@@ -72,15 +72,23 @@
   <PropertyGroup Label="UserMacros" />
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
     <LinkIncremental>true</LinkIncremental>
+    <IntDir>temp\$(Platform)\$(Configuration)\</IntDir>
+    <OutDir>$(SolutionDir)output\$(Platform)\$(Configuration)\</OutDir>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
     <LinkIncremental>true</LinkIncremental>
+    <IntDir>temp\$(Platform)\$(Configuration)\</IntDir>
+    <OutDir>$(SolutionDir)output\$(Platform)\$(Configuration)\</OutDir>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
     <LinkIncremental>false</LinkIncremental>
+    <IntDir>temp\$(Platform)\$(Configuration)\</IntDir>
+    <OutDir>$(SolutionDir)output\$(Platform)\$(Configuration)\</OutDir>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
     <LinkIncremental>false</LinkIncremental>
+    <IntDir>temp\$(Platform)\$(Configuration)\</IntDir>
+    <OutDir>$(SolutionDir)output\$(Platform)\$(Configuration)\</OutDir>
   </PropertyGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
     <ClCompile>
@@ -101,7 +109,8 @@
       <AdditionalDependencies>opengl32.lib;glew32.lib;glfw3.lib;%(AdditionalDependencies)</AdditionalDependencies>
     </Link>
     <PreBuildEvent>
-      <Command>xcopy $(SolutionDir)..\..\GLExternals\glew\bin\Release\$(Platform)\glew32.dll $(targetDir) /Y</Command>
+      <Command>xcopy $(SolutionDir)..\..\GLExternals\glew\bin\Release\$(Platform)\glew32.dll $(targetDir) /Y
+xcopy $(SolutionDir)Contents $(targetDir)Contents /Y /E /I</Command>
     </PreBuildEvent>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
@@ -123,7 +132,8 @@
       <AdditionalDependencies>opengl32.lib;glew32.lib;glfw3.lib;%(AdditionalDependencies)</AdditionalDependencies>
     </Link>
     <PreBuildEvent>
-      <Command>xcopy $(SolutionDir)..\..\GLExternals\glew\bin\Release\$(Platform)\glew32.dll $(targetDir) /Y</Command>
+      <Command>xcopy $(SolutionDir)..\..\GLExternals\glew\bin\Release\$(Platform)\glew32.dll $(targetDir) /Y
+xcopy $(SolutionDir)Contents $(targetDir)Contents /Y /E /I</Command>
     </PreBuildEvent>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
@@ -149,7 +159,8 @@
       <AdditionalDependencies>opengl32.lib;glew32.lib;glfw3.lib;%(AdditionalDependencies)</AdditionalDependencies>
     </Link>
     <PreBuildEvent>
-      <Command>xcopy $(SolutionDir)..\..\GLExternals\glew\bin\Release\$(Platform)\glew32.dll $(targetDir) /Y</Command>
+      <Command>xcopy $(SolutionDir)..\..\GLExternals\glew\bin\Release\$(Platform)\glew32.dll $(targetDir) /Y
+xcopy $(SolutionDir)Contents $(targetDir)Contents /Y /E /I</Command>
     </PreBuildEvent>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
@@ -175,11 +186,17 @@
       <AdditionalDependencies>opengl32.lib;glew32.lib;glfw3.lib;%(AdditionalDependencies)</AdditionalDependencies>
     </Link>
     <PreBuildEvent>
-      <Command>xcopy $(SolutionDir)..\..\GLExternals\glew\bin\Release\$(Platform)\glew32.dll $(targetDir) /Y</Command>
+      <Command>xcopy $(SolutionDir)..\..\GLExternals\glew\bin\Release\$(Platform)\glew32.dll $(targetDir) /Y
+xcopy $(SolutionDir)Contents $(targetDir)Contents /Y /E /I</Command>
     </PreBuildEvent>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClCompile Include="Draw.cpp" />
     <ClCompile Include="Main.cpp" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="Contents\shaders\fragmentShader.glsl" />
+    <None Include="Contents\shaders\vertexShader.glsl" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

@@ -1,4 +1,5 @@
 #include <stdio.h>
+#include <string>
 #include "GL/glew.h"
 #include "GLFW/glfw3.h"
 
@@ -6,6 +7,9 @@
 // -----------------------
 const GLint WIDTH = 800, HEIGHT = 600;
 GLFWwindow* s_mainWindow;
+extern GLuint s_vaoID;
+extern GLuint s_vboID;
+extern GLuint s_programID;
 // Function definition
 // ----------------------------
 /** Initialize GLFW*/
@@ -13,7 +17,10 @@ bool InitGLFW();
 bool SetupGLFWWindow(GLFWwindow*& o_mainWindow, const char* windowName, GLFWmonitor* i_monitor = nullptr, GLFWwindow* i_sharedWindow = nullptr);
 /** Initialize GLEW*/
 bool InitGLEW();
-
+/** Create shaders*/
+void CompileShaders();
+/** Create triangle*/
+void CreateTriangle();
 int main()
 {
 	// Init GLFW
@@ -40,6 +47,11 @@ int main()
 	// Set up viewport, which part of the window will draw things
 	glViewport(0, 0, bufferWidth, bufferHeight);
 
+	// Create triangle
+	CreateTriangle();
+	//Comiple shaders
+	CompileShaders();
+
 	// loop until window closed
 	while (!glfwWindowShouldClose(s_mainWindow))
 	{
@@ -47,9 +59,21 @@ int main()
 		glfwPollEvents();
 
 		// clear window
-		glClearColor(0.4f, 0.4f, 0.4f, 1.f);
+		glClearColor(0.8f, 0.8f, 0.8f, 1.f);
 		// A lot of things can be cleaned like color buffer, depth buffer, so we need to specify what to clear
 		glClear(GL_COLOR_BUFFER_BIT);
+
+		//----------------------
+		// Bind program and VAO
+		glUseProgram(s_programID);
+		glBindVertexArray(s_vaoID);
+
+		// Draw 
+		glDrawArrays(GL_TRIANGLES, 0, 3);
+
+		// clear program and VAO
+		glBindVertexArray(0);
+		glUseProgram(0);
 
 		glfwSwapBuffers(s_mainWindow);
 	}
