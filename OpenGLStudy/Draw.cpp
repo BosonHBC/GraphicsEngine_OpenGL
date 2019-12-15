@@ -4,8 +4,13 @@
 #include "GL/glew.h"
 #include "GLFW/glfw3.h"
 
+#include "glm/glm.hpp"
+#include "glm/gtc/matrix_transform.hpp"
+#include "glm/gtc/type_ptr.hpp"
+
 const char* s_dataFilePrefix = "Contents/shaders/";
 GLuint s_vaoID, s_vboID, s_programID;
+GLuint s_modelMatrix_UniformID;
 // Compile and add shader
 // ------------------------------------
 
@@ -17,7 +22,7 @@ void AddShader(GLuint i_programID, const char* i_shaderName, GLenum i_shaderType
 void CompileShaders();
 
 void CreateTriangle();
-
+void ApplyTransfomration();
 
 // Function implementations
 // ---------------------------------------------------
@@ -83,7 +88,7 @@ void CompileShaders()
 	glGetProgramiv(s_programID, GL_LINK_STATUS, &result);
 	if (!result) {
 		glGetProgramInfoLog(s_programID, sizeof(eLog), NULL, eLog);
-		printf("Error Linking program: %d \n%s", s_programID,eLog);
+		printf("Error Linking program: %d \n%s", s_programID, eLog);
 		return;
 	}
 
@@ -92,9 +97,14 @@ void CompileShaders()
 	glGetProgramiv(s_programID, GL_VALIDATE_STATUS, &result);
 	if (!result) {
 		glGetProgramInfoLog(s_programID, sizeof(eLog), NULL, eLog);
-		printf("Error validating program: %d \n%s", s_programID,eLog);
+		printf("Error validating program: %d \n%s", s_programID, eLog);
 		return;
 	}
+
+	// Assign uniform ID
+	s_modelMatrix_UniformID = glGetUniformLocation(s_programID, "modelMatrix");
+
+
 }
 // create triangle
 void CreateTriangle() {
@@ -132,3 +142,14 @@ void CreateTriangle() {
 	glBindVertexArray(0);
 }
 
+
+void ApplyTransfomration()
+{
+	// model needs to be initialized as identity so that it can translate properly
+	glm::mat4 model = glm::identity<glm::mat4>();
+	model = glm::translate(model, glm::vec3(0.2, 0, 0));
+
+	// the raw pointer pointer to the model doesn't match opengl shader's requirement, 
+	// so we need to use glm::value_ptr to process the raw pointer so that opengl shader can recoginize this pointer
+	glUniformMatrix4fv(s_modelMatrix_UniformID, 1, GL_FALSE, glm::value_ptr(model));
+}

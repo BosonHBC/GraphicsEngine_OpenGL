@@ -3,6 +3,10 @@
 #include "GL/glew.h"
 #include "GLFW/glfw3.h"
 
+#include "glm/glm.hpp"
+#include "glm/gtc/matrix_transform.hpp"
+#include "glm/gtc/type_ptr.hpp"
+
 // constants definition
 // -----------------------
 const GLint WIDTH = 800, HEIGHT = 600;
@@ -10,6 +14,7 @@ GLFWwindow* s_mainWindow;
 extern GLuint s_vaoID;
 extern GLuint s_vboID;
 extern GLuint s_programID;
+
 // Function definition
 // ----------------------------
 /** Initialize GLFW*/
@@ -21,14 +26,17 @@ bool InitGLEW();
 void CompileShaders();
 /** Create triangle*/
 void CreateTriangle();
+void ApplyTransfomration();
+
+
 int main()
 {
 	// Init GLFW
 	if (!InitGLFW()) return 1;
-	
+
 	// Create window
 	if (!SetupGLFWWindow(s_mainWindow, "MainWindow")) return 1;
-	
+
 	// Get buffer size information
 	int bufferWidth, bufferHeight;
 	glfwGetFramebufferSize(s_mainWindow, &bufferWidth, &bufferHeight);
@@ -63,9 +71,13 @@ int main()
 		// A lot of things can be cleaned like color buffer, depth buffer, so we need to specify what to clear
 		glClear(GL_COLOR_BUFFER_BIT);
 
-		//----------------------
+		// ----------------------
 		// Bind program and VAO
 		glUseProgram(s_programID);
+
+		ApplyTransfomration();
+
+		// use VAO
 		glBindVertexArray(s_vaoID);
 
 		// Draw 
@@ -75,6 +87,8 @@ int main()
 		glBindVertexArray(0);
 		glUseProgram(0);
 
+		// ----------------------
+		// Swap buffers
 		glfwSwapBuffers(s_mainWindow);
 	}
 
