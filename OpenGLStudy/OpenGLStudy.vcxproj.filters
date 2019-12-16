@@ -28,6 +28,9 @@
     <Filter Include="Source Files\Graphics\Effect">
       <UniqueIdentifier>{be7d3c32-3959-49f0-8c30-9e3a2e4f0121}</UniqueIdentifier>
     </Filter>
+    <Filter Include="Source Files\Graphics\Window">
+      <UniqueIdentifier>{95b24a94-9e82-408d-b203-ba924745e6f6}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="Main.cpp">
@@ -38,6 +41,9 @@
     </ClCompile>
     <ClCompile Include="Graphics\Mesh\Mesh.cpp">
       <Filter>Source Files\Graphics\Mesh</Filter>
+    </ClCompile>
+    <ClCompile Include="Graphics\Window\Window.cpp">
+      <Filter>Source Files\Graphics\Window</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
@@ -54,6 +60,9 @@
     </ClInclude>
     <ClInclude Include="Graphics\Mesh\Mesh.h">
       <Filter>Source Files\Graphics\Mesh</Filter>
+    </ClInclude>
+    <ClInclude Include="Graphics\Window\Window.h">
+      <Filter>Source Files\Graphics\Window</Filter>
     </ClInclude>
   </ItemGroup>
 </Project>

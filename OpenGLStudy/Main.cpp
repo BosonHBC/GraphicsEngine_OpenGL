@@ -1,4 +1,11 @@
-#include <stdio.h>
+#ifdef _DEBUG
+#define _CRTDBG_MAP_ALLOC
+#include <stdlib.h>
+#include <crtdbg.h>
+#endif // DEBUG
+
+
+
 #include <string>
 #include <vector>
 #include "GL/glew.h"
@@ -8,6 +15,7 @@
 #include "glm/gtc/matrix_transform.hpp"
 #include "glm/gtc/type_ptr.hpp"
 
+#include "Window/Window.h"
 #include "Mesh/Mesh.h"
 #include "Effect/Effect.h"
 // constants definition
@@ -17,19 +25,10 @@
 const GLint WIDTH = 800, HEIGHT = 600;
 GLFWwindow* s_mainWindow;
 
-float s_aspect;
-
-std::vector<Mesh*> s_renderList;
-std::vector<Effect*> s_effectList;
+std::vector<Graphics::cMesh*> s_renderList;
+std::vector<Graphics::cEffect*> s_effectList;
 // Function definition
 // ----------------------------
-/** InitializeGL GLFW*/
-bool InitializeGL();
-
-bool InitGLFW();
-bool SetupGLFWWindow(GLFWwindow*& o_mainWindow, const char* windowName, GLFWmonitor* i_monitor = nullptr, GLFWwindow* i_sharedWindow = nullptr);
-/** InitializeGL GLEW*/
-bool InitGLEW();
 /** Create shaders*/
 void CreateEffect();
 /** Create triangle*/
@@ -37,8 +36,11 @@ void CreateTriangle();
 
 int main()
 {
-	if (!InitializeGL()) return 1;
-
+	cWindow* newWindow = new cWindow(WIDTH, HEIGHT);
+	if (!newWindow->Initialzation()) {
+		printf("Failed to initialize openGL window!");
+		return 1;
+	}
 	// Create triangle
 	CreateTriangle();
 	//Compile shaders
@@ -47,21 +49,22 @@ int main()
 	glm::mat4 mProjection = glm::perspective(45.0f, (GLfloat)WIDTH / (GLfloat)HEIGHT, 1.0f, 150.0f);
 
 	// loop until window closed
-	while (!glfwWindowShouldClose(s_mainWindow))
+	while (!newWindow->GetShouldClose())
 	{
 		// get + handle user input events
 		glfwPollEvents();
-
 		// clear window
 		glClearColor(0.8f, 0.8f, 0.8f, 1.f);
 		// A lot of things can be cleaned like color buffer, depth buffer, so we need to specify what to clear
 		glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
+		// Draw
+		for (int i = 0; i < s_renderList.size(); ++i)
 		{
 			s_effectList[0]->UseEffect();
 
 			glm::mat4 model = glm::identity<glm::mat4>();
-			model = glm::translate(model, glm::vec3(0,0,-2.5f));
+			model = glm::translate(model, glm::vec3(0, 0, -2.5f));
 			model = glm::rotate(model, ToRadian(45), glm::vec3(0, 0, 1));
 			model = glm::scale(model, glm::vec3(0.4f, 0.4f, 1.0f));
 			glUniformMatrix4fv(s_effectList[0]->GetModelMatrixUniformID(), 1, GL_FALSE, glm::value_ptr(model));
@@ -72,97 +75,34 @@ int main()
 			glUseProgram(0);
 		}
 
-
 		// ----------------------
 		// Swap buffers
-		glfwSwapBuffers(s_mainWindow);
+		newWindow->SwapBuffers();
 	}
-
-	glfwDestroyWindow(s_mainWindow);
-	glfwTerminate();
-
-	return 0;
-}
-
-
-// Function implementation 
-// ----------------------------
-
-bool InitializeGL()
-{
-	// Init GLFW
-	if (!InitGLFW()) return false;
-
-	// Create window
-	if (!SetupGLFWWindow(s_mainWindow, "MainWindow")) return false;
-
-	// Get buffer size information
-	int bufferWidth, bufferHeight;
-	glfwGetFramebufferSize(s_mainWindow, &bufferWidth, &bufferHeight);
-
-	s_aspect = (float)bufferWidth / (float)bufferHeight;
-
-	// Set context for GLFW to use, let opengl know that which window is going to be drawn in
-	// By calling this function, we can switch between different windows
-	glfwMakeContextCurrent(s_mainWindow);
-
-	// InitializeGL GLEW
-	if (!InitGLEW()) {
-		glfwDestroyWindow(s_mainWindow);
-		glfwTerminate();
-		return false;
-	}
-
-	// Set up viewport, which part of the window will draw things
-	glViewport(0, 0, bufferWidth, bufferHeight);
-
-	// enable features
+	// Clean up memories
 	{
-		glEnable(GL_DEPTH_TEST);
+		delete newWindow;
+		newWindow = nullptr;
+		for (auto it = s_renderList.begin(); it != s_renderList.end(); ++it)
+		{
+			delete *it;
+			(*it) = nullptr;
+		}
+		for (auto it = s_effectList.begin(); it != s_effectList.end(); ++it)
+		{
+			delete *it;
+			(*it) = nullptr;
+		}
+		s_renderList.clear();
+		s_effectList.clear();
+		s_renderList.~vector();
+		s_effectList.~vector();
 	}
-	return true;
-}
 
-bool InitGLFW()
-{
-	if (!glfwInit()) {
-		printf("GLFW initialization failed!");
-		glfwTerminate();
-		return false;
-	}
-	return true;
-}
-
-bool SetupGLFWWindow(GLFWwindow*& o_mainWindow, const char* i_windowName, GLFWmonitor* i_monitor, GLFWwindow* i_sharedWindow)
-{
-	// Set the major version of this window to 3, since we are using 3.3
-	glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 3);
-	glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 3);
-	// Core profile = No backwards compatibility
-	// This line will throw an error when we are trying to use old features, function which might be removed in the future
-	glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
-	// Allow forward compatibility
-	glfwWindowHint(GLFW_OPENGL_FORWARD_COMPAT, GL_TRUE);
-
-	o_mainWindow = glfwCreateWindow(WIDTH, HEIGHT, i_windowName, i_monitor, i_sharedWindow);
-	if (!o_mainWindow) {
-		printf("Create GLFW window failed!");
-		glfwTerminate();
-		return false;
-	}
-	return true;
-}
-
-
-bool InitGLEW()
-{
-	//Allow modern extension features, allow us to use modern extension, which can make things easier
-	glewExperimental = GL_TRUE;
-	if (glewInit() != GLEW_OK) {
-		printf("GLEW Initialization failed!");
-		return false;
-	}
-	return true;
+#ifdef _DEBUG
+	_CrtDumpMemoryLeaks();
+#endif
+	return 0;
 }
 
 // create triangle
@@ -182,7 +122,7 @@ void CreateTriangle() {
 		0.0f, 1.0f, 0.0f
 	};
 
-	Mesh* triangle = new Mesh();
+	Graphics::cMesh* triangle = new Graphics::cMesh();
 
 	triangle->CreateMesh(vertices, indices, 12, 12);
 	s_renderList.push_back(triangle);
@@ -191,7 +131,7 @@ void CreateTriangle() {
 
 void CreateEffect()
 {
-	Effect* defaultEffect = new Effect();
+	Graphics::cEffect* defaultEffect = new Graphics::cEffect();
 	if (!defaultEffect->CreateProgram()) {
 		exit(1);
 		return;
