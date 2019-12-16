@@ -8,6 +8,8 @@
 #include "glm/gtc/matrix_transform.hpp"
 #include "glm/gtc/type_ptr.hpp"
 
+#define ToRadian(x) x * 0.0174532925f
+
 const char* s_dataFilePrefix = "Contents/shaders/";
 GLuint s_vaoID, s_vboID, s_programID;
 GLuint s_modelMatrix_UniformID;
@@ -147,8 +149,9 @@ void ApplyTransfomration()
 {
 	// model needs to be initialized as identity so that it can translate properly
 	glm::mat4 model = glm::identity<glm::mat4>();
-	model = glm::translate(model, glm::vec3(0.2, 0, 0));
-
+	model = glm::translate(model, glm::vec3(0.0, 0.0, 0.0));
+	model = glm::rotate(model, ToRadian(90), glm::vec3(0.0, 0.0, 1.0));
+	//model = glm::scale(model, glm::vec3(0.4, 0.4, 1));
 	// the raw pointer pointer to the model doesn't match opengl shader's requirement, 
 	// so we need to use glm::value_ptr to process the raw pointer so that opengl shader can recoginize this pointer
 	glUniformMatrix4fv(s_modelMatrix_UniformID, 1, GL_FALSE, glm::value_ptr(model));
