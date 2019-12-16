@@ -19,13 +19,25 @@
     <Filter Include="Source Files\Contents\shaders">
       <UniqueIdentifier>{b7ad59ef-2c16-4d6b-a612-aea310f26a18}</UniqueIdentifier>
     </Filter>
+    <Filter Include="Source Files\Graphics">
+      <UniqueIdentifier>{48d9d8ad-5af8-4995-9be9-81941c080737}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source Files\Graphics\Mesh">
+      <UniqueIdentifier>{9da3f5b0-ac07-47d3-b1ee-42671e0d4ee2}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source Files\Graphics\Effect">
+      <UniqueIdentifier>{be7d3c32-3959-49f0-8c30-9e3a2e4f0121}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="Main.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="Draw.cpp">
-      <Filter>Source Files</Filter>
+    <ClCompile Include="Graphics\Effect\Effect.cpp">
+      <Filter>Source Files\Graphics\Effect</Filter>
+    </ClCompile>
+    <ClCompile Include="Graphics\Mesh\Mesh.cpp">
+      <Filter>Source Files\Graphics\Mesh</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
@@ -35,5 +47,13 @@
     <None Include="Contents\shaders\fragmentShader.glsl">
       <Filter>Source Files\Contents\shaders</Filter>
     </None>
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="Graphics\Effect\Effect.h">
+      <Filter>Source Files\Graphics\Effect</Filter>
+    </ClInclude>
+    <ClInclude Include="Graphics\Mesh\Mesh.h">
+      <Filter>Source Files\Graphics\Mesh</Filter>
+    </ClInclude>
   </ItemGroup>
 </Project>
