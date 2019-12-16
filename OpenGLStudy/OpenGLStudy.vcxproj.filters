@@ -64,5 +64,8 @@
     <ClInclude Include="Graphics\Window\Window.h">
       <Filter>Source Files\Graphics\Window</Filter>
     </ClInclude>
+    <ClInclude Include="Graphics\Window\WindowInput.h">
+      <Filter>Source Files\Graphics\Window</Filter>
+    </ClInclude>
   </ItemGroup>
 </Project>

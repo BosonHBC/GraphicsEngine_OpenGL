@@ -1,6 +1,6 @@
 #include <stdio.h>
 #include "Window.h"
-
+#include "WindowInput.h"
 
 cWindow::~cWindow()
 {
@@ -55,11 +55,24 @@ bool cWindow::Initialzation()
 	{
 		glEnable(GL_DEPTH_TEST);
 	}
+
+	//07. setup input callback
+	{
+		// Assign user pointer to this window, so that GLFW window knows this cWindow reference so that we can get keys variable
+		glfwSetWindowUserPointer(m_window, this);
+		CreateCallbacks();
+		// Set input mode
+		glfwSetInputMode(m_window, GLFW_CURSOR, GLFW_CURSOR_DISABLED);
+	}
 	return true;
 }
 
 void cWindow::CleanUp()
 {
+	if (m_windowInput) {
+		delete m_windowInput;
+		m_windowInput = nullptr;
+	}
 	if (m_window) {
 		glfwDestroyWindow(m_window);
 	}
@@ -89,6 +102,57 @@ bool cWindow::SetupGLFWWindow(GLFWwindow*& o_mainWindow, const char* i_windowNam
 		return false;
 	}
 	return true;
+}
+
+void cWindow::CreateCallbacks()
+{
+	m_windowInput = new sWindowInput();
+	glfwSetKeyCallback(m_window, &cWindow::HandleKeys);
+	glfwSetCursorPosCallback(m_window, &cWindow::HandleMouse);
+}
+
+void cWindow::HandleKeys(GLFWwindow* i_window, int i_key, int i_code, int i_action, int i_mode)
+{
+	// Get reference to the instanced window
+	cWindow* thisWindow = static_cast<cWindow*>(glfwGetWindowUserPointer(i_window));
+	sWindowInput* _input = thisWindow->m_windowInput;
+
+	if (i_key == GLFW_KEY_ESCAPE && i_action == GLFW_PRESS) {
+		// tell glfw window that it is time to close
+		glfwSetWindowShouldClose(i_window, GL_TRUE);
+	}
+	if (i_key >= 0 && i_key <= MAX_KEY_LENGTH) {
+		const uint64_t keyMask = 1;
+
+		if (i_action == GLFW_PRESS) {
+			_input->keyDowns = ((keyMask << i_key) | _input->keyDowns);
+		}
+		else if (i_action == GLFW_RELEASE) {
+			_input->keyDowns = ((~(keyMask << i_key)) & _input->keyDowns);
+		}
+	}
+}
+
+void cWindow::HandleMouse(GLFWwindow* i_window, double i_xPos, double i_yPos)
+{
+	// Get reference to the instanced window
+	cWindow* thisWindow = static_cast<cWindow*>(glfwGetWindowUserPointer(i_window));
+	sWindowInput* _input = thisWindow->m_windowInput;
+
+	
+	if (_input->isFirstMove) {
+		_input->lastX = i_xPos;
+		_input->lastY = i_yPos;
+		_input->isFirstMove = false;
+	}
+
+	_input->dx = i_xPos - _input->lastX;
+	// prevent inverted control in Y axis
+	_input->dy = _input->lastY - i_yPos;
+
+	_input->lastX = i_xPos;
+	_input->lastY = i_yPos;
+
 }
 
 void cWindow::SwapBuffers()
