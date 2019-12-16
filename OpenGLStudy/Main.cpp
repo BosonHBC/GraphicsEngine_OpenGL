@@ -27,7 +27,7 @@ void CompileShaders();
 /** Create triangle*/
 void CreateTriangle();
 void ApplyTransfomration();
-
+void DrawTriangle();
 
 int main()
 {
@@ -55,6 +55,11 @@ int main()
 	// Set up viewport, which part of the window will draw things
 	glViewport(0, 0, bufferWidth, bufferHeight);
 
+	// enable features
+	{
+		glEnable(GL_DEPTH_TEST);
+	}
+
 	// Create triangle
 	CreateTriangle();
 	//Comiple shaders
@@ -69,29 +74,14 @@ int main()
 		// clear window
 		glClearColor(0.8f, 0.8f, 0.8f, 1.f);
 		// A lot of things can be cleaned like color buffer, depth buffer, so we need to specify what to clear
-		glClear(GL_COLOR_BUFFER_BIT);
+		glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
-		// ----------------------
-		// Bind program and VAO
-		glUseProgram(s_programID);
-
-		ApplyTransfomration();
-
-		// use VAO
-		glBindVertexArray(s_vaoID);
-
-		// Draw 
-		glDrawArrays(GL_TRIANGLES, 0, 3);
-
-		// clear program and VAO
-		glBindVertexArray(0);
-		glUseProgram(0);
+		DrawTriangle();
 
 		// ----------------------
 		// Swap buffers
 		glfwSwapBuffers(s_mainWindow);
 	}
-
 
 	glfwDestroyWindow(s_mainWindow);
 	glfwTerminate();

@@ -1,8 +1,12 @@
 #version 330
 
+// vertex color coming from vertex shader
+in vec4 vertexColor;
+
 // the color of the pixel
 out vec4 color;
 
 void main(){
-	color = vec4( 0.4 , 0.0, 0.0, 1.0);
+
+	color = vertexColor;
 }
