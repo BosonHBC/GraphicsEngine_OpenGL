@@ -13,6 +13,7 @@ namespace Application {
 		virtual ~cApplication();
 
 		virtual bool Initialize(GLuint i_width, GLuint i_height);
+		virtual void PostInitialization();
 		virtual void CleanUp();
 		virtual void Run() {};
 		virtual void UpdateBasedOnTime(float DeltaSeconds) {}

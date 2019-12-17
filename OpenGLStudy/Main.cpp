@@ -9,16 +9,16 @@ const GLint WIDTH = 800, HEIGHT = 600;
 
 int main()
 {
-	cMyGame* app = new cMyGame();
+	cMyGame* _myGame = new cMyGame();
 
-	if (!app->Initialize(WIDTH, HEIGHT)) {
+	if (!_myGame->Initialize(WIDTH, HEIGHT)) {
 		printf("Failed to initialize application!");
 		return 1;
 	}
+	_myGame->PostInitialization();
+	_myGame->Run();
 
-	app->Run();
-
-	delete app;
+	delete _myGame;
 
 #ifdef _DEBUG
 	_CrtDumpMemoryLeaks();

@@ -6,6 +6,7 @@
 #include "glm/gtc/matrix_transform.hpp"
 #include "glm/gtc/type_ptr.hpp"
 
+#include "Graphics/Window/WindowInput.h"
 #include "Graphics/Window/Window.h"
 #include "Graphics/Mesh/Mesh.h"
 #include "Graphics/Effect/Effect.h"
@@ -133,7 +134,9 @@ void cMyGame::UpdateBasedOnTime(float DeltaSeconds)
 {
 	// get + handle user input events
 	{
-		s_mainCamera->CameraControl(m_window->GetWindowInput(), DeltaSeconds);
+		sWindowInput* _windowInput = m_window->GetWindowInput();
+		s_mainCamera->CameraControl(_windowInput, DeltaSeconds);
+		s_mainCamera->MouseControl(_windowInput->DX(), _windowInput->DY(), DeltaSeconds);
 	}
 }
 

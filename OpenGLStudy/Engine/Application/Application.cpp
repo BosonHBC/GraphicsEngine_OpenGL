@@ -36,6 +36,12 @@ namespace Application {
 			}
 		}
 
+
+		return true;
+	}
+
+	void cApplication::PostInitialization()
+	{
 		// Create application thread by lambda
 		m_applicationThread = new std::thread(
 			[&](cApplication* app)
@@ -43,7 +49,6 @@ namespace Application {
 				app->UpdateUntilExit();
 			}
 		, this);
-		return true;
 	}
 
 	void cApplication::ApplicationLoopThread(void* const io_application)

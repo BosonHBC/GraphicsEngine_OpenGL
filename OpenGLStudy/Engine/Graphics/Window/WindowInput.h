@@ -6,8 +6,7 @@
 struct sWindowInput {
 	GLfloat lastX, lastY, dx, dy;
 	uint64_t keyDowns = 0;
-	bool isFirstMove = false;
-	bool isMovingSinceLastChange = false;
+	bool isFirstMove =true;
 
 	bool IsKeyDown(int i_key) {
 		return (keyDowns >> i_key) & 1;
