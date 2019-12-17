@@ -5,6 +5,7 @@
 #endif // DEBUG
 #include "MyGame/MyGame.h"
 
+
 const GLint WIDTH = 800, HEIGHT = 600;
 
 int main()

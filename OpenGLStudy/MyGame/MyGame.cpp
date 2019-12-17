@@ -9,6 +9,7 @@
 #include "Graphics/Window/WindowInput.h"
 #include "Graphics/Window/Window.h"
 #include "Graphics/Mesh/Mesh.h"
+#include "Graphics/Texture/Texture.h"
 #include "Graphics/Effect/Effect.h"
 #include "Graphics/Camera/Camera.h"
 // constants definition
@@ -22,11 +23,16 @@ std::vector<Graphics::cEffect*> s_effectList;
 cCamera* s_mainCamera;
 cMyGame* s_myGameInstance;
 
+Graphics::cTexture s_brickTexture;
+Graphics::cTexture s_woodTexture;
+
+
 // Function definition
 // ----------------------------
 void CreateEffect();
 void CreateTriangle();
 void CreateCamera();
+void SetUpTextures();
 
 void CreateCamera()
 {
@@ -45,16 +51,24 @@ void CreateTriangle() {
 	};
 
 	GLfloat vertices[] = {
-		-1.0f, -1.0f, 0.0f,
-		0.0, -1.0, 1.0f,
-		1.0f, -1.0f, 0.0f,
-		0.0f, 1.0f, 0.0f
+		//     x,		y,		z,			u,		v
+			-1.0f, -1.0f, 0.0f,		0.0f, 0.0f,
+			0.0f, -1.0f, 1.0f,		0.5f, 0.0f,
+			1.0f, -1.0f, 0.0f,		1.0f, 0.0f,
+			0.0f, 1.0f, 0.0f,			0.5f, 1.0f
 	};
 
 	Graphics::cMesh* triangle = new Graphics::cMesh();
 
-	triangle->CreateMesh(vertices, indices, 12, 12);
+	// xyz * 4 + uv * 4 = 20
+	triangle->CreateMesh(vertices, indices, 20, 12);
 	s_renderList.push_back(triangle);
+
+	Graphics::cMesh* triangle2 = new Graphics::cMesh();
+
+	// xyz * 4 + uv * 4 = 20
+	triangle2->CreateMesh(vertices, indices, 20, 12);
+	s_renderList.push_back(triangle2);
 }
 
 
@@ -67,6 +81,14 @@ void CreateEffect()
 	}
 	s_effectList.push_back(defaultEffect);
 }
+void SetUpTextures()
+{
+	s_brickTexture = Graphics::cTexture("Contents/textures/brick.png");
+	s_brickTexture.LoadTexture();
+	s_woodTexture = Graphics::cTexture("Contents/textures/wood2.png");
+	s_woodTexture.LoadTexture();
+}
+
 
 /**
 	The previous part is global functions and variables
@@ -91,6 +113,8 @@ bool cMyGame::Initialize(GLuint i_width, GLuint i_height)
 	// create camera
 	CreateCamera();
 
+	SetUpTextures();
+
 	return result;
 }
 
@@ -113,13 +137,35 @@ void cMyGame::Run()
 			s_effectList[0]->UseEffect();
 
 			glm::mat4 model = glm::identity<glm::mat4>();
-			model = glm::translate(model, glm::vec3(0, 0, -2.5f));
-			model = glm::rotate(model, ToRadian(45), glm::vec3(0, 0, 1));
+			model = glm::translate(model, glm::vec3(0, -0.4, -2.5f));
+			model = glm::rotate(model, ToRadian(180), glm::vec3(0, 0, 1));
 			model = glm::scale(model, glm::vec3(0.4f, 0.4f, 1.0f));
 			glUniformMatrix4fv(s_effectList[0]->GetModelMatrixUniformID(), 1, GL_FALSE, glm::value_ptr(model));
 			glUniformMatrix4fv(s_effectList[0]->GetProjectionMatrixUniformID(), 1, GL_FALSE, glm::value_ptr(s_mainCamera->GetProjectionMatrix()));
 			glUniformMatrix4fv(s_effectList[0]->GetViewMatrixUniformID(), 1, GL_FALSE, glm::value_ptr(s_mainCamera->GetViewMatrix()));
+
+			// use texture for
+			s_brickTexture.UseTexture();
+
 			s_renderList[0]->Render();
+
+			// second obj
+			{
+				glm::mat4 model = glm::identity<glm::mat4>();
+				model = glm::translate(model, glm::vec3(0, 0.4, -2.5f));
+				model = glm::rotate(model, ToRadian(0), glm::vec3(0, 0, 1));
+				model = glm::scale(model, glm::vec3(0.4f, 0.4f, 1.0f));
+				glUniformMatrix4fv(s_effectList[0]->GetModelMatrixUniformID(), 1, GL_FALSE, glm::value_ptr(model));
+				glUniformMatrix4fv(s_effectList[0]->GetProjectionMatrixUniformID(), 1, GL_FALSE, glm::value_ptr(s_mainCamera->GetProjectionMatrix()));
+				glUniformMatrix4fv(s_effectList[0]->GetViewMatrixUniformID(), 1, GL_FALSE, glm::value_ptr(s_mainCamera->GetViewMatrix()));
+
+				// use texture for
+				s_woodTexture.UseTexture();
+
+				s_renderList[1]->Render();
+			}
+
+
 			// clear program
 			glUseProgram(0);
 		}
@@ -160,6 +206,7 @@ void cMyGame::CleanUp()
 		s_effectList.clear();
 		s_renderList.~vector();
 		s_effectList.~vector();
+
 	}
 
 	cApplication::CleanUp();

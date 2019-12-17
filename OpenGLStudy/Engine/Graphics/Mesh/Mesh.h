@@ -17,6 +17,7 @@ namespace Graphics {
 		void Render();
 
 	private:
+		/** private variables*/
 		GLuint m_vao, m_vbo, m_ibo;
 		GLuint m_indexCount;
 	};

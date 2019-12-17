@@ -46,6 +46,15 @@
     <Filter Include="Source Files\MyGame">
       <UniqueIdentifier>{7f69affb-87e0-452e-ad6f-7c6b796b94a5}</UniqueIdentifier>
     </Filter>
+    <Filter Include="Source Files\Tool">
+      <UniqueIdentifier>{b9129976-be09-49ef-a4b6-e7324617dd2f}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source Files\Engine\Graphics\Texture">
+      <UniqueIdentifier>{6983bf0b-f8b3-4605-8293-f0ea42a81658}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source Files\Contents\textures">
+      <UniqueIdentifier>{f2696715-db38-46c5-a147-beb181ea8124}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="Main.cpp">
@@ -71,6 +80,9 @@
     </ClCompile>
     <ClCompile Include="MyGame\MyGame.cpp">
       <Filter>Source Files\MyGame</Filter>
+    </ClCompile>
+    <ClCompile Include="Engine\Graphics\Texture\Texture.cpp">
+      <Filter>Source Files\Engine\Graphics\Texture</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
@@ -98,6 +110,12 @@
     <ClInclude Include="MyGame\MyGame.h">
       <Filter>Source Files\MyGame</Filter>
     </ClInclude>
+    <ClInclude Include="Tool\stb_image.h">
+      <Filter>Source Files\Tool</Filter>
+    </ClInclude>
+    <ClInclude Include="Engine\Graphics\Texture\Texture.h">
+      <Filter>Source Files\Engine\Graphics\Texture</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <None Include="Contents\shaders\fragmentShader.glsl">
@@ -106,5 +124,13 @@
     <None Include="Contents\shaders\vertexShader.glsl">
       <Filter>Source Files\Contents\shaders</Filter>
     </None>
+  </ItemGroup>
+  <ItemGroup>
+    <Image Include="Contents\textures\brick.jpg">
+      <Filter>Source Files\Contents\textures</Filter>
+    </Image>
+    <Image Include="Contents\textures\dirt.jpg">
+      <Filter>Source Files\Contents\textures</Filter>
+    </Image>
   </ItemGroup>
 </Project>

@@ -1,4 +1,3 @@
-#include "stdio.h"
 #include "Camera.h"
 #include "glfw/glfw3.h"
 #include "Graphics/Window/WindowInput.h"
@@ -51,7 +50,6 @@ void cCamera::MouseControl(GLfloat i_dx, GLfloat i_dy, float i_dt)
 	m_yaw += i_dx * m_turnSpeed ;
 	m_pitch += i_dy * m_turnSpeed;
 	Update();
-	printf("Yaw: %f\n", m_yaw);
 }
 
 glm::mat4 cCamera::GetViewMatrix() const

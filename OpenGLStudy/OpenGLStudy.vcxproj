@@ -100,7 +100,7 @@
       <ConformanceMode>true</ConformanceMode>
       <PrecompiledHeaderFile>
       </PrecompiledHeaderFile>
-      <AdditionalIncludeDirectories>$(SolutionDir)..\..\GLExternals\;$(SolutionDir)..\..\GLExternals\glew\include;$(SolutionDir)..\..\GLExternals\glfw32\include;$(SolutionDir)Engine;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>$(SolutionDir);$(SolutionDir)..\..\GLExternals\;$(SolutionDir)..\..\GLExternals\glew\include;$(SolutionDir)..\..\GLExternals\glfw32\include;$(SolutionDir)Engine;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
     </ClCompile>
     <Link>
       <SubSystem>Console</SubSystem>
@@ -123,7 +123,7 @@ xcopy $(SolutionDir)Contents $(targetDir)Contents /Y /E /I</Command>
       <ConformanceMode>true</ConformanceMode>
       <PrecompiledHeaderFile>
       </PrecompiledHeaderFile>
-      <AdditionalIncludeDirectories>$(SolutionDir)..\..\GLExternals\;$(SolutionDir)..\..\GLExternals\glew\include;$(SolutionDir)..\..\GLExternals\glfw\include;$(SolutionDir)Engine;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>$(SolutionDir);$(SolutionDir)..\..\GLExternals\;$(SolutionDir)..\..\GLExternals\glew\include;$(SolutionDir)..\..\GLExternals\glfw\include;$(SolutionDir)Engine;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
     </ClCompile>
     <Link>
       <SubSystem>Console</SubSystem>
@@ -148,7 +148,7 @@ xcopy $(SolutionDir)Contents $(targetDir)Contents /Y /E /I</Command>
       <ConformanceMode>true</ConformanceMode>
       <PrecompiledHeaderFile>
       </PrecompiledHeaderFile>
-      <AdditionalIncludeDirectories>$(SolutionDir)..\..\GLExternals\;$(SolutionDir)..\..\GLExternals\glew\include;$(SolutionDir)..\..\GLExternals\glfw32\include;$(SolutionDir)Engine;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>$(SolutionDir);$(SolutionDir)..\..\GLExternals\;$(SolutionDir)..\..\GLExternals\glew\include;$(SolutionDir)..\..\GLExternals\glfw32\include;$(SolutionDir)Engine;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
     </ClCompile>
     <Link>
       <SubSystem>Console</SubSystem>
@@ -175,7 +175,7 @@ xcopy $(SolutionDir)Contents $(targetDir)Contents /Y /E /I</Command>
       <ConformanceMode>true</ConformanceMode>
       <PrecompiledHeaderFile>
       </PrecompiledHeaderFile>
-      <AdditionalIncludeDirectories>$(SolutionDir)..\..\GLExternals\;$(SolutionDir)..\..\GLExternals\glew\include;$(SolutionDir)..\..\GLExternals\glfw\include;$(SolutionDir)Engine;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>$(SolutionDir);$(SolutionDir)..\..\GLExternals\;$(SolutionDir)..\..\GLExternals\glew\include;$(SolutionDir)..\..\GLExternals\glfw\include;$(SolutionDir)Engine;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
     </ClCompile>
     <Link>
       <SubSystem>Console</SubSystem>
@@ -195,6 +195,7 @@ xcopy $(SolutionDir)Contents $(targetDir)Contents /Y /E /I</Command>
     <ClCompile Include="Engine\Graphics\Camera\Camera.cpp" />
     <ClCompile Include="Engine\Graphics\Effect\Effect.cpp" />
     <ClCompile Include="Engine\Graphics\Mesh\Mesh.cpp" />
+    <ClCompile Include="Engine\Graphics\Texture\Texture.cpp" />
     <ClCompile Include="Engine\Graphics\Window\Window.cpp" />
     <ClCompile Include="Engine\Time\Time.cpp" />
     <ClCompile Include="Main.cpp" />
@@ -205,14 +206,20 @@ xcopy $(SolutionDir)Contents $(targetDir)Contents /Y /E /I</Command>
     <ClInclude Include="Engine\Graphics\Camera\Camera.h" />
     <ClInclude Include="Engine\Graphics\Effect\Effect.h" />
     <ClInclude Include="Engine\Graphics\Mesh\Mesh.h" />
+    <ClInclude Include="Engine\Graphics\Texture\Texture.h" />
     <ClInclude Include="Engine\Graphics\Window\Window.h" />
     <ClInclude Include="Engine\Graphics\Window\WindowInput.h" />
     <ClInclude Include="Engine\Time\Time.h" />
     <ClInclude Include="MyGame\MyGame.h" />
+    <ClInclude Include="Tool\stb_image.h" />
   </ItemGroup>
   <ItemGroup>
     <None Include="Contents\shaders\fragmentShader.glsl" />
     <None Include="Contents\shaders\vertexShader.glsl" />
+  </ItemGroup>
+  <ItemGroup>
+    <Image Include="Contents\textures\brick.jpg" />
+    <Image Include="Contents\textures\dirt.jpg" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

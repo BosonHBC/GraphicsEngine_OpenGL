@@ -12,7 +12,7 @@ class cCamera
 public:
 	/** Constructors and destructor */
 	cCamera() : m_position(glm::vec3(0, 0, 0)), m_forward(glm::vec3(0, 0, -1)), m_up(glm::vec3(0, 1, 0)),
-		m_right(glm::vec3(1, 0, 0)), m_pitch(0), m_yaw(0),m_translationSpeed(1), m_turnSpeed(0.05)
+		m_right(glm::vec3(1, 0, 0)), m_pitch(0), m_yaw(0),m_translationSpeed(1), m_turnSpeed(0.1)
 	{
 		Update();
 	}
