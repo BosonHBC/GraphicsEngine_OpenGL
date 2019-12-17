@@ -191,18 +191,24 @@ xcopy $(SolutionDir)Contents $(targetDir)Contents /Y /E /I</Command>
     </PreBuildEvent>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClCompile Include="Engine\Application\Application.cpp" />
     <ClCompile Include="Engine\Graphics\Camera\Camera.cpp" />
     <ClCompile Include="Engine\Graphics\Effect\Effect.cpp" />
     <ClCompile Include="Engine\Graphics\Mesh\Mesh.cpp" />
     <ClCompile Include="Engine\Graphics\Window\Window.cpp" />
+    <ClCompile Include="Engine\Time\Time.cpp" />
     <ClCompile Include="Main.cpp" />
+    <ClCompile Include="MyGame\MyGame.cpp" />
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="Engine\Application\Application.h" />
     <ClInclude Include="Engine\Graphics\Camera\Camera.h" />
     <ClInclude Include="Engine\Graphics\Effect\Effect.h" />
     <ClInclude Include="Engine\Graphics\Mesh\Mesh.h" />
     <ClInclude Include="Engine\Graphics\Window\Window.h" />
     <ClInclude Include="Engine\Graphics\Window\WindowInput.h" />
+    <ClInclude Include="Engine\Time\Time.h" />
+    <ClInclude Include="MyGame\MyGame.h" />
   </ItemGroup>
   <ItemGroup>
     <None Include="Contents\shaders\fragmentShader.glsl" />

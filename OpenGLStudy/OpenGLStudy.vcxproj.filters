@@ -40,6 +40,12 @@
     <Filter Include="Source Files\Contents\shaders">
       <UniqueIdentifier>{b7ad59ef-2c16-4d6b-a612-aea310f26a18}</UniqueIdentifier>
     </Filter>
+    <Filter Include="Source Files\Engine\Application">
+      <UniqueIdentifier>{e5c0b51a-62c6-4df5-a0ce-49ed6a6f839c}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source Files\MyGame">
+      <UniqueIdentifier>{7f69affb-87e0-452e-ad6f-7c6b796b94a5}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="Main.cpp">
@@ -57,6 +63,15 @@
     <ClCompile Include="Engine\Graphics\Window\Window.cpp">
       <Filter>Source Files\Engine\Graphics\Window</Filter>
     </ClCompile>
+    <ClCompile Include="Engine\Time\Time.cpp">
+      <Filter>Source Files\Engine\Time</Filter>
+    </ClCompile>
+    <ClCompile Include="Engine\Application\Application.cpp">
+      <Filter>Source Files\Engine\Application</Filter>
+    </ClCompile>
+    <ClCompile Include="MyGame\MyGame.cpp">
+      <Filter>Source Files\MyGame</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Engine\Graphics\Camera\Camera.h">
@@ -73,6 +88,15 @@
     </ClInclude>
     <ClInclude Include="Engine\Graphics\Window\WindowInput.h">
       <Filter>Source Files\Engine\Graphics\Window</Filter>
+    </ClInclude>
+    <ClInclude Include="Engine\Time\Time.h">
+      <Filter>Source Files\Engine\Time</Filter>
+    </ClInclude>
+    <ClInclude Include="Engine\Application\Application.h">
+      <Filter>Source Files\Engine\Application</Filter>
+    </ClInclude>
+    <ClInclude Include="MyGame\MyGame.h">
+      <Filter>Source Files\MyGame</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>

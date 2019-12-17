@@ -20,18 +20,18 @@ bool cWindow::Initialzation()
 
 	//01. Create window
 	{
-		if (!SetupGLFWWindow(m_window, "MainWindow")) return false;
+		if (!SetupGLFWWindow(m_glfwWindow, "MainWindow")) return false;
 	}
 
 	//02. Set buffer size information
 	{
-		glfwGetFramebufferSize(m_window, &m_bufferWidth, &m_bufferHeight);
+		glfwGetFramebufferSize(m_glfwWindow, &m_bufferWidth, &m_bufferHeight);
 	}
 
 	//03.Set context for GLFW to use, let opengl know that which window is going to be drawn in
 	{
 		// By calling this function, we can switch between different windows
-		glfwMakeContextCurrent(m_window);
+		glfwMakeContextCurrent(m_glfwWindow);
 	}
 
 	//04. InitializeGL GLEW
@@ -39,7 +39,7 @@ bool cWindow::Initialzation()
 		//Allow modern extension features, allow us to use modern extension, which can make things easier
 		glewExperimental = GL_TRUE;
 		if (glewInit() != GLEW_OK) {
-			glfwDestroyWindow(m_window);
+			glfwDestroyWindow(m_glfwWindow);
 			glfwTerminate();
 			printf("GLEW Initialization failed!");
 			return false;
@@ -59,10 +59,10 @@ bool cWindow::Initialzation()
 	//07. setup input callback
 	{
 		// Assign user pointer to this window, so that GLFW window knows this cWindow reference so that we can get keys variable
-		glfwSetWindowUserPointer(m_window, this);
+		glfwSetWindowUserPointer(m_glfwWindow, this);
 		CreateCallbacks();
 		// Set input mode
-		glfwSetInputMode(m_window, GLFW_CURSOR, GLFW_CURSOR_DISABLED);
+		glfwSetInputMode(m_glfwWindow, GLFW_CURSOR, GLFW_CURSOR_DISABLED);
 	}
 	return true;
 }
@@ -73,15 +73,15 @@ void cWindow::CleanUp()
 		delete m_windowInput;
 		m_windowInput = nullptr;
 	}
-	if (m_window) {
-		glfwDestroyWindow(m_window);
+	if (m_glfwWindow) {
+		glfwDestroyWindow(m_glfwWindow);
 	}
 	glfwTerminate();
 }
 
 bool cWindow::GetShouldClose() const
 {
-	return glfwWindowShouldClose(m_window);
+	return glfwWindowShouldClose(m_glfwWindow);
 }
 
 bool cWindow::SetupGLFWWindow(GLFWwindow*& o_mainWindow, const char* i_windowName, GLFWmonitor* i_monitor /*= nullptr*/, GLFWwindow* i_sharedWindow /*= nullptr*/)
@@ -107,8 +107,8 @@ bool cWindow::SetupGLFWWindow(GLFWwindow*& o_mainWindow, const char* i_windowNam
 void cWindow::CreateCallbacks()
 {
 	m_windowInput = new sWindowInput();
-	glfwSetKeyCallback(m_window, &cWindow::HandleKeys);
-	glfwSetCursorPosCallback(m_window, &cWindow::HandleMouse);
+	glfwSetKeyCallback(m_glfwWindow, &cWindow::HandleKeys);
+	glfwSetCursorPosCallback(m_glfwWindow, &cWindow::HandleMouse);
 }
 
 void cWindow::HandleKeys(GLFWwindow* i_window, int i_key, int i_code, int i_action, int i_mode)
@@ -156,5 +156,5 @@ void cWindow::HandleMouse(GLFWwindow* i_window, double i_xPos, double i_yPos)
 
 void cWindow::SwapBuffers()
 {
-	glfwSwapBuffers(m_window);
+	glfwSwapBuffers(m_glfwWindow);
 }
