@@ -12,7 +12,7 @@ class cCamera
 public:
 	/** Constructors and destructor */
 	cCamera() : m_position(glm::vec3(0, 0, 0)), m_forward(glm::vec3(0, 0, -1)), m_up(glm::vec3(0, 1, 0)),
-		m_right(glm::vec3(1, 0, 0)), m_pitch(90.f), m_yaw(0),m_translationSpeed(0.01f), m_turnSpeed(0.01f)
+		m_right(glm::vec3(1, 0, 0)), m_pitch(90.f), m_yaw(0),m_translationSpeed(1), m_turnSpeed(1)
 	{
 		Update();
 	}
@@ -26,8 +26,11 @@ public:
 	~cCamera();
 
 	/** Usage functions*/
-	void CameraControl(sWindowInput* const i_windowInput);
+	void CameraControl(sWindowInput* const i_windowInput, float i_deltaSecs);
 	glm::mat4 GetViewMatrix() const;
+	const glm::mat4& GetProjectionMatrix() const { return m_projectionMatrix; }
+	// Projection matrix
+	void CreateProjectionMatrix(GLfloat i_fov, GLfloat i_aspect, GLfloat i_nearPlane = 0.1f, GLfloat i_farPlane = 100.f);
 
 private:
 	/** private member variables*/
@@ -41,6 +44,8 @@ private:
 
 	GLfloat m_translationSpeed;
 	GLfloat m_turnSpeed;
+
+	glm::mat4 m_projectionMatrix;
 
 	/** private helper functions*/
 	void Update();

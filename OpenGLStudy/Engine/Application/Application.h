@@ -19,8 +19,10 @@ namespace Application {
 		
 		void UpdateUntilExit();
 
+		cWindow* Get_GLFW_Window() const { return m_window; }
 	protected:
 		cWindow* m_window;
+
 		uint64_t m_tickCount_systemTime_WhenApplicationStart = false;
 		uint64_t m_tickCount_systemTime_Current = 0;
 		uint64_t m_tickCountt_systemTime_Elapsed = 0;

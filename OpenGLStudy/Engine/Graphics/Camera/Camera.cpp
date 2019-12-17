@@ -24,23 +24,23 @@ cCamera::~cCamera()
 
 }
 
-void cCamera::CameraControl(sWindowInput* const i_windowInput)
+void cCamera::CameraControl(sWindowInput* const i_windowInput, float i_deltaSecs)
 {
 	if (i_windowInput->IsKeyDown(GLFW_KEY_W)) 
 	{
-		m_position += m_forward * m_translationSpeed;
+		m_position += m_forward * m_translationSpeed * i_deltaSecs;
 	}
 	if (i_windowInput->IsKeyDown(GLFW_KEY_S))
 	{
-		m_position -= m_forward * m_translationSpeed;
+		m_position -= m_forward * m_translationSpeed * i_deltaSecs;
 	}
 	if (i_windowInput->IsKeyDown(GLFW_KEY_A))
 	{
-		m_position -= m_right * m_translationSpeed;
+		m_position -= m_right * m_translationSpeed * i_deltaSecs;
 	}
 	if (i_windowInput->IsKeyDown(GLFW_KEY_D))
 	{
-		m_position += m_right * m_translationSpeed;
+		m_position += m_right * m_translationSpeed * i_deltaSecs;
 	}
 }
 
@@ -48,5 +48,10 @@ glm::mat4 cCamera::GetViewMatrix() const
 {
 	glm::vec3 _targetLoc = m_position + m_forward;
 	return glm::lookAt(m_position, _targetLoc, m_up);
+}
+
+void cCamera::CreateProjectionMatrix(GLfloat i_fov, GLfloat i_aspect, GLfloat i_nearPlane /*= 0.1f*/, GLfloat i_farPlane /*= 100.f*/)
+{
+	m_projectionMatrix = glm::perspective(i_fov, i_aspect, i_nearPlane, i_farPlane);
 }
 
