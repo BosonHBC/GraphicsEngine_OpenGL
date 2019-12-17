@@ -23,11 +23,12 @@ namespace Graphics {
 
 		/** Getters */
 		const GLuint& GetModelMatrixUniformID() const { return m_modelMatrixID; }
+		const GLuint& GetViewMatrixUniformID() const { return m_viewMatrixID; }
 		const GLuint& GetProjectionMatrixUniformID() const { return m_projectionMatrixID; }
 		const GLuint& GetProgramID() const { return m_programID; }
 	private:
 		GLuint m_programID;
-		GLuint m_modelMatrixID, m_projectionMatrixID;
+		GLuint m_modelMatrixID, m_viewMatrixID, m_projectionMatrixID;
 
 
 		// Initialize shaders

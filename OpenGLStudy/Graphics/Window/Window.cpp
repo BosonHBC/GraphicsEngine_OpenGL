@@ -152,7 +152,6 @@ void cWindow::HandleMouse(GLFWwindow* i_window, double i_xPos, double i_yPos)
 
 	_input->lastX = i_xPos;
 	_input->lastY = i_yPos;
-
 }
 
 void cWindow::SwapBuffers()

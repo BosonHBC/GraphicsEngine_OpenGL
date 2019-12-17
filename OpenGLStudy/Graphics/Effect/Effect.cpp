@@ -83,6 +83,7 @@ namespace Graphics {
 	{
 		// Assign uniform ID
 		m_modelMatrixID = glGetUniformLocation(m_programID, "modelMatrix");
+		m_viewMatrixID = glGetUniformLocation(m_programID, "viewMatrix");
 		m_projectionMatrixID = glGetUniformLocation(m_programID, "projectionMatrix");
 
 		return true;

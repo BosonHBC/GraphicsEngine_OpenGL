@@ -18,6 +18,7 @@
 #include "Window/Window.h"
 #include "Mesh/Mesh.h"
 #include "Effect/Effect.h"
+#include "Camera/Camera.h"
 // constants definition
 // -----------------------
 #define ToRadian(x) x * 0.0174532925f
@@ -27,12 +28,17 @@ GLFWwindow* s_mainWindow;
 
 std::vector<Graphics::cMesh*> s_renderList;
 std::vector<Graphics::cEffect*> s_effectList;
+cCamera* s_mainCamera;
 // Function definition
 // ----------------------------
-/** Create shaders*/
 void CreateEffect();
-/** Create triangle*/
 void CreateTriangle();
+void CreateCamera();
+
+void CreateCamera()
+{
+	s_mainCamera = new cCamera();
+}
 
 int main()
 {
@@ -45,6 +51,8 @@ int main()
 	CreateTriangle();
 	//Compile shaders
 	CreateEffect();
+	// create camera
+	CreateCamera();
 
 	glm::mat4 mProjection = glm::perspective(45.0f, (GLfloat)WIDTH / (GLfloat)HEIGHT, 1.0f, 150.0f);
 
@@ -52,7 +60,12 @@ int main()
 	while (!newWindow->GetShouldClose())
 	{
 		// get + handle user input events
-		glfwPollEvents();
+		{
+			glfwPollEvents();
+
+			s_mainCamera->CameraControl(newWindow->GetWindowInput());
+		}
+
 		// clear window
 		glClearColor(0.8f, 0.8f, 0.8f, 1.f);
 		// A lot of things can be cleaned like color buffer, depth buffer, so we need to specify what to clear
@@ -69,7 +82,7 @@ int main()
 			model = glm::scale(model, glm::vec3(0.4f, 0.4f, 1.0f));
 			glUniformMatrix4fv(s_effectList[0]->GetModelMatrixUniformID(), 1, GL_FALSE, glm::value_ptr(model));
 			glUniformMatrix4fv(s_effectList[0]->GetProjectionMatrixUniformID(), 1, GL_FALSE, glm::value_ptr(mProjection));
-
+			glUniformMatrix4fv(s_effectList[0]->GetViewMatrixUniformID() , 1, GL_FALSE, glm::value_ptr(s_mainCamera->GetViewMatrix()));
 			s_renderList[0]->Render();
 			// clear program
 			glUseProgram(0);
@@ -81,6 +94,7 @@ int main()
 	}
 	// Clean up memories
 	{
+		delete s_mainCamera;
 		delete newWindow;
 		newWindow = nullptr;
 		for (auto it = s_renderList.begin(); it != s_renderList.end(); ++it)

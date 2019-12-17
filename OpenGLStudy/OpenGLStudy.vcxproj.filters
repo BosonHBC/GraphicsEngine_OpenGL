@@ -31,6 +31,9 @@
     <Filter Include="Source Files\Graphics\Window">
       <UniqueIdentifier>{95b24a94-9e82-408d-b203-ba924745e6f6}</UniqueIdentifier>
     </Filter>
+    <Filter Include="Source Files\Graphics\Camera">
+      <UniqueIdentifier>{eb2d5f20-ba74-457e-a934-d7f697164fb5}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="Main.cpp">
@@ -44,6 +47,9 @@
     </ClCompile>
     <ClCompile Include="Graphics\Window\Window.cpp">
       <Filter>Source Files\Graphics\Window</Filter>
+    </ClCompile>
+    <ClCompile Include="Graphics\Camera\Camera.cpp">
+      <Filter>Source Files\Graphics\Camera</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
@@ -66,6 +72,9 @@
     </ClInclude>
     <ClInclude Include="Graphics\Window\WindowInput.h">
       <Filter>Source Files\Graphics\Window</Filter>
+    </ClInclude>
+    <ClInclude Include="Graphics\Camera\Camera.h">
+      <Filter>Source Files\Graphics\Camera</Filter>
     </ClInclude>
   </ItemGroup>
 </Project>

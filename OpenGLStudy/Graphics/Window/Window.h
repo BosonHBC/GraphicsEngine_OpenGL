@@ -33,7 +33,7 @@ public:
 	const GLint& GetBufferHeight() const { return m_bufferHeight; }
 	bool GetShouldClose() const;
 	GLFWwindow* GetWindow() const { return m_window; }
-	sWindowInput* const GetWindowInput() const { m_windowInput; }
+	sWindowInput* const GetWindowInput() const { return m_windowInput; }
 
 private:
 	/** private variables*/

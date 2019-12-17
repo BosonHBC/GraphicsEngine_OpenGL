@@ -191,6 +191,7 @@ xcopy $(SolutionDir)Contents $(targetDir)Contents /Y /E /I</Command>
     </PreBuildEvent>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClCompile Include="Graphics\Camera\Camera.cpp" />
     <ClCompile Include="Graphics\Effect\Effect.cpp" />
     <ClCompile Include="Graphics\Mesh\Mesh.cpp" />
     <ClCompile Include="Graphics\Window\Window.cpp" />
@@ -201,6 +202,7 @@ xcopy $(SolutionDir)Contents $(targetDir)Contents /Y /E /I</Command>
     <None Include="Contents\shaders\vertexShader.glsl" />
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="Graphics\Camera\Camera.h" />
     <ClInclude Include="Graphics\Effect\Effect.h" />
     <ClInclude Include="Graphics\Mesh\Mesh.h" />
     <ClInclude Include="Graphics\Window\Window.h" />
