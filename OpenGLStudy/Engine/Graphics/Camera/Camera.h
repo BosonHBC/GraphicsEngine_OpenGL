@@ -25,7 +25,7 @@ public:
 	}
 	~cCamera();
 
-	/** Useful functions*/
+	/** Usage functions*/
 	void CameraControl(sWindowInput* const i_windowInput);
 	glm::mat4 GetViewMatrix() const;
 

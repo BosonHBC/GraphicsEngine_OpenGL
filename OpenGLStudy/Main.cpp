@@ -15,10 +15,10 @@
 #include "glm/gtc/matrix_transform.hpp"
 #include "glm/gtc/type_ptr.hpp"
 
-#include "Window/Window.h"
-#include "Mesh/Mesh.h"
-#include "Effect/Effect.h"
-#include "Camera/Camera.h"
+#include "Graphics/Window/Window.h"
+#include "Graphics/Mesh/Mesh.h"
+#include "Graphics/Effect/Effect.h"
+#include "Graphics/Camera/Camera.h"
 // constants definition
 // -----------------------
 #define ToRadian(x) x * 0.0174532925f

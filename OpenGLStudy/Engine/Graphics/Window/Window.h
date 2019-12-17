@@ -26,6 +26,7 @@ public:
 	void CleanUp();
 
 	/** Usage function*/
+	void UpdateBasedOnTime(float i_elapsedSecondCount_sinceLastUpdate);
 	void SwapBuffers();
 
 	/** Getters */

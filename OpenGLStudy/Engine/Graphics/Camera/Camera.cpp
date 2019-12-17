@@ -1,6 +1,6 @@
 #include "Camera.h"
 #include "glfw/glfw3.h"
-#include "Window/WindowInput.h"
+#include "Graphics/Window/WindowInput.h"
 glm::vec3 cCamera::WorldUp = glm::vec3(0.0, 1.0, 0.0);
 glm::vec3 cCamera::WorldRight = glm::vec3(1.0, 0.0, 0.0);
 glm::vec3 cCamera::WorldForward = glm::vec3(0.0, 0.0, 1.0);
