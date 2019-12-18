@@ -195,6 +195,7 @@ xcopy $(SolutionDir)Contents $(targetDir)Contents /Y /E /I</Command>
     <ClCompile Include="Engine\Graphics\Camera\Camera.cpp" />
     <ClCompile Include="Engine\Graphics\Effect\Effect.cpp" />
     <ClCompile Include="Engine\Graphics\Light\AmbientLight\AmbientLight.cpp" />
+    <ClCompile Include="Engine\Graphics\Light\DirectionalLight\DirectionalLight.cpp" />
     <ClCompile Include="Engine\Graphics\Light\Light.cpp" />
     <ClCompile Include="Engine\Graphics\Mesh\Mesh.cpp" />
     <ClCompile Include="Engine\Graphics\Texture\Texture.cpp" />
@@ -208,6 +209,7 @@ xcopy $(SolutionDir)Contents $(targetDir)Contents /Y /E /I</Command>
     <ClInclude Include="Engine\Graphics\Camera\Camera.h" />
     <ClInclude Include="Engine\Graphics\Effect\Effect.h" />
     <ClInclude Include="Engine\Graphics\Light\AmbientLight\AmbientLight.h" />
+    <ClInclude Include="Engine\Graphics\Light\DirectionalLight\DirectionalLight.h" />
     <ClInclude Include="Engine\Graphics\Light\Light.h" />
     <ClInclude Include="Engine\Graphics\Mesh\Mesh.h" />
     <ClInclude Include="Engine\Graphics\Texture\Texture.h" />

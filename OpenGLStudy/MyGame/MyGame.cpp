@@ -13,6 +13,7 @@
 #include "Graphics/Effect/Effect.h"
 #include "Graphics/Camera/Camera.h"
 #include "Graphics/Light/AmbientLight/AmbientLight.h"
+#include "Graphics/Light/DirectionalLight/DirectionalLight.h"
 // constants definition
 // -----------------------
 #define ToRadian(x) x * 0.0174532925f
@@ -28,10 +29,11 @@ Graphics::cTexture s_brickTexture;
 Graphics::cTexture s_woodTexture;
 
 Graphics::cAmbientLight s_ambientLight;
-
+Graphics::cDirectionalLight s_DirectionalLight;
 
 // Function definition
 // ----------------------------
+void CalculateAverageNormals(GLuint* indices, GLuint indiceCount, GLfloat* vertices, GLuint vertexCount, GLuint sizeOfDataPerVertex, GLuint normalOffset);
 void CreateEffect();
 void CreateTriangle();
 void CreateCamera();
@@ -55,25 +57,59 @@ void CreateTriangle() {
 	};
 
 	GLfloat vertices[] = {
-		//     x,		y,		z,			u,		v
-			-1.0f, -1.0f, 0.0f,		0.0f, 0.0f,
-			0.0f, -1.0f, 1.0f,		0.5f, 0.0f,
-			1.0f, -1.0f, 0.0f,		1.0f, 0.0f,
-			0.0f, 1.0f, 0.0f,			0.5f, 1.0f
+		//     x,		y,		z,			u,		v			n_x 	n_y,	n_z
+			-1.0f, -1.0f, 0.0f,		0.0f, 0.0f,		0.0f, 0.0f, 0.0f,
+			0.0f, -1.0f, 1.0f,		0.5f, 0.0f,		0.0f, 0.0f, 0.0f,
+			1.0f, -1.0f, 0.0f,		1.0f, 0.0f,		0.0f, 0.0f, 0.0f,
+			0.0f, 1.0f, 0.0f,			0.5f, 1.0f,		0.0f, 0.0f, 0.0f
 	};
+
+	CalculateAverageNormals(indices, 12, vertices, 32, 8, 5);
+
 
 	Graphics::cMesh* triangle = new Graphics::cMesh();
 
 	// xyz * 4 + uv * 4 = 20
-	triangle->CreateMesh(vertices, indices, 20, 12);
+	triangle->CreateMesh(vertices, indices, 32, 12);
 	s_renderList.push_back(triangle);
 
 	Graphics::cMesh* triangle2 = new Graphics::cMesh();
 
 	// xyz * 4 + uv * 4 = 20
-	triangle2->CreateMesh(vertices, indices, 20, 12);
+	triangle2->CreateMesh(vertices, indices, 32, 12);
 	s_renderList.push_back(triangle2);
 }
+
+void CalculateAverageNormals(GLuint* indices, GLuint indiceCount, GLfloat* vertices, GLuint vertexCount
+	, GLuint sizeOfDataPerVertex, GLuint normalOffset)
+{
+	for (size_t i = 0; i < indiceCount; i += 3)
+	{
+		GLuint in0 = indices[i] * sizeOfDataPerVertex;
+		GLuint in1 = indices[i + 1] * sizeOfDataPerVertex;
+		GLuint in2 = indices[i + 2] * sizeOfDataPerVertex;
+
+		glm::vec3 v1 = glm::vec3(vertices[in1] - vertices[in0], vertices[in1 + 1] - vertices[in0 + 1], vertices[in1 + 2] - vertices[in0 + 2]);
+		glm::vec3 v2 = glm::vec3(vertices[in2] - vertices[in0], vertices[in2 + 1] - vertices[in0 + 1], vertices[in2 + 2] - vertices[in0 + 2]);
+		glm::vec3 vN = glm::normalize(glm::cross(v1, v2));
+
+		in0 += normalOffset; in1 += normalOffset; in2 += normalOffset;
+		vertices[in0] += vN.x; vertices[in0 + 1] += vN.y; vertices[in0 + 2] += vN.z;
+		vertices[in1] += vN.x; vertices[in1 + 1] += vN.y; vertices[in1 + 2] += vN.z;
+		vertices[in2] += vN.x; vertices[in2 + 1] += vN.y; vertices[in2 + 2] += vN.z;
+	}
+
+	for (size_t i = 0; i < vertexCount / sizeOfDataPerVertex; ++i)
+	{
+		GLuint _normalOffset = i * sizeOfDataPerVertex + normalOffset;
+		glm::vec3 vec(vertices[_normalOffset], vertices[_normalOffset + 1], vertices[_normalOffset + 2]);
+		vec = glm::normalize(vec);
+		vertices[_normalOffset] = vec.x;
+		vertices[_normalOffset + 1] = vec.y;
+		vertices[_normalOffset + 2] = vec.z;
+	}
+}
+
 
 
 void CreateEffect()
@@ -96,6 +132,10 @@ void SetUpLights()
 {
 	s_ambientLight = Graphics::cAmbientLight();
 	s_ambientLight.SetupLight(0.2, glm::vec3(1, 1, 1), s_effectList[0]->GetProgramID());
+
+	s_DirectionalLight = Graphics::cDirectionalLight();
+	s_DirectionalLight.SetupLight(0.8, glm::vec3(1, 1, 0.9), s_effectList[0]->GetProgramID());
+	s_DirectionalLight.SetupLightDirection(glm::vec3(0, -1, -1));
 }
 
 
@@ -143,12 +183,13 @@ void cMyGame::Run()
 		// A lot of things can be cleaned like color buffer, depth buffer, so we need to specify what to clear
 		glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
-		// Draw
-
+		/** Drawing Starts*/ 
+		// Use this programID
 		s_effectList[0]->UseEffect();
 
 		// Illuminate the light
 		s_ambientLight.Illuminate();
+		s_DirectionalLight.Illuminate();
 
 		glm::mat4 model = glm::identity<glm::mat4>();
 		model = glm::translate(model, glm::vec3(0, -0.4, -2.5f));

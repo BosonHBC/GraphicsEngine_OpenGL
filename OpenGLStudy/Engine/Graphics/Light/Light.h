@@ -17,7 +17,6 @@ namespace Graphics {
 		virtual void SetupLight(GLfloat i_intensity, glm::vec3 i_color,const GLuint& i_programID);
 
 		/** Pure virtual functions*/
-		virtual glm::vec3 Direction(glm::vec3 i_position) = 0;
 		virtual void Illuminate() = 0;
 
 	protected:

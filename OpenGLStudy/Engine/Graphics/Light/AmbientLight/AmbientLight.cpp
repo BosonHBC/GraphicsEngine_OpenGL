@@ -10,8 +10,8 @@ namespace Graphics {
 	{
 		cGenLight::SetupLight(i_intensity, i_color, i_programID);
 
-		m_ambientColorID = glGetUniformLocation(i_programID, "directionalLight.color");
-		m_ambientIntensityID = glGetUniformLocation(i_programID, "directionalLight.ambientIntensity");
+		m_ambientColorID = glGetUniformLocation(i_programID, "ambientLight.color");
+		m_ambientIntensityID = glGetUniformLocation(i_programID, "ambientLight.intensity");
 	}
 
 	void cAmbientLight::Illuminate()
@@ -20,9 +20,5 @@ namespace Graphics {
 		glUniform1f(m_ambientIntensityID, m_intensity);
 	}
 
-	glm::vec3 cAmbientLight::Direction(glm::vec3 i_position)
-	{
-		return glm::vec3(0, 0, 0);
-	}
 
 }

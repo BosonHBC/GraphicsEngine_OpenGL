@@ -52,13 +52,17 @@ namespace Graphics {
 			// if normalize the data or not
 			// stride means if skip any data, like 3 * GL_FLOAT, when we add texcood in vertices, the stride should no longer be 0
 			// the offset to start the data
-			glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, sizeof(i_vertices[0]) * 5, 0);
+			glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, sizeof(i_vertices[0]) * 8, 0);
 			// enable the attribute pointer we just created
 			glEnableVertexAttribArray(0);
 
 			// add attribute pointer for texcood
-			glVertexAttribPointer(1, 2, GL_FLOAT, GL_FALSE, sizeof(i_vertices[0]) * 5, reinterpret_cast<void*>(sizeof(i_vertices[0]) * 3));
+			glVertexAttribPointer(1, 2, GL_FLOAT, GL_FALSE, sizeof(i_vertices[0]) * 8, reinterpret_cast<void*>(sizeof(i_vertices[0]) * 3));
 			glEnableVertexAttribArray(1);
+
+			// add attribute pointer for normal
+			glVertexAttribPointer(2, 3, GL_FLOAT, GL_FALSE, sizeof(i_vertices[0]) * 8, reinterpret_cast<void*>(sizeof(i_vertices[0]) * 5));
+			glEnableVertexAttribArray(2);
 		}
 
 		// unbind VBO

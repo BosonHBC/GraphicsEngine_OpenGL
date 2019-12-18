@@ -5,22 +5,32 @@
 uniform sampler2D theTexture;
 
 in vec2 texCood0;
+in vec3 Normal;
 
 // the color of the pixel
 out vec4 color;
 
 // Lighting, no interpoloation
+struct AmbientLight{
+	vec3 color;
+	float intensity;
+};
 struct DirectionalLight{
 	vec3 color;
-	float ambientIntensity;
+	float intensity;
+	vec3 direction;
 };
 
+uniform AmbientLight ambientLight;
 uniform DirectionalLight directionalLight;
 
 void main(){
 	
-	vec4 ambientColor = vec4(directionalLight.color, 1.0f) * directionalLight.ambientIntensity;
+	vec4 ambientColor = vec4(ambientLight.color, 1.0f) * ambientLight.intensity;
 
-	color = texture(theTexture, texCood0) * ambientColor;
+	float vN_Dot_vL = max( dot( Normal , directionalLight.direction), 0.0f );
+	vec4 directionalLightColor = vec4(directionalLight.color , 1.0f) * directionalLight.intensity * vN_Dot_vL;
+
+	color = texture(theTexture, texCood0) * ( ambientColor + directionalLightColor);
 
 }
