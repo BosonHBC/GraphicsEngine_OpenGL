@@ -64,6 +64,12 @@
     <Filter Include="Source Files\Engine\Graphics\Light\DirectionLight">
       <UniqueIdentifier>{c84de5d1-f8b6-4ed7-afaa-c125957672a6}</UniqueIdentifier>
     </Filter>
+    <Filter Include="Source Files\Engine\Graphics\Material">
+      <UniqueIdentifier>{e74254c1-12cd-425b-accb-59c2288768e7}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source Files\Engine\Graphics\Color">
+      <UniqueIdentifier>{52359260-46e6-4873-a1b2-2c6e7fe88d14}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="Main.cpp">
@@ -101,6 +107,9 @@
     </ClCompile>
     <ClCompile Include="Engine\Graphics\Light\DirectionalLight\DirectionalLight.cpp">
       <Filter>Source Files\Engine\Graphics\Light\DirectionLight</Filter>
+    </ClCompile>
+    <ClCompile Include="Engine\Graphics\Material\Material.cpp">
+      <Filter>Source Files\Engine\Graphics\Material</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
@@ -142,6 +151,15 @@
     </ClInclude>
     <ClInclude Include="Engine\Graphics\Light\DirectionalLight\DirectionalLight.h">
       <Filter>Source Files\Engine\Graphics\Light\DirectionLight</Filter>
+    </ClInclude>
+    <ClInclude Include="Engine\Graphics\Material\Material.h">
+      <Filter>Source Files\Engine\Graphics\Material</Filter>
+    </ClInclude>
+    <ClInclude Include="Engine\Graphics\Color\cyColor.h">
+      <Filter>Source Files\Engine\Graphics\Color</Filter>
+    </ClInclude>
+    <ClInclude Include="Engine\Graphics\Color\Color.h">
+      <Filter>Source Files\Engine\Graphics\Color</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>
