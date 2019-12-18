@@ -9,9 +9,18 @@ in vec2 texCood0;
 // the color of the pixel
 out vec4 color;
 
+// Lighting, no interpoloation
+struct DirectionalLight{
+	vec3 color;
+	float ambientIntensity;
+};
+
+uniform DirectionalLight directionalLight;
 
 void main(){
+	
+	vec4 ambientColor = vec4(directionalLight.color, 1.0f) * directionalLight.ambientIntensity;
 
-	color = texture(theTexture, texCood0);
+	color = texture(theTexture, texCood0) * ambientColor;
 
 }

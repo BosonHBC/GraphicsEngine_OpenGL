@@ -55,6 +55,12 @@
     <Filter Include="Source Files\Contents\textures">
       <UniqueIdentifier>{f2696715-db38-46c5-a147-beb181ea8124}</UniqueIdentifier>
     </Filter>
+    <Filter Include="Source Files\Engine\Graphics\Light">
+      <UniqueIdentifier>{b1d29944-38a9-430c-a709-7c08ab12076f}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source Files\Engine\Graphics\Light\AmbientLight">
+      <UniqueIdentifier>{f372e2f0-ea1c-4d4b-8b26-b6180766bb4c}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="Main.cpp">
@@ -83,6 +89,12 @@
     </ClCompile>
     <ClCompile Include="Engine\Graphics\Texture\Texture.cpp">
       <Filter>Source Files\Engine\Graphics\Texture</Filter>
+    </ClCompile>
+    <ClCompile Include="Engine\Graphics\Light\Light.cpp">
+      <Filter>Source Files\Engine\Graphics\Light</Filter>
+    </ClCompile>
+    <ClCompile Include="Engine\Graphics\Light\AmbientLight\AmbientLight.cpp">
+      <Filter>Source Files\Engine\Graphics\Light\AmbientLight</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
@@ -115,6 +127,12 @@
     </ClInclude>
     <ClInclude Include="Engine\Graphics\Texture\Texture.h">
       <Filter>Source Files\Engine\Graphics\Texture</Filter>
+    </ClInclude>
+    <ClInclude Include="Engine\Graphics\Light\Light.h">
+      <Filter>Source Files\Engine\Graphics\Light</Filter>
+    </ClInclude>
+    <ClInclude Include="Engine\Graphics\Light\AmbientLight\AmbientLight.h">
+      <Filter>Source Files\Engine\Graphics\Light\AmbientLight</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>

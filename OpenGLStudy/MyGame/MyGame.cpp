@@ -12,19 +12,22 @@
 #include "Graphics/Texture/Texture.h"
 #include "Graphics/Effect/Effect.h"
 #include "Graphics/Camera/Camera.h"
+#include "Graphics/Light/AmbientLight/AmbientLight.h"
 // constants definition
 // -----------------------
 #define ToRadian(x) x * 0.0174532925f
 
 GLFWwindow* s_mainWindow;
 
-std::vector<Graphics::cMesh*> s_renderList;
-std::vector<Graphics::cEffect*> s_effectList;
+std::vector<Graphics::cMesh*> s_renderList = std::vector<Graphics::cMesh *>();
+std::vector<Graphics::cEffect*> s_effectList = std::vector<Graphics::cEffect *>();
 cCamera* s_mainCamera;
 cMyGame* s_myGameInstance;
 
 Graphics::cTexture s_brickTexture;
 Graphics::cTexture s_woodTexture;
+
+Graphics::cAmbientLight s_ambientLight;
 
 
 // Function definition
@@ -33,6 +36,7 @@ void CreateEffect();
 void CreateTriangle();
 void CreateCamera();
 void SetUpTextures();
+void SetUpLights();
 
 void CreateCamera()
 {
@@ -88,6 +92,12 @@ void SetUpTextures()
 	s_woodTexture = Graphics::cTexture("Contents/textures/wood2.png");
 	s_woodTexture.LoadTexture();
 }
+void SetUpLights()
+{
+	s_ambientLight = Graphics::cAmbientLight();
+	s_ambientLight.SetupLight(0.2, glm::vec3(1, 1, 1), s_effectList[0]->GetProgramID());
+}
+
 
 
 /**
@@ -115,6 +125,8 @@ bool cMyGame::Initialize(GLuint i_width, GLuint i_height)
 
 	SetUpTextures();
 
+	SetUpLights();
+
 	return result;
 }
 
@@ -132,43 +144,44 @@ void cMyGame::Run()
 		glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
 		// Draw
-		for (int i = 0; i < s_renderList.size(); ++i)
-		{
-			s_effectList[0]->UseEffect();
 
+		s_effectList[0]->UseEffect();
+
+		// Illuminate the light
+		s_ambientLight.Illuminate();
+
+		glm::mat4 model = glm::identity<glm::mat4>();
+		model = glm::translate(model, glm::vec3(0, -0.4, -2.5f));
+		model = glm::rotate(model, ToRadian(180), glm::vec3(0, 0, 1));
+		model = glm::scale(model, glm::vec3(0.4f, 0.4f, 1.0f));
+		glUniformMatrix4fv(s_effectList[0]->GetModelMatrixUniformID(), 1, GL_FALSE, glm::value_ptr(model));
+		glUniformMatrix4fv(s_effectList[0]->GetProjectionMatrixUniformID(), 1, GL_FALSE, glm::value_ptr(s_mainCamera->GetProjectionMatrix()));
+		glUniformMatrix4fv(s_effectList[0]->GetViewMatrixUniformID(), 1, GL_FALSE, glm::value_ptr(s_mainCamera->GetViewMatrix()));
+
+		// use texture for first object
+		s_brickTexture.UseTexture();
+
+		s_renderList[0]->Render();
+
+		// second obj
+		{
 			glm::mat4 model = glm::identity<glm::mat4>();
-			model = glm::translate(model, glm::vec3(0, -0.4, -2.5f));
-			model = glm::rotate(model, ToRadian(180), glm::vec3(0, 0, 1));
+			model = glm::translate(model, glm::vec3(0, 0.4, -2.5f));
+			model = glm::rotate(model, ToRadian(0), glm::vec3(0, 0, 1));
 			model = glm::scale(model, glm::vec3(0.4f, 0.4f, 1.0f));
 			glUniformMatrix4fv(s_effectList[0]->GetModelMatrixUniformID(), 1, GL_FALSE, glm::value_ptr(model));
 			glUniformMatrix4fv(s_effectList[0]->GetProjectionMatrixUniformID(), 1, GL_FALSE, glm::value_ptr(s_mainCamera->GetProjectionMatrix()));
 			glUniformMatrix4fv(s_effectList[0]->GetViewMatrixUniformID(), 1, GL_FALSE, glm::value_ptr(s_mainCamera->GetViewMatrix()));
 
-			// use texture for
-			s_brickTexture.UseTexture();
+			// use texture for second object
+			s_woodTexture.UseTexture();
 
-			s_renderList[0]->Render();
-
-			// second obj
-			{
-				glm::mat4 model = glm::identity<glm::mat4>();
-				model = glm::translate(model, glm::vec3(0, 0.4, -2.5f));
-				model = glm::rotate(model, ToRadian(0), glm::vec3(0, 0, 1));
-				model = glm::scale(model, glm::vec3(0.4f, 0.4f, 1.0f));
-				glUniformMatrix4fv(s_effectList[0]->GetModelMatrixUniformID(), 1, GL_FALSE, glm::value_ptr(model));
-				glUniformMatrix4fv(s_effectList[0]->GetProjectionMatrixUniformID(), 1, GL_FALSE, glm::value_ptr(s_mainCamera->GetProjectionMatrix()));
-				glUniformMatrix4fv(s_effectList[0]->GetViewMatrixUniformID(), 1, GL_FALSE, glm::value_ptr(s_mainCamera->GetViewMatrix()));
-
-				// use texture for
-				s_woodTexture.UseTexture();
-
-				s_renderList[1]->Render();
-			}
-
-
-			// clear program
-			glUseProgram(0);
+			s_renderList[1]->Render();
 		}
+
+
+		// clear program
+		glUseProgram(0);
 
 		// ----------------------
 		// Swap buffers
