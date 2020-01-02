@@ -9,7 +9,7 @@
 #include "Graphics/Window/WindowInput.h"
 #include "Graphics/Window/Window.h"
 #include "Graphics/Mesh/Mesh.h"
-#include "Graphics/Texture/Texture.h"
+#include "Graphics/Material/Material.h"
 #include "Graphics/Effect/Effect.h"
 #include "Graphics/Camera/Camera.h"
 #include "Graphics/Light/AmbientLight/AmbientLight.h"
@@ -25,8 +25,8 @@ std::vector<Graphics::cEffect*> s_effectList = std::vector<Graphics::cEffect *>(
 cCamera* s_mainCamera;
 cMyGame* s_myGameInstance;
 
-Graphics::cTexture s_brickTexture;
-Graphics::cTexture s_woodTexture;
+Graphics::cMaterial s_brickMat;
+Graphics::cMaterial s_woodMat;
 
 Graphics::cAmbientLight s_ambientLight;
 Graphics::cDirectionalLight s_DirectionalLight;
@@ -123,10 +123,12 @@ void CreateEffect()
 }
 void SetUpTextures()
 {
-	s_brickTexture = Graphics::cTexture("Contents/textures/brick.png");
-	s_brickTexture.LoadTexture();
-	s_woodTexture = Graphics::cTexture("Contents/textures/wood2.png");
-	s_woodTexture.LoadTexture();
+	s_brickMat = Graphics::cMaterial();
+	s_brickMat.SetDiffuse("Contents/textures/brick.png");
+	s_brickMat.SetShininess(50, s_effectList[0]->GetProgramID());
+	s_woodMat = Graphics::cMaterial();
+	s_woodMat.SetDiffuse("Contents/textures/wood2.png");
+	s_woodMat.SetShininess(100, s_effectList[0]->GetProgramID());
 }
 void SetUpLights()
 {
@@ -200,7 +202,7 @@ void cMyGame::Run()
 		glUniformMatrix4fv(s_effectList[0]->GetViewMatrixUniformID(), 1, GL_FALSE, glm::value_ptr(s_mainCamera->GetViewMatrix()));
 
 		// use texture for first object
-		s_brickTexture.UseTexture();
+		s_brickMat.UseMaterial();
 
 		s_renderList[0]->Render();
 
@@ -215,7 +217,7 @@ void cMyGame::Run()
 			glUniformMatrix4fv(s_effectList[0]->GetViewMatrixUniformID(), 1, GL_FALSE, glm::value_ptr(s_mainCamera->GetViewMatrix()));
 
 			// use texture for second object
-			s_woodTexture.UseTexture();
+			s_woodMat.UseMaterial();
 
 			s_renderList[1]->Render();
 		}

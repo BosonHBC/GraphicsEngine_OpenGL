@@ -70,6 +70,9 @@
     <Filter Include="Source Files\Engine\Graphics\Color">
       <UniqueIdentifier>{52359260-46e6-4873-a1b2-2c6e7fe88d14}</UniqueIdentifier>
     </Filter>
+    <Filter Include="Source Files\Engine\Graphics\Light\PointLight">
+      <UniqueIdentifier>{d2a5a549-e9f6-4b90-9b7d-7038139f8d54}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="Main.cpp">
@@ -110,6 +113,9 @@
     </ClCompile>
     <ClCompile Include="Engine\Graphics\Material\Material.cpp">
       <Filter>Source Files\Engine\Graphics\Material</Filter>
+    </ClCompile>
+    <ClCompile Include="Engine\Graphics\Light\PointLight\PointLight.cpp">
+      <Filter>Source Files\Engine\Graphics\Light\PointLight</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
@@ -160,6 +166,9 @@
     </ClInclude>
     <ClInclude Include="Engine\Graphics\Color\Color.h">
       <Filter>Source Files\Engine\Graphics\Color</Filter>
+    </ClInclude>
+    <ClInclude Include="Engine\Graphics\Light\PointLight\PointLight.h">
+      <Filter>Source Files\Engine\Graphics\Light\PointLight</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>

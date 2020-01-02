@@ -1,6 +1,9 @@
 #include "DirectionalLight.h"
 namespace Graphics {
 
+	cDirectionalLight::cDirectionalLight() : m_directionID(0), m_direction(glm::vec3(0, -1, 0)), cGenLight()
+	{}
+
 	cDirectionalLight::~cDirectionalLight()
 	{
 	}

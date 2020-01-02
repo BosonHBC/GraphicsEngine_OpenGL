@@ -8,9 +8,8 @@ namespace Graphics {
 	{
 	public:
 		/** Constructors and destructor */
-		cGenLight() : m_intensity(1), m_color(glm::vec3(1.0, 1.0, 1.0))
-		{
-		};
+		cGenLight() : m_intensity(1), m_color(glm::vec3(1.0, 1.0, 1.0)), m_intensityID(0), m_colorID(0)
+		{};
 		~cGenLight();
 
 		/**Usage function*/
@@ -22,6 +21,7 @@ namespace Graphics {
 	protected:
 		GLfloat m_intensity;
 		glm::vec3 m_color;
+		GLuint m_intensityID, m_colorID;
 	};
 
 }

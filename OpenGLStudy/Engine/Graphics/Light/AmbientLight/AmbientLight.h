@@ -1,15 +1,11 @@
 #pragma once
 #include "Graphics/Light/Light.h"
-#include "GL/glew.h"
-#include "glm/glm.hpp"
 
 namespace Graphics {
 	class cAmbientLight : public cGenLight
 	{
 	public:
-		cAmbientLight(): m_ambientIntensityID(0), m_ambientColorID(0)
-		{
-		}
+		cAmbientLight();
 		~cAmbientLight();
 
 		/** Setup uniform id*/
@@ -18,8 +14,6 @@ namespace Graphics {
 		/** overriding virtual functions*/
 		void Illuminate();
 
-	private:
-		GLuint m_ambientIntensityID, m_ambientColorID;
 	};
 
 }

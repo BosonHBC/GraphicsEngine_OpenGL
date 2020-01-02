@@ -9,6 +9,7 @@ uniform mat4 modelMatrix;
 
 out vec2 texCood0;
 out vec3 Normal;
+out vec3 fragPos;
 
 void main()
 {
@@ -18,4 +19,5 @@ void main()
 	// Handle scaling in only one axis situation
 	Normal = mat3(transpose(inverse(modelMatrix))) * normal;
 
+	fragPos =  (modelMatrix * vec4(pos.x, pos.y, pos.z, 1.0)).xyz;
 }

@@ -1,6 +1,11 @@
 #include "AmbientLight.h"
 namespace Graphics {
 
+	cAmbientLight::cAmbientLight(): cGenLight()
+	{
+
+	}
+
 	cAmbientLight::~cAmbientLight()
 	{
 	}
@@ -10,14 +15,14 @@ namespace Graphics {
 	{
 		cGenLight::SetupLight(i_intensity, i_color, i_programID);
 
-		m_ambientColorID = glGetUniformLocation(i_programID, "ambientLight.color");
-		m_ambientIntensityID = glGetUniformLocation(i_programID, "ambientLight.intensity");
+		m_colorID = glGetUniformLocation(i_programID, "ambientLight.color");
+		m_intensityID = glGetUniformLocation(i_programID, "ambientLight.intensity");
 	}
 
 	void cAmbientLight::Illuminate()
 	{
-		glUniform3f(m_ambientColorID, m_color.x, m_color.y, m_color.z);
-		glUniform1f(m_ambientIntensityID, m_intensity);
+		glUniform3f(m_colorID, m_color.x, m_color.y, m_color.z);
+		glUniform1f(m_intensityID, m_intensity);
 	}
 
 

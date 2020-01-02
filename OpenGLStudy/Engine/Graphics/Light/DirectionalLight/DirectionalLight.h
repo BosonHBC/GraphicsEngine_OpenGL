@@ -1,15 +1,11 @@
 #pragma once
 #include "Graphics/Light/Light.h"
-#include "GL/glew.h"
-#include "glm/glm.hpp"
 
 namespace Graphics {
 	class cDirectionalLight : public cGenLight
 	{
 	public:
-		cDirectionalLight(): m_intensityID(0), m_colorID(0)
-		{
-		}
+		cDirectionalLight();
 		~cDirectionalLight();
 
 		/** Setup uniform id*/
@@ -22,7 +18,7 @@ namespace Graphics {
 
 	private:
 		glm::vec3 m_direction;
-		GLuint m_intensityID, m_colorID, m_directionID;
+		GLuint m_directionID;
 	};
 
 }

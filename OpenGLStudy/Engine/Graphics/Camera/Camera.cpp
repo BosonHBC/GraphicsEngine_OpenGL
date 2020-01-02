@@ -19,6 +19,11 @@ void cCamera::Update()
 
 
 
+void cCamera::UpdateUniformLocation()
+{
+	
+}
+
 cCamera::~cCamera()
 {
 
@@ -61,5 +66,10 @@ glm::mat4 cCamera::GetViewMatrix() const
 void cCamera::CreateProjectionMatrix(GLfloat i_fov, GLfloat i_aspect, GLfloat i_nearPlane /*= 0.1f*/, GLfloat i_farPlane /*= 100.f*/)
 {
 	m_projectionMatrix = glm::perspective(i_fov, i_aspect, i_nearPlane, i_farPlane);
+}
+
+void cCamera::SetUpLocations(GLuint i_programID)
+{
+
 }
 

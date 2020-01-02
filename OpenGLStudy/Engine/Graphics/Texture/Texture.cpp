@@ -54,10 +54,10 @@ namespace Graphics {
 		return true;
 	}
 
-	void cTexture::UseTexture()
+	void cTexture::UseTexture(int i_textuerLocation)
 	{
 		// activate the texture unit 0
-		glActiveTexture(GL_TEXTURE0);
+		glActiveTexture(i_textuerLocation);
 		// bind texture to texture unit 0
 		// this allow multiples texture to be bound to one texture unit
 		// so in one object, it can be multiple texture

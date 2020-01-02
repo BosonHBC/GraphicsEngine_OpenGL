@@ -30,6 +30,8 @@ public:
 	void MouseControl(GLfloat i_dx, GLfloat i_dy, float i_dt);
 	// Projection matrix
 	void CreateProjectionMatrix(GLfloat i_fov, GLfloat i_aspect, GLfloat i_nearPlane = 0.1f, GLfloat i_farPlane = 100.f);
+	// Setup locations
+	void SetUpLocations(GLuint i_programID);
 
 	/** Getters*/
 	glm::mat4 GetViewMatrix() const;
@@ -49,8 +51,11 @@ private:
 
 	glm::mat4 m_projectionMatrix;
 
+	GLuint m_camPositionLocation;
+
 	/** private helper functions*/
 	void Update();
+	void UpdateUniformLocation();
 
 	/** private static variables*/
 	static glm::vec3 WorldUp;
