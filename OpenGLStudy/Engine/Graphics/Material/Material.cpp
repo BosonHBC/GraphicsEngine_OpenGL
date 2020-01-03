@@ -8,16 +8,15 @@ namespace Graphics {
 		m_diffuse->LoadTexture();
 	}
 
-	void cMaterial::SetShininess(GLfloat i_shine, GLuint i_programID)
+	void cMaterial::SetShininess(GLfloat i_shine)
 	{
 		 m_shininess = i_shine;
-		 glGetUniformLocation(i_programID, "shininess");
 	}
 
-	void cMaterial::UseMaterial()
+	void cMaterial::UseMaterial(GLuint i_programID)
 	{
 		m_diffuse->UseTexture(GL_TEXTURE0);
-		glUniform1f(m_shininessLocation, m_shininess);
+		glUniform1f(glGetUniformLocation(i_programID, "material.shininess"), m_shininess);
 	}
 
 	void cMaterial::CleanUp()

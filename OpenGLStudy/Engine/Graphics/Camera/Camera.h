@@ -32,6 +32,8 @@ public:
 	void CreateProjectionMatrix(GLfloat i_fov, GLfloat i_aspect, GLfloat i_nearPlane = 0.1f, GLfloat i_farPlane = 100.f);
 	// Setup locations
 	void SetUpLocations(GLuint i_programID);
+	// Update uniform locations
+	void UpdateUniformLocation();
 
 	/** Getters*/
 	glm::mat4 GetViewMatrix() const;
@@ -55,7 +57,6 @@ private:
 
 	/** private helper functions*/
 	void Update();
-	void UpdateUniformLocation();
 
 	/** private static variables*/
 	static glm::vec3 WorldUp;

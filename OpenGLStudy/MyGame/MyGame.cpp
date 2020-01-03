@@ -45,6 +45,7 @@ void CreateCamera()
 	s_mainCamera = new cCamera();
 	float _aspect = (float)s_myGameInstance->Get_GLFW_Window()->GetBufferWidth() / (float)s_myGameInstance->Get_GLFW_Window()->GetBufferHeight();
 	s_mainCamera->CreateProjectionMatrix(45.0f, _aspect, 0.1f, 150.0f);
+	s_mainCamera->SetUpLocations(s_effectList[0]->GetProgramID());
 }
 // create triangle
 void CreateTriangle() {
@@ -125,10 +126,10 @@ void SetUpTextures()
 {
 	s_brickMat = Graphics::cMaterial();
 	s_brickMat.SetDiffuse("Contents/textures/brick.png");
-	s_brickMat.SetShininess(50, s_effectList[0]->GetProgramID());
+	s_brickMat.SetShininess(64);
 	s_woodMat = Graphics::cMaterial();
 	s_woodMat.SetDiffuse("Contents/textures/wood2.png");
-	s_woodMat.SetShininess(100, s_effectList[0]->GetProgramID());
+	s_woodMat.SetShininess(128);
 }
 void SetUpLights()
 {
@@ -193,6 +194,9 @@ void cMyGame::Run()
 		s_ambientLight.Illuminate();
 		s_DirectionalLight.Illuminate();
 
+		// update camera
+		s_mainCamera->UpdateUniformLocation();
+
 		glm::mat4 model = glm::identity<glm::mat4>();
 		model = glm::translate(model, glm::vec3(0, -0.4, -2.5f));
 		model = glm::rotate(model, ToRadian(180), glm::vec3(0, 0, 1));
@@ -202,7 +206,7 @@ void cMyGame::Run()
 		glUniformMatrix4fv(s_effectList[0]->GetViewMatrixUniformID(), 1, GL_FALSE, glm::value_ptr(s_mainCamera->GetViewMatrix()));
 
 		// use texture for first object
-		s_brickMat.UseMaterial();
+		s_brickMat.UseMaterial(s_effectList[0]->GetProgramID());
 
 		s_renderList[0]->Render();
 
@@ -217,7 +221,7 @@ void cMyGame::Run()
 			glUniformMatrix4fv(s_effectList[0]->GetViewMatrixUniformID(), 1, GL_FALSE, glm::value_ptr(s_mainCamera->GetViewMatrix()));
 
 			// use texture for second object
-			s_woodMat.UseMaterial();
+			s_woodMat.UseMaterial(s_effectList[0]->GetProgramID());
 
 			s_renderList[1]->Render();
 		}

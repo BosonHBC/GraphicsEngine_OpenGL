@@ -15,13 +15,12 @@ void cCamera::Update()
 
 	m_right = glm::normalize(glm::cross(m_forward, WorldUp));
 	m_up = glm::normalize(glm::cross(m_right, m_forward));
+
 }
-
-
 
 void cCamera::UpdateUniformLocation()
 {
-	
+	glUniform3f(m_camPositionLocation, m_position.x, m_position.y, m_position.z);
 }
 
 cCamera::~cCamera()
@@ -47,6 +46,7 @@ void cCamera::CameraControl(sWindowInput* const i_windowInput, float i_dt)
 	{
 		m_position += m_right * m_translationSpeed * i_dt;
 	}
+
 }
 
 
@@ -70,6 +70,6 @@ void cCamera::CreateProjectionMatrix(GLfloat i_fov, GLfloat i_aspect, GLfloat i_
 
 void cCamera::SetUpLocations(GLuint i_programID)
 {
-
+	m_camPositionLocation = glGetUniformLocation(i_programID, "camPos");
 }
 

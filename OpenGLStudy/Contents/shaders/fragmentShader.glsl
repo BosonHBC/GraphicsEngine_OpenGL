@@ -39,12 +39,17 @@ void main(){
 	float vN_Dot_vL = max( dot( Normal , directionalLight.direction), 0.0f );
 	vec4 directionalLightColor = vec4(directionalLight.color , 1.0f) * directionalLight.intensity * vN_Dot_vL;
 
-	vec4 specularColor = vec4(0 ,0, 0, 0);
-
 	if(vN_Dot_vL > 0.0f)
 	{
 		vec3 fragToEye = normalize(camPos - fragPos);
-		vec3 reflectedVertex = normalzie( reflect( directionalLight.direction, normalize(Normal) ) );
+		vec3 reflectedVertex = normalize( reflect( directionalLight.direction, normalize(Normal) ) );
+		
+		float specularFactor = dot(fragToEye, reflectedVertex);
+
+		if(specularFactor > 0){
+			specularFactor = pow(specularFactor, material.shininess);
+			directionalLightColor += vec4(directionalLight.color, 1.f) * directionalLight.intensity  * specularFactor;
+		}
 	}
 
 	color = texture(diffuseTex, texCood0) * ( ambientColor + directionalLightColor);
