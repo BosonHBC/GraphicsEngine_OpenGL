@@ -1,28 +1,26 @@
 #include "AmbientLight.h"
 namespace Graphics {
 
-	cAmbientLight::cAmbientLight(): cGenLight()
-	{
-
-	}
-
 	cAmbientLight::~cAmbientLight()
 	{
 	}
 
 
-	void cAmbientLight::SetupLight(GLfloat i_intensity, glm::vec3 i_color, const GLuint& i_programID)
+	void cAmbientLight::SetupLight(const GLuint& i_programID, GLuint i_lightIndex)
 	{
-		cGenLight::SetupLight(i_intensity, i_color, i_programID);
+		cGenLight::SetupLight( i_programID, i_lightIndex);
 
-		m_colorID = glGetUniformLocation(i_programID, "ambientLight.color");
-		m_intensityID = glGetUniformLocation(i_programID, "ambientLight.intensity");
+		m_colorID = glGetUniformLocation(i_programID, "ambientLight.base.color");
+
+		m_diffuseIntensityID = glGetUniformLocation(i_programID, "ambientLight.base.diffuseIntensity");
+		m_specularIntensityID = glGetUniformLocation(i_programID, "ambientLight.base.specularIntensity");
 	}
 
 	void cAmbientLight::Illuminate()
 	{
 		glUniform3f(m_colorID, m_color.x, m_color.y, m_color.z);
-		glUniform1f(m_intensityID, m_intensity);
+		glUniform1f(m_diffuseIntensityID, m_diffuseIntensity);
+		glUniform1f(m_specularIntensityID, m_specularIntensity);
 	}
 
 

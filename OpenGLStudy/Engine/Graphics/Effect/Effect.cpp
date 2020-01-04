@@ -86,6 +86,8 @@ namespace Graphics {
 		m_viewMatrixID = glGetUniformLocation(m_programID, "viewMatrix");
 		m_projectionMatrixID = glGetUniformLocation(m_programID, "projectionMatrix");
 
+		m_pointLightCountID = glGetUniformLocation(m_programID, "pointLightCount");
+
 		return true;
 	}
 
@@ -93,6 +95,12 @@ namespace Graphics {
 	{
 		// Bind program and VAO
 		glUseProgram(m_programID);
+
+	}
+
+	void cEffect::SetPointLightCount(int i_pointLightCount)
+	{
+		glUniform1i(m_pointLightCountID, i_pointLightCount);
 	}
 
 	bool cEffect::LoadShader(const char* i_shaderName, GLenum i_shaderType)

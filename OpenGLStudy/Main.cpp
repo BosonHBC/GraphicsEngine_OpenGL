@@ -6,7 +6,7 @@
 #include "MyGame/MyGame.h"
 
 
-const GLint WIDTH = 800, HEIGHT = 600;
+const GLint WIDTH = 1366, HEIGHT = 768; // 1280:1024 || 1024:768
 
 int main()
 {

@@ -14,6 +14,7 @@
 #include "Graphics/Camera/Camera.h"
 #include "Graphics/Light/AmbientLight/AmbientLight.h"
 #include "Graphics/Light/DirectionalLight/DirectionalLight.h"
+#include "Graphics/Light/PointLight/PointLight.h"
 // constants definition
 // -----------------------
 #define ToRadian(x) x * 0.0174532925f
@@ -30,6 +31,8 @@ Graphics::cMaterial s_woodMat;
 
 Graphics::cAmbientLight s_ambientLight;
 Graphics::cDirectionalLight s_DirectionalLight;
+const int s_pointLightCount = 2;
+Graphics::cPointLight s_pointLights[s_pointLightCount];
 
 // Function definition
 // ----------------------------
@@ -45,7 +48,6 @@ void CreateCamera()
 	s_mainCamera = new cCamera();
 	float _aspect = (float)s_myGameInstance->Get_GLFW_Window()->GetBufferWidth() / (float)s_myGameInstance->Get_GLFW_Window()->GetBufferHeight();
 	s_mainCamera->CreateProjectionMatrix(45.0f, _aspect, 0.1f, 150.0f);
-	s_mainCamera->SetUpLocations(s_effectList[0]->GetProgramID());
 }
 // create triangle
 void CreateTriangle() {
@@ -59,14 +61,13 @@ void CreateTriangle() {
 
 	GLfloat vertices[] = {
 		//     x,		y,		z,			u,		v			n_x 	n_y,	n_z
-			-1.0f, -1.0f, 0.0f,		0.0f, 0.0f,		0.0f, 0.0f, 0.0f,
-			0.0f, -1.0f, 1.0f,		0.5f, 0.0f,		0.0f, 0.0f, 0.0f,
+			-1.0f, -1.0f, -0.0f,		0.0f, 0.0f,		0.0f, 0.0f, 0.0f,
+			0.0f, -1.0f, 1.732f,		0.5f, 0.0f,		0.0f, 0.0f, 0.0f,
 			1.0f, -1.0f, 0.0f,		1.0f, 0.0f,		0.0f, 0.0f, 0.0f,
-			0.0f, 1.0f, 0.0f,			0.5f, 1.0f,		0.0f, 0.0f, 0.0f
+			0.0f, 1.0f, 0.5773f,			0.5f, 1.0f,		0.0f, 0.0f, 0.0f
 	};
 
 	CalculateAverageNormals(indices, 12, vertices, 32, 8, 5);
-
 
 	Graphics::cMesh* triangle = new Graphics::cMesh();
 
@@ -102,7 +103,7 @@ void CalculateAverageNormals(GLuint* indices, GLuint indiceCount, GLfloat* verti
 
 	for (size_t i = 0; i < vertexCount / sizeOfDataPerVertex; ++i)
 	{
-		GLuint _normalOffset = i * sizeOfDataPerVertex + normalOffset;
+		size_t _normalOffset = i * sizeOfDataPerVertex + normalOffset;
 		glm::vec3 vec(vertices[_normalOffset], vertices[_normalOffset + 1], vertices[_normalOffset + 2]);
 		vec = glm::normalize(vec);
 		vertices[_normalOffset] = vec.x;
@@ -126,19 +127,29 @@ void SetUpTextures()
 {
 	s_brickMat = Graphics::cMaterial();
 	s_brickMat.SetDiffuse("Contents/textures/brick.png");
-	s_brickMat.SetShininess(64);
+	s_brickMat.SetShininess(4);
 	s_woodMat = Graphics::cMaterial();
 	s_woodMat.SetDiffuse("Contents/textures/wood2.png");
-	s_woodMat.SetShininess(128);
+	s_woodMat.SetShininess(32);
 }
 void SetUpLights()
 {
-	s_ambientLight = Graphics::cAmbientLight();
-	s_ambientLight.SetupLight(0.2, glm::vec3(1, 1, 1), s_effectList[0]->GetProgramID());
+	// Point Light
+	s_ambientLight = Graphics::cAmbientLight(0.05f, 0.0f, glm::vec3(1,1,1));
+	s_ambientLight.SetupLight(s_effectList[0]->GetProgramID());
 
-	s_DirectionalLight = Graphics::cDirectionalLight();
-	s_DirectionalLight.SetupLight(0.8, glm::vec3(1, 1, 0.9), s_effectList[0]->GetProgramID());
-	s_DirectionalLight.SetupLightDirection(glm::vec3(0, -1, -1));
+	// Directional light
+	s_DirectionalLight = Graphics::cDirectionalLight(0.2f, 0.8f, glm::vec3(1, 1, 0.9f)
+														, glm::vec3(0, -1, -1));
+	s_DirectionalLight.SetupLight(s_effectList[0]->GetProgramID());
+
+	s_pointLights[0] = Graphics::cPointLight(0.3f, 0.75f,glm::vec3(0.8f, 0.2f, 0.2f)
+														,glm::vec3(-1.5f, 1.5f, 0.3f), 1.f, 0.007f, 0.0002f);
+	s_pointLights[0].SetupLight(s_effectList[0]->GetProgramID(), 0);
+
+	s_pointLights[1] = Graphics::cPointLight(0.5f, 0.4f,glm::vec3(0.2f, 0.8f, 0.2f)
+														,glm::vec3(1.5f, 1.5f, 0.3f), 1.f, 0.07f, 0.017f);
+	s_pointLights[1].SetupLight( s_effectList[0]->GetProgramID(), 1);
 }
 
 
@@ -156,8 +167,8 @@ bool cMyGame::Initialize(GLuint i_width, GLuint i_height)
 		assert(false, "Failed to initialize Application!");
 		return false;
 	}
-	s_myGameInstance = this;
 
+	s_myGameInstance = this;
 
 	// Create triangle
 	CreateTriangle();
@@ -189,18 +200,22 @@ void cMyGame::Run()
 		/** Drawing Starts*/ 
 		// Use this programID
 		s_effectList[0]->UseEffect();
-
+		// s_pointLightCount must be correct
+		s_effectList[0]->SetPointLightCount(s_pointLightCount);
 		// Illuminate the light
 		s_ambientLight.Illuminate();
 		s_DirectionalLight.Illuminate();
-
+		for (int i = 0; i < s_pointLightCount; ++i)
+		{
+			s_pointLights[i].Illuminate();
+		}
 		// update camera
-		s_mainCamera->UpdateUniformLocation();
+		s_mainCamera->UpdateUniformLocation(s_effectList[0]->GetProgramID());
 
 		glm::mat4 model = glm::identity<glm::mat4>();
 		model = glm::translate(model, glm::vec3(0, -0.4, -2.5f));
 		model = glm::rotate(model, ToRadian(180), glm::vec3(0, 0, 1));
-		model = glm::scale(model, glm::vec3(0.4f, 0.4f, 1.0f));
+		model = glm::scale(model, glm::vec3(0.4f, 0.4f, 0.4f));
 		glUniformMatrix4fv(s_effectList[0]->GetModelMatrixUniformID(), 1, GL_FALSE, glm::value_ptr(model));
 		glUniformMatrix4fv(s_effectList[0]->GetProjectionMatrixUniformID(), 1, GL_FALSE, glm::value_ptr(s_mainCamera->GetProjectionMatrix()));
 		glUniformMatrix4fv(s_effectList[0]->GetViewMatrixUniformID(), 1, GL_FALSE, glm::value_ptr(s_mainCamera->GetViewMatrix()));
@@ -215,7 +230,7 @@ void cMyGame::Run()
 			glm::mat4 model = glm::identity<glm::mat4>();
 			model = glm::translate(model, glm::vec3(0, 0.4, -2.5f));
 			model = glm::rotate(model, ToRadian(0), glm::vec3(0, 0, 1));
-			model = glm::scale(model, glm::vec3(0.4f, 0.4f, 1.0f));
+			model = glm::scale(model, glm::vec3(0.4f, 0.4f, 0.4f));
 			glUniformMatrix4fv(s_effectList[0]->GetModelMatrixUniformID(), 1, GL_FALSE, glm::value_ptr(model));
 			glUniformMatrix4fv(s_effectList[0]->GetProjectionMatrixUniformID(), 1, GL_FALSE, glm::value_ptr(s_mainCamera->GetProjectionMatrix()));
 			glUniformMatrix4fv(s_effectList[0]->GetViewMatrixUniformID(), 1, GL_FALSE, glm::value_ptr(s_mainCamera->GetViewMatrix()));

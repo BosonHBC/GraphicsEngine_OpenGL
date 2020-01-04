@@ -18,7 +18,7 @@ namespace Graphics {
 
 		/** Usage functions*/
 		void UseEffect();
-
+		void SetPointLightCount(int i_pointLightCount);
 
 
 		/** Getters */
@@ -30,6 +30,7 @@ namespace Graphics {
 		/** private variables*/
 		GLuint m_programID;
 		GLuint m_modelMatrixID, m_viewMatrixID, m_projectionMatrixID;
+		GLuint m_pointLightCountID;
 
 		/** private helper functions*/
 		// Initialize shaders

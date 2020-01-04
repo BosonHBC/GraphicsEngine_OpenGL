@@ -18,9 +18,9 @@ void cCamera::Update()
 
 }
 
-void cCamera::UpdateUniformLocation()
+void cCamera::UpdateUniformLocation(GLuint i_programID)
 {
-	glUniform3f(m_camPositionLocation, m_position.x, m_position.y, m_position.z);
+	glUniform3f(glGetUniformLocation(i_programID, "camPos"), m_position.x, m_position.y, m_position.z);
 }
 
 cCamera::~cCamera()
@@ -68,8 +68,4 @@ void cCamera::CreateProjectionMatrix(GLfloat i_fov, GLfloat i_aspect, GLfloat i_
 	m_projectionMatrix = glm::perspective(i_fov, i_aspect, i_nearPlane, i_farPlane);
 }
 
-void cCamera::SetUpLocations(GLuint i_programID)
-{
-	m_camPositionLocation = glGetUniformLocation(i_programID, "camPos");
-}
 

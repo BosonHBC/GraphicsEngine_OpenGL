@@ -161,9 +161,6 @@
     <ClInclude Include="Engine\Graphics\Material\Material.h">
       <Filter>Source Files\Engine\Graphics\Material</Filter>
     </ClInclude>
-    <ClInclude Include="Engine\Graphics\Color\cyColor.h">
-      <Filter>Source Files\Engine\Graphics\Color</Filter>
-    </ClInclude>
     <ClInclude Include="Engine\Graphics\Color\Color.h">
       <Filter>Source Files\Engine\Graphics\Color</Filter>
     </ClInclude>

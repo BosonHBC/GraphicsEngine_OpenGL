@@ -15,6 +15,7 @@ namespace Graphics {
 
 	void cMaterial::UseMaterial(GLuint i_programID)
 	{
+
 		m_diffuse->UseTexture(GL_TEXTURE0);
 		glUniform1f(glGetUniformLocation(i_programID, "material.shininess"), m_shininess);
 	}
