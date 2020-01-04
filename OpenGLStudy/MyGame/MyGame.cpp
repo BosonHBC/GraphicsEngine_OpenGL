@@ -28,6 +28,7 @@ cMyGame* s_myGameInstance;
 
 Graphics::cMaterial s_brickMat;
 Graphics::cMaterial s_woodMat;
+Graphics::cMaterial s_floorMat;
 
 Graphics::cAmbientLight s_ambientLight;
 Graphics::cDirectionalLight s_DirectionalLight;
@@ -60,26 +61,42 @@ void CreateTriangle() {
 	};
 
 	GLfloat vertices[] = {
-		//     x,		y,		z,			u,		v			n_x 	n_y,	n_z
+		//     x,		y,		z,			u,		v			n_x, 	n_y,	n_z
 			-1.0f, -1.0f, -0.0f,		0.0f, 0.0f,		0.0f, 0.0f, 0.0f,
 			0.0f, -1.0f, 1.732f,		0.5f, 0.0f,		0.0f, 0.0f, 0.0f,
 			1.0f, -1.0f, 0.0f,		1.0f, 0.0f,		0.0f, 0.0f, 0.0f,
 			0.0f, 1.0f, 0.5773f,			0.5f, 1.0f,		0.0f, 0.0f, 0.0f
 	};
 
+	GLuint floorIndices[] = {
+		0, 2, 1,
+		1, 2, 3
+	};
+
+	GLfloat floorVertices[] = {
+		//     x,		y,		z,			u,		v			n_x, 	n_y,	n_z
+			-10.f, 0.0f, -10.0f,		0.0f, 0.0f,		0.0f, -1.0f,  0.0f,
+			10.f, 0.0f, -10.0f,		10.f, 0.0f,		0.0f, -1.0f, 0.0f,
+			-10.f, 0.0f, 10.0f,		0.0f, 10.f,		0.0f, -1.0f, 0.0f,
+			10.f,	0.0f, 10.0f,		10.f, 10.f,		0.0f, -1.0f, 0.0f,
+	};
+
+
+
 	CalculateAverageNormals(indices, 12, vertices, 32, 8, 5);
 
 	Graphics::cMesh* triangle = new Graphics::cMesh();
-
-	// xyz * 4 + uv * 4 = 20
 	triangle->CreateMesh(vertices, indices, 32, 12);
 	s_renderList.push_back(triangle);
 
 	Graphics::cMesh* triangle2 = new Graphics::cMesh();
-
-	// xyz * 4 + uv * 4 = 20
 	triangle2->CreateMesh(vertices, indices, 32, 12);
 	s_renderList.push_back(triangle2);
+
+	Graphics::cMesh* floor = new Graphics::cMesh();
+	floor->CreateMesh(floorVertices, floorIndices, 32, 6);
+	s_renderList.push_back(floor);
+
 }
 
 void CalculateAverageNormals(GLuint* indices, GLuint indiceCount, GLfloat* vertices, GLuint vertexCount
@@ -125,12 +142,14 @@ void CreateEffect()
 }
 void SetUpTextures()
 {
-	s_brickMat = Graphics::cMaterial();
 	s_brickMat.SetDiffuse("Contents/textures/brick.png");
 	s_brickMat.SetShininess(4);
-	s_woodMat = Graphics::cMaterial();
+
 	s_woodMat.SetDiffuse("Contents/textures/wood2.png");
-	s_woodMat.SetShininess(32);
+	s_woodMat.SetShininess(64);
+	
+	s_floorMat.SetDiffuse("Contents/textures/whiteBoard.png");
+	s_floorMat.SetShininess(128);
 }
 void SetUpLights()
 {
@@ -144,11 +163,11 @@ void SetUpLights()
 	s_DirectionalLight.SetupLight(s_effectList[0]->GetProgramID());
 
 	s_pointLights[0] = Graphics::cPointLight(0.3f, 0.75f,glm::vec3(0.8f, 0.2f, 0.2f)
-														,glm::vec3(-1.5f, 1.5f, 0.3f), 1.f, 0.007f, 0.0002f);
+														,glm::vec3(-2.5f, 1.5f, 0.3f), 1.f, 0.07f, 0.002f);
 	s_pointLights[0].SetupLight(s_effectList[0]->GetProgramID(), 0);
 
-	s_pointLights[1] = Graphics::cPointLight(0.5f, 0.4f,glm::vec3(0.2f, 0.8f, 0.2f)
-														,glm::vec3(1.5f, 1.5f, 0.3f), 1.f, 0.07f, 0.017f);
+	s_pointLights[1] = Graphics::cPointLight(0.5f, 1.f,glm::vec3(0.2f, 0.8f, 0.2f)
+														,glm::vec3(2.5f, 1.5f, 0.3f), 1.f, 0.7f, 0.17f);
 	s_pointLights[1].SetupLight( s_effectList[0]->GetProgramID(), 1);
 }
 
@@ -193,7 +212,7 @@ void cMyGame::Run()
 		glfwPollEvents();
 
 		// clear window
-		glClearColor(0.8f, 0.8f, 0.8f, 1.f);
+		glClearColor(0,0,0, 1.f);
 		// A lot of things can be cleaned like color buffer, depth buffer, so we need to specify what to clear
 		glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
@@ -203,7 +222,7 @@ void cMyGame::Run()
 		// s_pointLightCount must be correct
 		s_effectList[0]->SetPointLightCount(s_pointLightCount);
 		// Illuminate the light
-		s_ambientLight.Illuminate();
+		//s_ambientLight.Illuminate();
 		s_DirectionalLight.Illuminate();
 		for (int i = 0; i < s_pointLightCount; ++i)
 		{
@@ -240,7 +259,20 @@ void cMyGame::Run()
 
 			s_renderList[1]->Render();
 		}
+		// floor obj
+		{
+			glm::mat4 model = glm::identity<glm::mat4>();
+			model = glm::translate(model, glm::vec3(0, -1.f, 0.0f));
 
+			glUniformMatrix4fv(s_effectList[0]->GetModelMatrixUniformID(), 1, GL_FALSE, glm::value_ptr(model));
+			glUniformMatrix4fv(s_effectList[0]->GetProjectionMatrixUniformID(), 1, GL_FALSE, glm::value_ptr(s_mainCamera->GetProjectionMatrix()));
+			glUniformMatrix4fv(s_effectList[0]->GetViewMatrixUniformID(), 1, GL_FALSE, glm::value_ptr(s_mainCamera->GetViewMatrix()));
+
+			// use texture for floor
+			s_floorMat.UseMaterial(s_effectList[0]->GetProgramID());
+
+			s_renderList[2]->Render();
+		}
 
 		// clear program
 		glUseProgram(0);
@@ -282,6 +314,9 @@ void cMyGame::CleanUp()
 		s_renderList.~vector();
 		s_effectList.~vector();
 
+		s_woodMat.CleanUp();
+		s_brickMat.CleanUp();
+		s_floorMat.CleanUp();
 	}
 
 	cApplication::CleanUp();
