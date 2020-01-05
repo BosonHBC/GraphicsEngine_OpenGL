@@ -154,24 +154,22 @@ void SetUpTextures()
 void SetUpLights()
 {
 	// Point Light
-	s_ambientLight = Graphics::cAmbientLight(0.05f, 0.0f, glm::vec3(1,1,1));
+	s_ambientLight = Graphics::cAmbientLight(0.05f, 0.0f, Color(1, 1, 1));
 	s_ambientLight.SetupLight(s_effectList[0]->GetProgramID());
 
 	// Directional light
-	s_DirectionalLight = Graphics::cDirectionalLight(0.2f, 0.8f, glm::vec3(1, 1, 0.9f)
+	s_DirectionalLight = Graphics::cDirectionalLight(0.2f, 0.8f, Color(1, 1, 0.9f)
 														, glm::vec3(0, -1, -1));
 	s_DirectionalLight.SetupLight(s_effectList[0]->GetProgramID());
 
-	s_pointLights[0] = Graphics::cPointLight(0.3f, 0.75f,glm::vec3(0.8f, 0.2f, 0.2f)
-														,glm::vec3(-2.5f, 1.5f, 0.3f), 1.f, 0.07f, 0.002f);
+	s_pointLights[0] = Graphics::cPointLight(0.3f, 0.75f, Color(0.8f, 0.2f, 0.2f)
+														,glm::vec3(-2.5f, 1.5f, 0.3f), 0.3f, 0.1f, 0.1f);
 	s_pointLights[0].SetupLight(s_effectList[0]->GetProgramID(), 0);
 
-	s_pointLights[1] = Graphics::cPointLight(0.5f, 1.f,glm::vec3(0.2f, 0.8f, 0.2f)
-														,glm::vec3(2.5f, 1.5f, 0.3f), 1.f, 0.7f, 0.17f);
+	s_pointLights[1] = Graphics::cPointLight(0.5f, 1.f, Color(0.2f, 0.8f, 0.2f)
+														,glm::vec3(2.5f, 1.5f, 0.3f), 0.3f, 0.2f, 0.1f);
 	s_pointLights[1].SetupLight( s_effectList[0]->GetProgramID(), 1);
 }
-
-
 
 /**
 	The previous part is global functions and variables
@@ -223,7 +221,7 @@ void cMyGame::Run()
 		s_effectList[0]->SetPointLightCount(s_pointLightCount);
 		// Illuminate the light
 		//s_ambientLight.Illuminate();
-		s_DirectionalLight.Illuminate();
+		//s_DirectionalLight.Illuminate();
 		for (int i = 0; i < s_pointLightCount; ++i)
 		{
 			s_pointLights[i].Illuminate();

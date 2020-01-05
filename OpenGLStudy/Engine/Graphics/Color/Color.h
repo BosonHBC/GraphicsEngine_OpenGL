@@ -1,6 +1,8 @@
 #pragma once
+
 namespace Graphics {
-	// Color class represent 24bits color value, prevent inheritance
+
+	// Color class represent 24bits color value from 0 to 1, prevent inheritance
 	class cColor final
 	{
 	public:
@@ -34,4 +36,6 @@ namespace Graphics {
 
 	};
 
-}
+
+}	
+typedef Graphics::cColor Color;

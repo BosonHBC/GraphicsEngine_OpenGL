@@ -5,7 +5,7 @@ namespace Graphics {
 
 	void cPointLight::Illuminate()
 	{
-		glUniform3f(m_colorID, m_color.x, m_color.y, m_color.z);
+		glUniform3f(m_colorID, m_color.r, m_color.g, m_color.b);
 		glUniform1f(m_diffuseIntensityID, m_diffuseIntensity);
 		glUniform1f(m_specularIntensityID, m_specularIntensity);
 		glUniform3f(m_positionID, m_position.x, m_position.y, m_position.z);
