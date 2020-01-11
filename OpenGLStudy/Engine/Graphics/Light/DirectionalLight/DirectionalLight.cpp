@@ -18,7 +18,7 @@ namespace Graphics {
 
 	void cDirectionalLight::Illuminate()
 	{
-		glUniform3f(m_colorID, m_color.x, m_color.y, m_color.z);
+		glUniform3f(m_colorID, m_color.r, m_color.g, m_color.b);
 		glUniform1f(m_diffuseIntensityID, m_diffuseIntensity);
 		glUniform1f(m_specularIntensityID, m_specularIntensity);
 		glUniform3f(m_directionID, m_direction.x, m_direction.y, m_direction.z);
