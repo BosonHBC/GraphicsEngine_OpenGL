@@ -16,8 +16,8 @@ public:
 	/** Constructors and destructor */
 	cWindow() : m_glfwWindow(nullptr), m_bufferWidth(0), m_bufferHeight(0)
 	{}
-	cWindow(GLint i_windowWidth, GLint i_windowHeight) : m_glfwWindow(nullptr),
-		m_bufferWidth(i_windowWidth), m_bufferHeight(i_windowHeight)
+	cWindow(GLint i_windowWidth, GLint i_windowHeight, const char* i_windowName) : m_glfwWindow(nullptr),
+		m_bufferWidth(i_windowWidth), m_bufferHeight(i_windowHeight), m_windowName(i_windowName)
 	{}
 	~cWindow();
 
@@ -39,6 +39,7 @@ private:
 	/** private variables*/
 	GLFWwindow* m_glfwWindow;
 	GLint m_bufferWidth, m_bufferHeight;
+	const char* m_windowName;
 	sWindowInput* m_windowInput;
 
 	/** private helper functions*/

@@ -20,7 +20,7 @@ bool cWindow::Initialzation()
 
 	//01. Create window
 	{
-		if (!SetupGLFWWindow(m_glfwWindow, "MainWindow")) return false;
+		if (!SetupGLFWWindow(m_glfwWindow, m_windowName)) return false;
 	}
 
 	//02. Set buffer size information

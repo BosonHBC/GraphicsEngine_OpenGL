@@ -14,7 +14,7 @@ namespace Application {
 		CleanUp();
 	}
 
-	bool cApplication::Initialize(GLuint i_width, GLuint i_height)
+	bool cApplication::Initialize(GLuint i_width, GLuint i_height, const char* i_windowName)
 	{
 		bool result = true;
 		// Initialize Time
@@ -29,7 +29,7 @@ namespace Application {
 
 		// Create a GLFW window
 		{
-			m_window = new cWindow(i_width, i_height);
+			m_window = new cWindow(i_width, i_height, i_windowName);
 			if (!m_window->Initialzation()) {
 				printf("Failed to initialize openGL window!");
 				return false;

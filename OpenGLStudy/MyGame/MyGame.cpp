@@ -19,8 +19,6 @@
 // -----------------------
 #define ToRadian(x) x * 0.0174532925f
 
-GLFWwindow* s_mainWindow;
-
 std::vector<Graphics::cMesh*> s_renderList = std::vector<Graphics::cMesh *>();
 std::vector<Graphics::cEffect*> s_effectList = std::vector<Graphics::cEffect *>();
 cCamera* s_mainCamera;
@@ -177,10 +175,10 @@ void SetUpLights()
 	The following part is in cMyGame class
 **/
 
-bool cMyGame::Initialize(GLuint i_width, GLuint i_height)
+bool cMyGame::Initialize(GLuint i_width, GLuint i_height, const char* i_windowName)
 {
 	auto result = true;
-	if (!(result = cApplication::Initialize(i_width, i_width))) {
+	if (!(result = cApplication::Initialize(i_width, i_width, i_windowName))) {
 		assert(false, "Failed to initialize Application!");
 		return false;
 	}
@@ -281,13 +279,13 @@ void cMyGame::Run()
 	}
 }
 
-void cMyGame::UpdateBasedOnTime(float DeltaSeconds)
+void cMyGame::UpdateBasedOnTime(float second_since_lastFrame)
 {
 	// get + handle user input events
 	{
 		sWindowInput* _windowInput = m_window->GetWindowInput();
-		s_mainCamera->CameraControl(_windowInput, DeltaSeconds);
-		s_mainCamera->MouseControl(_windowInput->DX(), _windowInput->DY(), DeltaSeconds);
+		s_mainCamera->CameraControl(_windowInput, second_since_lastFrame);
+		s_mainCamera->MouseControl(_windowInput->DX(), _windowInput->DY(), second_since_lastFrame);
 	}
 }
 

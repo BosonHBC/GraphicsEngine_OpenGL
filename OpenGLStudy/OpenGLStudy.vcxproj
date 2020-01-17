@@ -100,12 +100,12 @@
       <ConformanceMode>true</ConformanceMode>
       <PrecompiledHeaderFile>
       </PrecompiledHeaderFile>
-      <AdditionalIncludeDirectories>$(SolutionDir);$(SolutionDir)Engine;$(SolutionDir)Engine\Graphics;$(SolutionDir)..\..\GLExternals\;$(SolutionDir)..\..\GLExternals\glew\include;$(SolutionDir)..\..\GLExternals\glfw32\include;$(SolutionDir)Engine;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>$(SolutionDir);$(SolutionDir)Engine;$(SolutionDir)Engine\Graphics;$(SolutionDir)..\..\GL\;$(SolutionDir)..\..\GL\glew\include;$(SolutionDir)..\..\GL\glfw32\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
     </ClCompile>
     <Link>
       <SubSystem>Console</SubSystem>
       <GenerateDebugInformation>true</GenerateDebugInformation>
-      <AdditionalLibraryDirectories>$(SolutionDir)..\..\GLExternals\glew\lib\Release\$(Platform);$(SolutionDir)..\..\GLExternals\glfw32\lib-vc2017\;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
+      <AdditionalLibraryDirectories>$(SolutionDir)..\..\GL\glew\lib\Release\$(Platform);$(SolutionDir)..\..\GL\glfw32\lib-vc2017\;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
       <AdditionalDependencies>opengl32.lib;glew32.lib;glfw3.lib;glfw3dll.lib;%(AdditionalDependencies)</AdditionalDependencies>
     </Link>
     <PreBuildEvent>
@@ -123,12 +123,12 @@ xcopy $(SolutionDir)Contents $(targetDir)Contents /Y /E /I</Command>
       <ConformanceMode>true</ConformanceMode>
       <PrecompiledHeaderFile>
       </PrecompiledHeaderFile>
-      <AdditionalIncludeDirectories>$(SolutionDir);$(SolutionDir)Engine;$(SolutionDir)Engine\Graphics;$(SolutionDir)..\..\GLExternals\;$(SolutionDir)..\..\GLExternals\glew\include;$(SolutionDir)..\..\GLExternals\glfw\include;$(SolutionDir)Engine;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>$(SolutionDir);$(SolutionDir)Engine;$(SolutionDir)Engine\Graphics;$(SolutionDir)..\..\GL\;$(SolutionDir)..\..\GL\glew\include;$(SolutionDir)..\..\GL\glfw\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
     </ClCompile>
     <Link>
       <SubSystem>Console</SubSystem>
       <GenerateDebugInformation>true</GenerateDebugInformation>
-      <AdditionalLibraryDirectories>$(SolutionDir)..\..\GLExternals\glew\lib\Release\$(Platform);$(SolutionDir)..\..\GLExternals\glfw\lib-vc2017\;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
+      <AdditionalLibraryDirectories>$(SolutionDir)..\..\GL\glew\lib\Release\$(Platform);$(SolutionDir)..\..\GL\glfw\lib-vc2017\;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
       <AdditionalDependencies>opengl32.lib;glew32.lib;glfw3.lib;glfw3dll.lib;%(AdditionalDependencies)</AdditionalDependencies>
     </Link>
     <PreBuildEvent>
@@ -148,14 +148,14 @@ xcopy $(SolutionDir)Contents $(targetDir)Contents /Y /E /I</Command>
       <ConformanceMode>true</ConformanceMode>
       <PrecompiledHeaderFile>
       </PrecompiledHeaderFile>
-      <AdditionalIncludeDirectories>$(SolutionDir);$(SolutionDir)Engine;$(SolutionDir)Engine\Graphics;$(SolutionDir)..\..\GLExternals\;$(SolutionDir)..\..\GLExternals\glew\include;$(SolutionDir)..\..\GLExternals\glfw32\include;$(SolutionDir)Engine;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>$(SolutionDir);$(SolutionDir)Engine;$(SolutionDir)Engine\Graphics;$(SolutionDir)..\..\GL\;$(SolutionDir)..\..\GL\glew\include;$(SolutionDir)..\..\GL\glfw32\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
     </ClCompile>
     <Link>
       <SubSystem>Console</SubSystem>
       <EnableCOMDATFolding>true</EnableCOMDATFolding>
       <OptimizeReferences>true</OptimizeReferences>
       <GenerateDebugInformation>true</GenerateDebugInformation>
-      <AdditionalLibraryDirectories>$(SolutionDir)..\..\GLExternals\glew\lib\Release\$(Platform);$(SolutionDir)..\..\GLExternals\glfw32\lib-vc2017\;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
+      <AdditionalLibraryDirectories>$(SolutionDir)..\..\GL\glew\lib\Release\$(Platform);$(SolutionDir)..\..\GL\glfw32\lib-vc2017\;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
       <AdditionalDependencies>opengl32.lib;glew32.lib;glfw3.lib;glfw3dll.lib;%(AdditionalDependencies)</AdditionalDependencies>
     </Link>
     <PreBuildEvent>
@@ -175,14 +175,14 @@ xcopy $(SolutionDir)Contents $(targetDir)Contents /Y /E /I</Command>
       <ConformanceMode>true</ConformanceMode>
       <PrecompiledHeaderFile>
       </PrecompiledHeaderFile>
-      <AdditionalIncludeDirectories>$(SolutionDir);$(SolutionDir)Engine;$(SolutionDir)Engine\Graphics;$(SolutionDir)..\..\GLExternals\;$(SolutionDir)..\..\GLExternals\glew\include;$(SolutionDir)..\..\GLExternals\glfw\include;$(SolutionDir)Engine;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>$(SolutionDir);$(SolutionDir)Engine;$(SolutionDir)Engine\Graphics;$(SolutionDir)..\..\GL\;$(SolutionDir)..\..\GL\glew\include;$(SolutionDir)..\..\GL\glfw\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
     </ClCompile>
     <Link>
       <SubSystem>Console</SubSystem>
       <EnableCOMDATFolding>true</EnableCOMDATFolding>
       <OptimizeReferences>true</OptimizeReferences>
       <GenerateDebugInformation>true</GenerateDebugInformation>
-      <AdditionalLibraryDirectories>$(SolutionDir)..\..\GLExternals\glew\lib\Release\$(Platform);$(SolutionDir)..\..\GLExternals\glfw\lib-vc2017\;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
+      <AdditionalLibraryDirectories>$(SolutionDir)..\..\GL\glew\lib\Release\$(Platform);$(SolutionDir)..\..\GL\glfw\lib-vc2017\;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
       <AdditionalDependencies>opengl32.lib;glew32.lib;glfw3.lib;glfw3dll.lib;%(AdditionalDependencies)</AdditionalDependencies>
     </Link>
     <PreBuildEvent>
@@ -191,6 +191,7 @@ xcopy $(SolutionDir)Contents $(targetDir)Contents /Y /E /I</Command>
     </PreBuildEvent>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClCompile Include="Assignments\Assignment1\Assignment1.cpp" />
     <ClCompile Include="Engine\Application\Application.cpp" />
     <ClCompile Include="Engine\Graphics\Camera\Camera.cpp" />
     <ClCompile Include="Engine\Graphics\Effect\Effect.cpp" />
@@ -203,10 +204,11 @@ xcopy $(SolutionDir)Contents $(targetDir)Contents /Y /E /I</Command>
     <ClCompile Include="Engine\Graphics\Texture\Texture.cpp" />
     <ClCompile Include="Engine\Graphics\Window\Window.cpp" />
     <ClCompile Include="Engine\Time\Time.cpp" />
-    <ClCompile Include="Main.cpp" />
+    <ClCompile Include="EntryPoint.cpp" />
     <ClCompile Include="MyGame\MyGame.cpp" />
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="Assignments\Assignment1\Assignment1.h" />
     <ClInclude Include="Engine\Application\Application.h" />
     <ClInclude Include="Engine\Graphics\Camera\Camera.h" />
     <ClInclude Include="Engine\Graphics\Color\Color.h" />

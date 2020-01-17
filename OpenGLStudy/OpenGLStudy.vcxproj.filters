@@ -43,9 +43,6 @@
     <Filter Include="Source Files\Engine\Application">
       <UniqueIdentifier>{e5c0b51a-62c6-4df5-a0ce-49ed6a6f839c}</UniqueIdentifier>
     </Filter>
-    <Filter Include="Source Files\MyGame">
-      <UniqueIdentifier>{7f69affb-87e0-452e-ad6f-7c6b796b94a5}</UniqueIdentifier>
-    </Filter>
     <Filter Include="Source Files\Tool">
       <UniqueIdentifier>{b9129976-be09-49ef-a4b6-e7324617dd2f}</UniqueIdentifier>
     </Filter>
@@ -73,11 +70,17 @@
     <Filter Include="Source Files\Engine\Graphics\Light\PointLight">
       <UniqueIdentifier>{d2a5a549-e9f6-4b90-9b7d-7038139f8d54}</UniqueIdentifier>
     </Filter>
+    <Filter Include="Source Files\ExampleGame">
+      <UniqueIdentifier>{7f69affb-87e0-452e-ad6f-7c6b796b94a5}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source Files\Assignments">
+      <UniqueIdentifier>{fa08801f-210b-41aa-97c6-07501b24a87d}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source Files\Assignments\Assignment1">
+      <UniqueIdentifier>{302a5138-9ff4-41ef-bede-2d230dc261bd}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="Main.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
     <ClCompile Include="Engine\Graphics\Camera\Camera.cpp">
       <Filter>Source Files\Engine\Graphics\Camera</Filter>
     </ClCompile>
@@ -97,7 +100,7 @@
       <Filter>Source Files\Engine\Application</Filter>
     </ClCompile>
     <ClCompile Include="MyGame\MyGame.cpp">
-      <Filter>Source Files\MyGame</Filter>
+      <Filter>Source Files\ExampleGame</Filter>
     </ClCompile>
     <ClCompile Include="Engine\Graphics\Texture\Texture.cpp">
       <Filter>Source Files\Engine\Graphics\Texture</Filter>
@@ -116,6 +119,12 @@
     </ClCompile>
     <ClCompile Include="Engine\Graphics\Light\PointLight\PointLight.cpp">
       <Filter>Source Files\Engine\Graphics\Light\PointLight</Filter>
+    </ClCompile>
+    <ClCompile Include="EntryPoint.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="Assignments\Assignment1\Assignment1.cpp">
+      <Filter>Source Files\Assignments\Assignment1</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
@@ -141,7 +150,7 @@
       <Filter>Source Files\Engine\Application</Filter>
     </ClInclude>
     <ClInclude Include="MyGame\MyGame.h">
-      <Filter>Source Files\MyGame</Filter>
+      <Filter>Source Files\ExampleGame</Filter>
     </ClInclude>
     <ClInclude Include="Tool\stb_image.h">
       <Filter>Source Files\Tool</Filter>
@@ -166,6 +175,9 @@
     </ClInclude>
     <ClInclude Include="Engine\Graphics\Light\PointLight\PointLight.h">
       <Filter>Source Files\Engine\Graphics\Light\PointLight</Filter>
+    </ClInclude>
+    <ClInclude Include="Assignments\Assignment1\Assignment1.h">
+      <Filter>Source Files\Assignments\Assignment1</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>
