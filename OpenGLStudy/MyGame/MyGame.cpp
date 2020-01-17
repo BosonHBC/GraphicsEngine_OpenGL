@@ -279,13 +279,13 @@ void cMyGame::Run()
 	}
 }
 
-void cMyGame::UpdateBasedOnTime(float DeltaSeconds)
+void cMyGame::UpdateBasedOnTime(float second_since_lastFrame)
 {
 	// get + handle user input events
 	{
 		sWindowInput* _windowInput = m_window->GetWindowInput();
-		s_mainCamera->CameraControl(_windowInput, DeltaSeconds);
-		s_mainCamera->MouseControl(_windowInput->DX(), _windowInput->DY(), DeltaSeconds);
+		s_mainCamera->CameraControl(_windowInput, second_since_lastFrame);
+		s_mainCamera->MouseControl(_windowInput->DX(), _windowInput->DY(), second_since_lastFrame);
 	}
 }
 

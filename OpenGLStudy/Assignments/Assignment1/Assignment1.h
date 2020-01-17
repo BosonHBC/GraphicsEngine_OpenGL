@@ -14,7 +14,7 @@ public:
 	virtual void Run();
 	virtual void CleanUp();
 
-	void UpdateBasedOnTime(float DeltaSeconds);
+	void UpdateBasedOnTime(float second_since_lastFrame);
 
 private:
 

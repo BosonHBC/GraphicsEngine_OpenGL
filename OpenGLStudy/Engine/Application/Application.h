@@ -16,7 +16,7 @@ namespace Application {
 		virtual void PostInitialization();
 		virtual void CleanUp();
 		virtual void Run() {};
-		virtual void UpdateBasedOnTime(float DeltaSeconds) {}
+		virtual void UpdateBasedOnTime(float second_since_lastFrame) {}
 		
 		void UpdateUntilExit();
 
