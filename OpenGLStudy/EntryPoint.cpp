@@ -3,14 +3,14 @@
 #include <stdlib.h>
 #include <crtdbg.h>
 #endif // DEBUG
-#include "MyGame/MyGame.h"
-
+#include "Assignments/Assignment1/Assignment1.h"
+//#include "MyGame/MyGame.h"
 
 const GLint WIDTH = 1366, HEIGHT = 768; // 1280:1024 || 1024:768
 
 int main()
 {
-	cMyGame* _myGame = new cMyGame();
+	Assignment1* _myGame = new Assignment1();
 
 	if (!_myGame->Initialize(WIDTH, HEIGHT, "Assignment1")) {
 		printf("Failed to initialize application!");
