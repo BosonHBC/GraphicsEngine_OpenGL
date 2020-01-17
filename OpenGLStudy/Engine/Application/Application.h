@@ -12,7 +12,7 @@ namespace Application {
 		cApplication();
 		virtual ~cApplication();
 
-		virtual bool Initialize(GLuint i_width, GLuint i_height);
+		virtual bool Initialize(GLuint i_width, GLuint i_height, const char* i_windowName = "Default Window");
 		virtual void PostInitialization();
 		virtual void CleanUp();
 		virtual void Run() {};

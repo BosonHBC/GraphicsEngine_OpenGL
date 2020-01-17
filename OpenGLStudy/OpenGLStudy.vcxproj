@@ -191,6 +191,7 @@ xcopy $(SolutionDir)Contents $(targetDir)Contents /Y /E /I</Command>
     </PreBuildEvent>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClCompile Include="Assignments\Assignment1\Assignment1.cpp" />
     <ClCompile Include="Engine\Application\Application.cpp" />
     <ClCompile Include="Engine\Graphics\Camera\Camera.cpp" />
     <ClCompile Include="Engine\Graphics\Effect\Effect.cpp" />
@@ -203,10 +204,11 @@ xcopy $(SolutionDir)Contents $(targetDir)Contents /Y /E /I</Command>
     <ClCompile Include="Engine\Graphics\Texture\Texture.cpp" />
     <ClCompile Include="Engine\Graphics\Window\Window.cpp" />
     <ClCompile Include="Engine\Time\Time.cpp" />
-    <ClCompile Include="Main.cpp" />
+    <ClCompile Include="EntryPoint.cpp" />
     <ClCompile Include="MyGame\MyGame.cpp" />
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="Assignments\Assignment1\Assignment1.h" />
     <ClInclude Include="Engine\Application\Application.h" />
     <ClInclude Include="Engine\Graphics\Camera\Camera.h" />
     <ClInclude Include="Engine\Graphics\Color\Color.h" />

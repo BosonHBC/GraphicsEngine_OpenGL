@@ -12,13 +12,13 @@ int main()
 {
 	cMyGame* _myGame = new cMyGame();
 
-	if (!_myGame->Initialize(WIDTH, HEIGHT)) {
+	if (!_myGame->Initialize(WIDTH, HEIGHT, "Assignment1")) {
 		printf("Failed to initialize application!");
 		return 1;
 	}
 	_myGame->PostInitialization();
 	_myGame->Run();
-
+	
 	delete _myGame;
 
 #ifdef _DEBUG
