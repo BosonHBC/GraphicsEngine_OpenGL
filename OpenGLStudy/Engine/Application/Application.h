@@ -16,20 +16,31 @@ namespace Application {
 		virtual void PostInitialization();
 		virtual void CleanUp();
 		virtual void Run() {};
-		virtual void UpdateBasedOnTime(float second_since_lastFrame) {}
+
+		// Real time update, call as much as possible
+		virtual void Tick(float second_since_lastFrame) {}
+		// Simulation time update, call in fixed rate, set by m_simulationUpdateRate_InSeconds
+		virtual void FixedTick(){}
 		
 		void UpdateUntilExit();
 
 		cWindow* Get_GLFW_Window() const { return m_window; }
+
 	protected:
 		cWindow* m_window;
 
+		/** Handle timing*/
+		//---------------------------------------------------
+		bool m_shouldApplicationLoopExit = false;
 		uint64_t m_tickCount_systemTime_WhenApplicationStart = false;
 		uint64_t m_tickCount_systemTime_Current = 0;
 		uint64_t m_tickCountt_systemTime_Elapsed = 0;
-		bool m_shouldApplicationLoopExit = false;
-		std::thread* m_applicationThread;
+		// Fixed update rate, in default case: function should be called every 0.02 seconds, which is every 1/0.02f = 50 ticks
+		float m_simulationUpdateRate_InSeconds = 0.02f;
 
+		/** Handle threading*/
+		//---------------------------------------------------
+		std::thread* m_applicationThread;
 		void ApplicationLoopThread(void* const io_application);
 
 	};

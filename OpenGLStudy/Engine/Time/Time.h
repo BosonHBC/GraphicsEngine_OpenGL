@@ -12,6 +12,7 @@ namespace Time {
 	bool Initialize();
 
 	uint64_t GetCurrentSystemTimeTickCount();
-	GLfloat ConvertFromTickToSeconds(const uint64_t& i_tickCount);
+	double ConvertFromTickToSeconds(const uint64_t& i_tickCount);
+	uint64_t ConvertFromSecondsToTick(const double& i_second);
 
 }

@@ -279,7 +279,7 @@ void cMyGame::Run()
 	}
 }
 
-void cMyGame::UpdateBasedOnTime(float second_since_lastFrame)
+void cMyGame::Tick(float second_since_lastFrame)
 {
 	// get + handle user input events
 	{

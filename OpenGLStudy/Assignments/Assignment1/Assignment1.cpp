@@ -23,22 +23,6 @@ void Assignment1::Run()
 	// loop until window closed
 	while (!m_shouldApplicationLoopExit)
 	{	
-		// change r channel
-		if (s_clearColor.r > 0.99f || s_clearColor.r < 0.01f) {
-			s_channelDir[0] = !s_channelDir[0];
-		}
-		s_clearColor.r = s_clearColor.r + (s_channelDir[0] ? 1.f : -1.f) *0.02f;
-		// change g channel
-		if (s_clearColor.g > 0.99f || s_clearColor.g < 0.01f) {
-			s_channelDir[1] = !s_channelDir[1];
-		}
-		s_clearColor.g = s_clearColor.g + (s_channelDir[0] ? 1.f : -1.f) * 0.04f;
-		// change b channel
-		if (s_clearColor.b > 0.99f || s_clearColor.b < 0.01f) {
-			s_channelDir[2] = !s_channelDir[2];
-		}
-		s_clearColor.b = s_clearColor.b + (s_channelDir[0] ? 1.f : -1.f)* 0.06f;
-
 		// clear window
 		glClearColor(s_clearColor.r, s_clearColor.g, s_clearColor.b, 1.f);
 		glfwPollEvents();
@@ -66,27 +50,30 @@ void Assignment1::CleanUp()
 
 }
 
-void Assignment1::UpdateBasedOnTime(float second_since_lastFrame)
+void Assignment1::Tick(float second_since_lastFrame)
 {
 
-/*
 	// change r channel
-	if (s_clearColor.r > 0.99f || s_clearColor.r < 0.01f) {
+	if (s_clearColor.r >= 1 || s_clearColor.r <= 0) {
 		s_channelDir[0] = !s_channelDir[0];
 	}
-	s_clearColor.r = s_clearColor.r + (s_channelDir[0] ? 1.f : -1.f) *0.02f;
+	s_clearColor.r = s_clearColor.r + (s_channelDir[0] ? 1.f : -1.f) * second_since_lastFrame;
 	// change g channel
-	if (s_clearColor.g > 0.99f || s_clearColor.g < 0.01f) {
+	if (s_clearColor.g >= 1 || s_clearColor.g <= 0) {
 		s_channelDir[1] = !s_channelDir[1];
 	}
-	s_clearColor.g = s_clearColor.g + (s_channelDir[0] ? 1.f : -1.f) * 0.04f;
+	s_clearColor.g = s_clearColor.g + (s_channelDir[0] ? 1.f : -1.f) *2* second_since_lastFrame;
 	// change b channel
-	if (s_clearColor.b > 0.99f || s_clearColor.b < 0.01f) {
+	if (s_clearColor.b >=1 || s_clearColor.b <= 0){
 		s_channelDir[2] = !s_channelDir[2];
 	}
-	s_clearColor.b = s_clearColor.b + (s_channelDir[0] ? 1.f : -1.f)* 0.06f;*/
+	s_clearColor.b = s_clearColor.b + (s_channelDir[0] ? 1.f : -1.f) *3* second_since_lastFrame;
 
-	
-	printf("ds: %f\n", second_since_lastFrame);
+//	printf("r: %f, g: %f, b: %f \n", s_clearColor.r, s_clearColor.g, s_clearColor.b);
+
+}
+
+void Assignment1::FixedTick()
+{
 
 }

@@ -7,7 +7,7 @@ namespace {
 }
 
 namespace Time {
-	
+
 	bool Initialize()
 	{
 		LARGE_INTEGER tickCountPerSecond;
@@ -40,10 +40,16 @@ namespace Time {
 		return static_cast<uint64_t>(totalTickCountSinceSystemBoot.QuadPart);
 	}
 
-	GLfloat ConvertFromTickToSeconds(const uint64_t& i_tickCount)
+	double ConvertFromTickToSeconds(const uint64_t& i_tickCount)
 	{
 		assert(s_tickCountPerSecond > 0 && "s_tickCountPerSecond is smaller or equal to zero");
 		return static_cast<double>(i_tickCount) / static_cast<double>(s_tickCountPerSecond);
+	}
+
+	uint64_t ConvertFromSecondsToTick(const double& i_second)
+	{
+		assert(s_tickCountPerSecond > 0 && "s_tickCountPerSecond is smaller or equal to zero");
+		return static_cast<uint64_t>((i_second * static_cast<double>(s_tickCountPerSecond)) + 0.5);
 	}
 
 }

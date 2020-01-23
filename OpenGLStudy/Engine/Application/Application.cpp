@@ -1,4 +1,4 @@
-#include "stdio.h"
+#include <algorithm>
 #include "assert.h"
 #include "Application.h"
 #include "Graphics/Window/Window.h"
@@ -62,22 +62,45 @@ namespace Application {
 	{
 		auto tickCount_systemTime_currentLoop = Time::GetCurrentSystemTimeTickCount();
 		m_tickCount_systemTime_Current = tickCount_systemTime_currentLoop;
+		const auto tickCount_per_simulationUpdate = Time::ConvertFromSecondsToTick(m_simulationUpdateRate_InSeconds);
+		auto tickCount_ElapsedBetween_twoSimulationUpdate = uint64_t(0);
+		// In debug mode, application may freeze but the tick will not.
+		// To prevent the second_since_last_update from being too large, need to add a max limitation for it. 
+		const auto tickCount_maxAllowable_time_per_Iteration = Time::ConvertFromSecondsToTick(0.5);
 
+		// Update until application thread exits
 		while (!m_shouldApplicationLoopExit)
 		{
 			// Calculate how much time has elapsed since the last loop
 			uint64_t tickCount_systemTime_elapsedSinceLastLoop;
+			// Update based on time
 			{
+				// previous
 				const auto tickCount_systemTime_previousLoop = tickCount_systemTime_currentLoop;
+				// current
 				tickCount_systemTime_currentLoop = Time::GetCurrentSystemTimeTickCount();
+				// record current tick count
 				m_tickCount_systemTime_Current = tickCount_systemTime_currentLoop;
 
-				tickCount_systemTime_elapsedSinceLastLoop = tickCount_systemTime_currentLoop - tickCount_systemTime_previousLoop;
+				// calculate the delta tick between loop, make sure the update between will not be larger than the maxAllowable_time_per_Iteration
+				tickCount_systemTime_elapsedSinceLastLoop = 
+					std::min(tickCount_systemTime_currentLoop - tickCount_systemTime_previousLoop, tickCount_maxAllowable_time_per_Iteration);
+
+				// Update as soon as possible
+				Tick(static_cast<float>(Time::ConvertFromTickToSeconds(tickCount_systemTime_elapsedSinceLastLoop)));
 			}
-			// Update by delta seconds
+
+			// Update simulation (fixed update)
 			{
-				UpdateBasedOnTime(static_cast<float>(Time::ConvertFromTickToSeconds(tickCount_systemTime_elapsedSinceLastLoop)));
+				tickCount_ElapsedBetween_twoSimulationUpdate += tickCount_systemTime_elapsedSinceLastLoop;
+
+				// When the tick count elapse between two simulation is bigger than the interval, call update simulation
+				if (tickCount_ElapsedBetween_twoSimulationUpdate >= tickCount_per_simulationUpdate) {
+					FixedTick();
+					tickCount_ElapsedBetween_twoSimulationUpdate -= tickCount_per_simulationUpdate;
+				}
 			}
+
 			m_shouldApplicationLoopExit = m_window->GetShouldClose();
 		}
 

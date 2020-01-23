@@ -14,7 +14,7 @@ public:
 	virtual void Run();
 	virtual void CleanUp();
 	
-	void UpdateBasedOnTime(float second_since_lastFrame);
+	void Tick(float second_since_lastFrame);
 
 private:
 
