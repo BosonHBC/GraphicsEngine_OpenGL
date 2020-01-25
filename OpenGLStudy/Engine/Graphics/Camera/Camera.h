@@ -36,6 +36,10 @@ public:
 
 	/** Getters*/
 	glm::mat4 GetViewMatrix() const;
+	glm::vec3 CamLocation() const { return m_position; }
+	glm::vec3 CamForward() const { return m_forward; }
+	glm::vec3 CamRight() const { return m_right; }
+	glm::vec3 CamUp() const { return m_up; }
 	const glm::mat4& GetProjectionMatrix() const { return m_projectionMatrix; }
 private:
 	/** private member variables*/

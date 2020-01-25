@@ -5,7 +5,11 @@ namespace Graphics {
 	void cMaterial::SetDiffuse(const char* i_diffusePath)
 	{
 		m_diffuse = new cTexture(i_diffusePath);
-		m_diffuse->LoadTexture();
+		if (!m_diffuse->LoadTexture()) {
+			delete m_diffuse;
+			// Use default texture, which is the white board
+			m_diffuse = new cTexture("Contents/textures/whiteBoard.png");
+		}
 	}
 
 	void cMaterial::SetShininess(GLfloat i_shine)

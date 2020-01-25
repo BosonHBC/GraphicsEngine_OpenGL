@@ -12,6 +12,7 @@ namespace Graphics {
 
 		/** Usage function*/
 		bool LoadTexture();
+		bool LoadTextureA();
 		void UseTexture(int i_textureLocation);
 		void CleanUp();
 

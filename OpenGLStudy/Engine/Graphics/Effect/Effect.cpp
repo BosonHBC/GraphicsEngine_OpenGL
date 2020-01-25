@@ -76,7 +76,10 @@ namespace Graphics {
 			m_programID = 0;
 		}
 		m_modelMatrixID = 0;
+		m_viewMatrixID = 0;
 		m_projectionMatrixID = 0;
+		m_pointLightCountID = 0;
+		m_spotLightCountID = 0;
 	}
 
 	bool cEffect::BindUniformVariables()
@@ -87,7 +90,7 @@ namespace Graphics {
 		m_projectionMatrixID = glGetUniformLocation(m_programID, "projectionMatrix");
 
 		m_pointLightCountID = glGetUniformLocation(m_programID, "pointLightCount");
-
+		m_spotLightCountID = glGetUniformLocation(m_programID, "spotLightCount");
 		return true;
 	}
 
@@ -101,6 +104,12 @@ namespace Graphics {
 	void cEffect::SetPointLightCount(int i_pointLightCount)
 	{
 		glUniform1i(m_pointLightCountID, i_pointLightCount);
+	}
+
+	void cEffect::SetSpotLightCount(int i_spotLightCount)
+	{
+		glUniform1i(m_spotLightCountID, i_spotLightCount);
+
 	}
 
 	bool cEffect::LoadShader(const char* i_shaderName, GLenum i_shaderType)

@@ -79,6 +79,9 @@
     <Filter Include="Source Files\Assignments\Assignment1">
       <UniqueIdentifier>{302a5138-9ff4-41ef-bede-2d230dc261bd}</UniqueIdentifier>
     </Filter>
+    <Filter Include="Source Files\Engine\Graphics\Light\SpotLight">
+      <UniqueIdentifier>{76854aaf-e6a8-43de-b600-592cb271aece}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="Engine\Graphics\Camera\Camera.cpp">
@@ -125,6 +128,9 @@
     </ClCompile>
     <ClCompile Include="Assignments\Assignment1\Assignment1.cpp">
       <Filter>Source Files\Assignments\Assignment1</Filter>
+    </ClCompile>
+    <ClCompile Include="Engine\Graphics\Light\SpotLight\SpotLight.cpp">
+      <Filter>Source Files\Engine\Graphics\Light\SpotLight</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
@@ -178,6 +184,9 @@
     </ClInclude>
     <ClInclude Include="Assignments\Assignment1\Assignment1.h">
       <Filter>Source Files\Assignments\Assignment1</Filter>
+    </ClInclude>
+    <ClInclude Include="Engine\Graphics\Light\SpotLight\SpotLight.h">
+      <Filter>Source Files\Engine\Graphics\Light\SpotLight</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>

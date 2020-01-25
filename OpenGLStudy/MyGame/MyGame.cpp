@@ -15,6 +15,7 @@
 #include "Graphics/Light/AmbientLight/AmbientLight.h"
 #include "Graphics/Light/DirectionalLight/DirectionalLight.h"
 #include "Graphics/Light/PointLight/PointLight.h"
+#include "Graphics/Light/SpotLight/SpotLight.h"
 // constants definition
 // -----------------------
 #define ToRadian(x) x * 0.0174532925f
@@ -32,6 +33,8 @@ Graphics::cAmbientLight s_ambientLight;
 Graphics::cDirectionalLight s_DirectionalLight;
 const int s_pointLightCount = 2;
 Graphics::cPointLight s_pointLights[s_pointLightCount];
+const int s_spotLightCount = 1;
+Graphics::cSpotLight s_spotLights[s_spotLightCount];
 
 // Function definition
 // ----------------------------
@@ -151,7 +154,7 @@ void SetUpTextures()
 }
 void SetUpLights()
 {
-	// Point Light
+	// Ambient Light
 	s_ambientLight = Graphics::cAmbientLight(0.05f, 0.0f, Color(1, 1, 1));
 	s_ambientLight.SetupLight(s_effectList[0]->GetProgramID());
 
@@ -167,6 +170,10 @@ void SetUpLights()
 	s_pointLights[1] = Graphics::cPointLight(0.5f, 1.f, Color(0.2f, 0.8f, 0.2f)
 														,glm::vec3(2.5f, 1.5f, 0.3f), 0.3f, 0.2f, 0.1f);
 	s_pointLights[1].SetupLight( s_effectList[0]->GetProgramID(), 1);
+
+	s_spotLights[0] = Graphics::cSpotLight(0.5f, 1.f, Color(1, 1, 1), glm::vec3(0,1, 0) 
+														, glm::vec3(5, -1, 0), 20.f, 1.f, 0.0f, 0.0f);
+	s_spotLights[0].SetupLight(s_effectList[0]->GetProgramID(), 0);
 }
 
 /**
@@ -217,6 +224,7 @@ void cMyGame::Run()
 		s_effectList[0]->UseEffect();
 		// s_pointLightCount must be correct
 		s_effectList[0]->SetPointLightCount(s_pointLightCount);
+		s_effectList[0]->SetSpotLightCount(s_spotLightCount);
 		// Illuminate the light
 		//s_ambientLight.Illuminate();
 		//s_DirectionalLight.Illuminate();
@@ -224,8 +232,15 @@ void cMyGame::Run()
 		{
 			s_pointLights[i].Illuminate();
 		}
+		// Update spot light position
+		s_spotLights[0].SetSpotLight(s_mainCamera->CamLocation() + glm::vec3(0, -0.3f, 0) + 0.3f * s_mainCamera->CamRight(), s_mainCamera->CamForward());
+		for (int i = 0; i < s_spotLightCount; ++i)
+		{
+			s_spotLights[i].Illuminate();
+		}
 		// update camera
 		s_mainCamera->UpdateUniformLocation(s_effectList[0]->GetProgramID());
+
 
 		glm::mat4 model = glm::identity<glm::mat4>();
 		model = glm::translate(model, glm::vec3(0, -0.4, -2.5f));
