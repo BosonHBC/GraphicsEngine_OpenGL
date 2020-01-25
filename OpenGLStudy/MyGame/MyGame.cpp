@@ -16,6 +16,9 @@
 #include "Graphics/Light/DirectionalLight/DirectionalLight.h"
 #include "Graphics/Light/PointLight/PointLight.h"
 #include "Graphics/Light/SpotLight/SpotLight.h"
+
+#include <assimp/Importer.hpp>
+
 // constants definition
 // -----------------------
 #define ToRadian(x) x * 0.0174532925f
@@ -53,6 +56,8 @@ void CreateCamera()
 }
 // create triangle
 void CreateTriangle() {
+
+	Assimp::Importer importer;
 
 	GLuint indices[] = {
 		0, 3, 1,
