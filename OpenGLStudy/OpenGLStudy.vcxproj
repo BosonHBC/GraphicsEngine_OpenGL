@@ -195,7 +195,7 @@ xcopy $(SolutionDir)Contents $(targetDir)Contents /Y /E /I</Command>
     </PreBuildEvent>
   </ItemDefinitionGroup>
   <ItemGroup>
-    <ClCompile Include="Assignments\Assignment1\Assignment1.cpp" />
+    <ClCompile Include="Assignments\Assignment.cpp" />
     <ClCompile Include="Engine\Application\Application.cpp" />
     <ClCompile Include="Engine\Graphics\Camera\Camera.cpp" />
     <ClCompile Include="Engine\Graphics\Effect\Effect.cpp" />
@@ -206,6 +206,7 @@ xcopy $(SolutionDir)Contents $(targetDir)Contents /Y /E /I</Command>
     <ClCompile Include="Engine\Graphics\Light\SpotLight\SpotLight.cpp" />
     <ClCompile Include="Engine\Graphics\Material\Material.cpp" />
     <ClCompile Include="Engine\Graphics\Mesh\Mesh.cpp" />
+    <ClCompile Include="Engine\Graphics\Model\Model.cpp" />
     <ClCompile Include="Engine\Graphics\Texture\Texture.cpp" />
     <ClCompile Include="Engine\Graphics\Window\Window.cpp" />
     <ClCompile Include="Engine\Time\Time.cpp" />
@@ -213,8 +214,9 @@ xcopy $(SolutionDir)Contents $(targetDir)Contents /Y /E /I</Command>
     <ClCompile Include="MyGame\MyGame.cpp" />
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="Assignments\Assignment1\Assignment1.h" />
+    <ClInclude Include="Assignments\Assignment.h" />
     <ClInclude Include="Engine\Application\Application.h" />
+    <ClInclude Include="Engine\Constants\Constants.h" />
     <ClInclude Include="Engine\Graphics\Camera\Camera.h" />
     <ClInclude Include="Engine\Graphics\Color\Color.h" />
     <ClInclude Include="Engine\Graphics\Effect\Effect.h" />
@@ -225,6 +227,7 @@ xcopy $(SolutionDir)Contents $(targetDir)Contents /Y /E /I</Command>
     <ClInclude Include="Engine\Graphics\Light\SpotLight\SpotLight.h" />
     <ClInclude Include="Engine\Graphics\Material\Material.h" />
     <ClInclude Include="Engine\Graphics\Mesh\Mesh.h" />
+    <ClInclude Include="Engine\Graphics\Model\Model.h" />
     <ClInclude Include="Engine\Graphics\Texture\Texture.h" />
     <ClInclude Include="Engine\Graphics\Window\Window.h" />
     <ClInclude Include="Engine\Graphics\Window\WindowInput.h" />

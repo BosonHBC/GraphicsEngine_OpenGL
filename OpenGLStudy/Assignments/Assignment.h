@@ -1,11 +1,11 @@
 #pragma once
 #include "Application/Application.h"
 
-class Assignment1 : public Application::cApplication
+class Assignment : public Application::cApplication
 {
 public:
-	Assignment1() {};
-	~Assignment1()
+	Assignment() {};
+	~Assignment()
 	{
 		CleanUp();
 	};

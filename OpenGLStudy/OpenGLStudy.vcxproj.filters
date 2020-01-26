@@ -76,11 +76,14 @@
     <Filter Include="Source Files\Assignments">
       <UniqueIdentifier>{fa08801f-210b-41aa-97c6-07501b24a87d}</UniqueIdentifier>
     </Filter>
-    <Filter Include="Source Files\Assignments\Assignment1">
-      <UniqueIdentifier>{302a5138-9ff4-41ef-bede-2d230dc261bd}</UniqueIdentifier>
-    </Filter>
     <Filter Include="Source Files\Engine\Graphics\Light\SpotLight">
       <UniqueIdentifier>{76854aaf-e6a8-43de-b600-592cb271aece}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source Files\Engine\Graphics\Model">
+      <UniqueIdentifier>{5dc153dd-e2e9-4ca4-b122-3e6d4b344b27}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source Files\Engine\Constants">
+      <UniqueIdentifier>{a6e699f3-a45c-4c72-8666-3b547174ff18}</UniqueIdentifier>
     </Filter>
   </ItemGroup>
   <ItemGroup>
@@ -126,11 +129,14 @@
     <ClCompile Include="EntryPoint.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="Assignments\Assignment1\Assignment1.cpp">
-      <Filter>Source Files\Assignments\Assignment1</Filter>
-    </ClCompile>
     <ClCompile Include="Engine\Graphics\Light\SpotLight\SpotLight.cpp">
       <Filter>Source Files\Engine\Graphics\Light\SpotLight</Filter>
+    </ClCompile>
+    <ClCompile Include="Engine\Graphics\Model\Model.cpp">
+      <Filter>Source Files\Engine\Graphics\Model</Filter>
+    </ClCompile>
+    <ClCompile Include="Assignments\Assignment.cpp">
+      <Filter>Source Files\Assignments</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
@@ -182,11 +188,17 @@
     <ClInclude Include="Engine\Graphics\Light\PointLight\PointLight.h">
       <Filter>Source Files\Engine\Graphics\Light\PointLight</Filter>
     </ClInclude>
-    <ClInclude Include="Assignments\Assignment1\Assignment1.h">
-      <Filter>Source Files\Assignments\Assignment1</Filter>
-    </ClInclude>
     <ClInclude Include="Engine\Graphics\Light\SpotLight\SpotLight.h">
       <Filter>Source Files\Engine\Graphics\Light\SpotLight</Filter>
+    </ClInclude>
+    <ClInclude Include="Engine\Graphics\Model\Model.h">
+      <Filter>Source Files\Engine\Graphics\Model</Filter>
+    </ClInclude>
+    <ClInclude Include="Engine\Constants\Constants.h">
+      <Filter>Source Files\Engine\Constants</Filter>
+    </ClInclude>
+    <ClInclude Include="Assignments\Assignment.h">
+      <Filter>Source Files\Assignments</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>
