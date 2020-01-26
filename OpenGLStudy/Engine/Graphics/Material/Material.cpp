@@ -9,7 +9,7 @@ namespace Graphics {
 		if (!m_diffuse->LoadTexture()) {
 			delete m_diffuse;
 			// Use default texture, which is the white board
-			m_diffuse = new cTexture(Constants::CONST_DEFAULT_TEXTURE_PATH);
+			m_diffuse = new cTexture(Constants::CONST_PATH_DEFAULT_TEXTURE);
 		}
 	}
 

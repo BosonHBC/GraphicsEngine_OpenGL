@@ -17,7 +17,7 @@ namespace Graphics {
 			m_procEdge = cosf(glm::radians(m_edge));
 		}
 
-		~cSpotLight() {};
+		virtual ~cSpotLight() {};
 		
 		void SetSpotLight(glm::vec3 i_pos, glm::vec3 i_dir);
 

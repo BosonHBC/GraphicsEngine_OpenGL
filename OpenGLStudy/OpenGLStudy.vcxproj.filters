@@ -85,6 +85,9 @@
     <Filter Include="Source Files\Engine\Constants">
       <UniqueIdentifier>{a6e699f3-a45c-4c72-8666-3b547174ff18}</UniqueIdentifier>
     </Filter>
+    <Filter Include="Source Files\Engine\Graphics\Effect\Shader">
+      <UniqueIdentifier>{1547c236-a253-4e69-bc4d-3636be221a24}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="Engine\Graphics\Camera\Camera.cpp">
@@ -199,6 +202,9 @@
     </ClInclude>
     <ClInclude Include="Assignments\Assignment.h">
       <Filter>Source Files\Assignments</Filter>
+    </ClInclude>
+    <ClInclude Include="Engine\Graphics\Effect\Shader\GLShader.h">
+      <Filter>Source Files\Engine\Graphics\Effect\Shader</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>

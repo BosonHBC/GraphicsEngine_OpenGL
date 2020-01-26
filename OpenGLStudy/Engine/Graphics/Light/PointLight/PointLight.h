@@ -12,7 +12,7 @@ namespace Graphics {
 			m_position(i_pos), m_const(i_const), m_linear(i_linear), m_quadratic(i_quadratic),
 			cGenLight(i_diffuseIntensity, i_specularIntensity, i_color)
 		{}
-		~cPointLight() {}
+		virtual ~cPointLight() {}
 
 		/** overriding virtual functions*/
 		virtual void Illuminate() override;

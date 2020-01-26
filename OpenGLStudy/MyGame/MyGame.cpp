@@ -2,6 +2,7 @@
 
 #include <vector>
 
+#include "GLFW/glfw3.h"
 #include "glm/glm.hpp"
 #include "glm/gtc/matrix_transform.hpp"
 #include "glm/gtc/type_ptr.hpp"
@@ -16,8 +17,9 @@
 #include "Graphics/Light/DirectionalLight/DirectionalLight.h"
 #include "Graphics/Light/PointLight/PointLight.h"
 #include "Graphics/Light/SpotLight/SpotLight.h"
-
 #include "Graphics/Model/Model.h"
+
+#include "Constants/Constants.h"
 
 // constants definition
 // -----------------------
@@ -103,7 +105,6 @@ void CreateTriangle() {
 	floor->CreateMesh(floorVertices, floorIndices, 32, 6);
 	s_renderList.push_back(floor);
 
-	s_helecopter = Graphics::cModel();
 	s_helecopter.LoadModel("Contents/models/72-helecopter/chopper.obj");
 }
 
@@ -221,6 +222,11 @@ void cMyGame::Run()
 	{
 		glfwPollEvents();
 
+		// for recompile shader
+		if (m_window->GetWindowInput()->IsKeyDown(GLFW_KEY_P)) {
+			s_effectList[0]->RecompileShader(Constants::CONST_PATH_DEFAULT_VERTEXSHADER, GL_VERTEX_SHADER);
+
+		}
 		// clear window
 		glClearColor(0,0,0, 1.f);
 		// A lot of things can be cleaned like color buffer, depth buffer, so we need to specify what to clear
@@ -317,12 +323,14 @@ void cMyGame::Run()
 
 void cMyGame::Tick(float second_since_lastFrame)
 {
+	sWindowInput* _windowInput = m_window->GetWindowInput();
+
 	// get + handle user input events
 	{
-		sWindowInput* _windowInput = m_window->GetWindowInput();
 		s_mainCamera->CameraControl(_windowInput, second_since_lastFrame);
 		s_mainCamera->MouseControl(_windowInput->DX(), _windowInput->DY(), second_since_lastFrame);
 	}
+
 }
 
 
@@ -341,6 +349,13 @@ void cMyGame::CleanUp()
 			delete *it;
 			(*it) = nullptr;
 		}
+
+		s_helecopter.~cModel();
+
+		s_pointLights[0].~cPointLight();
+		s_pointLights[1].~cPointLight();
+		s_spotLights[0].~cSpotLight();
+
 		s_renderList.clear();
 		s_effectList.clear();
 		s_renderList.~vector();

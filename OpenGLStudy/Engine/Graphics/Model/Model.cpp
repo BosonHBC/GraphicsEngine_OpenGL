@@ -28,6 +28,8 @@ namespace Graphics {
 
 		// Load nodes
 		LoadNode(_scene->mRootNode, _scene);
+		//  Load materials
+		LoadMaterials(_scene);
 
 		return true;
 	}
@@ -57,6 +59,7 @@ namespace Graphics {
 				m_textureList[i] = nullptr;
 			}
 		}
+		m_textureList.clear();
 		m_textureList.~vector();
 
 		for (size_t i = 0; i < m_meshList.size(); ++i)
@@ -66,7 +69,11 @@ namespace Graphics {
 				m_meshList[i] = nullptr;
 			}
 		}
+		m_meshList.clear();
 		m_meshList.~vector();
+	
+		m_mesh_to_texture.clear();
+		m_mesh_to_texture.~vector();
 	}
 
 	void cModel::LoadNode(const aiNode* i_node, const aiScene* i_scene)
@@ -124,7 +131,7 @@ namespace Graphics {
 		m_meshList.push_back(_newMesh);
 		m_mesh_to_texture.push_back(i_mesh->mMaterialIndex);
 
-		LoadMaterials(i_scene);
+
 	}
 
 	void cModel::LoadMaterials(const aiScene* i_scene)
@@ -157,7 +164,7 @@ namespace Graphics {
 			}
 			// Fail to load texture, set it to default texture
 			if (!m_textureList[i]) {
-				m_textureList[i] = new cTexture(Constants::CONST_DEFAULT_TEXTURE_PATH);
+				m_textureList[i] = new cTexture(Constants::CONST_PATH_DEFAULT_TEXTURE);
 				m_textureList[i]->LoadTexture();
 			}
 		}

@@ -1,12 +1,11 @@
 #include "Effect.h"
 #include <string>
-#include <fstream>
 #include <stdio.h>
 
 #include "glm/glm.hpp"
 #include "glm/gtc/type_ptr.hpp"
 
-const char* s_dataFilePrefix = "Contents/shaders/";
+#include "Shader/GLShader.h"
 
 namespace Graphics {
 	cEffect::cEffect()
@@ -29,36 +28,37 @@ namespace Graphics {
 			return false;
 		}
 
-		if (!LoadShader("vertexShader.glsl", GL_VERTEX_SHADER)) {
+		if (!LoadShader(Constants::CONST_PATH_DEFAULT_VERTEXSHADER, GL_VERTEX_SHADER)) {
 			printf("Can not create program without vertex shader\n");
 			return false;
 		}
-		if (!LoadShader("fragmentShader.glsl", GL_FRAGMENT_SHADER))
+		if (!LoadShader(Constants::CONST_PATH_DEFAULT_FRAGMENTSHADER, GL_FRAGMENT_SHADER))
 		{
 			printf("Can not create program without fragment shader\n");
 			return false;
 		}
 
-		// try handle error
-		GLint result = 0;
-		GLchar eLog[1024] = { 0 };
-
 		// link the program
-		glLinkProgram(m_programID);
-		glGetProgramiv(m_programID, GL_LINK_STATUS, &result);
-		if (!result) {
-			glGetProgramInfoLog(m_programID, sizeof(eLog), NULL, eLog);
-			printf("Error Linking program: %d \n%s", m_programID, eLog);
-			return false;
-		}
+		{
+			GLint result = 0;
+			GLchar eLog[1024] = { 0 };
+			glLinkProgram(m_programID);
+			glGetProgramiv(m_programID, GL_LINK_STATUS, &result);
+			if (!result) {
+				glGetProgramInfoLog(m_programID, sizeof(eLog), NULL, eLog);
+				printf("Error Linking program: %d \n%s", m_programID, eLog);
+				return false;
+			}
 
-		// validate the program
-		glValidateProgram(m_programID);
-		glGetProgramiv(m_programID, GL_VALIDATE_STATUS, &result);
-		if (!result) {
-			glGetProgramInfoLog(m_programID, sizeof(eLog), NULL, eLog);
-			printf("Error validating program: %d \n%s", m_programID, eLog);
-			return false;
+			// validate the program
+			glValidateProgram(m_programID);
+			// try handle error
+			glGetProgramiv(m_programID, GL_VALIDATE_STATUS, &result);
+			if (!result) {
+				glGetProgramInfoLog(m_programID, sizeof(eLog), NULL, eLog);
+				printf("Error validating program: %d \n%s", m_programID, eLog);
+				return false;
+			}
 		}
 
 		if (!BindUniformVariables()) {
@@ -70,6 +70,13 @@ namespace Graphics {
 
 	void cEffect::CleanUp()
 	{
+		// Clean up GLShader
+		for (auto it = m_shaders.begin(); it != m_shaders.end(); ++it)
+		{
+			delete it->second;
+			it->second = nullptr;
+		}
+
 		if (m_programID != 0)
 		{
 			glDeleteProgram(m_programID);
@@ -112,50 +119,34 @@ namespace Graphics {
 
 	}
 
-	bool cEffect::LoadShader(const char* i_shaderName, GLenum i_shaderType)
+	bool cEffect::RecompileShader(const char* i_shaderName, GLenum i_shaderType)
 	{
-		GLuint shaderID = glCreateShader(i_shaderType);
-
-		std::string shaderCode = ReadShaderCode(i_shaderName);
-
-		const GLchar* theCode[1];
-		theCode[0] = shaderCode.c_str();
-
-		GLint codeLength[1];
-		codeLength[0] = shaderCode.length();
-
-		glShaderSource(shaderID, 1, theCode, codeLength);
-		glCompileShader(shaderID);
-
-		// try handle error
-		GLint result = 0;
-		GLchar eLog[1024] = { 0 };
-
-		glGetShaderiv(shaderID, GL_COMPILE_STATUS, &result);
-		if (!result) {
-			glGetShaderInfoLog(shaderID, sizeof(eLog), NULL, eLog);
-			printf("Error compiling shader: %s \n%s", i_shaderName, eLog);
-			return false;
-		}
-
-		glAttachShader(m_programID, shaderID);
-
+		CreateProgram();
 		return true;
 	}
 
-	std::string cEffect::ReadShaderCode(const char* fileName)
+	bool cEffect::LoadShader(const char* i_shaderName, GLenum i_shaderType)
 	{
-		std::ifstream meInput(std::string(s_dataFilePrefix).append(fileName));
-		if (!meInput.good())
-		{
-			printf("File failed to load [%s]", fileName);
-			exit(1);
+		// this type of shader did not exist in GL context
+		if (m_shaders.count(i_shaderType) <= 0) {
+			sGLShader* _newShader = new sGLShader();
+			if (!_newShader->CompileShader(i_shaderName, i_shaderType)) {
+				printf("Error compiling shader[%s]\n", i_shaderName);
+				return false;
+			}
+			m_shaders.insert({ i_shaderType, _newShader });
+		}
+		else {
+			// if this shader already existed in this effect, need to recompile it
+			if (!m_shaders.at(i_shaderType)->CompileShader(i_shaderName, i_shaderType)) {
+				printf("Error compiling shader[%s]\n", i_shaderName);
+				return false;
+			}
 		}
 
-		return std::string(
-			std::istreambuf_iterator<char>(meInput),
-			std::istreambuf_iterator<char>());
-
+		// Attach this shader to this program
+		glAttachShader(m_programID, m_shaders.at(i_shaderType)->GetShaderID());
+		return true;
 	}
 
 }

@@ -10,7 +10,7 @@ const GLint WIDTH = 1366, HEIGHT = 768; // 1280:1024 || 1024:768
 
 int main()
 {
-	Assignment* _myGame = new Assignment();
+	cMyGame* _myGame = new cMyGame();
 
 	if (!_myGame->Initialize(WIDTH, HEIGHT, "cMyGame")) {
 		printf("Failed to initialize application!");
