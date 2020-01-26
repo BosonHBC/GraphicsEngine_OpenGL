@@ -17,7 +17,7 @@
 #include "Graphics/Light/PointLight/PointLight.h"
 #include "Graphics/Light/SpotLight/SpotLight.h"
 
-#include <assimp/Importer.hpp>
+#include "Graphics/Model/Model.h"
 
 // constants definition
 // -----------------------
@@ -39,6 +39,8 @@ Graphics::cPointLight s_pointLights[s_pointLightCount];
 const int s_spotLightCount = 1;
 Graphics::cSpotLight s_spotLights[s_spotLightCount];
 
+Graphics::cModel s_helecopter;
+
 // Function definition
 // ----------------------------
 void CalculateAverageNormals(GLuint* indices, GLuint indiceCount, GLfloat* vertices, GLuint vertexCount, GLuint sizeOfDataPerVertex, GLuint normalOffset);
@@ -56,8 +58,6 @@ void CreateCamera()
 }
 // create triangle
 void CreateTriangle() {
-
-	Assimp::Importer importer;
 
 	GLuint indices[] = {
 		0, 3, 1,
@@ -103,6 +103,8 @@ void CreateTriangle() {
 	floor->CreateMesh(floorVertices, floorIndices, 32, 6);
 	s_renderList.push_back(floor);
 
+	s_helecopter = Graphics::cModel();
+	s_helecopter.LoadModel("Contents/models/72-helecopter/chopper.obj");
 }
 
 void CalculateAverageNormals(GLuint* indices, GLuint indiceCount, GLfloat* vertices, GLuint vertexCount
@@ -168,11 +170,11 @@ void SetUpLights()
 														, glm::vec3(0, -1, -1));
 	s_DirectionalLight.SetupLight(s_effectList[0]->GetProgramID());
 
-	s_pointLights[0] = Graphics::cPointLight(0.3f, 0.75f, Color(0.8f, 0.2f, 0.2f)
+	s_pointLights[0] = Graphics::cPointLight(0.3f, 0.75f, Color(0.8f, 0.8f, 0.8f)
 														,glm::vec3(-2.5f, 1.5f, 0.3f), 0.3f, 0.1f, 0.1f);
 	s_pointLights[0].SetupLight(s_effectList[0]->GetProgramID(), 0);
 
-	s_pointLights[1] = Graphics::cPointLight(0.5f, 1.f, Color(0.2f, 0.8f, 0.2f)
+	s_pointLights[1] = Graphics::cPointLight(0.5f, 1.f, Color(0.8f, 0.8f, 0.8f)
 														,glm::vec3(2.5f, 1.5f, 0.3f), 0.3f, 0.2f, 0.1f);
 	s_pointLights[1].SetupLight( s_effectList[0]->GetProgramID(), 1);
 
@@ -231,8 +233,8 @@ void cMyGame::Run()
 		s_effectList[0]->SetPointLightCount(s_pointLightCount);
 		s_effectList[0]->SetSpotLightCount(s_spotLightCount);
 		// Illuminate the light
-		//s_ambientLight.Illuminate();
-		//s_DirectionalLight.Illuminate();
+		s_ambientLight.Illuminate();
+		s_DirectionalLight.Illuminate();
 		for (int i = 0; i < s_pointLightCount; ++i)
 		{
 			s_pointLights[i].Illuminate();
@@ -288,6 +290,20 @@ void cMyGame::Run()
 			s_floorMat.UseMaterial(s_effectList[0]->GetProgramID());
 
 			s_renderList[2]->Render();
+		}
+		// chopper
+		{
+			glm::mat4 model = glm::identity<glm::mat4>();
+			model = glm::translate(model, glm::vec3(5.f, 0, 0.0f));
+
+			glUniformMatrix4fv(s_effectList[0]->GetModelMatrixUniformID(), 1, GL_FALSE, glm::value_ptr(model));
+			glUniformMatrix4fv(s_effectList[0]->GetProjectionMatrixUniformID(), 1, GL_FALSE, glm::value_ptr(s_mainCamera->GetProjectionMatrix()));
+			glUniformMatrix4fv(s_effectList[0]->GetViewMatrixUniformID(), 1, GL_FALSE, glm::value_ptr(s_mainCamera->GetViewMatrix()));
+
+			// use texture for floor
+			s_floorMat.UseMaterial(s_effectList[0]->GetProgramID());
+			s_helecopter.Render();
+
 		}
 
 		// clear program
