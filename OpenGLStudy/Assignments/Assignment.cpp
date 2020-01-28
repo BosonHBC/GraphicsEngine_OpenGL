@@ -15,6 +15,7 @@ bool Assignment::Initialize(GLuint i_width, GLuint i_height, const char* i_windo
 	}
 
 	glfwSwapInterval(1);
+	return result;
 }
 
 void Assignment::Run()

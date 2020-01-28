@@ -28,6 +28,7 @@ namespace Time {
 			assert(false && "Windows failed to query performance frequency");
 			return false;
 		}
+		return true;
 	}
 
 	uint64_t GetCurrentSystemTimeTickCount()
