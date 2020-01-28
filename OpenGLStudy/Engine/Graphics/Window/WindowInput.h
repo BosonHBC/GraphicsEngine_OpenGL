@@ -7,7 +7,8 @@
 // Input struct
 struct sWindowInput {
 
-	sWindowInput(size_t i_numOfKeySupporting) {
+	sWindowInput(size_t i_numOfKeySupporting) : lastX(0), lastY(0), dx(0), dy(0)
+	{
 		// Create a bit array with the size of supporting Key count, and initialize them all to 0
 		m_keyDowns = Core::cBitArray::CreateBitArray(i_numOfKeySupporting, true);
 	}

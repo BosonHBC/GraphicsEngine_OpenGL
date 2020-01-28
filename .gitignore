@@ -358,4 +358,4 @@ MigrationBackup/
 !OpenGLStudy/Externals/ASSIMP_N/lib/*/x64
 
 # not contents
-!OpenGLStudy/Contents/*
+!OpenGLStudy/Contents/models/*

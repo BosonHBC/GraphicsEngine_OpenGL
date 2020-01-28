@@ -6,11 +6,11 @@
 #include "Assignments/Assignment.h"
 #include "MyGame/MyGame.h"
 
-const GLint WIDTH = 1366, HEIGHT = 768; // 1280:1024 || 1024:768
+const GLint WIDTH = 800, HEIGHT = 600; // 1280:1024 || 1024:768 || 1366 : 768
 
 int main()
 {
-	cMyGame* _myGame = new cMyGame();
+	Assignment* _myGame = new Assignment();
 
 	if (!_myGame->Initialize(WIDTH, HEIGHT, "cMyGame")) {
 		printf("Failed to initialize application!");

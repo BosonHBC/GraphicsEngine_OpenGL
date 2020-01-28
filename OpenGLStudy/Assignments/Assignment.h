@@ -1,5 +1,13 @@
 #pragma once
 #include "Application/Application.h"
+#include <vector>
+#include "Color/Color.h"
+
+class cCamera;
+namespace Graphics {
+	class cModel;
+	class cEffect;
+}
 
 class Assignment : public Application::cApplication
 {
@@ -18,6 +26,12 @@ public:
 	void FixedTick();
 private:
 
+	void CreateEffect();
+	void CreateCamera();
 
+	Color m_clearColor;
+	Graphics::cModel* m_teapot;
+	std::vector<Graphics::cEffect*> m_effectList;
+	cCamera* m_mainCamera;
 };
 
