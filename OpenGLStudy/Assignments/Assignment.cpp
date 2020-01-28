@@ -31,6 +31,7 @@ bool Assignment::Initialize(GLuint i_width, GLuint i_height, const char* i_windo
 	CreateEffect();
 	CreateCamera();
 
+	return result;
 }
 void Assignment::CreateEffect()
 {
