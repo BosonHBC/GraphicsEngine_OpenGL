@@ -2,6 +2,7 @@
 #include "Window.h"
 #include "WindowInput.h"
 
+
 cWindow::~cWindow()
 {
 	CleanUp();
@@ -106,7 +107,9 @@ bool cWindow::SetupGLFWWindow(GLFWwindow*& o_mainWindow, const char* i_windowNam
 
 void cWindow::CreateCallbacks()
 {
-	m_windowInput = new sWindowInput();
+	// According to glfw website: https://www.glfw.org/docs/latest/group__keys.html
+	// Supported key numbers are 350+, so I set it to 360
+	m_windowInput = new sWindowInput(GLFW_MAX_KEY_COUNT);
 	glfwSetKeyCallback(m_glfwWindow, &cWindow::HandleKeys);
 	glfwSetCursorPosCallback(m_glfwWindow, &cWindow::HandleMouse);
 }
@@ -121,14 +124,14 @@ void cWindow::HandleKeys(GLFWwindow* i_window, int i_key, int i_code, int i_acti
 		// tell glfw window that it is time to close
 		glfwSetWindowShouldClose(i_window, GL_TRUE);
 	}
-	if (i_key >= 0 && i_key <= MAX_KEY_LENGTH) {
-		const uint64_t keyMask = 1;
+
+	if (i_key >= 0 && i_key <= GLFW_MAX_KEY_COUNT) {
 
 		if (i_action == GLFW_PRESS) {
-			_input->keyDowns = ((keyMask << i_key) | _input->keyDowns);
+			_input->SetKey(i_key, true);
 		}
 		else if (i_action == GLFW_RELEASE) {
-			_input->keyDowns = ((~(keyMask << i_key)) & _input->keyDowns);
+			_input->SetKey(i_key, false);
 		}
 	}
 }

@@ -88,6 +88,12 @@
     <Filter Include="Source Files\Engine\Graphics\Effect\Shader">
       <UniqueIdentifier>{1547c236-a253-4e69-bc4d-3636be221a24}</UniqueIdentifier>
     </Filter>
+    <Filter Include="Source Files\Engine\Cores">
+      <UniqueIdentifier>{577e77b9-8ba6-4c8c-8fc5-c915df56a7a3}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source Files\Engine\Cores\BirArray">
+      <UniqueIdentifier>{2c9065cc-bde5-426a-8ee5-512d51cbaf5e}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="Engine\Graphics\Camera\Camera.cpp">
@@ -140,6 +146,9 @@
     </ClCompile>
     <ClCompile Include="Assignments\Assignment.cpp">
       <Filter>Source Files\Assignments</Filter>
+    </ClCompile>
+    <ClCompile Include="Engine\Cores\BitArray\BitArray.cpp">
+      <Filter>Source Files\Engine\Cores\BirArray</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
@@ -205,6 +214,9 @@
     </ClInclude>
     <ClInclude Include="Engine\Graphics\Effect\Shader\GLShader.h">
       <Filter>Source Files\Engine\Graphics\Effect\Shader</Filter>
+    </ClInclude>
+    <ClInclude Include="Engine\Cores\BitArray\BitArray.h">
+      <Filter>Source Files\Engine\Cores\BirArray</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>

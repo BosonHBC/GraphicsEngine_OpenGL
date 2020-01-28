@@ -223,7 +223,7 @@ void cMyGame::Run()
 		glfwPollEvents();
 
 		// for recompile shader
-		if (m_window->GetWindowInput()->IsKeyDown(GLFW_KEY_P)) {
+		if (m_window->GetWindowInput()->IsKeyDown(GLFW_KEY_F6)) {
 			s_effectList[0]->RecompileShader(Constants::CONST_PATH_DEFAULT_VERTEXSHADER, GL_VERTEX_SHADER);
 
 		}
