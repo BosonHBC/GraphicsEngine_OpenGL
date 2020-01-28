@@ -197,6 +197,7 @@ xcopy $(SolutionDir)Contents $(targetDir)Contents /Y /E /I</Command>
   <ItemGroup>
     <ClCompile Include="Assignments\Assignment.cpp" />
     <ClCompile Include="Engine\Application\Application.cpp" />
+    <ClCompile Include="Engine\Cores\BitArray\BitArray.cpp" />
     <ClCompile Include="Engine\Graphics\Camera\Camera.cpp" />
     <ClCompile Include="Engine\Graphics\Effect\Effect.cpp" />
     <ClCompile Include="Engine\Graphics\Light\AmbientLight\AmbientLight.cpp" />
@@ -217,6 +218,7 @@ xcopy $(SolutionDir)Contents $(targetDir)Contents /Y /E /I</Command>
     <ClInclude Include="Assignments\Assignment.h" />
     <ClInclude Include="Engine\Application\Application.h" />
     <ClInclude Include="Engine\Constants\Constants.h" />
+    <ClInclude Include="Engine\Cores\BitArray\BitArray.h" />
     <ClInclude Include="Engine\Graphics\Camera\Camera.h" />
     <ClInclude Include="Engine\Graphics\Color\Color.h" />
     <ClInclude Include="Engine\Graphics\Effect\Effect.h" />

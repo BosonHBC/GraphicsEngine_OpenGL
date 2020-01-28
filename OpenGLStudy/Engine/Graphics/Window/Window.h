@@ -3,7 +3,7 @@
 #include "GL/glew.h"
 #include "GLFW/glfw3.h"
 
-#define MAX_KEY_LENGTH 128
+#define GLFW_MAX_KEY_COUNT 360
 
 // Forward declaration
 // ------------------------
