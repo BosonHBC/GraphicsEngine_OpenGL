@@ -14,6 +14,7 @@
 #include "Graphics/Effect/Effect.h"
 #include "Graphics/Camera/Camera.h"
 #include "Graphics/Model/Model.h"
+#include "Light/PointLight/PointLight.h"
 
 
 
@@ -30,6 +31,10 @@ bool Assignment::Initialize(GLuint i_width, GLuint i_height, const char* i_windo
 	m_teapot->LoadModel("Contents/models/teapot.obj");
 	CreateEffect();
 	CreateCamera();
+
+	m_PointLight = new Graphics::cPointLight(0.3f, 0.75f, Color(0.8f, 0.8f, 0.8f)
+		, glm::vec3(-2.5f, 1.5f, 0.3f), 0.3f, 0.1f, 0.1f);
+	m_PointLight->SetupLight(m_effectList[0]->GetProgramID(), 0);
 
 	return result;
 }
@@ -68,17 +73,30 @@ void Assignment::Run()
 		}
 
 		m_effectList[0]->UseEffect();
+
+		// Set up lighting
+		// --------------------------------------------------
+		{
+			m_effectList[0]->SetPointLightCount(1);
+			m_PointLight->Illuminate();
+		}
+
 		// main draw happens in this scope
 		// --------------------------------------------------
 		{
 			glm::mat4 model = glm::identity<glm::mat4>();
-			model = glm::translate(model, glm::vec3(0, -0.4f, -5.f));
+			model = glm::translate(model, glm::vec3(0, -0.4f, -2.f));
 			model = glm::rotate(model, glm::radians(-90.f), glm::vec3(1, 0, 0));
-			model = glm::scale(model, glm::vec3(0.05f, 0.05f, 0.05f));
+			model = glm::scale(model, glm::vec3(0.05f, 0.05f, 0.025f));
+
 			glUniformMatrix4fv(m_effectList[0]->GetModelMatrixUniformID(), 1, GL_FALSE, glm::value_ptr(model));
 			glUniformMatrix4fv(m_effectList[0]->GetProjectionMatrixUniformID(), 1, GL_FALSE, glm::value_ptr(m_mainCamera->GetProjectionMatrix()));
 			glUniformMatrix4fv(m_effectList[0]->GetViewMatrixUniformID(), 1, GL_FALSE, glm::value_ptr(m_mainCamera->GetViewMatrix()));
-
+			{
+				// fix non-uniform scale
+				glm::mat4 normalMatrix = glm::transpose(glm::inverse(model));
+				glUniformMatrix4fv(m_effectList[0]->GetNormalMatrixUniformID(), 1, GL_FALSE, glm::value_ptr(normalMatrix));
+			}
 			m_teapot->Render();
 		}
 		// --------------------------------------------------
@@ -104,6 +122,7 @@ void Assignment::CleanUp()
 	m_effectList.clear();
 	m_effectList.~vector();
 
+	delete m_PointLight;
 	delete m_teapot;
 }
 

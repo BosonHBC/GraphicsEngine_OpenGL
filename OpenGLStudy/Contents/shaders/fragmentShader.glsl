@@ -152,6 +152,7 @@ void main(){
 	vec4 pointLightColor = CalcPointLights();
 	vec4 spotLightColor = CalcSpotLights();
 
+	//texture(diffuseTex, texCood0)
 	color = texture(diffuseTex, texCood0) * ( ambientLightColor + directionLightColor + pointLightColor + spotLightColor);
 
 }

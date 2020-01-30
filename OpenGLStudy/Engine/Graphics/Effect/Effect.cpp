@@ -95,6 +95,7 @@ namespace Graphics {
 		m_modelMatrixID = glGetUniformLocation(m_programID, "modelMatrix");
 		m_viewMatrixID = glGetUniformLocation(m_programID, "viewMatrix");
 		m_projectionMatrixID = glGetUniformLocation(m_programID, "projectionMatrix");
+		m_normalMatrixID = glGetUniformLocation(m_programID, "normalMatrix");
 
 		m_pointLightCountID = glGetUniformLocation(m_programID, "pointLightCount");
 		m_spotLightCountID = glGetUniformLocation(m_programID, "spotLightCount");

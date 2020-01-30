@@ -81,7 +81,7 @@ namespace Graphics {
 		//bind IBO
 		glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, m_ibo);
 		// Index draw
-		glDrawElements(GL_POINTS, m_indexCount, GL_UNSIGNED_INT, 0);
+		glDrawElements(GL_TRIANGLES, m_indexCount, GL_UNSIGNED_INT, 0);
 
 		// Vertex draw
 		//glDrawArrays(GL_TRIANGLES, 0, 3);

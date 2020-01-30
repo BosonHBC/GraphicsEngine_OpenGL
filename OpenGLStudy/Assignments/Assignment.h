@@ -7,6 +7,7 @@ class cCamera;
 namespace Graphics {
 	class cModel;
 	class cEffect;
+	class cPointLight;
 }
 
 class Assignment : public Application::cApplication
@@ -33,5 +34,7 @@ private:
 	Graphics::cModel* m_teapot;
 	std::vector<Graphics::cEffect*> m_effectList;
 	cCamera* m_mainCamera;
+
+	Graphics::cPointLight* m_PointLight;
 };
 
