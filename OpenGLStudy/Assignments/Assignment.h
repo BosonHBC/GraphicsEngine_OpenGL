@@ -3,7 +3,7 @@
 #include <vector>
 #include "Color/Color.h"
 
-class cCamera;
+class cEditorCamera;
 namespace Graphics {
 	class cModel;
 	class cEffect;
@@ -33,7 +33,7 @@ private:
 	Color m_clearColor;
 	Graphics::cModel* m_teapot;
 	std::vector<Graphics::cEffect*> m_effectList;
-	cCamera* m_mainCamera;
+	cEditorCamera* m_editorCamera;
 
 	Graphics::cPointLight* m_PointLight;
 };

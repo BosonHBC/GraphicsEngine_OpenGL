@@ -328,7 +328,7 @@ void cMyGame::Tick(float second_since_lastFrame)
 	// get + handle user input events
 	{
 		s_mainCamera->CameraControl(_windowInput, second_since_lastFrame);
-		s_mainCamera->MouseControl(_windowInput->DX(), _windowInput->DY(), second_since_lastFrame);
+		s_mainCamera->MouseControl(_windowInput, second_since_lastFrame);
 	}
 
 }

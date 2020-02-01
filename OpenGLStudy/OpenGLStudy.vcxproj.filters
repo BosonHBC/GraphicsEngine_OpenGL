@@ -94,6 +94,9 @@
     <Filter Include="Source Files\Engine\Cores\BirArray">
       <UniqueIdentifier>{2c9065cc-bde5-426a-8ee5-512d51cbaf5e}</UniqueIdentifier>
     </Filter>
+    <Filter Include="Source Files\Engine\Graphics\Camera\EditorCamera">
+      <UniqueIdentifier>{24b75239-6ef3-488c-bdfa-df421f63f68d}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="Engine\Graphics\Camera\Camera.cpp">
@@ -149,6 +152,9 @@
     </ClCompile>
     <ClCompile Include="Engine\Cores\BitArray\BitArray.cpp">
       <Filter>Source Files\Engine\Cores\BirArray</Filter>
+    </ClCompile>
+    <ClCompile Include="Engine\Graphics\Camera\EditorCamera\EditorCamera.cpp">
+      <Filter>Source Files\Engine\Graphics\Camera\EditorCamera</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
@@ -217,6 +223,9 @@
     </ClInclude>
     <ClInclude Include="Engine\Cores\BitArray\BitArray.h">
       <Filter>Source Files\Engine\Cores\BirArray</Filter>
+    </ClInclude>
+    <ClInclude Include="Engine\Graphics\Camera\EditorCamera\EditorCamera.h">
+      <Filter>Source Files\Engine\Graphics\Camera\EditorCamera</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>

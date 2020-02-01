@@ -50,10 +50,10 @@ void cCamera::CameraControl(sWindowInput* const i_windowInput, float i_dt)
 }
 
 
-void cCamera::MouseControl(GLfloat i_dx, GLfloat i_dy, float i_dt)
+void cCamera::MouseControl(sWindowInput* const i_windowInput, float i_dt)
 {
-	m_yaw += i_dx * m_turnSpeed ;
-	m_pitch += i_dy * m_turnSpeed;
+	m_yaw += i_windowInput->DX() * m_turnSpeed ;
+	m_pitch += i_windowInput->DY() * m_turnSpeed;
 	Update();
 }
 

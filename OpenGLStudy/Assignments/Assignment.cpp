@@ -12,7 +12,7 @@
 
 
 #include "Graphics/Effect/Effect.h"
-#include "Graphics/Camera/Camera.h"
+#include "Graphics/Camera/EditorCamera/EditorCamera.h"
 #include "Graphics/Model/Model.h"
 #include "Light/PointLight/PointLight.h"
 
@@ -50,9 +50,9 @@ void Assignment::CreateEffect()
 
 void Assignment::CreateCamera()
 {
-	m_mainCamera = new cCamera(glm::vec3(0,0,0),0,0,3,0.1f);
+	m_editorCamera = new cEditorCamera(glm::vec3(0,0,0),0,0,3,10.f);
 	float _aspect = (float)(Get_GLFW_Window()->GetBufferWidth()) / (float)(Get_GLFW_Window()->GetBufferHeight());
-	m_mainCamera->CreateProjectionMatrix(45.0f, _aspect, 0.1f, 150.0f);
+	m_editorCamera->CreateProjectionMatrix(45.0f, _aspect, 0.1f, 150.0f);
 }
 
 void Assignment::Run()
@@ -90,8 +90,8 @@ void Assignment::Run()
 			model = glm::scale(model, glm::vec3(0.05f, 0.05f, 0.025f));
 
 			glUniformMatrix4fv(m_effectList[0]->GetModelMatrixUniformID(), 1, GL_FALSE, glm::value_ptr(model));
-			glUniformMatrix4fv(m_effectList[0]->GetProjectionMatrixUniformID(), 1, GL_FALSE, glm::value_ptr(m_mainCamera->GetProjectionMatrix()));
-			glUniformMatrix4fv(m_effectList[0]->GetViewMatrixUniformID(), 1, GL_FALSE, glm::value_ptr(m_mainCamera->GetViewMatrix()));
+			glUniformMatrix4fv(m_effectList[0]->GetProjectionMatrixUniformID(), 1, GL_FALSE, glm::value_ptr(m_editorCamera->GetProjectionMatrix()));
+			glUniformMatrix4fv(m_effectList[0]->GetViewMatrixUniformID(), 1, GL_FALSE, glm::value_ptr(m_editorCamera->GetViewMatrix()));
 			{
 				// fix non-uniform scale
 				glm::mat4 normalMatrix = glm::transpose(glm::inverse(model));
@@ -112,7 +112,7 @@ void Assignment::Run()
 
 void Assignment::CleanUp()
 {
-	delete m_mainCamera;
+	delete m_editorCamera;
 
 	for (auto it = m_effectList.begin(); it != m_effectList.end(); ++it)
 	{
@@ -132,13 +132,14 @@ void Assignment::Tick(float second_since_lastFrame)
 
 	// get + handle user input events
 	{
-		m_mainCamera->CameraControl(_windowInput, second_since_lastFrame);
-		m_mainCamera->MouseControl(_windowInput->DX(), _windowInput->DY(), second_since_lastFrame);
+		m_editorCamera->CameraControl(_windowInput, second_since_lastFrame);
+
+		m_editorCamera->MouseControl(_windowInput, 0.02f);
 	}
 
 }
 
 void Assignment::FixedTick()
 {
-
+	
 }
