@@ -17,7 +17,8 @@
 #include "Light/PointLight/PointLight.h"
 #include "Light/AmbientLight/AmbientLight.h"
 #include "Material/Material.h"
-
+#include "Actor/Actor.h"
+#include "Transform/Transform.h"
 
 
 bool Assignment::Initialize(GLuint i_width, GLuint i_height, const char* i_windowName /*= "Default Window"*/)
@@ -27,18 +28,10 @@ bool Assignment::Initialize(GLuint i_width, GLuint i_height, const char* i_windo
 		assert(false, "Failed to initialize Application!");
 		return false;
 	}
-
-	m_teapot = new Graphics::cModel();
-	m_teapot->LoadModel("Contents/models/teapot.obj");
+	CreateActor();
 	CreateEffect();
 	CreateCamera();
-
-	m_PointLight = new Graphics::cPointLight(Color(1.f,1.f,1.f)
-		, glm::vec3(0, 1.5f, 0), 0.3f, 0.1f, 0.1f);
-	m_PointLight->SetupLight(m_effectList[0]->GetProgramID(), 0);
-	//Color(0.1f, 0.1f, 0.1f)
-	m_ambientLight = new Graphics::cAmbientLight(Color::Black());
-	m_ambientLight->SetupLight(m_effectList[0]->GetProgramID(), 0);
+	CreateLight();
 
 	return result;
 }
@@ -50,15 +43,36 @@ void Assignment::CreateEffect()
 		return;
 	}
 	m_effectList.push_back(defaultEffect);
-
+	m_currentEffect = m_effectList[0];
 	// -----------------------------------
 	// Create materials
 	// -----------------------------------
-	m_material = new Graphics::cMaterial();
-	m_material->SetDiffuseIntensity(defaultEffect->GetProgramID(), Color(1,0.0f,0.0f));
-	m_material->SetSpecularIntensity(defaultEffect->GetProgramID(), Color(1,1,1));
-	m_material->SetShininess(defaultEffect->GetProgramID(), 32);
+	auto _material = new Graphics::cMaterial();
+	_material->SetDiffuseIntensity(defaultEffect->GetProgramID(), Color(1,0.0f,0.0f));
+	_material->SetSpecularIntensity(defaultEffect->GetProgramID(), Color(1,1,1));
+	_material->SetShininess(defaultEffect->GetProgramID(), 32);
 
+	// Set material
+	m_teapot->SetMaterial(_material);
+	// -----------------------------------
+	// Create models
+	// -----------------------------------
+	Graphics::cModel* _teapot = new Graphics::cModel();
+	_teapot->LoadModel("Contents/models/teapot.obj");
+
+	// Set model
+	m_teapot->SetModel(_teapot);
+
+
+}
+
+void Assignment::CreateActor()
+{
+	m_teapot = new cActor();
+	m_teapot->Initialize();
+	m_teapot->Transform()->Translate(glm::vec3(0, -0.4f, -2.f));
+	m_teapot->Transform()->Rotate(glm::vec3(1, 0, 0), -90.f);
+	m_teapot->Transform()->Scale(glm::vec3(0.05f, 0.05f, 0.05f));
 }
 
 void Assignment::CreateCamera()
@@ -68,8 +82,20 @@ void Assignment::CreateCamera()
 	m_editorCamera->CreateProjectionMatrix(45.0f, _aspect, 0.1f, 150.0f);
 }
 
+void Assignment::CreateLight()
+{
+
+	m_PointLight = new Graphics::cPointLight(Color(1.f, 1.f, 1.f), 0.3f, 0.1f, 0.1f);
+	m_PointLight->SetupLight(m_currentEffect->GetProgramID(), 0);
+	m_PointLight->SetLightInitialLocation(glm::vec3(0, 1.5f, 0));
+	//Color(0.1f, 0.1f, 0.1f)
+	m_ambientLight = new Graphics::cAmbientLight(Color::Black());
+	m_ambientLight->SetupLight(m_currentEffect->GetProgramID(), 0);
+}
+
 void Assignment::Run()
 {
+
 	// loop until window closed
 	while (!m_shouldApplicationLoopExit)
 	{
@@ -82,44 +108,28 @@ void Assignment::Run()
 
 		// for recompile shader
 		if (m_window->GetWindowInput()->IsKeyDown(GLFW_KEY_F6)) {
-			m_effectList[0]->RecompileShader(Constants::CONST_PATH_DEFAULT_VERTEXSHADER, GL_VERTEX_SHADER);
+			m_currentEffect->RecompileShader(Constants::CONST_PATH_DEFAULT_VERTEXSHADER, GL_VERTEX_SHADER);
 		}
 
-		m_effectList[0]->UseEffect();
+		m_currentEffect->UseEffect();
 
 		// Update camera location
 		// --------------------------------------------------
-		m_editorCamera->UpdateUniformLocation(m_effectList[0]->GetProgramID());
+		m_editorCamera->UpdateUniformLocation(m_currentEffect->GetProgramID());
+		glUniformMatrix4fv(m_currentEffect->GetProjectionMatrixUniformID(), 1, GL_FALSE, glm::value_ptr(m_editorCamera->GetProjectionMatrix()));
+		glUniformMatrix4fv(m_currentEffect->GetViewMatrixUniformID(), 1, GL_FALSE, glm::value_ptr(m_editorCamera->GetViewMatrix()));
 
 		// Set up lighting
 		// --------------------------------------------------
 		{	
 			m_ambientLight->Illuminate();
-			m_effectList[0]->SetPointLightCount(1);
+			m_currentEffect->SetPointLightCount(1);
 			m_PointLight->Illuminate();
 		}
-
-		// Set up materials
-		// --------------------------------------------------
-		m_material->UseMaterial(m_effectList[0]->GetProgramID());
-
 		// main draw happens in this scope
 		// --------------------------------------------------
 		{
-			glm::mat4 model = glm::identity<glm::mat4>();
-			model = glm::translate(model, glm::vec3(0, -0.4f, -2.f));
-			model = glm::rotate(model, glm::radians(-90.f), glm::vec3(1, 0, 0));
-			model = glm::scale(model, glm::vec3(0.05f, 0.05f, 0.05f));
-
-			glUniformMatrix4fv(m_effectList[0]->GetModelMatrixUniformID(), 1, GL_FALSE, glm::value_ptr(model));
-			glUniformMatrix4fv(m_effectList[0]->GetProjectionMatrixUniformID(), 1, GL_FALSE, glm::value_ptr(m_editorCamera->GetProjectionMatrix()));
-			glUniformMatrix4fv(m_effectList[0]->GetViewMatrixUniformID(), 1, GL_FALSE, glm::value_ptr(m_editorCamera->GetViewMatrix()));
-			{
-				// fix non-uniform scale
-				glm::mat4 normalMatrix = glm::transpose(glm::inverse(model));
-				glUniformMatrix4fv(m_effectList[0]->GetNormalMatrixUniformID(), 1, GL_FALSE, glm::value_ptr(normalMatrix));
-			}
-			m_teapot->Render();
+			m_teapot->Update(m_currentEffect);
 		}
 		// --------------------------------------------------
 
@@ -144,9 +154,8 @@ void Assignment::CleanUp()
 
 	safe_delete(m_editorCamera);
 	safe_delete(m_PointLight);
-	safe_delete(m_teapot);
-	safe_delete(m_material);
 	safe_delete(m_ambientLight);
+	safe_delete(m_teapot);
 
 	cApplication::CleanUp();
 }

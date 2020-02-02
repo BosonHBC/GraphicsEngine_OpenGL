@@ -3,10 +3,10 @@
 
 namespace Graphics {
 
-	void cSpotLight::SetSpotLight(glm::vec3 i_pos, glm::vec3 i_dir)
+	void cSpotLight::SetSpotLightInitialLocation(glm::vec3 i_pos, glm::vec3 i_dir)
 	{
-		cPointLight::SetupLight(i_pos);
-		m_dir = i_dir;
+		cPointLight::SetLightInitialLocation(i_pos);
+		m_dir = glm::normalize(i_dir);
 	}
 
 	void cSpotLight::Illuminate()

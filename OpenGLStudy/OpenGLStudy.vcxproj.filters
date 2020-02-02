@@ -97,6 +97,15 @@
     <Filter Include="Source Files\Engine\Graphics\Camera\EditorCamera">
       <UniqueIdentifier>{24b75239-6ef3-488c-bdfa-df421f63f68d}</UniqueIdentifier>
     </Filter>
+    <Filter Include="Source Files\Engine\Math">
+      <UniqueIdentifier>{54a1789a-69b8-4130-8e55-b675fee99c8d}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source Files\Engine\Cores\Actor">
+      <UniqueIdentifier>{57160238-6888-44a4-a7ed-9cfa40d113f8}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source Files\Engine\Math\Transform">
+      <UniqueIdentifier>{92937dad-c7b2-4d94-97ba-c75cae129afa}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="Engine\Graphics\Camera\Camera.cpp">
@@ -155,6 +164,12 @@
     </ClCompile>
     <ClCompile Include="Engine\Graphics\Camera\EditorCamera\EditorCamera.cpp">
       <Filter>Source Files\Engine\Graphics\Camera\EditorCamera</Filter>
+    </ClCompile>
+    <ClCompile Include="Engine\Cores\Actor\Actor.cpp">
+      <Filter>Source Files\Engine\Cores\Actor</Filter>
+    </ClCompile>
+    <ClCompile Include="Engine\Math\Transform\Transform.cpp">
+      <Filter>Source Files\Engine\Math\Transform</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
@@ -226,6 +241,15 @@
     </ClInclude>
     <ClInclude Include="Engine\Graphics\Camera\EditorCamera\EditorCamera.h">
       <Filter>Source Files\Engine\Graphics\Camera\EditorCamera</Filter>
+    </ClInclude>
+    <ClInclude Include="Engine\Cores\Actor\Actor.h">
+      <Filter>Source Files\Engine\Cores\Actor</Filter>
+    </ClInclude>
+    <ClInclude Include="Engine\Math\Transform\Transform.h">
+      <Filter>Source Files\Engine\Math\Transform</Filter>
+    </ClInclude>
+    <ClInclude Include="Engine\Cores\Core.h">
+      <Filter>Source Files\Engine\Cores</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>

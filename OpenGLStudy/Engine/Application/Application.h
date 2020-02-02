@@ -1,12 +1,14 @@
 #pragma once
-class cWindow;
 
+#include "Engine/Cores/Core.h"
 #include "gl/glew.h"
 #include "glfw/glfw3.h"
 #include <thread>
 
-#define safe_delete(x) if(x){delete x; x = nullptr;}
-
+/** Forward deceleration*/
+//----------------------------------------------
+class cWindow;
+//----------------------------------------------
 namespace Application {
 	class cApplication
 	{

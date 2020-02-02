@@ -6,19 +6,19 @@ namespace Graphics {
 	{
 	public:
 		cSpotLight() : cPointLight() {}
-		cSpotLight(Color i_color, glm::vec3 i_pos, glm::vec3 i_dir,
+		cSpotLight(Color i_color,
 			GLfloat i_edge,
 			GLfloat i_const, GLfloat i_linear, GLfloat i_quadratic) :
 			m_edge(i_edge),
-			cPointLight(i_color, i_pos, i_const, i_linear, i_quadratic) 
+			cPointLight(i_color, i_const, i_linear, i_quadratic) 
 		{
-			m_dir = glm::normalize(i_dir);
+
 			m_procEdge = cosf(glm::radians(m_edge));
 		}
 
 		virtual ~cSpotLight() {};
 		
-		void SetSpotLight(glm::vec3 i_pos, glm::vec3 i_dir);
+		void SetSpotLightInitialLocation(glm::vec3 i_pos, glm::vec3 i_dir);
 
 		/** overriding virtual functions*/
 		void Illuminate();

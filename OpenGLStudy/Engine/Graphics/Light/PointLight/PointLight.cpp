@@ -6,7 +6,8 @@ namespace Graphics {
 	void cPointLight::Illuminate()
 	{
 		glUniform3f(m_colorID, m_color.r, m_color.g, m_color.b);
-		glUniform3f(m_positionID, m_position.x, m_position.y, m_position.z);
+		glm::vec3 worldLoc = m_transform->GetWorldLocation();
+		glUniform3f(m_positionID, m_transform->GetWorldLocation().x, m_transform->GetWorldLocation().y, m_transform->GetWorldLocation().z);
 		glUniform1f(m_constID, m_const);
 		glUniform1f(m_linearID, m_linear);
 		glUniform1f(m_quadraticID, m_quadratic);
@@ -35,9 +36,9 @@ namespace Graphics {
 
 	}
 
-	void cPointLight::SetupLight(glm::vec3 i_position)
+	void cPointLight::SetLightInitialLocation(glm::vec3 i_position)
 	{
-		m_position = i_position;
+		m_transform->Translate(i_position);
 	}
 
 }
