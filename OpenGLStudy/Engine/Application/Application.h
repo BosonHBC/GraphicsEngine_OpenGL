@@ -5,6 +5,8 @@ class cWindow;
 #include "glfw/glfw3.h"
 #include <thread>
 
+#define safe_delete(x) if(x){delete x; x = nullptr;}
+
 namespace Application {
 	class cApplication
 	{
@@ -35,8 +37,8 @@ namespace Application {
 		uint64_t m_tickCount_systemTime_WhenApplicationStart = false;
 		uint64_t m_tickCount_systemTime_Current = 0;
 		uint64_t m_tickCountt_systemTime_Elapsed = 0;
-		// Fixed update rate, in default case: function should be called every 0.02 seconds, which is every 1/0.02f = 50 ticks
-		float m_simulationUpdateRate_InSeconds = 0.02f;
+		// Fixed update rate, in default case: function should be called every 0.016667f seconds, which is every 1/0.016667f = 60 ticks
+		float m_simulationUpdateRate_InSeconds = 0.016667f;
 
 		/** Handle threading*/
 		//---------------------------------------------------

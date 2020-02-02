@@ -16,7 +16,7 @@ namespace Graphics {
 
 		/** Initializations and clean up*/
 		/** Create program with default vertex shader and fragment shader*/
-		bool CreateProgram();
+		bool CreateProgram(const char* const i_vertexShaderPath, const char* const i_fragmentShaderPath);
 		void CleanUp();
 
 		/** Usage functions*/
@@ -30,11 +30,12 @@ namespace Graphics {
 		const GLuint& GetModelMatrixUniformID() const { return m_modelMatrixID; }
 		const GLuint& GetViewMatrixUniformID() const { return m_viewMatrixID; }
 		const GLuint& GetProjectionMatrixUniformID() const { return m_projectionMatrixID; }
+		const GLuint& GetNormalMatrixUniformID() const { return m_normalMatrixID; }
 		const GLuint& GetProgramID() const { return m_programID; }
 	private:
 		/** private variables*/
 		GLuint m_programID;
-		GLuint m_modelMatrixID, m_viewMatrixID, m_projectionMatrixID;
+		GLuint m_modelMatrixID, m_viewMatrixID, m_projectionMatrixID, m_normalMatrixID;
 		GLuint m_pointLightCountID, m_spotLightCountID;
 
 		std::map<GLenum, sGLShader*> m_shaders;

@@ -63,7 +63,7 @@ bool cWindow::Initialzation()
 		glfwSetWindowUserPointer(m_glfwWindow, this);
 		CreateCallbacks();
 		// Set input mode
-		glfwSetInputMode(m_glfwWindow, GLFW_CURSOR, GLFW_CURSOR_DISABLED);
+		glfwSetInputMode(m_glfwWindow, GLFW_CURSOR, GLFW_CURSOR_NORMAL);
 	}
 	return true;
 }
@@ -112,6 +112,7 @@ void cWindow::CreateCallbacks()
 	m_windowInput = new sWindowInput(GLFW_MAX_KEY_COUNT);
 	glfwSetKeyCallback(m_glfwWindow, &cWindow::HandleKeys);
 	glfwSetCursorPosCallback(m_glfwWindow, &cWindow::HandleMouse);
+	glfwSetMouseButtonCallback(m_glfwWindow, &cWindow::HandleMouseButton);
 }
 
 void cWindow::HandleKeys(GLFWwindow* i_window, int i_key, int i_code, int i_action, int i_mode)
@@ -155,6 +156,24 @@ void cWindow::HandleMouse(GLFWwindow* i_window, double i_xPos, double i_yPos)
 
 	_input->lastX = i_xPos;
 	_input->lastY = i_yPos;
+}
+
+void cWindow::HandleMouseButton(GLFWwindow* i_window, int i_button, int i_action, int i_mods)
+{
+	// Get reference to the instanced window
+	cWindow* thisWindow = static_cast<cWindow*>(glfwGetWindowUserPointer(i_window));
+	sWindowInput* _input = thisWindow->m_windowInput;
+
+	if (i_button >= 0 && i_button <= GLFW_MAX_BUTTON_COUNT) {
+
+		if (i_action == GLFW_PRESS) {
+			_input->SetButton(i_button, true);
+		}
+		else if (i_action == GLFW_RELEASE) {
+			_input->SetButton(i_button, false);
+		}
+	}
+
 }
 
 void cWindow::SwapBuffers()

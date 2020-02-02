@@ -8,6 +8,7 @@ namespace Constants {
 	char const * const CONST_PATH_SHADER_ROOT = "Contents/shaders/";
 	char const * const CONST_PATH_DEFAULT_VERTEXSHADER = "vertexShader.glsl";
 	char const * const CONST_PATH_DEFAULT_FRAGMENTSHADER = "fragmentShader.glsl";
+	char const* const CONST_PATH_BLINNPHONG_FRAGMENTSHADER = "BlinnPhong.glsl";
 
 }
 #endif // !MYLIB_CONSTANTS_H

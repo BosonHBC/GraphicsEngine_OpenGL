@@ -113,10 +113,7 @@ namespace Application {
 			delete m_applicationThread;
 			m_applicationThread = nullptr;
 		}
-		if (m_window) {
-			delete m_window;
-			m_window = nullptr;
-		}
+		safe_delete(m_window);
 	}
 
 }

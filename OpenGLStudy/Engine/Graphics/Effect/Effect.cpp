@@ -20,7 +20,7 @@ namespace Graphics {
 		CleanUp();
 	}
 
-	bool cEffect::CreateProgram()
+	bool cEffect::CreateProgram(const char* const i_vertexShaderPath, const char* const i_fragmentShaderPath)
 	{
 		m_programID = glCreateProgram();
 		if (!m_programID) {
@@ -28,11 +28,11 @@ namespace Graphics {
 			return false;
 		}
 
-		if (!LoadShader(Constants::CONST_PATH_DEFAULT_VERTEXSHADER, GL_VERTEX_SHADER)) {
+		if (!LoadShader(i_vertexShaderPath, GL_VERTEX_SHADER)) {
 			printf("Can not create program without vertex shader\n");
 			return false;
 		}
-		if (!LoadShader(Constants::CONST_PATH_DEFAULT_FRAGMENTSHADER, GL_FRAGMENT_SHADER))
+		if (!LoadShader(i_fragmentShaderPath, GL_FRAGMENT_SHADER))
 		{
 			printf("Can not create program without fragment shader\n");
 			return false;
@@ -76,6 +76,7 @@ namespace Graphics {
 			delete it->second;
 			it->second = nullptr;
 		}
+		m_shaders.clear();
 
 		if (m_programID != 0)
 		{
@@ -95,6 +96,7 @@ namespace Graphics {
 		m_modelMatrixID = glGetUniformLocation(m_programID, "modelMatrix");
 		m_viewMatrixID = glGetUniformLocation(m_programID, "viewMatrix");
 		m_projectionMatrixID = glGetUniformLocation(m_programID, "projectionMatrix");
+		m_normalMatrixID = glGetUniformLocation(m_programID, "normalMatrix");
 
 		m_pointLightCountID = glGetUniformLocation(m_programID, "pointLightCount");
 		m_spotLightCountID = glGetUniformLocation(m_programID, "spotLightCount");
@@ -121,7 +123,7 @@ namespace Graphics {
 
 	bool cEffect::RecompileShader(const char* i_shaderName, GLenum i_shaderType)
 	{
-		CreateProgram();
+		CreateProgram(Constants::CONST_PATH_DEFAULT_VERTEXSHADER, Constants::CONST_PATH_BLINNPHONG_FRAGMENTSHADER);
 		return true;
 	}
 

@@ -68,26 +68,23 @@ uniform vec3 camPos;
 // Fucntions
 //-------------------------------------------------------------------------
 
-vec4 IlluminateByDirection(Light light, vec3 direction){
+vec4 IlluminateByDirection(Light light, vec3 vL){
 
-	float vN_Dot_vL = max( dot( Normal , direction), 0.0f );
-	vec4 diffuseColor = vec4(light.color , 1.0f) * vec4(material.kd,1.0f) * vN_Dot_vL;
+	vec4 outColor = vec4(0,0,0,0);
+	vec3 vN = normalize(Normal);
+	float vN_Dot_vL = max( dot( vN , vL), 0.0f );
 
-	vec4 specularColor = vec4(0,0,0,0);
-	if(vN_Dot_vL > 0.0f)
-	{
-		vec3 fragToEye = normalize(camPos - fragPos);
-		vec3 reflectedVertex = normalize( reflect( direction, normalize(Normal) ) );
-		
-		float specularFactor = dot(fragToEye, reflectedVertex);
+	vec3 vV = normalize(camPos - fragPos);
+	vec3 vH = normalize(vV + vL);
+	vec4 diffuseColor = vec4(material.kd, 1.0f) * vN_Dot_vL;
+	outColor += vec4(light.color , 1.0f) * diffuseColor;
 
-		if(specularFactor > 0.0f){
-			specularFactor = pow(specularFactor, material.shininess);
-			specularColor = vec4(light.color, 1.0f) * vec4(material.ks,1.0f)  * specularFactor;
-		}
-	}
+	float specularFactor = max(pow(dot(vH, vN),material.shininess),0.0f);
+	vec4 specularColor = vec4(material.ks, 1.0f) * specularFactor;
 
-	return diffuseColor + specularColor;
+	outColor += vec4(light.color , 1.0f) *specularColor;
+
+	return outColor;
 }
 
 
@@ -95,12 +92,9 @@ vec4 IlluminateByDirection(Light light, vec3 direction){
 // Light calculation
 //-------------------------------------------------------------------------
 
-vec4 CalcDirectionLight(){
-	return IlluminateByDirection(directionalLight.base, directionalLight.direction);
-}
 
 vec4 CalcPointLight(PointLight pLight){
-		vec3 dir = fragPos - pLight.position;
+		vec3 dir = pLight.position - fragPos;
 		float dist = length(dir);
 		dir = normalize(dir);
 
@@ -121,26 +115,6 @@ vec4 CalcPointLights(){
 	return outColor;
 }
 
-vec4 CalcSpotLight(SpotLight sLight){
-	vec3 rayDirection = normalize(fragPos - sLight.base.position);
-	float slFactor = dot(rayDirection, sLight.direction);
-
-	if(slFactor > sLight.edge){
-		vec4 color = CalcPointLight(sLight.base);
-		return color * (1.0f - (1.0f - slFactor) * (1.0f / (1.0f - sLight.edge)));
-	}
-	else return vec4(0,0,0,0);
-}
-
-vec4 CalcSpotLights(){
-	vec4 outColor = vec4(0,0,0,0);
-
-	for(int i = 0; i < spotLightCount; ++i){
-		outColor += CalcSpotLight(spotLights[i]);
-	}
-	return outColor;
-}
-
 //-------------------------------------------------------------------------
 // Main
 //-------------------------------------------------------------------------
@@ -148,11 +122,11 @@ vec4 CalcSpotLights(){
 void main(){
 	
 	vec4 ambientLightColor = vec4(ambientLight.base.color, 1.0f);
-	vec4 directionLightColor = CalcDirectionLight();
 	vec4 pointLightColor = CalcPointLights();
-	vec4 spotLightColor = CalcSpotLights();
+
 
 	//texture(diffuseTex, texCood0)
-	color = texture(diffuseTex, texCood0) * ( ambientLightColor + directionLightColor + pointLightColor + spotLightColor);
-
+	color = vec4(1,1,1,1) * ( ambientLightColor + pointLightColor);
+	//vec3 n = (Normal + vec3(1,1,1))/2.0f;
+	//color = vec4(n,1);
 }

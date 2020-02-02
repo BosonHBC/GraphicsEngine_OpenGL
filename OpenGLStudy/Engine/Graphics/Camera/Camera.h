@@ -23,11 +23,11 @@ public:
 	{
 		Update();
 	}
-	~cCamera();
+	virtual ~cCamera();
 
 	/** Usage functions*/
-	void CameraControl(sWindowInput* const i_windowInput, float i_dt);
-	void MouseControl(GLfloat i_dx, GLfloat i_dy, float i_dt);
+	virtual void CameraControl(sWindowInput* const i_windowInput, float i_dt);
+	virtual void MouseControl(sWindowInput* const i_windowInput, float i_dt);
 	// Projection matrix
 	void CreateProjectionMatrix(GLfloat i_fov, GLfloat i_aspect, GLfloat i_nearPlane = 0.1f, GLfloat i_farPlane = 100.f);
 
@@ -41,7 +41,7 @@ public:
 	glm::vec3 CamRight() const { return m_right; }
 	glm::vec3 CamUp() const { return m_up; }
 	const glm::mat4& GetProjectionMatrix() const { return m_projectionMatrix; }
-private:
+protected:
 	/** private member variables*/
 	glm::vec3 m_position;
 	glm::vec3 m_forward;
@@ -59,7 +59,7 @@ private:
 	GLuint m_camPositionLocation;
 
 	/** private helper functions*/
-	void Update();
+	virtual void Update();
 
 	/** private static variables*/
 	static glm::vec3 WorldUp;

@@ -6,6 +6,7 @@ layout (location = 2) in vec3 normal;
 uniform mat4 projectionMatrix;
 uniform mat4 viewMatrix;
 uniform mat4 modelMatrix;
+uniform mat4 normalMatrix;
 
 out vec2 texCood0;
 out vec3 Normal;
@@ -17,7 +18,7 @@ void main()
 	texCood0 = texcood;
 
 	// Handle scaling in only one axis situation
-	Normal = mat3(transpose(inverse(modelMatrix))) * normal;
+	Normal = mat3(normalMatrix) * normal;
 
 	fragPos =  (modelMatrix * vec4(pos.x, pos.y, pos.z, 1.0)).xyz;
 }
