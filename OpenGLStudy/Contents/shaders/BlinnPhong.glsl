@@ -121,12 +121,10 @@ vec4 CalcPointLights(){
 
 void main(){
 	
-	vec4 ambientLightColor = vec4(ambientLight.base.color, 1.0f);
+	vec4 ambientLightColor = vec4(ambientLight.base.color, 1.0f) * vec4(material.kd, 1.0f);
 	vec4 pointLightColor = CalcPointLights();
 
 
 	//texture(diffuseTex, texCood0)
 	color = vec4(1,1,1,1) * ( ambientLightColor + pointLightColor);
-	//vec3 n = (Normal + vec3(1,1,1))/2.0f;
-	//color = vec4(n,1);
 }

@@ -45,6 +45,6 @@ bool cTransform::HasScale() const
 
 void cTransform::Update()
 {
-	//mInv = glm::inverse(m);
+	mInv = glm::inverse(m);
 
 }

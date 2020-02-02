@@ -10,6 +10,7 @@
 #include "glm/gtc/matrix_transform.hpp"
 #include "glm/gtc/type_ptr.hpp"
 
+#include "Time/Time.h"
 
 #include "Graphics/Effect/Effect.h"
 #include "Graphics/Camera/EditorCamera/EditorCamera.h"
@@ -88,8 +89,8 @@ void Assignment::CreateLight()
 	m_PointLight = new Graphics::cPointLight(Color(1.f, 1.f, 1.f), 0.3f, 0.1f, 0.1f);
 	m_PointLight->SetupLight(m_currentEffect->GetProgramID(), 0);
 	m_PointLight->SetLightInitialLocation(glm::vec3(0, 1.5f, 0));
-	//Color(0.1f, 0.1f, 0.1f)
-	m_ambientLight = new Graphics::cAmbientLight(Color::Black());
+
+	m_ambientLight = new Graphics::cAmbientLight(Color(0.1f, 0.1f, 0.1f));
 	m_ambientLight->SetupLight(m_currentEffect->GetProgramID(), 0);
 }
 
@@ -171,9 +172,12 @@ void Assignment::Tick(float second_since_lastFrame)
 		m_editorCamera->MouseControl(_windowInput, 0.01667f);
 	}
 
+	glm::vec3 _toLight = (m_PointLight->Transform()->GetWorldLocation() - m_teapot->Transform()->GetWorldLocation());
+	glm::vec3 _toForward = glm::normalize( glm::cross(glm::vec3(0, 1, 0), _toLight)) * (5 *second_since_lastFrame);
+	m_PointLight->Transform()->Translate(_toForward);
 }
 
 void Assignment::FixedTick()
 {
-	
+
 }
