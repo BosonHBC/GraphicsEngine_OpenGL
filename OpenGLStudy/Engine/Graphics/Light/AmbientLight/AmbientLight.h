@@ -9,8 +9,8 @@ namespace Graphics {
 			: cGenLight()
 		{}
 
-		cAmbientLight(GLfloat i_diffuseIntensity, GLfloat i_specularIntensity,Color i_color)
-			: cGenLight(i_diffuseIntensity, i_specularIntensity,	i_color)
+		cAmbientLight(Color i_color)
+			: cGenLight(i_color)
 		{}
 
 		~cAmbientLight();

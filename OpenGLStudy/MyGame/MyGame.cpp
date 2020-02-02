@@ -12,7 +12,7 @@
 #include "Graphics/Mesh/Mesh.h"
 #include "Graphics/Material/Material.h"
 #include "Graphics/Effect/Effect.h"
-#include "Graphics/Camera/Camera.h"
+#include "Graphics/Camera/EditorCamera/EditorCamera.h"
 #include "Graphics/Light/AmbientLight/AmbientLight.h"
 #include "Graphics/Light/DirectionalLight/DirectionalLight.h"
 #include "Graphics/Light/PointLight/PointLight.h"
@@ -27,7 +27,7 @@
 
 std::vector<Graphics::cMesh*> s_renderList = std::vector<Graphics::cMesh *>();
 std::vector<Graphics::cEffect*> s_effectList = std::vector<Graphics::cEffect *>();
-cCamera* s_mainCamera;
+cEditorCamera* s_mainCamera;
 cMyGame* s_myGameInstance;
 
 Graphics::cMaterial s_brickMat;
@@ -54,7 +54,7 @@ void SetUpLights();
 
 void CreateCamera()
 {
-	s_mainCamera = new cCamera();
+	s_mainCamera = new cEditorCamera(glm::vec3(0,0,0), 0.0f, 0.0f, 1.0f, 10.f);
 	float _aspect = (float)s_myGameInstance->Get_GLFW_Window()->GetBufferWidth() / (float)s_myGameInstance->Get_GLFW_Window()->GetBufferHeight();
 	s_mainCamera->CreateProjectionMatrix(45.0f, _aspect, 0.1f, 150.0f);
 }
@@ -143,7 +143,7 @@ void CalculateAverageNormals(GLuint* indices, GLuint indiceCount, GLfloat* verti
 void CreateEffect()
 {
 	Graphics::cEffect* defaultEffect = new Graphics::cEffect();
-	if (!defaultEffect->CreateProgram()) {
+	if (!defaultEffect->CreateProgram(Constants::CONST_PATH_DEFAULT_VERTEXSHADER, Constants::CONST_PATH_BLINNPHONG_FRAGMENTSHADER)) {
 		exit(1);
 		return;
 	}
@@ -152,34 +152,34 @@ void CreateEffect()
 void SetUpTextures()
 {
 	s_brickMat.SetDiffuse("Contents/textures/brick.png");
-	s_brickMat.SetShininess(4);
+	s_brickMat.SetShininess(s_effectList[0]->GetProgramID(), 4);
 
 	s_woodMat.SetDiffuse("Contents/textures/wood2.png");
-	s_woodMat.SetShininess(64);
+	s_woodMat.SetShininess(s_effectList[0]->GetProgramID(), 64);
 	
 	s_floorMat.SetDiffuse("Contents/textures/whiteBoard.png");
-	s_floorMat.SetShininess(128);
+	s_floorMat.SetShininess(s_effectList[0]->GetProgramID(), 128);
 }
 void SetUpLights()
 {
 	// Ambient Light
-	s_ambientLight = Graphics::cAmbientLight(0.05f, 0.0f, Color(1, 1, 1));
+	s_ambientLight = Graphics::cAmbientLight(Color(1, 1, 1));
 	s_ambientLight.SetupLight(s_effectList[0]->GetProgramID());
 
 	// Directional light
-	s_DirectionalLight = Graphics::cDirectionalLight(0.2f, 0.8f, Color(1, 1, 0.9f)
+	s_DirectionalLight = Graphics::cDirectionalLight(Color(1, 1, 0.9f)
 														, glm::vec3(0, -1, -1));
 	s_DirectionalLight.SetupLight(s_effectList[0]->GetProgramID());
 
-	s_pointLights[0] = Graphics::cPointLight(0.3f, 0.75f, Color(0.8f, 0.8f, 0.8f)
+	s_pointLights[0] = Graphics::cPointLight(Color(0.8f, 0.8f, 0.8f)
 														,glm::vec3(-2.5f, 1.5f, 0.3f), 0.3f, 0.1f, 0.1f);
 	s_pointLights[0].SetupLight(s_effectList[0]->GetProgramID(), 0);
 
-	s_pointLights[1] = Graphics::cPointLight(0.5f, 1.f, Color(0.8f, 0.8f, 0.8f)
+	s_pointLights[1] = Graphics::cPointLight(Color(0.8f, 0.8f, 0.8f)
 														,glm::vec3(2.5f, 1.5f, 0.3f), 0.3f, 0.2f, 0.1f);
 	s_pointLights[1].SetupLight( s_effectList[0]->GetProgramID(), 1);
 
-	s_spotLights[0] = Graphics::cSpotLight(0.5f, 1.f, Color(1, 1, 1), glm::vec3(0,1, 0) 
+	s_spotLights[0] = Graphics::cSpotLight(Color(1, 1, 1), glm::vec3(0,1, 0) 
 														, glm::vec3(5, -1, 0), 20.f, 1.f, 0.0f, 0.0f);
 	s_spotLights[0].SetupLight(s_effectList[0]->GetProgramID(), 0);
 }
@@ -328,7 +328,7 @@ void cMyGame::Tick(float second_since_lastFrame)
 	// get + handle user input events
 	{
 		s_mainCamera->CameraControl(_windowInput, second_since_lastFrame);
-		s_mainCamera->MouseControl(_windowInput, second_since_lastFrame);
+		s_mainCamera->MouseControl(_windowInput, 0.016777f);
 	}
 
 }

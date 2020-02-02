@@ -111,7 +111,7 @@ namespace Graphics {
 			}
 
 			// 3. Insert normals
-			_vertices.insert(_vertices.end(), { -i_mesh->mNormals[i].x, -i_mesh->mNormals[i].y, -i_mesh->mNormals[i].z });
+			_vertices.insert(_vertices.end(), { i_mesh->mNormals[i].x, i_mesh->mNormals[i].y, i_mesh->mNormals[i].z });
 
 		}
 

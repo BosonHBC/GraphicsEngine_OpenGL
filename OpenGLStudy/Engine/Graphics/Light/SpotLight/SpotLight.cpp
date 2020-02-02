@@ -5,8 +5,8 @@ namespace Graphics {
 
 	void cSpotLight::SetSpotLight(glm::vec3 i_pos, glm::vec3 i_dir)
 	{
+		cPointLight::SetupLight(i_pos);
 		m_dir = i_dir;
-		m_position = i_pos;
 	}
 
 	void cSpotLight::Illuminate()
@@ -25,12 +25,6 @@ namespace Graphics {
 
 		snprintf(_buff, sizeof(_buff), "spotLights[%d].base.base.color", m_lightIndex);
 		m_colorID = glGetUniformLocation(i_programID, _buff);
-
-		snprintf(_buff, sizeof(_buff), "spotLights[%d].base.base.diffuseIntensity", m_lightIndex);
-		m_diffuseIntensityID = glGetUniformLocation(i_programID, _buff);
-
-		snprintf(_buff, sizeof(_buff), "spotLights[%d].base.base.specularIntensity", m_lightIndex);
-		m_specularIntensityID = glGetUniformLocation(i_programID, _buff);
 
 		snprintf(_buff, sizeof(_buff), "spotLights[%d].base.position", m_lightIndex);
 		m_positionID = glGetUniformLocation(i_programID, _buff);

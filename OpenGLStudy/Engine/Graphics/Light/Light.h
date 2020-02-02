@@ -9,10 +9,10 @@ namespace Graphics {
 	{
 	public:
 		/** Constructors and destructor */
-		cGenLight() : m_diffuseIntensity(1), m_specularIntensity(1), m_color(Color::White()), m_colorID(0), m_diffuseIntensityID(0), m_specularIntensityID(0)
+		cGenLight() : m_color(Color::White()), m_colorID(0)
 		{};
-		cGenLight(GLfloat i_diffuseIntensity, GLfloat i_specularIntensity, Color i_color)
-			: m_diffuseIntensity(i_diffuseIntensity), m_specularIntensity(i_specularIntensity), m_color(i_color) 
+		cGenLight(Color i_color)
+			:m_color(i_color) 
 		{}
 		virtual ~cGenLight();
 
@@ -23,9 +23,8 @@ namespace Graphics {
 		virtual void Illuminate() = 0;
 
 	protected:
-		GLfloat m_diffuseIntensity, m_specularIntensity;
 		Color m_color;
-		GLuint m_colorID, m_diffuseIntensityID, m_specularIntensityID;
+		GLuint m_colorID;
 		// record the index of this light
 		GLuint m_lightIndex;
 	};

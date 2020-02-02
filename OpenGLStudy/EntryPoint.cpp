@@ -19,7 +19,7 @@ int main()
 	_myGame->PostInitialization();
 	_myGame->Run();
 	
-	delete _myGame;
+	safe_delete(_myGame);
 
 #ifdef _DEBUG
 	_CrtDumpMemoryLeaks();

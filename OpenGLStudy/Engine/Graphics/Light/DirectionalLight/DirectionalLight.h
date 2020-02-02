@@ -8,8 +8,8 @@ namespace Graphics {
 		cDirectionalLight() 
 			: m_direction(glm::vec3(0, -1, 0)), cGenLight()
 		{}
-		cDirectionalLight(GLfloat i_diffuseIntensity, GLfloat i_specularIntensity, Color i_color, glm::vec3 i_direction)
-			: m_direction(i_direction), cGenLight(i_diffuseIntensity, i_specularIntensity, i_color)
+		cDirectionalLight(Color i_color, glm::vec3 i_direction)
+			: m_direction(i_direction), cGenLight(i_color)
 		{}
 		~cDirectionalLight();
 

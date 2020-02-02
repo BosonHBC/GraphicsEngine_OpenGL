@@ -15,6 +15,8 @@
 #include "Graphics/Camera/EditorCamera/EditorCamera.h"
 #include "Graphics/Model/Model.h"
 #include "Light/PointLight/PointLight.h"
+#include "Light/AmbientLight/AmbientLight.h"
+#include "Material/Material.h"
 
 
 
@@ -25,32 +27,43 @@ bool Assignment::Initialize(GLuint i_width, GLuint i_height, const char* i_windo
 		assert(false, "Failed to initialize Application!");
 		return false;
 	}
-	glfwSwapInterval(1);
 
 	m_teapot = new Graphics::cModel();
 	m_teapot->LoadModel("Contents/models/teapot.obj");
 	CreateEffect();
 	CreateCamera();
 
-	m_PointLight = new Graphics::cPointLight(0.3f, 0.75f, Color(0.8f, 0.8f, 0.8f)
-		, glm::vec3(-2.5f, 1.5f, 0.3f), 0.3f, 0.1f, 0.1f);
+	m_PointLight = new Graphics::cPointLight(Color(1.f,1.f,1.f)
+		, glm::vec3(0, 1.5f, 0), 0.3f, 0.1f, 0.1f);
 	m_PointLight->SetupLight(m_effectList[0]->GetProgramID(), 0);
+	//Color(0.1f, 0.1f, 0.1f)
+	m_ambientLight = new Graphics::cAmbientLight(Color::Black());
+	m_ambientLight->SetupLight(m_effectList[0]->GetProgramID(), 0);
 
 	return result;
 }
 void Assignment::CreateEffect()
 {
 	Graphics::cEffect* defaultEffect = new Graphics::cEffect();
-	if (!defaultEffect->CreateProgram()) {
+	if (!defaultEffect->CreateProgram(Constants::CONST_PATH_DEFAULT_VERTEXSHADER, Constants::CONST_PATH_BLINNPHONG_FRAGMENTSHADER)) {
 		exit(1);
 		return;
 	}
 	m_effectList.push_back(defaultEffect);
+
+	// -----------------------------------
+	// Create materials
+	// -----------------------------------
+	m_material = new Graphics::cMaterial();
+	m_material->SetDiffuseIntensity(defaultEffect->GetProgramID(), Color(1,0.0f,0.0f));
+	m_material->SetSpecularIntensity(defaultEffect->GetProgramID(), Color(1,1,1));
+	m_material->SetShininess(defaultEffect->GetProgramID(), 32);
+
 }
 
 void Assignment::CreateCamera()
 {
-	m_editorCamera = new cEditorCamera(glm::vec3(0,0,0),0,0,3,10.f);
+	m_editorCamera = new cEditorCamera(glm::vec3(0,1.f,0),-30.f,0,3,10.f);
 	float _aspect = (float)(Get_GLFW_Window()->GetBufferWidth()) / (float)(Get_GLFW_Window()->GetBufferHeight());
 	m_editorCamera->CreateProjectionMatrix(45.0f, _aspect, 0.1f, 150.0f);
 }
@@ -74,12 +87,21 @@ void Assignment::Run()
 
 		m_effectList[0]->UseEffect();
 
+		// Update camera location
+		// --------------------------------------------------
+		m_editorCamera->UpdateUniformLocation(m_effectList[0]->GetProgramID());
+
 		// Set up lighting
 		// --------------------------------------------------
-		{
+		{	
+			m_ambientLight->Illuminate();
 			m_effectList[0]->SetPointLightCount(1);
 			m_PointLight->Illuminate();
 		}
+
+		// Set up materials
+		// --------------------------------------------------
+		m_material->UseMaterial(m_effectList[0]->GetProgramID());
 
 		// main draw happens in this scope
 		// --------------------------------------------------
@@ -87,7 +109,7 @@ void Assignment::Run()
 			glm::mat4 model = glm::identity<glm::mat4>();
 			model = glm::translate(model, glm::vec3(0, -0.4f, -2.f));
 			model = glm::rotate(model, glm::radians(-90.f), glm::vec3(1, 0, 0));
-			model = glm::scale(model, glm::vec3(0.05f, 0.05f, 0.025f));
+			model = glm::scale(model, glm::vec3(0.05f, 0.05f, 0.05f));
 
 			glUniformMatrix4fv(m_effectList[0]->GetModelMatrixUniformID(), 1, GL_FALSE, glm::value_ptr(model));
 			glUniformMatrix4fv(m_effectList[0]->GetProjectionMatrixUniformID(), 1, GL_FALSE, glm::value_ptr(m_editorCamera->GetProjectionMatrix()));
@@ -112,18 +134,21 @@ void Assignment::Run()
 
 void Assignment::CleanUp()
 {
-	delete m_editorCamera;
 
 	for (auto it = m_effectList.begin(); it != m_effectList.end(); ++it)
 	{
-		delete *it;
-		(*it) = nullptr;
+		safe_delete(*it);
 	}
 	m_effectList.clear();
 	m_effectList.~vector();
 
-	delete m_PointLight;
-	delete m_teapot;
+	safe_delete(m_editorCamera);
+	safe_delete(m_PointLight);
+	safe_delete(m_teapot);
+	safe_delete(m_material);
+	safe_delete(m_ambientLight);
+
+	cApplication::CleanUp();
 }
 
 void Assignment::Tick(float second_since_lastFrame)
@@ -134,7 +159,7 @@ void Assignment::Tick(float second_since_lastFrame)
 	{
 		m_editorCamera->CameraControl(_windowInput, second_since_lastFrame);
 
-		m_editorCamera->MouseControl(_windowInput, 0.02f);
+		m_editorCamera->MouseControl(_windowInput, 0.01667f);
 	}
 
 }

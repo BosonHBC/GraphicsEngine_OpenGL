@@ -5,6 +5,8 @@ class cWindow;
 #include "glfw/glfw3.h"
 #include <thread>
 
+#define safe_delete(x) if(x){delete x; x = nullptr;}
+
 namespace Application {
 	class cApplication
 	{

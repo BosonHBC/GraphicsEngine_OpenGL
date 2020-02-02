@@ -6,8 +6,6 @@ namespace Graphics {
 	void cPointLight::Illuminate()
 	{
 		glUniform3f(m_colorID, m_color.r, m_color.g, m_color.b);
-		glUniform1f(m_diffuseIntensityID, m_diffuseIntensity);
-		glUniform1f(m_specularIntensityID, m_specularIntensity);
 		glUniform3f(m_positionID, m_position.x, m_position.y, m_position.z);
 		glUniform1f(m_constID, m_const);
 		glUniform1f(m_linearID, m_linear);
@@ -22,12 +20,6 @@ namespace Graphics {
 
 		snprintf(_buff, sizeof(_buff), "pointLights[%d].base.color", m_lightIndex);
 		m_colorID = glGetUniformLocation(i_programID, _buff);
-		
-		snprintf(_buff, sizeof(_buff), "pointLights[%d].base.diffuseIntensity", m_lightIndex);
-		m_diffuseIntensityID = glGetUniformLocation(i_programID, _buff);
-		
-		snprintf(_buff, sizeof(_buff), "pointLights[%d].base.specularIntensity", m_lightIndex);
-		m_specularIntensityID = glGetUniformLocation(i_programID, _buff);
 
 		snprintf(_buff, sizeof(_buff), "pointLights[%d].position", m_lightIndex);
 		m_positionID = glGetUniformLocation(i_programID, _buff);
@@ -41,6 +33,11 @@ namespace Graphics {
 		snprintf(_buff, sizeof(_buff), "pointLights[%d].quadratic", m_lightIndex);
 		m_quadraticID = glGetUniformLocation(i_programID, _buff);
 
+	}
+
+	void cPointLight::SetupLight(glm::vec3 i_position)
+	{
+		m_position = i_position;
 	}
 
 }

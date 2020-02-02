@@ -23,7 +23,7 @@ public:
 	{
 		Update();
 	}
-	~cCamera();
+	virtual ~cCamera();
 
 	/** Usage functions*/
 	virtual void CameraControl(sWindowInput* const i_windowInput, float i_dt);
