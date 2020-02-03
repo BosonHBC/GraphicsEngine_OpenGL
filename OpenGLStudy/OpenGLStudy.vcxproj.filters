@@ -259,6 +259,9 @@
     <None Include="Contents\shaders\vertexShader.glsl">
       <Filter>Source Files\Contents\shaders</Filter>
     </None>
+    <None Include="Contents\shaders\BlinnPhong.glsl">
+      <Filter>Source Files\Contents\shaders</Filter>
+    </None>
   </ItemGroup>
   <ItemGroup>
     <Image Include="Contents\textures\brick.jpg">

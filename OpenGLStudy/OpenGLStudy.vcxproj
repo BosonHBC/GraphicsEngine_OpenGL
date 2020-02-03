@@ -246,6 +246,7 @@ xcopy $(SolutionDir)Contents $(targetDir)Contents /Y /E /I</Command>
     <ClInclude Include="Tool\stb_image.h" />
   </ItemGroup>
   <ItemGroup>
+    <None Include="Contents\shaders\BlinnPhong.glsl" />
     <None Include="Contents\shaders\fragmentShader.glsl" />
     <None Include="Contents\shaders\vertexShader.glsl" />
   </ItemGroup>
