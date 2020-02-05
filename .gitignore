@@ -361,3 +361,7 @@ MigrationBackup/
 
 # not contents
 !OpenGLStudy/Contents/models/*
+
+# ignore output&temp file
+OpenGLStudy/output/*
+OpenGLStudy/temp/*

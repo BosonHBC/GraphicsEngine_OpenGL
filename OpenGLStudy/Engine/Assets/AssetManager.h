@@ -42,11 +42,14 @@ namespace Assets {
 
 		struct sAssetRecord
 		{
-			tAsset* ptr;
-			uint16_t count;
+			tAsset* pAsset;
+			uint16_t ReferenceCount;
+
+			sAssetRecord(tAsset* const i_pAsset, const uint16_t i_referenceCount) : pAsset(i_pAsset), ReferenceCount(i_referenceCount) 
+			{}
 		};
 
-		//
+		// List to store the asset
 		std::vector<sAssetRecord> m_assetList;
 
 		// This map store the pair of key to the handle

@@ -11,28 +11,41 @@
 
 #pragma once
 
+
+
+
 namespace Assets {
+	/** Forward declaration*/
+	template< class tAsset, class tKey = std::string>
+	class cAssetManager;
+
 	template<class tAsset>
 	class cHandle
 	{
 	public:
-		cHandle();
-		~cHandle();
+		// All default handles are invalid handle.
+		cHandle<tAsset>() { m_index = s_InvalidIndex; }
+		// rule of three
+		~cHandle<tAsset>() { m_index = s_InvalidIndex; };
+		cHandle<tAsset>(const cHandle<tAsset>& i_other) { m_index = i_other.m_index; }
+		cHandle<tAsset>& = operator (const cHandle<tAsset> i_other) { m_index = i_other.m_index; return *this; }
+
+		bool == operator(const cHandle<tAsset> i_other) { return m_index == i_other.m_index; }
+
+		/** Getters */
+		uint16_t GetIndex() const { return m_index; }
 
 	private:
 		// The index in the m_assetList in cAssetManager<tAsset>
-		uint16_t m_index;
+		uint16_t m_index = s_InvalidIndex;
+		static uint16_t s_InvalidIndex = 0xffff;
+
+		// constructor with index
+		cHandle(const uint16_t i_index) : m_index = i_index{}
+
+		// friend class that can asses private parameters
+		template<class tAsset, class tKey>
+		friend class cAssetManager<tAsset, tKey>;
 	};
 
-	// 
-	// Inline function definition 
-	//
-	template<class tAsset>
-	cHandle<tAsset>::cHandle()
-	{
-	}
-	template<class tAsset>
-	cHandle<tAsset>::~cHandle()
-	{
-	}
 }
