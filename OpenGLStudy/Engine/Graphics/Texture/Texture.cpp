@@ -94,6 +94,7 @@ namespace Graphics {
 
 		// clear data of stb_image
 		stbi_image_free(_data);
+		return true;
 	}
 
 	void cTexture::UseTexture(int i_textuerLocation)

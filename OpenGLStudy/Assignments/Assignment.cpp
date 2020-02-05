@@ -26,7 +26,9 @@ bool Assignment::Initialize(GLuint i_width, GLuint i_height, const char* i_windo
 {
 	auto result = true;
 	if (!(result = cApplication::Initialize(i_width, i_width, i_windowName))) {
-		assert(false, "Failed to initialize Application!");
+		assert(false);
+		// TODO: LogError
+		printf("Failed to initialize Application!");
 		return false;
 	}
 	CreateActor();
@@ -55,15 +57,14 @@ void Assignment::CreateEffect()
 
 	// Set material
 	m_teapot->SetMaterial(_material);
+	m_teapot->SetMaterial(_material);
 	// -----------------------------------
 	// Create models
 	// -----------------------------------
-	Graphics::cModel* _teapot = new Graphics::cModel();
-	_teapot->LoadModel("Contents/models/teapot.obj");
 
 	// Set model
-	m_teapot->SetModel(_teapot);
-
+	m_teapot->SetModel("Contents/models/teapot.obj");
+	m_teapot2->SetModel("Contents/models/teapot.obj");
 
 }
 
@@ -74,6 +75,12 @@ void Assignment::CreateActor()
 	m_teapot->Transform()->Translate(glm::vec3(0, -0.4f, -2.f));
 	m_teapot->Transform()->Rotate(glm::vec3(1, 0, 0), -90.f);
 	m_teapot->Transform()->Scale(glm::vec3(0.05f, 0.05f, 0.05f));
+
+	m_teapot2 = new cActor();
+	m_teapot2->Initialize();
+	m_teapot2->Transform()->Translate(glm::vec3(2, -0.4f, -3.f));
+	m_teapot2->Transform()->Rotate(glm::vec3(1, 0, 0), -90.f);
+	m_teapot2->Transform()->Scale(glm::vec3(0.03f, 0.03f, 0.03f));
 }
 
 void Assignment::CreateCamera()
@@ -131,6 +138,7 @@ void Assignment::Run()
 		// --------------------------------------------------
 		{
 			m_teapot->Update(m_currentEffect);
+			m_teapot2->Update(m_currentEffect);
 		}
 		// --------------------------------------------------
 
@@ -157,7 +165,7 @@ void Assignment::CleanUp()
 	safe_delete(m_PointLight);
 	safe_delete(m_ambientLight);
 	safe_delete(m_teapot);
-
+	safe_delete(m_teapot2);
 
 }
 

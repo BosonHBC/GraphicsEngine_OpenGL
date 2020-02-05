@@ -1,6 +1,8 @@
 #pragma once
 
 #include <vector>
+#include "Engine/Assets/AssetManager.h"
+#include "Engine/Assets/Handle.h"
 
 struct aiScene;
 struct aiNode;
@@ -14,16 +16,25 @@ namespace Graphics {
 	class cModel
 	{
 	public:
-		/** Constructor and destructor*/
-		cModel() {};
+		//--------------------------
+		// Asset management
+		using HANDLE = Assets::cHandle<cModel>;
+		static Assets::cAssetManager < cModel > s_manager;
+		static bool Load(const std::string& i_path, cModel*& o_model);
+		//--------------------------
+
+		/** Destructor*/
 		~cModel() { CleanUp(); }
 
 		/** Usage functions*/
-		bool LoadModel(const char* i_path);
 		void Render();
 		void CleanUp();
 
 	private:
+
+		/** private default constructor, that can not be used by others*/
+		cModel() {
+		}
 
 		/** Mesh list and texture list should not be stored here,
 			but for the sake of simplicity, put it here first
@@ -36,7 +47,12 @@ namespace Graphics {
 		void LoadNode(const aiNode* i_node, const aiScene* i_scene);
 		void LoadMesh(const aiMesh* i_mesh, const aiScene* i_scene);
 		void LoadMaterials(const aiScene* i_scene);
+
+		// actual loading function
+		bool LoadModel(const char* i_path);
 	};
+
+
 
 
 }

@@ -41,5 +41,6 @@ private:
 	Graphics::cAmbientLight* m_ambientLight;
 
 	cActor* m_teapot;
+	cActor* m_teapot2;
 };
 

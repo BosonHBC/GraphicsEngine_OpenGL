@@ -252,6 +252,11 @@ xcopy $(SolutionDir)Contents $(targetDir)Contents /Y /E /I</Command>
     <Image Include="Contents\textures\brick.jpg" />
     <Image Include="Contents\textures\dirt.jpg" />
   </ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="Engine\Assets\Assets.vcxproj">
+      <Project>{e5bc07b4-4aab-4ce6-8a4e-a5b3ec116cc6}</Project>
+    </ProjectReference>
+  </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">
   </ImportGroup>

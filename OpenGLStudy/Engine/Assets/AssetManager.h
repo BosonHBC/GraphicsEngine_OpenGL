@@ -20,21 +20,22 @@ namespace Assets {
 	class cAssetManager
 	{
 	public:
-		cAssetManager<tAsset, tKey>() = default;
-		~cAssetManager<tAsset, tKey>() {CleanUp()};
+		cAssetManager() = default;
+		~cAssetManager() { CleanUp(); }
 		
 		/** Usage functions*/
 		// Load function by the key and extra arguments
-		<typename ... ExtraArguments> // ExtraArgument is needed because some asset need to specify some variables when it is loaded
-		bool Load(const tKey& i_key, cHandle<tAsset> & o_asset, ExtraArguments... i_arguments);
+		// ExtraArgument is needed because some asset need to specify some variables when it is loaded
+		template <typename ... ExtraArguments> 
+		bool Load(const tKey& i_key, cHandle<tAsset> & o_asset, ExtraArguments&... i_arguments);
 		// Release the Asset, free the memory
-		bool Release(cHandle<tAsset> & io_asset);
+		bool Release(cHandle<tAsset> & io_handle);
 		
 		/** Getters */
 		tAsset* Get(const cHandle<tAsset>& i_handle);
 
 		/** Clean up*/
-		void CleanUp();
+		bool CleanUp();
 
 	private:
 		// This struct define the reference of an asset
@@ -47,6 +48,7 @@ namespace Assets {
 
 			sAssetRecord(tAsset* const i_pAsset, const uint16_t i_referenceCount) : pAsset(i_pAsset), ReferenceCount(i_referenceCount) 
 			{}
+			~sAssetRecord() { pAsset = nullptr; ReferenceCount = 0; }
 		};
 
 		// List to store the asset

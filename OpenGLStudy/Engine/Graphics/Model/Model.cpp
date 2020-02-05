@@ -8,8 +8,10 @@
 #include "assimp/scene.h"
 #include "assimp/postprocess.h"
 
-namespace Graphics {
+// Static variable definition
+Assets::cAssetManager<Graphics::cModel> Graphics::cModel::s_manager;
 
+namespace Graphics {
 
 	bool cModel::LoadModel(const char* i_path)
 	{
@@ -32,6 +34,31 @@ namespace Graphics {
 		LoadMaterials(_scene);
 
 		return true;
+	}
+
+	bool cModel::Load(const std::string& i_path, cModel*& o_model)
+	{
+		auto result = true;
+
+		cModel* _model = nullptr;
+
+		// make sure there is enough memory to allocate a model
+		_model = new (std::nothrow) cModel();
+		if (!_model) {
+			// Run out of memory
+			// TODO: LogError: Out of memory
+			result = false;
+			return result;
+		}
+		else {
+			if (!(result = _model->LoadModel(i_path.c_str()))) {
+				// TODO: LogError: fail to log
+				return result;
+			}
+		}
+
+		o_model = _model;
+		return result;
 	}
 
 	void cModel::Render()
@@ -125,7 +152,7 @@ namespace Graphics {
 		}
 
 		cMesh* _newMesh = new cMesh();
-		_newMesh->CreateMesh(&_vertices[0], &_indices[0], _vertices.size(), _indices.size());
+		_newMesh->CreateMesh(&_vertices[0], &_indices[0], static_cast<GLuint>(_vertices.size()), static_cast<GLuint>(_indices.size()));
 
 		// Stored new mesh to the list and store its index to material
 		m_meshList.push_back(_newMesh);
@@ -148,7 +175,7 @@ namespace Graphics {
 			if (_material->GetTextureCount(aiTextureType_DIFFUSE)) {
 				aiString _path;
 				if (_material->GetTexture(aiTextureType_DIFFUSE, 0, &_path) == AI_SUCCESS) {
-					int _idx = std::string(_path.data).rfind("\\");
+					auto _idx = std::string(_path.data).rfind("\\");
 					std::string _filename = std::string(_path.data).substr(_idx + 1);
 
 					std::string _texPath = std::string("Contents/textures/") + _filename;
@@ -156,7 +183,7 @@ namespace Graphics {
 					m_textureList[i] = new cTexture(_texPath.c_str());
 
 					if (!m_textureList[i]->LoadTexture()) {
-						printf("Fail to load texture[%s] file", _texPath);
+						printf("Fail to load texture[%s] file", _texPath.c_str());
 						delete m_textureList[i];
 						m_textureList[i] = nullptr;
 					}

@@ -6,6 +6,7 @@
 #include "Effect/Effect.h"
 #include "Material/Material.h"
 
+
 void cActor::Initialize()
 {
 	m_transform = new cTransform();
@@ -25,8 +26,9 @@ void cActor::Update(Graphics::cEffect* const i_effect)
 	if (m_material) {
 		m_material->UseMaterial(i_effect->GetProgramID());
 	}
-	if (m_model) {
-		m_model->Render();
+	Graphics::cModel* _model = Graphics::cModel::s_manager.Get(m_modelHandle);
+	if (_model) {
+		_model->Render();
 	}
 }
 
@@ -34,8 +36,16 @@ void cActor::CleanUp()
 {
 	safe_delete(m_transform);
 	
-	// TODO: Object Pool.....
+	// TODO: Handle
 	// Here should let object pool to delete, but for the simplicity sake, delete here right now
-	safe_delete(m_model);
 	safe_delete(m_material);
+
+	// Release the handle
+	Graphics::cModel::s_manager.Release(m_modelHandle);
+
+}
+
+void cActor::SetModel(std::string i_modelPath)
+{
+	Graphics::cModel::s_manager.Load(i_modelPath, m_modelHandle);
 }

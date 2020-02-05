@@ -11,12 +11,9 @@
 
 #pragma once
 
-
-
-
 namespace Assets {
 	/** Forward declaration*/
-	template< class tAsset, class tKey = std::string>
+	template< class tAsset, class tKey>
 	class cAssetManager;
 
 	template<class tAsset>
@@ -24,28 +21,29 @@ namespace Assets {
 	{
 	public:
 		// All default handles are invalid handle.
-		cHandle<tAsset>() { m_index = s_InvalidIndex; }
+		cHandle() { m_index = s_InvalidIndex; }
 		// rule of three
-		~cHandle<tAsset>() { m_index = s_InvalidIndex; };
-		cHandle<tAsset>(const cHandle<tAsset>& i_other) { m_index = i_other.m_index; }
-		cHandle<tAsset>& = operator (const cHandle<tAsset> i_other) { m_index = i_other.m_index; return *this; }
+		~cHandle() { m_index = s_InvalidIndex; };
+		cHandle(const cHandle& i_other) { m_index = i_other.m_index; }
+		cHandle& operator = (const cHandle& i_other) { m_index = i_other.m_index; return *this; }
 
-		bool == operator(const cHandle<tAsset> i_other) { return m_index == i_other.m_index; }
-
+		bool operator ==(const cHandle& i_other) const { return m_index == i_other.m_index; }
+		/** Setters */
+		void InvalidateIndex() { m_index = s_InvalidIndex; }
 		/** Getters */
 		uint16_t GetIndex() const { return m_index; }
 
 	private:
 		// The index in the m_assetList in cAssetManager<tAsset>
 		uint16_t m_index = s_InvalidIndex;
-		static uint16_t s_InvalidIndex = 0xffff;
+		static const uint16_t s_InvalidIndex = 0xffff;
 
 		// constructor with index
-		cHandle(const uint16_t i_index) : m_index = i_index{}
+		cHandle(const uint16_t i_index) : m_index(i_index){}
 
 		// friend class that can asses private parameters
 		template<class tAsset, class tKey>
-		friend class cAssetManager<tAsset, tKey>;
+		friend class cAssetManager;
 	};
 
 }

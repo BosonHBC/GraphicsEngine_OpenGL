@@ -1,11 +1,13 @@
 #pragma once
 #include "Engine/Cores/Core.h"
+#include <string>
 
+#include "Engine/Graphics/Model/Model.h"
 /** Forward deceleration*/
 //----------------------------------------------
 class cTransform;
+
 namespace Graphics {
-	class cModel;
 	class cMaterial;
 	class cEffect;
 }
@@ -22,7 +24,7 @@ public:
 	void CleanUp();
 	
 	/** Setters */
-	void SetModel(Graphics::cModel* const i_model) { m_model = i_model; };
+	void SetModel(const std::string i_modelPath);
 	void SetMaterial(Graphics::cMaterial* const i_mat) { m_material = i_mat; };
 
 	/** Getters*/
@@ -31,7 +33,7 @@ public:
 private:
 
 	cTransform* m_transform;
-	Graphics::cModel* m_model;
+	Graphics::cModel::HANDLE  m_modelHandle;
 	Graphics::cMaterial* m_material;
 
 };
