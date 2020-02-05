@@ -16,9 +16,8 @@ class Assignment : public Application::cApplication
 {
 public:
 	Assignment() {};
-	~Assignment()
+	virtual ~Assignment()
 	{
-		CleanUp();
 	};
 
 	virtual bool Initialize(GLuint i_width, GLuint i_height, const char* i_windowName = "Default Window");

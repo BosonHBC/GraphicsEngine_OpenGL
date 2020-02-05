@@ -14,7 +14,8 @@ class cActor
 {
 public:
 	cActor() {};
-	~cActor() { CleanUp(); }
+	// Rule of three
+	virtual ~cActor() { CleanUp(); }
 
 	void Initialize();
 	void Update(Graphics::cEffect* const i_effect);
@@ -25,7 +26,8 @@ public:
 	void SetMaterial(Graphics::cMaterial* const i_mat) { m_material = i_mat; };
 
 	/** Getters*/
-	cTransform* Transform() const { return m_transform; }
+	cTransform* Transform() const { 
+		return m_transform; }
 private:
 
 	cTransform* m_transform;

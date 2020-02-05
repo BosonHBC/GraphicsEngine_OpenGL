@@ -17,8 +17,8 @@ public:
 	cTransform(const glm::mat4& i_m, const glm::mat4& i_mInv) :m(i_m), mInv(i_mInv) {}
 	cTransform& operator = (const cTransform& i_other);
 	cTransform& operator = (const glm::mat4& i_m);
-	~cTransform()
-	{};
+	~cTransform();
+
 
 	/** static functions*/
 	static cTransform Inverse(const cTransform& t) { return cTransform(t.mInv, t.m); }
@@ -31,16 +31,22 @@ public:
 
 	/** Getters */
 	glm::vec3 GetWorldLocation() const;
+	glm::vec3 GetEulerAngle() const;
 	const glm::mat4& M() const { return m; }
 	const glm::mat4& MInv() const { return mInv; }
 
 	/** Helper functions*/
 	bool HasScale() const;
 	void Update();
+
+#ifdef _DEBUG
+	void PrintEulerAngle() const;
+#endif // _DEBUG
+
+
 private:
 	/** private data*/
 	// for simplicity, m is the abbr of m_m, and so is mInv for m_mInv;
 	glm::mat4 m, mInv;
-
 };
 

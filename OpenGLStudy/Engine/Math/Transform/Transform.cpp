@@ -15,6 +15,10 @@ cTransform& cTransform::operator=(const glm::mat4& i_m)
 	return *this;
 }
 
+cTransform::~cTransform()
+{
+}
+
 void cTransform::Translate(const glm::vec3& i_location)
 {
 	m = glm::translate(m, i_location);
@@ -36,6 +40,28 @@ glm::vec3 cTransform::GetWorldLocation() const
 	return glm::vec3(m[3][0], m[3][1], m[3][2]);
 }
 
+glm::vec3 cTransform::GetEulerAngle() const
+{
+	double sy = sqrt(m[0][0] * m[0][0] + m[1][0] * m[1][0]);
+
+	bool singular = sy < 1e-6;
+
+	float x, y, z;
+	if (!singular)
+	{
+		x = atan2(m[2][1], m[2][2]);
+		y = atan2(-m[2][0], sy);
+		z = atan2(m[1][0], m[0][0]);
+	}
+	else
+	{
+		x = atan2(-m[1][2], m[1][1]);
+		y = atan2(-m[2][0], sy);
+		z = 0;
+	}
+	return glm::vec3(x, y, z);
+}
+
 bool cTransform::HasScale() const
 {
 #define NOT_ONE(x) ((x) < .999f || (x) > 1.001f)
@@ -48,3 +74,14 @@ void cTransform::Update()
 	mInv = glm::inverse(m);
 
 }
+
+#ifdef _DEBUG
+#include "stdio.h"
+#define ToDegree(x) (x*57.2958f)
+void cTransform::PrintEulerAngle() const
+{
+	glm::vec3 angle = GetEulerAngle();
+
+	printf("angle: %f, %f, %f\n", ToDegree(angle.x), ToDegree(angle.y), ToDegree(angle.z));
+}
+#endif

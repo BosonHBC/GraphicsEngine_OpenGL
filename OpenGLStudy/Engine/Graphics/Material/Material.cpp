@@ -1,15 +1,16 @@
 #include "Material.h"
 #include "Engine/Graphics/Texture/Texture.h"
 #include "Engine/Constants/Constants.h"
+
 namespace Graphics {
 
 	void cMaterial::SetDiffuse(const char* i_diffusePath)
 	{
-		m_diffuseTexture = new cTexture(i_diffusePath);
+		m_diffuseTexture = new  cTexture(i_diffusePath);
 		if (!m_diffuseTexture->LoadTexture()) {
 			delete m_diffuseTexture;
 			// Use default texture, which is the white board
-			m_diffuseTexture = new cTexture(Constants::CONST_PATH_DEFAULT_TEXTURE);
+			m_diffuseTexture = new  cTexture(Constants::CONST_PATH_DEFAULT_TEXTURE);
 		}
 	}
 

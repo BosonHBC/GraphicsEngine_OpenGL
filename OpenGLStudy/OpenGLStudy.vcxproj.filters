@@ -126,9 +126,6 @@
     <ClCompile Include="Engine\Application\Application.cpp">
       <Filter>Source Files\Engine\Application</Filter>
     </ClCompile>
-    <ClCompile Include="MyGame\MyGame.cpp">
-      <Filter>Source Files\ExampleGame</Filter>
-    </ClCompile>
     <ClCompile Include="Engine\Graphics\Texture\Texture.cpp">
       <Filter>Source Files\Engine\Graphics\Texture</Filter>
     </ClCompile>
@@ -193,9 +190,6 @@
     </ClInclude>
     <ClInclude Include="Engine\Application\Application.h">
       <Filter>Source Files\Engine\Application</Filter>
-    </ClInclude>
-    <ClInclude Include="MyGame\MyGame.h">
-      <Filter>Source Files\ExampleGame</Filter>
     </ClInclude>
     <ClInclude Include="Tool\stb_image.h">
       <Filter>Source Files\Tool</Filter>

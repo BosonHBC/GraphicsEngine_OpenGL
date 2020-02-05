@@ -38,7 +38,7 @@ bool Assignment::Initialize(GLuint i_width, GLuint i_height, const char* i_windo
 }
 void Assignment::CreateEffect()
 {
-	Graphics::cEffect* defaultEffect = new Graphics::cEffect();
+	Graphics::cEffect* defaultEffect = new  Graphics::cEffect();
 	if (!defaultEffect->CreateProgram(Constants::CONST_PATH_DEFAULT_VERTEXSHADER, Constants::CONST_PATH_BLINNPHONG_FRAGMENTSHADER)) {
 		exit(1);
 		return;
@@ -48,9 +48,9 @@ void Assignment::CreateEffect()
 	// -----------------------------------
 	// Create materials
 	// -----------------------------------
-	auto _material = new Graphics::cMaterial();
-	_material->SetDiffuseIntensity(defaultEffect->GetProgramID(), Color(1,0.0f,0.0f));
-	_material->SetSpecularIntensity(defaultEffect->GetProgramID(), Color(1,1,1));
+	auto _material = new  Graphics::cMaterial();
+	_material->SetDiffuseIntensity(defaultEffect->GetProgramID(), Color(1, 0.0f, 0.0f));
+	_material->SetSpecularIntensity(defaultEffect->GetProgramID(), Color(1, 1, 1));
 	_material->SetShininess(defaultEffect->GetProgramID(), 32);
 
 	// Set material
@@ -78,7 +78,7 @@ void Assignment::CreateActor()
 
 void Assignment::CreateCamera()
 {
-	m_editorCamera = new cEditorCamera(glm::vec3(0,1.f,0),-30.f,0,3,10.f);
+	m_editorCamera = new  cEditorCamera(glm::vec3(0, 1.f, 0), -30.f, 0, 3, 10.f);
 	float _aspect = (float)(Get_GLFW_Window()->GetBufferWidth()) / (float)(Get_GLFW_Window()->GetBufferHeight());
 	m_editorCamera->CreateProjectionMatrix(45.0f, _aspect, 0.1f, 150.0f);
 }
@@ -86,11 +86,11 @@ void Assignment::CreateCamera()
 void Assignment::CreateLight()
 {
 
-	m_PointLight = new Graphics::cPointLight(Color(1.f, 1.f, 1.f), 0.3f, 0.1f, 0.1f);
+	m_PointLight = new  Graphics::cPointLight(Color(1.f, 1.f, 1.f), 0.3f, 0.1f, 0.1f);
 	m_PointLight->SetupLight(m_currentEffect->GetProgramID(), 0);
 	m_PointLight->SetLightInitialLocation(glm::vec3(0, 1.5f, 0));
 
-	m_ambientLight = new Graphics::cAmbientLight(Color(0.1f, 0.1f, 0.1f));
+	m_ambientLight = new  Graphics::cAmbientLight(Color(0.1f, 0.1f, 0.1f));
 	m_ambientLight->SetupLight(m_currentEffect->GetProgramID(), 0);
 }
 
@@ -122,7 +122,7 @@ void Assignment::Run()
 
 		// Set up lighting
 		// --------------------------------------------------
-		{	
+		{
 			m_ambientLight->Illuminate();
 			m_currentEffect->SetPointLightCount(1);
 			m_PointLight->Illuminate();
@@ -158,7 +158,7 @@ void Assignment::CleanUp()
 	safe_delete(m_ambientLight);
 	safe_delete(m_teapot);
 
-	cApplication::CleanUp();
+
 }
 
 void Assignment::Tick(float second_since_lastFrame)
@@ -173,8 +173,24 @@ void Assignment::Tick(float second_since_lastFrame)
 	}
 
 	glm::vec3 _toLight = (m_PointLight->Transform()->GetWorldLocation() - m_teapot->Transform()->GetWorldLocation());
-	glm::vec3 _toForward = glm::normalize( glm::cross(glm::vec3(0, 1, 0), _toLight)) * (5 *second_since_lastFrame);
+	glm::vec3 _toForward = glm::normalize(glm::cross(glm::vec3(0, 1, 0), _toLight)) * (5 * second_since_lastFrame);
 	m_PointLight->Transform()->Translate(_toForward);
+
+	/*
+		m_teapot->Transform()->PrintEulerAngle();
+
+		if (_windowInput->IsKeyDown(GLFW_KEY_LEFT)) {
+			m_teapot->Transform()->Rotate(glm::vec3(0, 0, 1), (50 * second_since_lastFrame));
+		}
+		if (_windowInput->IsKeyDown(GLFW_KEY_RIGHT)) {
+			m_teapot->Transform()->Rotate(glm::vec3(0, 0, 1), (-50 * second_since_lastFrame));
+		}
+		if (_windowInput->IsKeyDown(GLFW_KEY_UP)) {
+			m_teapot->Transform()->Rotate(glm::vec3(1, 0, 0), (50 * second_since_lastFrame));
+		}
+		if (_windowInput->IsKeyDown(GLFW_KEY_DOWN)) {
+			m_teapot->Transform()->Rotate(glm::vec3(1, 0, 0), (-50 * second_since_lastFrame));
+		}*/
 }
 
 void Assignment::FixedTick()

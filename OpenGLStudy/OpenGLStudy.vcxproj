@@ -215,7 +215,6 @@ xcopy $(SolutionDir)Contents $(targetDir)Contents /Y /E /I</Command>
     <ClCompile Include="Engine\Math\Transform\Transform.cpp" />
     <ClCompile Include="Engine\Time\Time.cpp" />
     <ClCompile Include="EntryPoint.cpp" />
-    <ClCompile Include="MyGame\MyGame.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Assignments\Assignment.h" />
@@ -242,7 +241,6 @@ xcopy $(SolutionDir)Contents $(targetDir)Contents /Y /E /I</Command>
     <ClInclude Include="Engine\Graphics\Window\WindowInput.h" />
     <ClInclude Include="Engine\Math\Transform\Transform.h" />
     <ClInclude Include="Engine\Time\Time.h" />
-    <ClInclude Include="MyGame\MyGame.h" />
     <ClInclude Include="Tool\stb_image.h" />
   </ItemGroup>
   <ItemGroup>

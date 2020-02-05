@@ -12,7 +12,10 @@ namespace Graphics {
 			m_const(i_const), m_linear(i_linear), m_quadratic(i_quadratic),
 			cGenLight(i_color)
 		{}
-		virtual ~cPointLight() {}
+		virtual ~cPointLight() {
+		}
+		cPointLight(const cPointLight& i_other);
+		cPointLight& operator = (const cPointLight& i_other);
 
 		/** overriding virtual functions*/
 		virtual void Illuminate() override;

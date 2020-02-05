@@ -1,7 +1,26 @@
 #include "PointLight.h"
 #include <stdio.h>
 namespace Graphics {
-	
+
+
+	cPointLight::cPointLight(const cPointLight& i_other)
+		: cGenLight(i_other), m_const(i_other.m_const), m_linear(i_other.m_linear), m_quadratic(m_quadratic),
+		m_positionID(i_other.m_positionID), m_constID(i_other.m_constID), m_linearID(i_other.m_linearID), m_quadraticID(i_other.m_quadraticID)
+	{
+	}
+
+	cPointLight& cPointLight::operator=(const cPointLight& i_other)
+	{
+		cGenLight::operator=(i_other);
+		m_const = i_other.m_const;
+		m_linear = i_other.m_linear;
+		m_quadratic = i_other.m_quadratic;
+		m_positionID = i_other.m_positionID;
+		m_constID = i_other.m_constID;
+		m_linearID = i_other.m_linearID;
+		m_quadraticID = i_other.m_quadraticID;
+		return *this;
+	}
 
 	void cPointLight::Illuminate()
 	{
