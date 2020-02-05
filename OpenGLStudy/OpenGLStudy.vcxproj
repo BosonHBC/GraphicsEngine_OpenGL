@@ -100,7 +100,7 @@
       <ConformanceMode>true</ConformanceMode>
       <PrecompiledHeaderFile>
       </PrecompiledHeaderFile>
-      <AdditionalIncludeDirectories>$(SolutionDir);$(SolutionDir)Engine;$(SolutionDir)Engine\Graphics;$(SolutionDir)Externals\GL\;$(SolutionDir)Externals\GL\glew\include;$(SolutionDir)Externals\ASSIMP_N\include;$(SolutionDir)Externals\GL\glfw32\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>$(SolutionDir);$(SolutionDir)Engine;$(SolutionDir)Engine\Math;$(SolutionDir)Engine\Cores;$(SolutionDir)Engine\Graphics;$(SolutionDir)Externals\GL\;$(SolutionDir)Externals\GL\glew\include;$(SolutionDir)Externals\ASSIMP_N\include;$(SolutionDir)Externals\GL\glfw32\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
     </ClCompile>
     <Link>
       <SubSystem>Console</SubSystem>
@@ -124,7 +124,7 @@ xcopy $(SolutionDir)Contents $(targetDir)Contents /Y /E /I</Command>
       <ConformanceMode>true</ConformanceMode>
       <PrecompiledHeaderFile>
       </PrecompiledHeaderFile>
-      <AdditionalIncludeDirectories>$(SolutionDir);$(SolutionDir)Engine;$(SolutionDir)Engine\Graphics;$(SolutionDir)Externals\GL\;$(SolutionDir)Externals\GL\glew\include;$(SolutionDir)Externals\ASSIMP_N\include;$(SolutionDir)Externals\GL\glfw\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>$(SolutionDir);$(SolutionDir)Engine;$(SolutionDir)Engine\Math;$(SolutionDir)Engine\Cores;$(SolutionDir)Engine\Graphics;$(SolutionDir)Externals\GL\;$(SolutionDir)Externals\GL\glew\include;$(SolutionDir)Externals\ASSIMP_N\include;$(SolutionDir)Externals\GL\glfw\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
     </ClCompile>
     <Link>
       <SubSystem>Console</SubSystem>
@@ -150,7 +150,7 @@ xcopy $(SolutionDir)Contents $(targetDir)Contents /Y /E /I</Command>
       <ConformanceMode>true</ConformanceMode>
       <PrecompiledHeaderFile>
       </PrecompiledHeaderFile>
-      <AdditionalIncludeDirectories>$(SolutionDir);$(SolutionDir)Engine;$(SolutionDir)Engine\Graphics;$(SolutionDir)Externals\GL\;$(SolutionDir)Externals\GL\glew\include;$(SolutionDir)Externals\ASSIMP_N\include;$(SolutionDir)Externals\GL\glfw32\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>$(SolutionDir);$(SolutionDir)Engine;$(SolutionDir)Engine\Math;$(SolutionDir)Engine\Cores;$(SolutionDir)Engine\Graphics;$(SolutionDir)Externals\GL\;$(SolutionDir)Externals\GL\glew\include;$(SolutionDir)Externals\ASSIMP_N\include;$(SolutionDir)Externals\GL\glfw32\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
     </ClCompile>
     <Link>
       <SubSystem>Console</SubSystem>
@@ -178,7 +178,7 @@ xcopy $(SolutionDir)Contents $(targetDir)Contents /Y /E /I</Command>
       <ConformanceMode>true</ConformanceMode>
       <PrecompiledHeaderFile>
       </PrecompiledHeaderFile>
-      <AdditionalIncludeDirectories>$(SolutionDir);$(SolutionDir)Engine;$(SolutionDir)Engine\Graphics;$(SolutionDir)Externals\GL\;$(SolutionDir)Externals\GL\glew\include;$(SolutionDir)Externals\ASSIMP_N\include;$(SolutionDir)Externals\GL\glfw\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>$(SolutionDir);$(SolutionDir)Engine;$(SolutionDir)Engine\Math;$(SolutionDir)Engine\Cores;$(SolutionDir)Engine\Graphics;$(SolutionDir)Externals\GL\;$(SolutionDir)Externals\GL\glew\include;$(SolutionDir)Externals\ASSIMP_N\include;$(SolutionDir)Externals\GL\glfw\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
     </ClCompile>
     <Link>
       <SubSystem>Console</SubSystem>
@@ -197,6 +197,7 @@ xcopy $(SolutionDir)Contents $(targetDir)Contents /Y /E /I</Command>
   <ItemGroup>
     <ClCompile Include="Assignments\Assignment.cpp" />
     <ClCompile Include="Engine\Application\Application.cpp" />
+    <ClCompile Include="Engine\Cores\Actor\Actor.cpp" />
     <ClCompile Include="Engine\Cores\BitArray\BitArray.cpp" />
     <ClCompile Include="Engine\Graphics\Camera\Camera.cpp" />
     <ClCompile Include="Engine\Graphics\Camera\EditorCamera\EditorCamera.cpp" />
@@ -211,15 +212,17 @@ xcopy $(SolutionDir)Contents $(targetDir)Contents /Y /E /I</Command>
     <ClCompile Include="Engine\Graphics\Model\Model.cpp" />
     <ClCompile Include="Engine\Graphics\Texture\Texture.cpp" />
     <ClCompile Include="Engine\Graphics\Window\Window.cpp" />
+    <ClCompile Include="Engine\Math\Transform\Transform.cpp" />
     <ClCompile Include="Engine\Time\Time.cpp" />
     <ClCompile Include="EntryPoint.cpp" />
-    <ClCompile Include="MyGame\MyGame.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Assignments\Assignment.h" />
     <ClInclude Include="Engine\Application\Application.h" />
     <ClInclude Include="Engine\Constants\Constants.h" />
+    <ClInclude Include="Engine\Cores\Actor\Actor.h" />
     <ClInclude Include="Engine\Cores\BitArray\BitArray.h" />
+    <ClInclude Include="Engine\Cores\Core.h" />
     <ClInclude Include="Engine\Graphics\Camera\Camera.h" />
     <ClInclude Include="Engine\Graphics\Camera\EditorCamera\EditorCamera.h" />
     <ClInclude Include="Engine\Graphics\Color\Color.h" />
@@ -236,11 +239,12 @@ xcopy $(SolutionDir)Contents $(targetDir)Contents /Y /E /I</Command>
     <ClInclude Include="Engine\Graphics\Texture\Texture.h" />
     <ClInclude Include="Engine\Graphics\Window\Window.h" />
     <ClInclude Include="Engine\Graphics\Window\WindowInput.h" />
+    <ClInclude Include="Engine\Math\Transform\Transform.h" />
     <ClInclude Include="Engine\Time\Time.h" />
-    <ClInclude Include="MyGame\MyGame.h" />
     <ClInclude Include="Tool\stb_image.h" />
   </ItemGroup>
   <ItemGroup>
+    <None Include="Contents\shaders\BlinnPhong.glsl" />
     <None Include="Contents\shaders\fragmentShader.glsl" />
     <None Include="Contents\shaders\vertexShader.glsl" />
   </ItemGroup>

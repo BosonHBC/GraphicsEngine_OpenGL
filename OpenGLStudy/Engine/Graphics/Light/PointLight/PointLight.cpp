@@ -1,12 +1,32 @@
 #include "PointLight.h"
 #include <stdio.h>
 namespace Graphics {
-	
+
+
+	cPointLight::cPointLight(const cPointLight& i_other)
+		: cGenLight(i_other), m_const(i_other.m_const), m_linear(i_other.m_linear), m_quadratic(m_quadratic),
+		m_positionID(i_other.m_positionID), m_constID(i_other.m_constID), m_linearID(i_other.m_linearID), m_quadraticID(i_other.m_quadraticID)
+	{
+	}
+
+	cPointLight& cPointLight::operator=(const cPointLight& i_other)
+	{
+		cGenLight::operator=(i_other);
+		m_const = i_other.m_const;
+		m_linear = i_other.m_linear;
+		m_quadratic = i_other.m_quadratic;
+		m_positionID = i_other.m_positionID;
+		m_constID = i_other.m_constID;
+		m_linearID = i_other.m_linearID;
+		m_quadraticID = i_other.m_quadraticID;
+		return *this;
+	}
 
 	void cPointLight::Illuminate()
 	{
 		glUniform3f(m_colorID, m_color.r, m_color.g, m_color.b);
-		glUniform3f(m_positionID, m_position.x, m_position.y, m_position.z);
+		glm::vec3 worldLoc = m_transform->GetWorldLocation();
+		glUniform3f(m_positionID, m_transform->GetWorldLocation().x, m_transform->GetWorldLocation().y, m_transform->GetWorldLocation().z);
 		glUniform1f(m_constID, m_const);
 		glUniform1f(m_linearID, m_linear);
 		glUniform1f(m_quadraticID, m_quadratic);
@@ -35,9 +55,9 @@ namespace Graphics {
 
 	}
 
-	void cPointLight::SetupLight(glm::vec3 i_position)
+	void cPointLight::SetLightInitialLocation(glm::vec3 i_position)
 	{
-		m_position = i_position;
+		m_transform->Translate(i_position);
 	}
 
 }

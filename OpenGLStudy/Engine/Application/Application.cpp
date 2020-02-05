@@ -88,6 +88,8 @@ namespace Application {
 
 				// Update as soon as possible
 				Tick(static_cast<float>(Time::ConvertFromTickToSeconds(tickCount_systemTime_elapsedSinceLastLoop)));
+
+				m_tickCountt_systemTime_Elapsed += tickCount_systemTime_elapsedSinceLastLoop;
 			}
 
 			// Update simulation (fixed update)

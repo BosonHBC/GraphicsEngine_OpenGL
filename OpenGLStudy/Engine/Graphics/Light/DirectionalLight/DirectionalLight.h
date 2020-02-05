@@ -11,7 +11,7 @@ namespace Graphics {
 		cDirectionalLight(Color i_color, glm::vec3 i_direction)
 			: m_direction(i_direction), cGenLight(i_color)
 		{}
-		~cDirectionalLight();
+		virtual ~cDirectionalLight();
 
 		/** Setup uniform id*/
 		void SetupLight(const GLuint& i_programID, GLuint i_lightIndex = 0) override;
