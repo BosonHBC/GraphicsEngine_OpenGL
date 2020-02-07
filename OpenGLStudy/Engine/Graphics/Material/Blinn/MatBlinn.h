@@ -7,16 +7,13 @@ namespace Graphics {
 
 		~cMatBlinn() { CleanUp(); };
 
-		bool Initialize(const std::string& i_path) override;
+		bool Initialize(const std::string& i_path, aiMaterial* const i_aiMat) override;
+		bool UpdateUniformVariables(GLuint i_programID) override;
 		void UseMaterial() override;
+		void CleanUpMaterialBind() override;
 		void CleanUp() override;
 
-		/** Setters */
-		void SetDiffuse(const std::string& i_diffusePath);
-		void SetSpecular(const std::string& i_specularPath);
-		void SetShininess(GLuint i_programID, GLfloat i_shine);
-		void SetDiffuseIntensity(GLuint i_programID, Color i_diffuseIntensity);
-		void SetSpecularIntensity(GLuint i_programID, Color i_diffuseIntensity);
+
 
 	private:
 		cMatBlinn()
@@ -25,6 +22,12 @@ namespace Graphics {
 		cMatBlinn(Color i_diffuseIntensity, Color i_specularIntensity)
 			: m_diffuseIntensity(i_diffuseIntensity), m_specularIntensity(i_diffuseIntensity), cMaterial(eMaterialType::MT_BLINN_PHONG)
 		{}
+		/** Setters */
+		void SetDiffuse(const std::string& i_diffusePath);
+		void SetSpecular(const std::string& i_specularPath);
+		void SetShininess(GLfloat i_shine);
+		void SetDiffuseIntensity(Color i_diffuseIntensity);
+		void SetSpecularIntensity(Color i_diffuseIntensity);
 
 		// diffuse texture handle
 		Assets::cHandle<cTexture> m_diffuseTextureHandle;
@@ -34,6 +37,7 @@ namespace Graphics {
 		Color m_diffuseIntensity, m_specularIntensity;
 		GLfloat m_shininess;
 
+		GLuint m_diffuseTexID, m_specularTexID;
 		GLuint m_shininessID, m_diffuseIntensityID, m_specularIntensityID;
 
 		friend class cMaterial;

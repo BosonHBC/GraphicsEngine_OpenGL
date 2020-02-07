@@ -20,6 +20,7 @@ public:
 	virtual ~cActor() { CleanUp(); }
 
 	void Initialize();
+	void UpdateUniformVariables(Graphics::cEffect* const i_effect);
 	void Update(Graphics::cEffect* const i_effect);
 	void CleanUp();
 	

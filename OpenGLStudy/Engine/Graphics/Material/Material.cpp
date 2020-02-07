@@ -1,9 +1,11 @@
 #include "Blinn/MatBlinn.h"
+#include "assimp/scene.h"
+
 namespace Graphics {
 
 	Assets::cAssetManager < cMaterial > cMaterial::s_manager;
 
-	bool cMaterial::Load(const std::string& i_path, cMaterial*& o_material)
+	bool cMaterial::Load(const std::string& i_path, cMaterial*& o_material, aiMaterial* const i_aiMat)
 	{
 		auto result = true;
 
@@ -32,7 +34,7 @@ namespace Graphics {
 			return result;
 		}
 
-		if (!(result = _mat->Initialize(i_path))) {
+		if (!(result = _mat->Initialize(i_path, i_aiMat))) {
 			// TODO: fail to initialize the material
 			return result;
 		}

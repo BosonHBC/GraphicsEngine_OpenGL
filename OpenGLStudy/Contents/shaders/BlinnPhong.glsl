@@ -3,6 +3,7 @@
 // this sampler is connected to the texture unit, and binding with our texture
 // this uniform is default 0, if we need more texture unit, we need to bind manually
 uniform sampler2D diffuseTex;
+uniform sampler2D specularTex;
 
 in vec2 texCood0;
 in vec3 Normal;
@@ -68,37 +69,44 @@ uniform vec3 camPos;
 // Fucntions
 //-------------------------------------------------------------------------
 
-vec4 IlluminateByDirection(Light light, vec3 vL){
+vec4 IlluminateByDirection_Kd(Light light, vec3 vL){
 
 	vec4 outColor = vec4(0,0,0,0);
 	vec3 vN = normalize(Normal);
 	float vN_Dot_vL = max( dot( vN , vL), 0.0f );
 
-	vec3 vV = normalize(camPos - fragPos);
-	vec3 vH = normalize(vV + vL);
 	vec4 diffuseColor = vec4(material.kd, 1.0f) * vN_Dot_vL;
 	outColor += vec4(light.color , 1.0f) * diffuseColor;
-
-	float specularFactor = max(pow(dot(vH, vN),material.shininess),0.0f);
-	vec4 specularColor = vec4(material.ks, 1.0f) * specularFactor;
-
-	outColor += vec4(light.color , 1.0f) *specularColor;
 
 	return outColor;
 }
 
+vec4 IlluminateByDirection_Ks(Light light, vec3 vL){
 
+	vec4 outColor = vec4(0,0,0,0);
+	vec3 vN = normalize(Normal);
+
+	vec3 vV = normalize(camPos - fragPos);
+	vec3 vH = normalize(vV + vL);
+	float specularFactor = max(pow(dot(vH, vN),material.shininess),0.0f);
+	vec4 specularColor = vec4(material.ks, 1.0f) * specularFactor;
+	outColor += vec4(light.color , 1.0f) *specularColor;
+
+	return outColor;
+}
 //-------------------------------------------------------------------------
 // Light calculation
 //-------------------------------------------------------------------------
 
-
-vec4 CalcPointLight(PointLight pLight){
+//-------------------------------------------------------------------------
+// PointLight
+//-------------------------------------------------------------------------
+vec4 CalcPointLight_Kd(PointLight pLight){
 		vec3 dir = pLight.position - fragPos;
 		float dist = length(dir);
 		dir = normalize(dir);
 
-		vec4 color = IlluminateByDirection(pLight.base, dir);
+		vec4 color = IlluminateByDirection_Kd(pLight.base, dir);
 		float attenuationFactor = pLight.quadratic * dist * dist + 
 													pLight.linear * dist + 
 													pLight.constant;
@@ -106,11 +114,32 @@ vec4 CalcPointLight(PointLight pLight){
 		return (color / attenuationFactor);
 }
 
-vec4 CalcPointLights(){
+vec4 CalcPointLights_Kd(){
 	vec4 outColor = vec4(0,0,0,0);
 
 	for(int i = 0; i < pointLightCount; ++i){
-		outColor += CalcPointLight(pointLights[i]);
+		outColor += CalcPointLight_Kd(pointLights[i]);
+	}
+	return outColor;
+}
+vec4 CalcPointLight_Ks(PointLight pLight){
+		vec3 dir = pLight.position - fragPos;
+		float dist = length(dir);
+		dir = normalize(dir);
+
+		vec4 color = IlluminateByDirection_Ks(pLight.base, dir);
+		float attenuationFactor = pLight.quadratic * dist * dist + 
+													pLight.linear * dist + 
+													pLight.constant;
+
+		return (color / attenuationFactor);
+}
+
+vec4 CalcPointLights_Ks(){
+	vec4 outColor = vec4(0,0,0,0);
+
+	for(int i = 0; i < pointLightCount; ++i){
+		outColor += CalcPointLight_Ks(pointLights[i]);
 	}
 	return outColor;
 }
@@ -122,7 +151,11 @@ vec4 CalcPointLights(){
 void main(){
 	
 	vec4 ambientLightColor = vec4(ambientLight.base.color, 1.0f) * vec4(material.kd, 1.0f);
-	vec4 pointLightColor = CalcPointLights();
+	vec4 pointLightColor_Kd = CalcPointLights_Kd();
+	vec4 pointLightColor_Ks = CalcPointLights_Ks();
 
-	color = texture(diffuseTex, texCood0) * ( ambientLightColor + pointLightColor);
+	vec4 diffuseTexColor =texture(diffuseTex, texCood0);
+	vec4 specularTexColor =texture(specularTex, texCood0);
+	color =  diffuseTexColor * ( ambientLightColor + pointLightColor_Kd) + specularTexColor * pointLightColor_Ks;
+	//color = texture(diffuseTex, texCood0) * ( ambientLightColor + pointLightColor_Kd + pointLightColor_Ks);
 }

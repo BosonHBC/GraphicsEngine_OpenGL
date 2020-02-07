@@ -12,6 +12,14 @@ void cActor::Initialize()
 	m_transform = new cTransform();
 }
 
+void cActor::UpdateUniformVariables(Graphics::cEffect* const i_effect)
+{
+	Graphics::cModel* _modelInst = Graphics::cModel::s_manager.Get(m_modelHandle);
+	if (_modelInst) {
+		_modelInst->UpdateUniformVariables(i_effect->GetProgramID());
+	}
+}
+
 void cActor::Update(Graphics::cEffect* const i_effect)
 {
 	// TransformUpdate
@@ -35,7 +43,7 @@ void cActor::Update(Graphics::cEffect* const i_effect)
 void cActor::CleanUp()
 {
 	safe_delete(m_transform);
-	
+
 	// TODO: Handle
 	// Here should let object pool to delete, but for the simplicity sake, delete here right now
 	safe_delete(m_material);
@@ -47,5 +55,7 @@ void cActor::CleanUp()
 
 void cActor::SetModel(std::string i_modelPath)
 {
-	Graphics::cModel::s_manager.Load(i_modelPath, m_modelHandle);
+	if (!Graphics::cModel::s_manager.Load(i_modelPath, m_modelHandle)) {
+		// TODO: print fail to load model
+	}
 }

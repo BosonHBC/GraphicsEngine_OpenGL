@@ -7,7 +7,7 @@
 #include "assimp/scene.h"
 #include "assimp/postprocess.h"
 
-#include "Material/Blinn/MatBlinn.h"
+#include "Material/Material.h"
 // Static variable definition
 Assets::cAssetManager<Graphics::cModel> Graphics::cModel::s_manager;
 
@@ -16,10 +16,10 @@ namespace Graphics {
 	bool cModel::LoadModel(const char* i_path)
 	{
 		Assimp::Importer _importer;
-		auto _scene = _importer.ReadFile(i_path, 
-			aiProcess_Triangulate 
-			| aiProcess_FlipUVs 
-			| aiProcess_GenSmoothNormals 
+		auto _scene = _importer.ReadFile(i_path,
+			aiProcess_Triangulate
+			| aiProcess_FlipUVs
+			| aiProcess_GenSmoothNormals
 			| aiProcess_JoinIdenticalVertices
 		);
 
@@ -44,18 +44,18 @@ namespace Graphics {
 
 		// make sure there is enough memory to allocate a model
 		_model = new (std::nothrow) cModel();
-		if (!(result =_model)) {
+		if (!(result = _model)) {
 			// Run out of memory
 			// TODO: LogError: Out of memory
-		
+
 			return result;
 		}
 		else {
 			if (!(result = _model->LoadModel(i_path.c_str()))) {
 				// TODO: LogError: fail to log
-				
+
 				delete _model;
-				
+
 				return result;
 			}
 		}
@@ -66,6 +66,17 @@ namespace Graphics {
 		printf("Succeed! Loading model: %s. Mesh size: %d, texture size: %d\n", i_path.c_str(), o_model->m_meshList.size(), o_model->m_materialList.size());
 
 		return result;
+	}
+
+	void cModel::UpdateUniformVariables(GLuint i_programID)
+	{
+		for (auto item : m_materialList)
+		{
+			cMaterial* _matInst = cMaterial::s_manager.Get(item);
+			if (_matInst) {
+				_matInst->UpdateUniformVariables(i_programID);
+			}
+		}
 	}
 
 	void cModel::Render()
@@ -83,6 +94,10 @@ namespace Graphics {
 			}
 
 			m_meshList[i]->Render();
+			
+			if (_matIndex < m_materialList.size() && _material) {
+				_material->CleanUpMaterialBind();
+			}
 		}
 	}
 
@@ -104,7 +119,7 @@ namespace Graphics {
 		}
 		m_meshList.clear();
 		m_meshList.~vector();
-	
+
 		m_mesh_to_material.clear();
 		m_mesh_to_material.~vector();
 	}
@@ -132,7 +147,7 @@ namespace Graphics {
 		{
 			//1. Insert vertices at the end of the data
 			_vertices.insert(_vertices.end(), { i_mesh->mVertices[i].x, i_mesh->mVertices[i].y, i_mesh->mVertices[i].z });
-			
+
 			//2. Insert texture coordinate data after vertices
 			if (i_mesh->mTextureCoords[0]) {
 				// if first coordinate exists
@@ -140,7 +155,7 @@ namespace Graphics {
 			}
 			else {
 				// there is no texture coordinate, give it default one
-				_vertices.insert(_vertices.end(), {0.0f, 0.0f });
+				_vertices.insert(_vertices.end(), { 0.0f, 0.0f });
 			}
 
 			// 3. Insert normals
@@ -175,51 +190,15 @@ namespace Graphics {
 		for (size_t i = 0; i < _numOfMaterials; ++i)
 		{
 			aiMaterial* _material = i_scene->mMaterials[i];
-			
+
 			// TODO: right now, the material path is meaningless
-			if (!cMaterial::s_manager.Load("Meaningless material path", m_materialList[i])) {
+			std::string _path = "Invalid path_" + std::to_string(i);
+			if (!cMaterial::s_manager.Load(_path, m_materialList[i], _material)) {
 				printf("Fail to load material[--] file");
 				continue;
 			}
-			// Load diffuse texture
-			if (_material->GetTextureCount(aiTextureType_DIFFUSE)) {
-				aiString _path;
-				if (_material->GetTexture(aiTextureType_DIFFUSE, 0, &_path) == AI_SUCCESS) {
-					auto _idx = std::string(_path.data).rfind("\\");
-					std::string _filename = std::string(_path.data).substr(_idx + 1);
-
-					std::string _texPath = "Contents/textures/" + _filename;
-					
-					cMatBlinn* _blinn = reinterpret_cast<cMatBlinn*>(cMaterial::s_manager.Get(m_materialList[i]));
-					if (_blinn) {
-						_blinn->SetDiffuse(_texPath);
-					}
-					else {
-						continue;
-					}
-				}
-			}
-			// Load specular texture
-			if (_material->GetTextureCount(aiTextureType_SPECULAR)) {
-				aiString _path;
-				if (_material->GetTexture(aiTextureType_SPECULAR, 0, &_path) == AI_SUCCESS) {
-					auto _idx = std::string(_path.data).rfind("\\");
-					std::string _filename = std::string(_path.data).substr(_idx + 1);
-
-					std::string _texPath = "Contents/textures/" + _filename;
-
-					cMatBlinn* _blinn = reinterpret_cast<cMatBlinn*>(cMaterial::s_manager.Get(m_materialList[i]));
-					if (_blinn) {
-						_blinn->SetSpecular(_texPath);
-						//_material->
-					}
-					else {
-						continue;
-					}
-				}
-			}
+			;
 		}
-
 
 	}
 

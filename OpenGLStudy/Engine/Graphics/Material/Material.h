@@ -9,6 +9,7 @@
 #include "GL/glew.h"
 #include "Graphics/Color/Color.h"
 #include "Engine/Graphics/Texture/Texture.h"
+struct aiMaterial;
 namespace Graphics {
 	//--------------------------
 	// Material enum definition, this enum may be moved to other places
@@ -27,14 +28,16 @@ namespace Graphics {
 		// Asset management
 		using HANDLE = Assets::cHandle<cMaterial>;
 		static Assets::cAssetManager < cMaterial > s_manager;
-		static bool Load(const std::string& i_path, cMaterial*& o_material);
+		static bool Load(const std::string& i_path, cMaterial*& o_material, aiMaterial* const i_aiMat);
 		//--------------------------
 
 		virtual ~cMaterial() { CleanUp(); };
 
 		// Actual Initialize function, ready for children class
-		virtual bool Initialize(const std::string& i_path) { return false; }
+		virtual bool Initialize(const std::string& i_path, aiMaterial* const i_aiMat) { return false; }
+		virtual bool UpdateUniformVariables(GLuint i_programID) { return false; }
 		virtual void UseMaterial() {};
+		virtual void CleanUpMaterialBind(){}
 		virtual void CleanUp() {};
 
 	protected:

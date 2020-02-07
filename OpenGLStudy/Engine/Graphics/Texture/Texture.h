@@ -19,7 +19,9 @@ namespace Graphics {
 		~cTexture() { CleanUp(); }
 
 		void UseTexture(int i_textureLocation);
+		void CleanUpTextureBind(int i_textureLocation);
 		void CleanUp();
+
 
 	private:
 		/** private constructors */

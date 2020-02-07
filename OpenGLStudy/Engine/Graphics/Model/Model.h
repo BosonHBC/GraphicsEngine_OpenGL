@@ -25,6 +25,7 @@ namespace Graphics {
 		~cModel() { CleanUp(); }
 
 		/** Usage functions*/
+		void UpdateUniformVariables(GLuint i_programID);
 		void Render();
 		void CleanUp();
 

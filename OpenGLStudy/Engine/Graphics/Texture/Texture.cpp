@@ -127,15 +127,21 @@ namespace Graphics {
 		return true;
 	}
 
-	void cTexture::UseTexture(int i_textuerLocation)
+	void cTexture::UseTexture(int i_textureLocation)
 	{
-		// activate the texture unit 0
-		glActiveTexture(i_textuerLocation);
-		// bind texture to texture unit 0
-		// this allow multiples texture to be bound to one texture unit
+		// activate the texture unit at i_textureLocation
+		glActiveTexture(i_textureLocation);
+		// bind texture to texture unit i_textureLocation
+		// this allow multiples texture to be bound to one shader
 		// so in one object, it can be multiple texture
 		glBindTexture(GL_TEXTURE_2D, m_textureID);
 		
+	}
+
+	void cTexture::CleanUpTextureBind(int i_textureLocation)
+	{
+		glActiveTexture(i_textureLocation);
+		glBindTexture(GL_TEXTURE_2D, 0);
 	}
 
 	void cTexture::CleanUp()
