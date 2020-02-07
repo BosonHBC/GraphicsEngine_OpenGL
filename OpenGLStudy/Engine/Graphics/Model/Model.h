@@ -1,7 +1,7 @@
 #pragma once
 
 #include <vector>
-#include "Engine/Graphics/Texture/Texture.h"
+#include "Engine/Graphics/Material/Material.h"
 
 struct aiScene;
 struct aiNode;
@@ -38,8 +38,8 @@ namespace Graphics {
 			but for the sake of simplicity, put it here first
 		*/
 		std::vector<cMesh*> m_meshList;
-		std::vector<cTexture::HANDLE> m_textureList;
-		std::vector<unsigned int> m_mesh_to_texture;
+		std::vector<cMaterial::HANDLE> m_materialList;
+		std::vector<unsigned int> m_mesh_to_material;
 
 		/** private helper functions*/
 		void LoadNode(const aiNode* i_node, const aiScene* i_scene);

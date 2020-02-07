@@ -24,7 +24,7 @@ void cActor::Update(Graphics::cEffect* const i_effect)
 	// Rendering Update
 	//---------------------------------
 	if (m_material) {
-		m_material->UseMaterial(i_effect->GetProgramID());
+		m_material->UseMaterial();
 	}
 	Graphics::cModel* _model = Graphics::cModel::s_manager.Get(m_modelHandle);
 	if (_model) {

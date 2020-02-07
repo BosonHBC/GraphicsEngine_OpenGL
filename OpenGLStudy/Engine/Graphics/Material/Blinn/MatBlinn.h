@@ -8,11 +8,12 @@ namespace Graphics {
 		~cMatBlinn() { CleanUp(); };
 
 		bool Initialize(const std::string& i_path) override;
-		void UseMaterial(GLuint i_programID) override;
+		void UseMaterial() override;
 		void CleanUp() override;
 
 		/** Setters */
 		void SetDiffuse(const std::string& i_diffusePath);
+		void SetSpecular(const std::string& i_specularPath);
 		void SetShininess(GLuint i_programID, GLfloat i_shine);
 		void SetDiffuseIntensity(GLuint i_programID, Color i_diffuseIntensity);
 		void SetSpecularIntensity(GLuint i_programID, Color i_diffuseIntensity);

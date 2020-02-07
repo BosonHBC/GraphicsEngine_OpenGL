@@ -3,7 +3,8 @@
 	Right now it only support Blinn-Phong Shading.
 
 */
-
+#ifndef MATERIAL_DEFINED
+#define MATERIAL_DEFINED
 #pragma once
 #include "GL/glew.h"
 #include "Graphics/Color/Color.h"
@@ -33,7 +34,7 @@ namespace Graphics {
 
 		// Actual Initialize function, ready for children class
 		virtual bool Initialize(const std::string& i_path) { return false; }
-		virtual void UseMaterial(GLuint i_programID) {};
+		virtual void UseMaterial() {};
 		virtual void CleanUp() {};
 
 	protected:
@@ -46,3 +47,4 @@ namespace Graphics {
 	};
 
 }
+#endif

@@ -1,13 +1,13 @@
 #include "Model/Model.h"
 
 #include "Mesh/Mesh.h"
-#include "Texture/Texture.h"
 #include "Engine/Constants/Constants.h"
 
 #include "assimp/Importer.hpp"
 #include "assimp/scene.h"
 #include "assimp/postprocess.h"
 
+#include "Material/Blinn/MatBlinn.h"
 // Static variable definition
 Assets::cAssetManager<Graphics::cModel> Graphics::cModel::s_manager;
 
@@ -63,7 +63,7 @@ namespace Graphics {
 		o_model = _model;
 
 		//TODO: Loading information succeed!
-		printf("Succeed! Loading model: %s. Mesh size: %d, texture size: %d\n", i_path.c_str(), o_model->m_meshList.size(), o_model->m_textureList.size());
+		printf("Succeed! Loading model: %s. Mesh size: %d, texture size: %d\n", i_path.c_str(), o_model->m_meshList.size(), o_model->m_materialList.size());
 
 		return result;
 	}
@@ -74,12 +74,12 @@ namespace Graphics {
 		for (size_t i = 0; i < m_meshList.size(); ++i)
 		{
 
-			auto _matIndex = m_mesh_to_texture[i];
+			auto _matIndex = m_mesh_to_material[i];
 
-			cTexture* _texture = cTexture::s_manager.Get(m_textureList[_matIndex]);
+			cMaterial* _material = cMaterial::s_manager.Get(m_materialList[_matIndex]);
 			// if _maxIndex is in range and the texture is not a nullptr
-			if (_matIndex < m_textureList.size() && _texture) {
-				_texture->UseTexture(GL_TEXTURE0);
+			if (_matIndex < m_materialList.size() && _material) {
+				_material->UseMaterial();
 			}
 
 			m_meshList[i]->Render();
@@ -88,12 +88,12 @@ namespace Graphics {
 
 	void cModel::CleanUp()
 	{
-		for (size_t i = 0; i < m_textureList.size(); ++i)
+		for (size_t i = 0; i < m_materialList.size(); ++i)
 		{
-			cTexture::s_manager.Release(m_textureList[i]);
+			cMaterial::s_manager.Release(m_materialList[i]);
 		}
-		m_textureList.clear();
-		m_textureList.~vector();
+		m_materialList.clear();
+		m_materialList.~vector();
 
 		for (size_t i = 0; i < m_meshList.size(); ++i)
 		{
@@ -105,8 +105,8 @@ namespace Graphics {
 		m_meshList.clear();
 		m_meshList.~vector();
 	
-		m_mesh_to_texture.clear();
-		m_mesh_to_texture.~vector();
+		m_mesh_to_material.clear();
+		m_mesh_to_material.~vector();
 	}
 
 	void cModel::LoadNode(const aiNode* i_node, const aiScene* i_scene)
@@ -162,7 +162,7 @@ namespace Graphics {
 
 		// Stored new mesh to the list and store its index to material
 		m_meshList.push_back(_newMesh);
-		m_mesh_to_texture.push_back(i_mesh->mMaterialIndex);
+		m_mesh_to_material.push_back(i_mesh->mMaterialIndex);
 
 
 	}
@@ -170,12 +170,17 @@ namespace Graphics {
 	void cModel::LoadMaterials(const aiScene* i_scene)
 	{
 		const size_t _numOfMaterials = i_scene->mNumMaterials;
-		m_textureList.resize(_numOfMaterials);
+		m_materialList.resize(_numOfMaterials);
 
 		for (size_t i = 0; i < _numOfMaterials; ++i)
 		{
 			aiMaterial* _material = i_scene->mMaterials[i];
 			
+			// TODO: right now, the material path is meaningless
+			if (!cMaterial::s_manager.Load("Meaningless material path", m_materialList[i])) {
+				printf("Fail to load material[--] file");
+				continue;
+			}
 			// Load diffuse texture
 			if (_material->GetTextureCount(aiTextureType_DIFFUSE)) {
 				aiString _path;
@@ -185,8 +190,31 @@ namespace Graphics {
 
 					std::string _texPath = "Contents/textures/" + _filename;
 					
-					if (!cTexture::s_manager.Load(_texPath, m_textureList[i], false)) {
-						printf("Fail to load texture[%s] file", _texPath.c_str());
+					cMatBlinn* _blinn = reinterpret_cast<cMatBlinn*>(cMaterial::s_manager.Get(m_materialList[i]));
+					if (_blinn) {
+						_blinn->SetDiffuse(_texPath);
+					}
+					else {
+						continue;
+					}
+				}
+			}
+			// Load specular texture
+			if (_material->GetTextureCount(aiTextureType_SPECULAR)) {
+				aiString _path;
+				if (_material->GetTexture(aiTextureType_SPECULAR, 0, &_path) == AI_SUCCESS) {
+					auto _idx = std::string(_path.data).rfind("\\");
+					std::string _filename = std::string(_path.data).substr(_idx + 1);
+
+					std::string _texPath = "Contents/textures/" + _filename;
+
+					cMatBlinn* _blinn = reinterpret_cast<cMatBlinn*>(cMaterial::s_manager.Get(m_materialList[i]));
+					if (_blinn) {
+						_blinn->SetSpecular(_texPath);
+						//_material->
+					}
+					else {
+						continue;
 					}
 				}
 			}

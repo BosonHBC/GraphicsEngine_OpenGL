@@ -66,7 +66,7 @@ bool cTransform::HasScale() const
 {
 #define NOT_ONE(x) ((x) < .999f || (x) > 1.001f)
 	return (NOT_ONE((m*glm::vec4(1, 0, 0, 0)).length()) || NOT_ONE((m*glm::vec4(1, 0, 0, 0)).length()) || NOT_ONE((m*glm::vec4(1, 0, 0, 0)).length()));
-#undef NOT_ONE;
+#undef NOT_ONE
 }
 
 void cTransform::Update()

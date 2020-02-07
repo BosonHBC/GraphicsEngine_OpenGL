@@ -7,11 +7,11 @@ namespace Graphics {
 	bool cMatBlinn::Initialize(const std::string& i_path)
 	{
 		bool result = true;
-
+		// TODO: load material data from LUA files
 		return result;
 	}
 
-	void cMatBlinn::UseMaterial(GLuint i_programID)
+	void cMatBlinn::UseMaterial()
 	{
 		glUniform1f(m_shininessID, m_shininess);
 		glUniform3f(m_diffuseIntensityID, m_diffuseIntensity.r, m_diffuseIntensity.g, m_diffuseIntensity.b);
@@ -39,6 +39,23 @@ namespace Graphics {
 			}
 		}
 	}
+
+	void cMatBlinn::SetSpecular(const std::string& i_specularPath)
+	{
+		auto result = true;
+		if (!(result = cTexture::s_manager.Load(i_specularPath, m_specularTextureHandle, false))) {
+			if (result = cTexture::s_manager.Load(Constants::CONST_PATH_DEFAULT_TEXTURE, m_specularTextureHandle, false))
+			{
+				//TODO: Use default texture, which is the white board
+
+			}
+			else {
+				//TODO: print Fail to load default texture
+
+			}
+		}
+	}
+
 	void cMatBlinn::SetShininess(GLuint i_programID, GLfloat i_shine)
 	{
 		m_shininess = i_shine;

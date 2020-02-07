@@ -1,11 +1,14 @@
 #include "Blinn/MatBlinn.h"
 namespace Graphics {
+
+	Assets::cAssetManager < cMaterial > cMaterial::s_manager;
+
 	bool cMaterial::Load(const std::string& i_path, cMaterial*& o_material)
 	{
 		auto result = true;
 
 		cMaterial* _mat = nullptr;
-		// TODO: read the material type from LUA file
+		// TODO: read the material type from LUA file, right now, set it to blinn-phong
 		eMaterialType _matType = MT_BLINN_PHONG;
 
 		switch (_matType)
