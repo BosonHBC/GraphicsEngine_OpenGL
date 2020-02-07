@@ -12,7 +12,7 @@ int main()
 {
 	Assignment* _myGame =  new Assignment();
 
-	if (!_myGame->Initialize(WIDTH, HEIGHT, "cMyGame")) {
+	if (!_myGame->Initialize(WIDTH, HEIGHT, "Assignment")) {
 		printf("Failed to initialize application!");
 		return 1;
 	}

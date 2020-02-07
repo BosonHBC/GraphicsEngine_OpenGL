@@ -27,7 +27,7 @@ namespace Assets {
 		// Load function by the key and extra arguments
 		// ExtraArgument is needed because some asset need to specify some variables when it is loaded
 		template <typename ... ExtraArguments> 
-		bool Load(const tKey& i_key, cHandle<tAsset> & o_asset, ExtraArguments&... i_arguments);
+		bool Load(const tKey& i_key, cHandle<tAsset> & o_asset, ExtraArguments&&... i_arguments);
 		// Release the Asset, free the memory
 		bool Release(cHandle<tAsset> & io_handle);
 		

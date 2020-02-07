@@ -44,20 +44,27 @@ namespace Graphics {
 
 		// make sure there is enough memory to allocate a model
 		_model = new (std::nothrow) cModel();
-		if (!_model) {
+		if (!(result =_model)) {
 			// Run out of memory
 			// TODO: LogError: Out of memory
-			result = false;
+		
 			return result;
 		}
 		else {
 			if (!(result = _model->LoadModel(i_path.c_str()))) {
 				// TODO: LogError: fail to log
+				
+				delete _model;
+				
 				return result;
 			}
 		}
 
 		o_model = _model;
+
+		//TODO: Loading information succeed!
+		printf("Succeed! Loading model: %s. Mesh size: %d, texture size: %d\n", i_path.c_str(), o_model->m_meshList.size(), o_model->m_textureList.size());
+
 		return result;
 	}
 
@@ -66,11 +73,13 @@ namespace Graphics {
 
 		for (size_t i = 0; i < m_meshList.size(); ++i)
 		{
+
 			auto _matIndex = m_mesh_to_texture[i];
 
+			cTexture* _texture = cTexture::s_manager.Get(m_textureList[_matIndex]);
 			// if _maxIndex is in range and the texture is not a nullptr
-			if (_matIndex < m_textureList.size() && m_textureList[_matIndex]) {
-				m_textureList[_matIndex]->UseTexture(GL_TEXTURE0);
+			if (_matIndex < m_textureList.size() && _texture) {
+				_texture->UseTexture(GL_TEXTURE0);
 			}
 
 			m_meshList[i]->Render();
@@ -81,10 +90,7 @@ namespace Graphics {
 	{
 		for (size_t i = 0; i < m_textureList.size(); ++i)
 		{
-			if (m_textureList[i]) {
-				delete m_textureList[i];
-				m_textureList[i] = nullptr;
-			}
+			cTexture::s_manager.Release(m_textureList[i]);
 		}
 		m_textureList.clear();
 		m_textureList.~vector();
@@ -170,29 +176,19 @@ namespace Graphics {
 		{
 			aiMaterial* _material = i_scene->mMaterials[i];
 			
-			m_textureList[i] = nullptr;
-
+			// Load diffuse texture
 			if (_material->GetTextureCount(aiTextureType_DIFFUSE)) {
 				aiString _path;
 				if (_material->GetTexture(aiTextureType_DIFFUSE, 0, &_path) == AI_SUCCESS) {
 					auto _idx = std::string(_path.data).rfind("\\");
 					std::string _filename = std::string(_path.data).substr(_idx + 1);
 
-					std::string _texPath = std::string("Contents/textures/") + _filename;
-
-					m_textureList[i] = new cTexture(_texPath.c_str());
-
-					if (!m_textureList[i]->LoadTexture()) {
+					std::string _texPath = "Contents/textures/" + _filename;
+					
+					if (!cTexture::s_manager.Load(_texPath, m_textureList[i], false)) {
 						printf("Fail to load texture[%s] file", _texPath.c_str());
-						delete m_textureList[i];
-						m_textureList[i] = nullptr;
 					}
 				}
-			}
-			// Fail to load texture, set it to default texture
-			if (!m_textureList[i]) {
-				m_textureList[i] = new cTexture(Constants::CONST_PATH_DEFAULT_TEXTURE);
-				m_textureList[i]->LoadTexture();
 			}
 		}
 

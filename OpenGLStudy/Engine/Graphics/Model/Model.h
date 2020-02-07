@@ -1,8 +1,7 @@
 #pragma once
 
 #include <vector>
-#include "Engine/Assets/AssetManager.h"
-#include "Engine/Assets/Handle.h"
+#include "Engine/Graphics/Texture/Texture.h"
 
 struct aiScene;
 struct aiNode;
@@ -11,7 +10,6 @@ namespace Graphics {
 
 	/** Forward declaration*/
 	class cMesh;
-	class cTexture;
 	/** Model stores information of meshes group and related textures*/
 	class cModel
 	{
@@ -40,7 +38,7 @@ namespace Graphics {
 			but for the sake of simplicity, put it here first
 		*/
 		std::vector<cMesh*> m_meshList;
-		std::vector<cTexture*> m_textureList;
+		std::vector<cTexture::HANDLE> m_textureList;
 		std::vector<unsigned int> m_mesh_to_texture;
 
 		/** private helper functions*/

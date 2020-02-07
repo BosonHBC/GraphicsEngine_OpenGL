@@ -6,7 +6,7 @@ namespace Assets {
 
 	template< class tAsset, class tKey /*= std::string*/>
 	template < typename... ExtraArguments>
-	bool cAssetManager<tAsset, tKey>::Load(const tKey& i_key, cHandle<tAsset> & o_asset, ExtraArguments&... i_arguments) {
+	bool cAssetManager<tAsset, tKey>::Load(const tKey& i_key, cHandle<tAsset> & o_asset, ExtraArguments&&... i_arguments) {
 		auto result = true;
 
 		// If the key exist in the map, get the existing one

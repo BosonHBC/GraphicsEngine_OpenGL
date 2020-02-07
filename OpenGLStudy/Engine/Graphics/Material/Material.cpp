@@ -4,14 +4,20 @@
 
 namespace Graphics {
 
-	void cMaterial::SetDiffuse(const char* i_diffusePath)
+	void cMaterial::SetDiffuse(const std::string& i_diffusePath)
 	{
-		m_diffuseTexture = new  cTexture(i_diffusePath);
-		if (!m_diffuseTexture->LoadTexture()) {
-			delete m_diffuseTexture;
-			// Use default texture, which is the white board
-			m_diffuseTexture = new  cTexture(Constants::CONST_PATH_DEFAULT_TEXTURE);
-		}
+		auto result = true;
+		if (!(result = cTexture::s_manager.Load(i_diffusePath, m_diffuseTextureHandle, false))) {
+			if (result = cTexture::s_manager.Load(Constants::CONST_PATH_DEFAULT_TEXTURE, m_diffuseTextureHandle, false))
+			{
+				//TODO: Use default texture, which is the white board
+
+			}
+			else {
+				//TODO: print Fail to load default texture
+
+			}
+		}	
 	}
 
 	void cMaterial::SetShininess(GLuint i_programID, GLfloat i_shine)
@@ -43,10 +49,8 @@ namespace Graphics {
 
 	void cMaterial::CleanUp()
 	{
-		if (m_diffuseTexture) {
-			delete m_diffuseTexture;
-			m_diffuseTexture = nullptr;
-		}
+		// Release diffuse texture
+		cTexture::s_manager.Release(m_diffuseTextureHandle);
 	}
 
 }
