@@ -1,56 +1,36 @@
-#include "Material.h"
-#include "Engine/Graphics/Texture/Texture.h"
-#include "Engine/Constants/Constants.h"
+#include "Blinn/MatBlinn.h"
 
 namespace Graphics {
-
-	void cMaterial::SetDiffuse(const std::string& i_diffusePath)
+	bool cMaterial::Load(const std::string& i_path, cMaterial*& o_material)
 	{
 		auto result = true;
-		if (!(result = cTexture::s_manager.Load(i_diffusePath, m_diffuseTextureHandle, false))) {
-			if (result = cTexture::s_manager.Load(Constants::CONST_PATH_DEFAULT_TEXTURE, m_diffuseTextureHandle, false))
-			{
-				//TODO: Use default texture, which is the white board
 
-			}
-			else {
-				//TODO: print Fail to load default texture
+		cMaterial* _mat = nullptr;
+		// TODO: read the material type from LUA file
+		eMaterialType _matType = MT_BLINN_PHONG;
 
-			}
-		}	
-	}
+		switch (_matType)
+		{
+		case Graphics::cMaterial::MT_INVALID:
+			_mat = new (std::nothrow) cMaterial(_matType);
+			break;
+		case Graphics::cMaterial::MT_BLINN_PHONG:
+			_mat = new (std::nothrow) cMatBlinn();
 
-	void cMaterial::SetShininess(GLuint i_programID, GLfloat i_shine)
-	{
-		 m_shininess = i_shine;
-		 m_shininessID = glGetUniformLocation(i_programID, "material.shininess");
-	}
+			break;
+		default:
+			break;
+		}
 
-	void cMaterial::SetDiffuseIntensity(GLuint i_programID, Color i_diffuseIntensity)
-	{
-		m_diffuseIntensity = i_diffuseIntensity;
-		m_diffuseIntensityID = glGetUniformLocation(i_programID, "material.kd");
-	}
+		if (!(result = _mat)) {
+			// Run out of memory
+			// TODO: LogError: Out of memory
 
-	void cMaterial::SetSpecularIntensity(GLuint i_programID, Color i_specularIntensity)
-	{
-		m_specularIntensity = i_specularIntensity;
-		m_specularIntensityID = glGetUniformLocation(i_programID, "material.ks");
-	}
-
-	void cMaterial::UseMaterial(GLuint i_programID)
-	{
-		//m_diffuseTexture->UseTexture(GL_TEXTURE0);
-		glUniform1f(m_shininessID  , m_shininess);
-		glUniform3f(m_diffuseIntensityID, m_diffuseIntensity.r, m_diffuseIntensity.g, m_diffuseIntensity.b);
-		glUniform3f(m_specularIntensityID, m_specularIntensity.r, m_specularIntensity.g, m_specularIntensity.b);
-
-	}
-
-	void cMaterial::CleanUp()
-	{
-		// Release diffuse texture
-		cTexture::s_manager.Release(m_diffuseTextureHandle);
+			return result;
+		}
+		else
+		{
+		}
 	}
 
 }

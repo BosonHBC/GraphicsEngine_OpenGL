@@ -1,3 +1,9 @@
+/*
+	Material describe the light-surface interaction.
+	Right now it only support Blinn-Phong Shading.
+
+*/
+
 #pragma once
 #include "GL/glew.h"
 #include "Graphics/Color/Color.h"
@@ -6,30 +12,42 @@ namespace Graphics {
 	class cMaterial
 	{
 	public:
-		cMaterial() 
-			: m_shininess(0), m_diffuseIntensity(Color::White()), m_specularIntensity(Color::White())
-		{}
-		cMaterial(Color i_diffuseIntensity, Color i_specularIntensity)
-			: m_diffuseIntensity(i_diffuseIntensity), m_specularIntensity(i_diffuseIntensity)
-		{}
-		~cMaterial() { CleanUp(); };
 
-		void UseMaterial( GLuint i_programID);
-		void CleanUp();
+		//--------------------------
+		// Material enum definition, this enum may be moved to other places
+		// When it starts to parse the material file, the subclass of the material is decided by this material.
+		enum eMaterialType : uint8_t
+		{
+			MT_INVALID,
+			MT_BLINN_PHONG,
+			//... will support more in the future
+		};
+		//--------------------------
 
-		/** Setters */
-		void SetDiffuse(const std::string& i_diffusePath);
-		void SetShininess(GLuint i_programID, GLfloat i_shine);
-		void SetDiffuseIntensity(GLuint i_programID, Color i_diffuseIntensity);
-		void SetSpecularIntensity(GLuint i_programID, Color i_diffuseIntensity);
+		//--------------------------
+		// Asset management
+		using HANDLE = Assets::cHandle<cMaterial>;
+		static Assets::cAssetManager < cMaterial > s_manager;
+		static bool Load(const std::string& i_path, cMaterial*& o_material);
+		//--------------------------
 
-		protected:
-		Assets::cHandle<cTexture> m_diffuseTextureHandle;
 
-		Color m_diffuseIntensity, m_specularIntensity;
-		GLfloat m_shininess;
+		virtual ~cMaterial() { CleanUp(); };
+		
+		// Actual Initialize function, ready for children class
+		virtual bool Initialize(const std::string& i_path) {}
+		virtual void UseMaterial(GLuint i_programID) {};
+		virtual void CleanUp() {};
 
-		GLuint m_shininessID, m_diffuseIntensityID, m_specularIntensityID;
+		
+
+	protected:
+		/** private constructor*/
+		cMaterial(): m_matType(MT_INVALID){}
+		cMaterial(const eMaterialType& i_matType) : m_matType(i_matType) {}
+
+		// Type of the material
+		eMaterialType m_matType;
 	};
 
 }
