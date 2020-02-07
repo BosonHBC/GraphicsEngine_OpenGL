@@ -2,6 +2,28 @@
 #include "Engine/Constants/Constants.h"
 
 namespace Graphics {
+
+
+	bool cMatBlinn::Initialize(const std::string& i_path)
+	{
+		bool result = true;
+
+		return result;
+	}
+
+	void cMatBlinn::UseMaterial(GLuint i_programID)
+	{
+		glUniform1f(m_shininessID, m_shininess);
+		glUniform3f(m_diffuseIntensityID, m_diffuseIntensity.r, m_diffuseIntensity.g, m_diffuseIntensity.b);
+		glUniform3f(m_specularIntensityID, m_specularIntensity.r, m_specularIntensity.g, m_specularIntensity.b);
+
+	}
+	void cMatBlinn::CleanUp()
+	{
+		cTexture::s_manager.Release(m_diffuseTextureHandle);
+		cTexture::s_manager.Release(m_specularTextureHandle);
+
+	}
 	void cMatBlinn::SetDiffuse(const std::string& i_diffusePath)
 	{
 		auto result = true;
@@ -17,14 +39,6 @@ namespace Graphics {
 			}
 		}
 	}
-	void cMatBlinn::UseMaterial(GLuint i_programID)
-	{
-		glUniform1f(m_shininessID, m_shininess);
-		glUniform3f(m_diffuseIntensityID, m_diffuseIntensity.r, m_diffuseIntensity.g, m_diffuseIntensity.b);
-		glUniform3f(m_specularIntensityID, m_specularIntensity.r, m_specularIntensity.g, m_specularIntensity.b);
-
-	}
-
 	void cMatBlinn::SetShininess(GLuint i_programID, GLfloat i_shine)
 	{
 		m_shininess = i_shine;

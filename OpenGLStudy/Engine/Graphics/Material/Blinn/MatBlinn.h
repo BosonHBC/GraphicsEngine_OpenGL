@@ -7,6 +7,7 @@ namespace Graphics {
 
 		~cMatBlinn() { CleanUp(); };
 
+		bool Initialize(const std::string& i_path) override;
 		void UseMaterial(GLuint i_programID) override;
 		void CleanUp() override;
 
@@ -18,10 +19,10 @@ namespace Graphics {
 
 	private:
 		cMatBlinn()
-			: m_shininess(0), m_diffuseIntensity(Color::White()), m_specularIntensity(Color::White()), m_matType(eMaterialType::MT_BLINN_PHONG)
+			: m_shininess(0), m_diffuseIntensity(Color::White()), m_specularIntensity(Color::White()), cMaterial(eMaterialType::MT_BLINN_PHONG)
 		{}
 		cMatBlinn(Color i_diffuseIntensity, Color i_specularIntensity)
-			: m_diffuseIntensity(i_diffuseIntensity), m_specularIntensity(i_diffuseIntensity)
+			: m_diffuseIntensity(i_diffuseIntensity), m_specularIntensity(i_diffuseIntensity), cMaterial(eMaterialType::MT_BLINN_PHONG)
 		{}
 
 		// diffuse texture handle
@@ -33,14 +34,11 @@ namespace Graphics {
 		GLfloat m_shininess;
 
 		GLuint m_shininessID, m_diffuseIntensityID, m_specularIntensityID;
+
+		friend class cMaterial;
 	};
 
-	void cMatBlinn::CleanUp()
-	{
-		cTexture::s_manager.Release(m_diffuseTextureHandle);
-		cTexture::s_manager.Release(m_specularTextureHandle);
 
-	}
 
 
 }

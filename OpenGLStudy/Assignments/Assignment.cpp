@@ -50,14 +50,14 @@ void Assignment::CreateEffect()
 	// -----------------------------------
 	// Create materials
 	// -----------------------------------
-	auto _material = new  Graphics::cMaterial();
-	_material->SetDiffuseIntensity(defaultEffect->GetProgramID(), Color(1, 1, 1));
-	_material->SetSpecularIntensity(defaultEffect->GetProgramID(), Color(1, 1, 1));
-	_material->SetShininess(defaultEffect->GetProgramID(), 32);
+	//auto _material = new  Graphics::cMaterial();
+	//_material->SetDiffuseIntensity(defaultEffect->GetProgramID(), Color(1, 1, 1));
+	//_material->SetSpecularIntensity(defaultEffect->GetProgramID(), Color(1, 1, 1));
+	//_material->SetShininess(defaultEffect->GetProgramID(), 32);
 
 	// Set material
-	m_teapot->SetMaterial(_material);
-	m_teapot->SetMaterial(_material);
+	//m_teapot->SetMaterial(_material);
+	//m_teapot->SetMaterial(_material);
 	// -----------------------------------
 	// Create models
 	// -----------------------------------

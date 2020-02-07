@@ -207,6 +207,7 @@ xcopy $(SolutionDir)Contents $(targetDir)Contents /Y /E /I</Command>
     <ClCompile Include="Engine\Graphics\Light\Light.cpp" />
     <ClCompile Include="Engine\Graphics\Light\PointLight\PointLight.cpp" />
     <ClCompile Include="Engine\Graphics\Light\SpotLight\SpotLight.cpp" />
+    <ClCompile Include="Engine\Graphics\Material\Blinn\MatBlinn.cpp" />
     <ClCompile Include="Engine\Graphics\Material\Material.cpp" />
     <ClCompile Include="Engine\Graphics\Mesh\Mesh.cpp" />
     <ClCompile Include="Engine\Graphics\Model\Model.cpp" />
@@ -233,6 +234,7 @@ xcopy $(SolutionDir)Contents $(targetDir)Contents /Y /E /I</Command>
     <ClInclude Include="Engine\Graphics\Light\Light.h" />
     <ClInclude Include="Engine\Graphics\Light\PointLight\PointLight.h" />
     <ClInclude Include="Engine\Graphics\Light\SpotLight\SpotLight.h" />
+    <ClInclude Include="Engine\Graphics\Material\Blinn\MatBlinn.h" />
     <ClInclude Include="Engine\Graphics\Material\Material.h" />
     <ClInclude Include="Engine\Graphics\Mesh\Mesh.h" />
     <ClInclude Include="Engine\Graphics\Model\Model.h" />

@@ -1,5 +1,4 @@
 #include "Blinn/MatBlinn.h"
-
 namespace Graphics {
 	bool cMaterial::Load(const std::string& i_path, cMaterial*& o_material)
 	{
@@ -11,12 +10,13 @@ namespace Graphics {
 
 		switch (_matType)
 		{
-		case Graphics::cMaterial::MT_INVALID:
-			_mat = new (std::nothrow) cMaterial(_matType);
-			break;
-		case Graphics::cMaterial::MT_BLINN_PHONG:
-			_mat = new (std::nothrow) cMatBlinn();
+		case eMaterialType::MT_INVALID:
 
+			// TODO: invalid material type
+			result = false;
+			return result;
+		case eMaterialType::MT_BLINN_PHONG:
+			_mat = new (std::nothrow) cMatBlinn();
 			break;
 		default:
 			break;
@@ -28,9 +28,14 @@ namespace Graphics {
 
 			return result;
 		}
-		else
-		{
+
+		if (!(result = _mat->Initialize(i_path))) {
+			// TODO: fail to initialize the material
+			return result;
 		}
+		o_material = _mat;
+		printf("Succeed! Loading material: %s.\n", i_path.c_str());
+		return result;
 	}
 
 }

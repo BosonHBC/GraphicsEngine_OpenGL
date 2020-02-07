@@ -9,21 +9,19 @@
 #include "Graphics/Color/Color.h"
 #include "Engine/Graphics/Texture/Texture.h"
 namespace Graphics {
+	//--------------------------
+	// Material enum definition, this enum may be moved to other places
+	// When it starts to parse the material file, the subclass of the material is decided by this material.
+	enum eMaterialType : uint8_t
+	{
+		MT_INVALID,
+		MT_BLINN_PHONG,
+		//... will support more in the future
+	};
+	//--------------------------
 	class cMaterial
 	{
 	public:
-
-		//--------------------------
-		// Material enum definition, this enum may be moved to other places
-		// When it starts to parse the material file, the subclass of the material is decided by this material.
-		enum eMaterialType : uint8_t
-		{
-			MT_INVALID,
-			MT_BLINN_PHONG,
-			//... will support more in the future
-		};
-		//--------------------------
-
 		//--------------------------
 		// Asset management
 		using HANDLE = Assets::cHandle<cMaterial>;
@@ -31,19 +29,16 @@ namespace Graphics {
 		static bool Load(const std::string& i_path, cMaterial*& o_material);
 		//--------------------------
 
-
 		virtual ~cMaterial() { CleanUp(); };
-		
+
 		// Actual Initialize function, ready for children class
-		virtual bool Initialize(const std::string& i_path) {}
+		virtual bool Initialize(const std::string& i_path) { return false; }
 		virtual void UseMaterial(GLuint i_programID) {};
 		virtual void CleanUp() {};
 
-		
-
 	protected:
 		/** private constructor*/
-		cMaterial(): m_matType(MT_INVALID){}
+		cMaterial() : m_matType(MT_INVALID) {}
 		cMaterial(const eMaterialType& i_matType) : m_matType(i_matType) {}
 
 		// Type of the material
