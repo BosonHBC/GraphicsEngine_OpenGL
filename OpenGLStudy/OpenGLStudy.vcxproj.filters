@@ -70,9 +70,6 @@
     <Filter Include="Source Files\Engine\Graphics\Light\PointLight">
       <UniqueIdentifier>{d2a5a549-e9f6-4b90-9b7d-7038139f8d54}</UniqueIdentifier>
     </Filter>
-    <Filter Include="Source Files\ExampleGame">
-      <UniqueIdentifier>{7f69affb-87e0-452e-ad6f-7c6b796b94a5}</UniqueIdentifier>
-    </Filter>
     <Filter Include="Source Files\Assignments">
       <UniqueIdentifier>{fa08801f-210b-41aa-97c6-07501b24a87d}</UniqueIdentifier>
     </Filter>

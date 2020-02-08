@@ -26,7 +26,6 @@ public:
 	
 	/** Setters */
 	void SetModel(const std::string i_modelPath);
-	void SetMaterial(Graphics::cMaterial* const i_mat) { m_material = i_mat; };
 
 	/** Getters*/
 	cTransform* Transform() const { 
@@ -35,6 +34,6 @@ private:
 
 	cTransform* m_transform;
 	Graphics::cModel::HANDLE  m_modelHandle;
-	Graphics::cMaterial* m_material;
+
 
 };

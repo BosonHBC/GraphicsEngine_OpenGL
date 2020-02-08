@@ -31,9 +31,7 @@ void cActor::Update(Graphics::cEffect* const i_effect)
 
 	// Rendering Update
 	//---------------------------------
-	if (m_material) {
-		m_material->UseMaterial();
-	}
+
 	Graphics::cModel* _model = Graphics::cModel::s_manager.Get(m_modelHandle);
 	if (_model) {
 		_model->Render();
@@ -43,10 +41,6 @@ void cActor::Update(Graphics::cEffect* const i_effect)
 void cActor::CleanUp()
 {
 	safe_delete(m_transform);
-
-	// TODO: Handle
-	// Here should let object pool to delete, but for the simplicity sake, delete here right now
-	safe_delete(m_material);
 
 	// Release the handle
 	Graphics::cModel::s_manager.Release(m_modelHandle);

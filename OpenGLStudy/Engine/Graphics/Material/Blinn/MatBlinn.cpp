@@ -10,31 +10,25 @@ namespace Graphics {
 
 		// TODO: load material data from LUA files
 		// Load diffuse texture
+		std::string _texPath = "Contents/textures/";
+		std::string _fileName = "";
 		if (i_aiMat->GetTextureCount(aiTextureType_DIFFUSE)) {
 			aiString _path;
 			if (i_aiMat->GetTexture(aiTextureType_DIFFUSE, 0, &_path) == AI_SUCCESS) {
 				auto _idx = std::string(_path.data).rfind("\\");
-				std::string _filename = std::string(_path.data).substr(_idx + 1);
-
-				std::string _texPath = "Contents/textures/" + _filename;
-
-				SetDiffuse(_texPath);
-
+				_fileName = std::string(_path.data).substr(_idx + 1);
 			}
 		}
+		SetDiffuse(_texPath + _fileName);
 		// Load specular texture
 		if (i_aiMat->GetTextureCount(aiTextureType_SPECULAR)) {
 			aiString _path;
 			if (i_aiMat->GetTexture(aiTextureType_SPECULAR, 0, &_path) == AI_SUCCESS) {
 				auto _idx = std::string(_path.data).rfind("\\");
-				std::string _filename = std::string(_path.data).substr(_idx + 1);
-
-				std::string _texPath = "Contents/textures/" + _filename;
-
-				SetSpecular(_texPath);
+				_fileName = std::string(_path.data).substr(_idx + 1);
 			}
 		}
-
+		SetSpecular(_texPath + _fileName);
 
 		//TODO: Temp set intensity and Shininess
 		SetShininess(32.f);

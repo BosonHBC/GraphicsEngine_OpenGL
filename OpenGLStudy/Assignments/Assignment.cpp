@@ -71,6 +71,12 @@ void Assignment::CreateActor()
 	m_teapot2->SetModel("Contents/models/teapot.obj");
 	m_teapot2->UpdateUniformVariables(m_currentEffect);
 
+	m_plane = new cActor();
+	m_plane->Initialize();
+	m_plane->SetModel("Contents/models/plane.obj");
+	m_plane->UpdateUniformVariables(m_currentEffect);
+	m_plane->Transform()->Translate(glm::vec3(0,-0.4f, -2.f));
+	m_plane->Transform()->Scale(glm::vec3(5, 1, 5));
 
 }
 
@@ -87,6 +93,10 @@ void Assignment::CreateLight()
 	m_PointLight = new  Graphics::cPointLight(Color(1.f, 1.f, 1.f), 0.3f, 0.1f, 0.1f);
 	m_PointLight->SetupLight(m_currentEffect->GetProgramID(), 0);
 	m_PointLight->SetLightInitialLocation(glm::vec3(0, 1.5f, 0));
+
+	m_PointLight2 = new Graphics::cPointLight(Color(1, 1, 1), 0.5f, 0.2f, 0.1f);
+	m_PointLight2->SetupLight(m_currentEffect->GetProgramID(), 1);
+	m_PointLight2->SetLightInitialLocation(glm::vec3(-3, 0, -3));
 
 	m_ambientLight = new  Graphics::cAmbientLight(Color(0.1f, 0.1f, 0.1f));
 	m_ambientLight->SetupLight(m_currentEffect->GetProgramID(), 0);
@@ -122,14 +132,16 @@ void Assignment::Run()
 		// --------------------------------------------------
 		{
 			m_ambientLight->Illuminate();
-			m_currentEffect->SetPointLightCount(1);
+			m_currentEffect->SetPointLightCount(2);
 			m_PointLight->Illuminate();
+			m_PointLight2->Illuminate();
 		}
 		// main draw happens in this scope
 		// --------------------------------------------------
 		{
 			m_teapot->Update(m_currentEffect);
 			m_teapot2->Update(m_currentEffect);
+			m_plane->Update(m_currentEffect);
 		}
 		// --------------------------------------------------
 
@@ -157,6 +169,7 @@ void Assignment::CleanUp()
 	safe_delete(m_ambientLight);
 	safe_delete(m_teapot);
 	safe_delete(m_teapot2);
+	safe_delete(m_plane);
 
 }
 
@@ -171,10 +184,10 @@ void Assignment::Tick(float second_since_lastFrame)
 		m_editorCamera->MouseControl(_windowInput, 0.01667f);
 	}
 
-/*
+
 	glm::vec3 _toLight = (m_PointLight->Transform()->GetWorldLocation() - m_teapot->Transform()->GetWorldLocation());
 	glm::vec3 _toForward = glm::normalize(glm::cross(glm::vec3(0, 1, 0), _toLight)) * (5 * second_since_lastFrame);
-	m_PointLight->Transform()->Translate(_toForward);*/
+	m_PointLight->Transform()->Translate(_toForward);
 
 	/*
 		m_teapot->Transform()->PrintEulerAngle();

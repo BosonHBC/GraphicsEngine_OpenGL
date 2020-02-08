@@ -4,7 +4,6 @@
 
 #endif // DEBUG
 #include "Assignments/Assignment.h"
-#include "MyGame/MyGame.h"
 
 const GLint WIDTH = 800, HEIGHT = 600; // 1280:1024 || 1024:768 || 1366 : 768
 

@@ -187,17 +187,16 @@ namespace Graphics {
 		const size_t _numOfMaterials = i_scene->mNumMaterials;
 		m_materialList.resize(_numOfMaterials);
 
-		for (size_t i = 0; i < _numOfMaterials; ++i)
+		for (size_t i = 1; i < _numOfMaterials; ++i)
 		{
 			aiMaterial* _material = i_scene->mMaterials[i];
 
 			// TODO: right now, the material path is meaningless
-			std::string _path = "Invalid path_" + std::to_string(i);
+			std::string _path =   "Invalid path_" + std::string( i_scene->mRootNode->mName.C_Str()) + std::to_string(i);
 			if (!cMaterial::s_manager.Load(_path, m_materialList[i], _material)) {
 				printf("Fail to load material[--] file");
 				continue;
 			}
-			;
 		}
 
 	}
