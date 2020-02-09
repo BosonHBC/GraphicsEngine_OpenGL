@@ -4,7 +4,6 @@
 
 #endif // DEBUG
 #include "Assignments/Assignment.h"
-#include "MyGame/MyGame.h"
 
 const GLint WIDTH = 800, HEIGHT = 600; // 1280:1024 || 1024:768 || 1366 : 768
 
@@ -12,7 +11,7 @@ int main()
 {
 	Assignment* _myGame =  new Assignment();
 
-	if (!_myGame->Initialize(WIDTH, HEIGHT, "cMyGame")) {
+	if (!_myGame->Initialize(WIDTH, HEIGHT, "Assignment")) {
 		printf("Failed to initialize application!");
 		return 1;
 	}
@@ -22,7 +21,7 @@ int main()
 	safe_delete(_myGame);
 
 #ifdef _DEBUG
-	_CrtDumpMemoryLeaks();
+	//_CrtDumpMemoryLeaks();
 #endif
 	return 0;
 }

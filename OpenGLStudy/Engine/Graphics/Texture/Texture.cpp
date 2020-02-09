@@ -1,21 +1,51 @@
 #define STB_IMAGE_IMPLEMENTATION
-#include "assert.h"
+
 #include "stdio.h"
 #include "Texture.h"
 #include "Tool/stb_image.h"
-
+#include "Constants/Constants.h"
+Assets::cAssetManager < Graphics::cTexture > Graphics::cTexture::s_manager;
 namespace Graphics {
 
-	cTexture::~cTexture()
+	bool cTexture::Load(const std::string& i_path, cTexture*& o_texture,bool i_isAlpha)
 	{
-		CleanUp();
+		auto result = true;
+		cTexture* _texture = nullptr;
+		// make sure there is enough memory to allocate a model
+		_texture = new (std::nothrow) cTexture();
+		if (!(result = _texture)) {
+			// Run out of memory
+			// TODO: LogError: Out of memory
+
+			return result;
+		}
+		else
+		{
+			if (i_isAlpha) {
+				result = _texture->LoadTextureA(i_path);
+			}
+			else {
+				result = _texture->LoadTexture(i_path);
+			}
+			if (!result) {
+				// TODO: Print load texture fail
+				delete _texture;
+				return result;
+			}
+		}
+		
+		o_texture = _texture;
+
+		//TODO: Loading information succeed!
+		printf("Succeed! Loading texture: %s. \n", i_path.c_str());
+
+		return result;
 	}
 
-	bool cTexture::LoadTexture()
+	bool cTexture::LoadTexture(const std::string& i_path)
 	{
-		unsigned char* _data = stbi_load(m_filePath, &m_width, &m_height, &m_bitDepth, 0);
+		unsigned char* _data = stbi_load(i_path.c_str(), &m_width, &m_height, &m_bitDepth, 0);
 		if (!_data) {
-			assert(_data, "Fail to load texture data");
 			printf("Fail to load texture data!\n");
 			return false;
 		}
@@ -54,11 +84,11 @@ namespace Graphics {
 		return true;
 	}
 
-	bool cTexture::LoadTextureA()
+	bool cTexture::LoadTextureA(const std::string& i_path)
 	{
-		unsigned char* _data = stbi_load(m_filePath, &m_width, &m_height, &m_bitDepth, 0);
+		unsigned char* _data = stbi_load(i_path.c_str(), &m_width, &m_height, &m_bitDepth, 0);
 		if (!_data) {
-			assert(_data, "Fail to load texture data");
+			// TODO: Print load texture fail
 			printf("Fail to load texture data!\n");
 			return false;
 		}
@@ -94,17 +124,24 @@ namespace Graphics {
 
 		// clear data of stb_image
 		stbi_image_free(_data);
+		return true;
 	}
 
-	void cTexture::UseTexture(int i_textuerLocation)
+	void cTexture::UseTexture(int i_textureLocation)
 	{
-		// activate the texture unit 0
-		glActiveTexture(i_textuerLocation);
-		// bind texture to texture unit 0
-		// this allow multiples texture to be bound to one texture unit
+		// activate the texture unit at i_textureLocation
+		glActiveTexture(i_textureLocation);
+		// bind texture to texture unit i_textureLocation
+		// this allow multiples texture to be bound to one shader
 		// so in one object, it can be multiple texture
 		glBindTexture(GL_TEXTURE_2D, m_textureID);
 		
+	}
+
+	void cTexture::CleanUpTextureBind(int i_textureLocation)
+	{
+		glActiveTexture(i_textureLocation);
+		glBindTexture(GL_TEXTURE_2D, 0);
 	}
 
 	void cTexture::CleanUp()

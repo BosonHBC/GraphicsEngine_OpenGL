@@ -1,34 +1,53 @@
+/*
+	Material describe the light-surface interaction.
+	Right now it only support Blinn-Phong Shading.
+
+*/
+#ifndef MATERIAL_DEFINED
+#define MATERIAL_DEFINED
 #pragma once
 #include "GL/glew.h"
 #include "Graphics/Color/Color.h"
+#include "Engine/Graphics/Texture/Texture.h"
+struct aiMaterial;
 namespace Graphics {
-	class cTexture;
+	//--------------------------
+	// Material enum definition, this enum may be moved to other places
+	// When it starts to parse the material file, the subclass of the material is decided by this material.
+	enum eMaterialType : uint8_t
+	{
+		MT_INVALID,
+		MT_BLINN_PHONG,
+		//... will support more in the future
+	};
+	//--------------------------
 	class cMaterial
 	{
 	public:
-		cMaterial() 
-			: m_diffuseTexture(nullptr), m_shininess(0), m_diffuseIntensity(Color::White()), m_specularIntensity(Color::White())
-		{}
-		cMaterial(Color i_diffuseIntensity, Color i_specularIntensity)
-			:m_diffuseTexture(nullptr), m_diffuseIntensity(i_diffuseIntensity), m_specularIntensity(i_diffuseIntensity)
-		{}
-		~cMaterial() { CleanUp(); };
+		//--------------------------
+		// Asset management
+		using HANDLE = Assets::cHandle<cMaterial>;
+		static Assets::cAssetManager < cMaterial > s_manager;
+		static bool Load(const std::string& i_path, cMaterial*& o_material);
+		//--------------------------
 
-		void UseMaterial( GLuint i_programID);
-		void CleanUp();
+		virtual ~cMaterial() { CleanUp(); };
 
-		/** Setters */
-		void SetDiffuse(const char* i_diffusePath);
-		void SetShininess(GLuint i_programID, GLfloat i_shine);
-		void SetDiffuseIntensity(GLuint i_programID, Color i_diffuseIntensity);
-		void SetSpecularIntensity(GLuint i_programID, Color i_diffuseIntensity);
+		// Actual Initialize function, ready for children class
+		virtual bool Initialize(const std::string& i_path) { return false; }
+		virtual bool UpdateUniformVariables(GLuint i_programID) { return false; }
+		virtual void UseMaterial() {};
+		virtual void CleanUpMaterialBind(){}
+		virtual void CleanUp() {};
 
-		protected:
-		cTexture* m_diffuseTexture;
-		Color m_diffuseIntensity, m_specularIntensity;
-		GLfloat m_shininess;
+	protected:
+		/** private constructor*/
+		cMaterial() : m_matType(MT_INVALID) {}
+		cMaterial(const eMaterialType& i_matType) : m_matType(i_matType) {}
 
-		GLuint m_shininessID, m_diffuseIntensityID, m_specularIntensityID;
+		// Type of the material
+		eMaterialType m_matType;
 	};
 
 }
+#endif

@@ -70,9 +70,6 @@
     <Filter Include="Source Files\Engine\Graphics\Light\PointLight">
       <UniqueIdentifier>{d2a5a549-e9f6-4b90-9b7d-7038139f8d54}</UniqueIdentifier>
     </Filter>
-    <Filter Include="Source Files\ExampleGame">
-      <UniqueIdentifier>{7f69affb-87e0-452e-ad6f-7c6b796b94a5}</UniqueIdentifier>
-    </Filter>
     <Filter Include="Source Files\Assignments">
       <UniqueIdentifier>{fa08801f-210b-41aa-97c6-07501b24a87d}</UniqueIdentifier>
     </Filter>
@@ -106,6 +103,9 @@
     <Filter Include="Source Files\Engine\Math\Transform">
       <UniqueIdentifier>{92937dad-c7b2-4d94-97ba-c75cae129afa}</UniqueIdentifier>
     </Filter>
+    <Filter Include="Source Files\Engine\Graphics\Material\Blinn">
+      <UniqueIdentifier>{cc2a0a84-b8b0-4cc7-9211-f97fdb7b890a}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="Engine\Graphics\Camera\Camera.cpp">
@@ -138,9 +138,6 @@
     <ClCompile Include="Engine\Graphics\Light\DirectionalLight\DirectionalLight.cpp">
       <Filter>Source Files\Engine\Graphics\Light\DirectionLight</Filter>
     </ClCompile>
-    <ClCompile Include="Engine\Graphics\Material\Material.cpp">
-      <Filter>Source Files\Engine\Graphics\Material</Filter>
-    </ClCompile>
     <ClCompile Include="Engine\Graphics\Light\PointLight\PointLight.cpp">
       <Filter>Source Files\Engine\Graphics\Light\PointLight</Filter>
     </ClCompile>
@@ -167,6 +164,12 @@
     </ClCompile>
     <ClCompile Include="Engine\Math\Transform\Transform.cpp">
       <Filter>Source Files\Engine\Math\Transform</Filter>
+    </ClCompile>
+    <ClCompile Include="Engine\Graphics\Material\Material.cpp">
+      <Filter>Source Files\Engine\Graphics\Material</Filter>
+    </ClCompile>
+    <ClCompile Include="Engine\Graphics\Material\Blinn\MatBlinn.cpp">
+      <Filter>Source Files\Engine\Graphics\Material\Blinn</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
@@ -244,6 +247,9 @@
     </ClInclude>
     <ClInclude Include="Engine\Cores\Core.h">
       <Filter>Source Files\Engine\Cores</Filter>
+    </ClInclude>
+    <ClInclude Include="Engine\Graphics\Material\Blinn\MatBlinn.h">
+      <Filter>Source Files\Engine\Graphics\Material\Blinn</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>

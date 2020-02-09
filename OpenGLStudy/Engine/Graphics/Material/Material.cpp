@@ -1,52 +1,46 @@
-#include "Material.h"
-#include "Engine/Graphics/Texture/Texture.h"
-#include "Engine/Constants/Constants.h"
+#include "Blinn/MatBlinn.h"
+#include "assimp/scene.h"
 
 namespace Graphics {
 
-	void cMaterial::SetDiffuse(const char* i_diffusePath)
+	Assets::cAssetManager < cMaterial > cMaterial::s_manager;
+
+	bool cMaterial::Load(const std::string& i_path, cMaterial*& o_material)
 	{
-		m_diffuseTexture = new  cTexture(i_diffusePath);
-		if (!m_diffuseTexture->LoadTexture()) {
-			delete m_diffuseTexture;
-			// Use default texture, which is the white board
-			m_diffuseTexture = new  cTexture(Constants::CONST_PATH_DEFAULT_TEXTURE);
+		auto result = true;
+
+		cMaterial* _mat = nullptr;
+		// TODO: read the material type from LUA file, right now, set it to blinn-phong
+		eMaterialType _matType = MT_BLINN_PHONG;
+
+		switch (_matType)
+		{
+		case eMaterialType::MT_INVALID:
+
+			// TODO: invalid material type
+			result = false;
+			return result;
+		case eMaterialType::MT_BLINN_PHONG:
+			_mat = new (std::nothrow) cMatBlinn();
+			break;
+		default:
+			break;
 		}
-	}
 
-	void cMaterial::SetShininess(GLuint i_programID, GLfloat i_shine)
-	{
-		 m_shininess = i_shine;
-		 m_shininessID = glGetUniformLocation(i_programID, "material.shininess");
-	}
+		if (!(result = _mat)) {
+			// Run out of memory
+			// TODO: LogError: Out of memory
 
-	void cMaterial::SetDiffuseIntensity(GLuint i_programID, Color i_diffuseIntensity)
-	{
-		m_diffuseIntensity = i_diffuseIntensity;
-		m_diffuseIntensityID = glGetUniformLocation(i_programID, "material.kd");
-	}
-
-	void cMaterial::SetSpecularIntensity(GLuint i_programID, Color i_specularIntensity)
-	{
-		m_specularIntensity = i_specularIntensity;
-		m_specularIntensityID = glGetUniformLocation(i_programID, "material.ks");
-	}
-
-	void cMaterial::UseMaterial(GLuint i_programID)
-	{
-		//m_diffuseTexture->UseTexture(GL_TEXTURE0);
-		glUniform1f(m_shininessID  , m_shininess);
-		glUniform3f(m_diffuseIntensityID, m_diffuseIntensity.r, m_diffuseIntensity.g, m_diffuseIntensity.b);
-		glUniform3f(m_specularIntensityID, m_specularIntensity.r, m_specularIntensity.g, m_specularIntensity.b);
-
-	}
-
-	void cMaterial::CleanUp()
-	{
-		if (m_diffuseTexture) {
-			delete m_diffuseTexture;
-			m_diffuseTexture = nullptr;
+			return result;
 		}
+
+		if (!(result = _mat->Initialize(i_path))) {
+			// TODO: fail to initialize the material
+			return result;
+		}
+		o_material = _mat;
+		printf("Succeed! Loading material: %s.\n", i_path.c_str());
+		return result;
 	}
 
 }

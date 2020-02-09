@@ -1,0 +1,45 @@
+<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <ImportGroup Label="PropertySheets" />
+  <PropertyGroup Label="UserMacros">
+    <EngineDir>$(SolutionDir)Engine\</EngineDir>
+    <EngineSourceContentDir>$(SolutionDir)Contents\</EngineSourceContentDir>
+    <ExternalDir>$(SolutionDir)Externals\</ExternalDir>
+    <TempDir>$(SolutionDir)temp\$(PlatformShortName)\$(Configuration)\</TempDir>
+    <IntermediateDir>$(TempDir)intermediates\$(ProjectName)\</IntermediateDir>
+    <OutputDir>$(SolutionDir)output\</OutputDir>
+  </PropertyGroup>
+  <PropertyGroup>
+    <OutDir>$(OutputDir)</OutDir>
+    <IntDir>$(IntermediateDir)</IntDir>
+  </PropertyGroup>
+  <ItemDefinitionGroup>
+    <ClCompile>
+      <PreprocessorDefinitions>_CRT_SECURE_NO_WARNINGS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+    </ClCompile>
+  </ItemDefinitionGroup>
+  <ItemGroup>
+    <BuildMacro Include="EngineDir">
+      <Value>$(EngineDir)</Value>
+      <EnvironmentVariable>true</EnvironmentVariable>
+    </BuildMacro>
+    <BuildMacro Include="EngineSourceContentDir">
+      <Value>$(EngineSourceContentDir)</Value>
+      <EnvironmentVariable>true</EnvironmentVariable>
+    </BuildMacro>
+    <BuildMacro Include="ExternalDir">
+      <Value>$(ExternalDir)</Value>
+    </BuildMacro>
+    <BuildMacro Include="TempDir">
+      <Value>$(TempDir)</Value>
+      <EnvironmentVariable>true</EnvironmentVariable>
+    </BuildMacro>
+    <BuildMacro Include="IntermediateDir">
+      <Value>$(IntermediateDir)</Value>
+      <EnvironmentVariable>true</EnvironmentVariable>
+    </BuildMacro>
+    <BuildMacro Include="OutputDir">
+      <Value>$(OutputDir)</Value>
+    </BuildMacro>
+  </ItemGroup>
+</Project>

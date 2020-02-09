@@ -1,23 +1,35 @@
 #include "Model/Model.h"
 
 #include "Mesh/Mesh.h"
-#include "Texture/Texture.h"
 #include "Engine/Constants/Constants.h"
 
 #include "assimp/Importer.hpp"
 #include "assimp/scene.h"
 #include "assimp/postprocess.h"
 
-namespace Graphics {
+#include "Material/Material.h"
+#include "Assets/LoadTableFromLuaFile.h"
+// Static variable definition
+Assets::cAssetManager<Graphics::cModel> Graphics::cModel::s_manager;
 
+namespace Graphics {
 
 	bool cModel::LoadModel(const char* i_path)
 	{
+		// Load model files from lua
+		std::string _modelPath, _materialPath;
+		// load model data from LUA files
+		if (!LoadFileFromLua(i_path, _modelPath, _materialPath)) {
+			printf("Fail to load model[%s] from LUA.\n", i_path);
+			return false;
+		}
+
+
 		Assimp::Importer _importer;
-		auto _scene = _importer.ReadFile(i_path, 
-			aiProcess_Triangulate 
-			| aiProcess_FlipUVs 
-			| aiProcess_GenSmoothNormals 
+		auto _scene = _importer.ReadFile(_modelPath.insert(0, Constants::CONST_PATH_MODLE_ROOT),
+			aiProcess_Triangulate
+			| aiProcess_FlipUVs
+			| aiProcess_GenSmoothNormals
 			| aiProcess_JoinIdenticalVertices
 		);
 
@@ -29,9 +41,52 @@ namespace Graphics {
 		// Load nodes
 		LoadNode(_scene->mRootNode, _scene);
 		//  Load materials
-		LoadMaterials(_scene);
+		LoadMaterials(_scene,_materialPath.c_str());
 
 		return true;
+	}
+
+	bool cModel::Load(const std::string& i_path, cModel*& o_model)
+	{
+		auto result = true;
+
+		cModel* _model = nullptr;
+
+		// make sure there is enough memory to allocate a model
+		_model = new (std::nothrow) cModel();
+		if (!(result = _model)) {
+			// Run out of memory
+			// TODO: LogError: Out of memory
+
+			return result;
+		}
+		else {
+			if (!(result = _model->LoadModel(i_path.c_str()))) {
+				// TODO: LogError: fail to log
+
+				delete _model;
+
+				return result;
+			}
+		}
+
+		o_model = _model;
+
+		//TODO: Loading information succeed!
+		printf("Succeed! Loading model: %s. Mesh size: %d, texture size: %d\n", i_path.c_str(), o_model->m_meshList.size(), o_model->m_materialList.size());
+
+		return result;
+	}
+
+	void cModel::UpdateUniformVariables(GLuint i_programID)
+	{
+		for (auto item : m_materialList)
+		{
+			cMaterial* _matInst = cMaterial::s_manager.Get(item);
+			if (_matInst) {
+				_matInst->UpdateUniformVariables(i_programID);
+			}
+		}
 	}
 
 	void cModel::Render()
@@ -39,28 +94,31 @@ namespace Graphics {
 
 		for (size_t i = 0; i < m_meshList.size(); ++i)
 		{
-			auto _matIndex = m_mesh_to_texture[i];
 
+			auto _matIndex = m_mesh_to_material[i];
+
+			cMaterial* _material = cMaterial::s_manager.Get(m_materialList[_matIndex]);
 			// if _maxIndex is in range and the texture is not a nullptr
-			if (_matIndex < m_textureList.size() && m_textureList[_matIndex]) {
-				m_textureList[_matIndex]->UseTexture(GL_TEXTURE0);
+			if (_matIndex < m_materialList.size() && _material) {
+				_material->UseMaterial();
 			}
 
 			m_meshList[i]->Render();
+
+			if (_matIndex < m_materialList.size() && _material) {
+				_material->CleanUpMaterialBind();
+			}
 		}
 	}
 
 	void cModel::CleanUp()
 	{
-		for (size_t i = 0; i < m_textureList.size(); ++i)
+		for (size_t i = 0; i < m_materialList.size(); ++i)
 		{
-			if (m_textureList[i]) {
-				delete m_textureList[i];
-				m_textureList[i] = nullptr;
-			}
+			cMaterial::s_manager.Release(m_materialList[i]);
 		}
-		m_textureList.clear();
-		m_textureList.~vector();
+		m_materialList.clear();
+		m_materialList.~vector();
 
 		for (size_t i = 0; i < m_meshList.size(); ++i)
 		{
@@ -71,9 +129,50 @@ namespace Graphics {
 		}
 		m_meshList.clear();
 		m_meshList.~vector();
-	
-		m_mesh_to_texture.clear();
-		m_mesh_to_texture.~vector();
+
+		m_mesh_to_material.clear();
+		m_mesh_to_material.~vector();
+	}
+
+	bool cModel::LoadFileFromLua(const char* i_path, std::string& o_modelPath, std::string& o_materialPath)
+	{
+		auto result = true;
+		lua_State* luaState = nullptr;
+		//------------------------------
+		// Initialize Lua
+		//------------------------------
+		if (!(result = Assets::InitializeLUA(i_path, luaState))) {
+			Assets::ReleaseLUA(luaState);
+			return result;
+		}
+		//------------------------------
+		// Load data
+		//------------------------------
+		{
+			// o_modelPath
+			{
+				constexpr auto* const _key = "ModelPath";
+				if (!(result = Assets::Lua_LoadString(luaState, _key, o_modelPath))) {
+					printf("LUA error: fail to load key[%s]", _key);
+					return result;
+				}
+			}
+			// o_materialPath
+			{
+				constexpr auto* const _key = "MaterialPath";
+				if (!(result = Assets::Lua_LoadString(luaState, _key, o_materialPath))) {
+					printf("LUA error: fail to load key[%s]", _key);
+					return result;
+				}
+			}
+		}
+		//------------------------------
+		// Release Lua
+		//------------------------------
+		result = Assets::ReleaseLUA(luaState);
+
+		return result;
+
 	}
 
 	void cModel::LoadNode(const aiNode* i_node, const aiScene* i_scene)
@@ -99,7 +198,7 @@ namespace Graphics {
 		{
 			//1. Insert vertices at the end of the data
 			_vertices.insert(_vertices.end(), { i_mesh->mVertices[i].x, i_mesh->mVertices[i].y, i_mesh->mVertices[i].z });
-			
+
 			//2. Insert texture coordinate data after vertices
 			if (i_mesh->mTextureCoords[0]) {
 				// if first coordinate exists
@@ -107,7 +206,7 @@ namespace Graphics {
 			}
 			else {
 				// there is no texture coordinate, give it default one
-				_vertices.insert(_vertices.end(), {0.0f, 0.0f });
+				_vertices.insert(_vertices.end(), { 0.0f, 0.0f });
 			}
 
 			// 3. Insert normals
@@ -125,50 +224,30 @@ namespace Graphics {
 		}
 
 		cMesh* _newMesh = new cMesh();
-		_newMesh->CreateMesh(&_vertices[0], &_indices[0], _vertices.size(), _indices.size());
+		_newMesh->CreateMesh(&_vertices[0], &_indices[0], static_cast<GLuint>(_vertices.size()), static_cast<GLuint>(_indices.size()));
 
 		// Stored new mesh to the list and store its index to material
 		m_meshList.push_back(_newMesh);
-		m_mesh_to_texture.push_back(i_mesh->mMaterialIndex);
+		m_mesh_to_material.push_back(i_mesh->mMaterialIndex);
 
 
 	}
 
-	void cModel::LoadMaterials(const aiScene* i_scene)
+	void cModel::LoadMaterials(const aiScene* i_scene, const char* i_matName)
 	{
 		const size_t _numOfMaterials = i_scene->mNumMaterials;
-		m_textureList.resize(_numOfMaterials);
+		m_materialList.resize(_numOfMaterials);
 
-		for (size_t i = 0; i < _numOfMaterials; ++i)
+		for (size_t i = 1; i < _numOfMaterials; ++i)
 		{
-			aiMaterial* _material = i_scene->mMaterials[i];
-			
-			m_textureList[i] = nullptr;
-
-			if (_material->GetTextureCount(aiTextureType_DIFFUSE)) {
-				aiString _path;
-				if (_material->GetTexture(aiTextureType_DIFFUSE, 0, &_path) == AI_SUCCESS) {
-					int _idx = std::string(_path.data).rfind("\\");
-					std::string _filename = std::string(_path.data).substr(_idx + 1);
-
-					std::string _texPath = std::string("Contents/textures/") + _filename;
-
-					m_textureList[i] = new cTexture(_texPath.c_str());
-
-					if (!m_textureList[i]->LoadTexture()) {
-						printf("Fail to load texture[%s] file", _texPath);
-						delete m_textureList[i];
-						m_textureList[i] = nullptr;
-					}
-				}
-			}
-			// Fail to load texture, set it to default texture
-			if (!m_textureList[i]) {
-				m_textureList[i] = new cTexture(Constants::CONST_PATH_DEFAULT_TEXTURE);
-				m_textureList[i]->LoadTexture();
+			// TODO: right now, the material path is meaningless
+			std::string _path = Constants::CONST_PATH_MATERIAL_ROOT;
+			_path.append(i_matName);
+			if (!cMaterial::s_manager.Load(_path, m_materialList[i])) {
+				printf("Fail to load material file[%s]\n", _path.c_str());
+				continue;
 			}
 		}
-
 
 	}
 

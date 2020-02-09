@@ -38,8 +38,12 @@ private:
 	std::vector<Graphics::cEffect*> m_effectList;
 	Graphics::cEffect* m_currentEffect;
 	Graphics::cPointLight* m_PointLight;
+	Graphics::cPointLight* m_PointLight2;
 	Graphics::cAmbientLight* m_ambientLight;
 
 	cActor* m_teapot;
+	cActor* m_teapot2;
+
+	cActor* m_plane;
 };
 

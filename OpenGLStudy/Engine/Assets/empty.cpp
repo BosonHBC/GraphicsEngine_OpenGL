@@ -1,0 +1,3 @@
+/*
+	This .cpp file exists because of the generation of at least one .obj file.
+*/
