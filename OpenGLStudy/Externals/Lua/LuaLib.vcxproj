@@ -106,7 +106,7 @@
     <ProjectGuid>{A506E35D-BB34-468D-82CD-112386BE29D1}</ProjectGuid>
     <Keyword>Win32Proj</Keyword>
     <RootNamespace>LuaLib</RootNamespace>
-    <WindowsTargetPlatformVersion>10.0.18362.0</WindowsTargetPlatformVersion>
+    <WindowsTargetPlatformVersion>10.0.17763.0</WindowsTargetPlatformVersion>
   </PropertyGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.Default.props" />
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'" Label="Configuration">

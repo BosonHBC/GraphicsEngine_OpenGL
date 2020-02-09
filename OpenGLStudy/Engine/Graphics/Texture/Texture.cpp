@@ -3,7 +3,7 @@
 #include "stdio.h"
 #include "Texture.h"
 #include "Tool/stb_image.h"
-
+#include "Constants/Constants.h"
 Assets::cAssetManager < Graphics::cTexture > Graphics::cTexture::s_manager;
 namespace Graphics {
 

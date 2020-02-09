@@ -1,11 +1,12 @@
+--[[
+	Blinn Phong Mat for teapot
+]]
 return 
 {
-    //
     MaterialType = 1,
-    DiffuseIntensity = {1,1,1},
-    SpecularIntensity = {1,1,1},
     DiffuseTexture = "brick.png",
     SpecularTexture = "brick-specular.png",
-    Shineness = 32
-
+    DiffuseIntensity = {1,1.0,1},
+    SpecularIntensity = {1.0,1.0,1.0},  
+    Shininess = 64,
 }

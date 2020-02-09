@@ -59,36 +59,40 @@
   </ImportGroup>
   <ImportGroup Label="PropertySheets" Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
     <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
+    <Import Project="Engine\EngineDefaults.props" />
   </ImportGroup>
   <ImportGroup Label="PropertySheets" Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
     <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
+    <Import Project="Engine\EngineDefaults.props" />
   </ImportGroup>
   <ImportGroup Label="PropertySheets" Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
     <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
+    <Import Project="Engine\EngineDefaults.props" />
   </ImportGroup>
   <ImportGroup Label="PropertySheets" Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
     <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
+    <Import Project="Engine\EngineDefaults.props" />
   </ImportGroup>
   <PropertyGroup Label="UserMacros" />
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
     <LinkIncremental>true</LinkIncremental>
-    <IntDir>temp\$(Platform)\$(Configuration)\</IntDir>
-    <OutDir>$(SolutionDir)output\$(Platform)\$(Configuration)\</OutDir>
+    <IntDir>$(IntermediateDir)</IntDir>
+    <OutDir>$(OutputDir)</OutDir>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
     <LinkIncremental>true</LinkIncremental>
-    <IntDir>temp\$(Platform)\$(Configuration)\</IntDir>
-    <OutDir>$(SolutionDir)output\$(Platform)\$(Configuration)\</OutDir>
+    <IntDir>$(IntermediateDir)</IntDir>
+    <OutDir>$(OutputDir)</OutDir>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
     <LinkIncremental>false</LinkIncremental>
-    <IntDir>temp\$(Platform)\$(Configuration)\</IntDir>
-    <OutDir>$(SolutionDir)output\$(Platform)\$(Configuration)\</OutDir>
+    <IntDir>$(IntermediateDir)</IntDir>
+    <OutDir>$(OutputDir)</OutDir>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
     <LinkIncremental>false</LinkIncremental>
-    <IntDir>temp\$(Platform)\$(Configuration)\</IntDir>
-    <OutDir>$(SolutionDir)output\$(Platform)\$(Configuration)\</OutDir>
+    <IntDir>$(IntermediateDir)</IntDir>
+    <OutDir>$(OutputDir)</OutDir>
   </PropertyGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
     <ClCompile>
@@ -105,8 +109,8 @@
     <Link>
       <SubSystem>Console</SubSystem>
       <GenerateDebugInformation>true</GenerateDebugInformation>
-      <AdditionalLibraryDirectories>$(SolutionDir)Externals\ASSIMP_N\lib\Release\$(Platform);$(SolutionDir)Externals\GL\glew\lib\Release\$(Platform);$(SolutionDir)Externals\GL\glfw32\lib-vc2017\</AdditionalLibraryDirectories>
-      <AdditionalDependencies>opengl32.lib;glew32.lib;glfw3.lib;glfw3dll.lib;assimp-vc141-mt.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalLibraryDirectories>$(OutputDir);$(SolutionDir)Externals\ASSIMP_N\lib\Release\$(Platform);$(SolutionDir)Externals\GL\glew\lib\Release\$(Platform);$(SolutionDir)Externals\GL\glfw32\lib-vc2017\</AdditionalLibraryDirectories>
+      <AdditionalDependencies>opengl32.lib;glew32.lib;glfw3.lib;glfw3dll.lib;assimp-vc141-mt.lib;LuaLib.lib;%(AdditionalDependencies)</AdditionalDependencies>
     </Link>
     <PreBuildEvent>
       <Command>xcopy $(SolutionDir)Externals\GL\glew\bin\Release\$(Platform)\glew32.dll $(targetDir) /Y
@@ -129,8 +133,8 @@ xcopy $(SolutionDir)Contents $(targetDir)Contents /Y /E /I</Command>
     <Link>
       <SubSystem>Console</SubSystem>
       <GenerateDebugInformation>true</GenerateDebugInformation>
-      <AdditionalLibraryDirectories>$(SolutionDir)Externals\ASSIMP_N\lib\Release\$(Platform);$(SolutionDir)Externals\GL\glew\lib\Release\$(Platform);$(SolutionDir)Externals\GL\glfw\lib-vc2017\;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
-      <AdditionalDependencies>opengl32.lib;glew32.lib;glfw3.lib;glfw3dll.lib;assimp-vc141-mt.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalLibraryDirectories>$(OutputDir);$(SolutionDir)Externals\ASSIMP_N\lib\Release\$(Platform);$(SolutionDir)Externals\GL\glew\lib\Release\$(Platform);$(SolutionDir)Externals\GL\glfw\lib-vc2017\;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
+      <AdditionalDependencies>opengl32.lib;glew32.lib;glfw3.lib;glfw3dll.lib;assimp-vc141-mt.lib;LuaLib.lib;%(AdditionalDependencies)</AdditionalDependencies>
     </Link>
     <PreBuildEvent>
       <Command>xcopy $(SolutionDir)Externals\GL\glew\bin\Release\$(Platform)\glew32.dll $(targetDir) /Y
@@ -157,8 +161,8 @@ xcopy $(SolutionDir)Contents $(targetDir)Contents /Y /E /I</Command>
       <EnableCOMDATFolding>true</EnableCOMDATFolding>
       <OptimizeReferences>true</OptimizeReferences>
       <GenerateDebugInformation>true</GenerateDebugInformation>
-      <AdditionalLibraryDirectories>$(SolutionDir)Externals\ASSIMP_N\lib\Release\$(Platform);$(SolutionDir)Externals\GL\glew\lib\Release\$(Platform);$(SolutionDir)Externals\GL\glfw32\lib-vc2017\</AdditionalLibraryDirectories>
-      <AdditionalDependencies>opengl32.lib;glew32.lib;glfw3.lib;glfw3dll.lib;assimp-vc141-mt.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalLibraryDirectories>$(OutputDir);$(SolutionDir)Externals\ASSIMP_N\lib\Release\$(Platform);$(SolutionDir)Externals\GL\glew\lib\Release\$(Platform);$(SolutionDir)Externals\GL\glfw32\lib-vc2017\</AdditionalLibraryDirectories>
+      <AdditionalDependencies>opengl32.lib;glew32.lib;glfw3.lib;glfw3dll.lib;assimp-vc141-mt.lib;LuaLib.lib;%(AdditionalDependencies)</AdditionalDependencies>
     </Link>
     <PreBuildEvent>
       <Command>xcopy $(SolutionDir)Externals\GL\glew\bin\Release\$(Platform)\glew32.dll $(targetDir) /Y
@@ -185,8 +189,8 @@ xcopy $(SolutionDir)Contents $(targetDir)Contents /Y /E /I</Command>
       <EnableCOMDATFolding>true</EnableCOMDATFolding>
       <OptimizeReferences>true</OptimizeReferences>
       <GenerateDebugInformation>true</GenerateDebugInformation>
-      <AdditionalLibraryDirectories>$(SolutionDir)Externals\ASSIMP_N\lib\Release\$(Platform);$(SolutionDir)Externals\GL\glew\lib\Release\$(Platform);$(SolutionDir)Externals\GL\glfw\lib-vc2017\;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
-      <AdditionalDependencies>opengl32.lib;glew32.lib;glfw3.lib;glfw3dll.lib;assimp-vc141-mt.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalLibraryDirectories>$(OutputDir);$(SolutionDir)Externals\ASSIMP_N\lib\Release\$(Platform);$(SolutionDir)Externals\GL\glew\lib\Release\$(Platform);$(SolutionDir)Externals\GL\glfw\lib-vc2017\;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
+      <AdditionalDependencies>opengl32.lib;glew32.lib;glfw3.lib;glfw3dll.lib;assimp-vc141-mt.lib;LuaLib.lib;%(AdditionalDependencies)</AdditionalDependencies>
     </Link>
     <PreBuildEvent>
       <Command>xcopy $(SolutionDir)Externals\GL\glew\bin\Release\$(Platform)\glew32.dll $(targetDir) /Y

@@ -21,12 +21,14 @@
   <ItemGroup>
     <ClInclude Include="AssetManager.h" />
     <ClInclude Include="Handle.h" />
+    <ClInclude Include="LoadTableFromLuaFile.h" />
   </ItemGroup>
   <ItemGroup>
     <None Include="cAssetManager.inl" />
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="empty.cpp" />
+    <ClCompile Include="LoadTableFromLuaFile.cpp" />
   </ItemGroup>
   <PropertyGroup Label="Globals">
     <VCProjectVersion>15.0</VCProjectVersion>

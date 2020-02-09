@@ -1,0 +1,9 @@
+--[[
+    Default Model sheet
+]]
+return 
+{
+    ModelPath = "plane.obj",
+    MaterialPath = "DefaultBlinnPhong.material",
+
+}

@@ -59,7 +59,7 @@ void Assignment::CreateActor()
 	m_teapot->Transform()->Rotate(glm::vec3(1, 0, 0), -90.f);
 	m_teapot->Transform()->Scale(glm::vec3(0.05f, 0.05f, 0.05f));
 
-	m_teapot->SetModel("Contents/models/teapot.obj");
+	m_teapot->SetModel("Contents/models/teapot.model");
 	m_teapot->UpdateUniformVariables(m_currentEffect);
 
 	m_teapot2 = new cActor();
@@ -68,12 +68,12 @@ void Assignment::CreateActor()
 	m_teapot2->Transform()->Rotate(glm::vec3(1, 0, 0), -90.f);
 	m_teapot2->Transform()->Scale(glm::vec3(0.03f, 0.03f, 0.03f));
 
-	m_teapot2->SetModel("Contents/models/teapot.obj");
+	m_teapot2->SetModel("Contents/models/teapot.model");
 	m_teapot2->UpdateUniformVariables(m_currentEffect);
 
 	m_plane = new cActor();
 	m_plane->Initialize();
-	m_plane->SetModel("Contents/models/plane.obj");
+	m_plane->SetModel("Contents/models/plane.model");
 	m_plane->UpdateUniformVariables(m_currentEffect);
 	m_plane->Transform()->Translate(glm::vec3(0,-0.4f, -2.f));
 	m_plane->Transform()->Scale(glm::vec3(5, 1, 5));

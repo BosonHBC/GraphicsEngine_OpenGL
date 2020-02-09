@@ -43,9 +43,10 @@ namespace Graphics {
 		std::vector<unsigned int> m_mesh_to_material;
 
 		/** private helper functions*/
+		bool LoadFileFromLua(const char* i_path, std::string& o_modelPath, std::string& o_materialPath);
 		void LoadNode(const aiNode* i_node, const aiScene* i_scene);
 		void LoadMesh(const aiMesh* i_mesh, const aiScene* i_scene);
-		void LoadMaterials(const aiScene* i_scene);
+		void LoadMaterials(const aiScene* i_scene, const char* i_matName);
 
 		// actual loading function
 		bool LoadModel(const char* i_path);

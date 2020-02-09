@@ -21,7 +21,7 @@ int main()
 	safe_delete(_myGame);
 
 #ifdef _DEBUG
-	_CrtDumpMemoryLeaks();
+	//_CrtDumpMemoryLeaks();
 #endif
 	return 0;
 }

@@ -28,13 +28,13 @@ namespace Graphics {
 		// Asset management
 		using HANDLE = Assets::cHandle<cMaterial>;
 		static Assets::cAssetManager < cMaterial > s_manager;
-		static bool Load(const std::string& i_path, cMaterial*& o_material, aiMaterial* const i_aiMat);
+		static bool Load(const std::string& i_path, cMaterial*& o_material);
 		//--------------------------
 
 		virtual ~cMaterial() { CleanUp(); };
 
 		// Actual Initialize function, ready for children class
-		virtual bool Initialize(const std::string& i_path, aiMaterial* const i_aiMat) { return false; }
+		virtual bool Initialize(const std::string& i_path) { return false; }
 		virtual bool UpdateUniformVariables(GLuint i_programID) { return false; }
 		virtual void UseMaterial() {};
 		virtual void CleanUpMaterialBind(){}
@@ -45,9 +45,6 @@ namespace Graphics {
 		cMaterial() : m_matType(MT_INVALID) {}
 		cMaterial(const eMaterialType& i_matType) : m_matType(i_matType) {}
 
-		// ReleaseLUA must be called when a LUA table is initialized
-		bool InitializeLUA(const std::string& i_path, void*& io_luaState);
-		bool ReleaseLUA(void*& io_luaState);
 		// Type of the material
 		eMaterialType m_matType;
 	};

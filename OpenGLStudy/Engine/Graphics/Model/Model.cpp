@@ -8,6 +8,7 @@
 #include "assimp/postprocess.h"
 
 #include "Material/Material.h"
+#include "Assets/LoadTableFromLuaFile.h"
 // Static variable definition
 Assets::cAssetManager<Graphics::cModel> Graphics::cModel::s_manager;
 
@@ -15,8 +16,17 @@ namespace Graphics {
 
 	bool cModel::LoadModel(const char* i_path)
 	{
+		// Load model files from lua
+		std::string _modelPath, _materialPath;
+		// load model data from LUA files
+		if (!LoadFileFromLua(i_path, _modelPath, _materialPath)) {
+			printf("Fail to load model[%s] from LUA.\n", i_path);
+			return false;
+		}
+
+
 		Assimp::Importer _importer;
-		auto _scene = _importer.ReadFile(i_path,
+		auto _scene = _importer.ReadFile(_modelPath.insert(0, Constants::CONST_PATH_MODLE_ROOT),
 			aiProcess_Triangulate
 			| aiProcess_FlipUVs
 			| aiProcess_GenSmoothNormals
@@ -31,7 +41,7 @@ namespace Graphics {
 		// Load nodes
 		LoadNode(_scene->mRootNode, _scene);
 		//  Load materials
-		LoadMaterials(_scene);
+		LoadMaterials(_scene,_materialPath.c_str());
 
 		return true;
 	}
@@ -94,7 +104,7 @@ namespace Graphics {
 			}
 
 			m_meshList[i]->Render();
-			
+
 			if (_matIndex < m_materialList.size() && _material) {
 				_material->CleanUpMaterialBind();
 			}
@@ -122,6 +132,47 @@ namespace Graphics {
 
 		m_mesh_to_material.clear();
 		m_mesh_to_material.~vector();
+	}
+
+	bool cModel::LoadFileFromLua(const char* i_path, std::string& o_modelPath, std::string& o_materialPath)
+	{
+		auto result = true;
+		lua_State* luaState = nullptr;
+		//------------------------------
+		// Initialize Lua
+		//------------------------------
+		if (!(result = Assets::InitializeLUA(i_path, luaState))) {
+			Assets::ReleaseLUA(luaState);
+			return result;
+		}
+		//------------------------------
+		// Load data
+		//------------------------------
+		{
+			// o_modelPath
+			{
+				constexpr auto* const _key = "ModelPath";
+				if (!(result = Assets::Lua_LoadString(luaState, _key, o_modelPath))) {
+					printf("LUA error: fail to load key[%s]", _key);
+					return result;
+				}
+			}
+			// o_materialPath
+			{
+				constexpr auto* const _key = "MaterialPath";
+				if (!(result = Assets::Lua_LoadString(luaState, _key, o_materialPath))) {
+					printf("LUA error: fail to load key[%s]", _key);
+					return result;
+				}
+			}
+		}
+		//------------------------------
+		// Release Lua
+		//------------------------------
+		result = Assets::ReleaseLUA(luaState);
+
+		return result;
+
 	}
 
 	void cModel::LoadNode(const aiNode* i_node, const aiScene* i_scene)
@@ -182,19 +233,18 @@ namespace Graphics {
 
 	}
 
-	void cModel::LoadMaterials(const aiScene* i_scene)
+	void cModel::LoadMaterials(const aiScene* i_scene, const char* i_matName)
 	{
 		const size_t _numOfMaterials = i_scene->mNumMaterials;
 		m_materialList.resize(_numOfMaterials);
 
 		for (size_t i = 1; i < _numOfMaterials; ++i)
 		{
-			aiMaterial* _material = i_scene->mMaterials[i];
-
 			// TODO: right now, the material path is meaningless
-			std::string _path =   "Invalid path_" + std::string( i_scene->mRootNode->mName.C_Str()) + std::to_string(i);
-			if (!cMaterial::s_manager.Load(_path, m_materialList[i], _material)) {
-				printf("Fail to load material[--] file");
+			std::string _path = Constants::CONST_PATH_MATERIAL_ROOT;
+			_path.append(i_matName);
+			if (!cMaterial::s_manager.Load(_path, m_materialList[i])) {
+				printf("Fail to load material file[%s]\n", _path.c_str());
 				continue;
 			}
 		}

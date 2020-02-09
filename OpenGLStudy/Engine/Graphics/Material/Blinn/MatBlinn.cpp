@@ -1,47 +1,23 @@
 #include "MatBlinn.h"
 #include "Engine/Constants/Constants.h"
 #include "assimp/scene.h"
-#include "Externals/Lua/Includes.h"
+#include "Assets/LoadTableFromLuaFile.h"
 
 namespace Graphics {
 
 
-	bool cMatBlinn::Initialize(const std::string& i_path, aiMaterial* const i_aiMat)
+	bool cMatBlinn::Initialize(const std::string& i_path)
 	{
 		bool result = true;
 		std::string _diffusePath, _specularPath;
-		// TODO: load material data from LUA files
+		// load material data from LUA files
 		if (!(result = LoadFileFromLua(i_path, m_matType,_diffusePath, _specularPath, m_diffuseIntensity, m_specularIntensity, m_shininess))) {
-			printf("Fail to load material[%s] from LUA\n.");
+			printf("Fail to load material[%s] from LUA.\n", i_path.c_str());
 			return result;
 		}
 
-
-		// Load diffuse texture
-		std::string _texPath = "Contents/textures/";
-		std::string _fileName = "";
-		if (i_aiMat->GetTextureCount(aiTextureType_DIFFUSE)) {
-			aiString _path;
-			if (i_aiMat->GetTexture(aiTextureType_DIFFUSE, 0, &_path) == AI_SUCCESS) {
-				auto _idx = std::string(_path.data).rfind("\\");
-				_fileName = std::string(_path.data).substr(_idx + 1);
-			}
-		}
-		SetDiffuse(_texPath + _fileName);
-		// Load specular texture
-		if (i_aiMat->GetTextureCount(aiTextureType_SPECULAR)) {
-			aiString _path;
-			if (i_aiMat->GetTexture(aiTextureType_SPECULAR, 0, &_path) == AI_SUCCESS) {
-				auto _idx = std::string(_path.data).rfind("\\");
-				_fileName = std::string(_path.data).substr(_idx + 1);
-			}
-		}
-		SetSpecular(_texPath + _fileName);
-
-		//TODO: Temp set intensity and Shininess
-		SetShininess(32.f);
-		SetDiffuseIntensity(Color::White());
-		SetSpecularIntensity(Color::White());
+		SetDiffuse(_diffusePath);
+		SetSpecular(_specularPath);
 		return result;
 	}
 
@@ -99,7 +75,8 @@ namespace Graphics {
 	void cMatBlinn::SetDiffuse(const std::string& i_diffusePath)
 	{
 		auto result = true;
-		if (!(result = cTexture::s_manager.Load(i_diffusePath, m_diffuseTextureHandle, false))) {
+		std::string _path = i_diffusePath;
+		if (!(result = cTexture::s_manager.Load(_path.insert(0, Constants::CONST_PATH_TEXTURE_ROOT), m_diffuseTextureHandle, false))) {
 			if (result = cTexture::s_manager.Load(Constants::CONST_PATH_DEFAULT_TEXTURE, m_diffuseTextureHandle, false))
 			{
 				//TODO: Use default texture, which is the white board
@@ -115,15 +92,16 @@ namespace Graphics {
 	void cMatBlinn::SetSpecular(const std::string& i_specularPath)
 	{
 		auto result = true;
-		if (!(result = cTexture::s_manager.Load(i_specularPath, m_specularTextureHandle, false))) {
+		std::string _path = i_specularPath;
+		if (!(result = cTexture::s_manager.Load(_path.insert(0, Constants::CONST_PATH_TEXTURE_ROOT), m_specularTextureHandle, false))) {
 			if (result = cTexture::s_manager.Load(Constants::CONST_PATH_DEFAULT_TEXTURE, m_specularTextureHandle, false))
 			{
 				//TODO: Use default texture, which is the white board
-
+				printf("Texture[%s] is invalid, use default texture instead.\n",_path.c_str());
 			}
 			else {
 				//TODO: print Fail to load default texture
-
+				printf("Fail to load default texture.\n");
 			}
 		}
 	}
@@ -143,17 +121,86 @@ namespace Graphics {
 		m_specularIntensity = i_specularIntensity;
 	}
 
-	bool cMatBlinn::LoadFileFromLua(const std::string& i_path, eMaterialType& o_matType, std::string& o_diffusePath, std::string& o_specularPath, Color& o_IntensityColor, Color& o_SpecularColor, float& o_Shineness)
+	bool cMatBlinn::LoadFileFromLua(const std::string& i_path, eMaterialType& o_matType, std::string& o_diffusePath, std::string& o_specularPath, Color& o_diffuseColor, Color& o_specularColor, float& o_shineness)
 	{
 		bool result;
 		lua_State* luaState = nullptr;
-		// Initialize LUA
-		if (!(result = InitializeLUA(i_path, luaState))) {
-			ReleaseLUA(luaState);
+		//------------------------------
+		// Initialize Lua
+		//------------------------------
+		if (!(result = Assets::InitializeLUA(i_path.c_str(), luaState))) {
+			Assets::ReleaseLUA(luaState);
 			return result;
 		}
+		//------------------------------
+		// Load data
+		//------------------------------
+		{
+			// o_matType
+			{
+				constexpr auto* const _key = "MaterialType";
+				int _tempType = 0;
+				if (!(result = Assets::Lua_LoadInteger(luaState, _key, _tempType))) {
+					printf("LUA error: fail to load key[%s]", _key);
+					return result;
+				}
+			}
+			// o_diffusePath
+			{
+				constexpr auto* const _key = "DiffuseTexture";
+				if (!(result = Assets::Lua_LoadString(luaState, _key, o_diffusePath))) {
+					printf("LUA error: fail to load key[%s]", _key);
+					return result;
+				}
+			}
+			// o_specularPath
+			{
+				constexpr auto* const _key = "SpecularTexture";
+				if (!(result = Assets::Lua_LoadString(luaState, _key, o_specularPath))) {
+					printf("LUA error: fail to load key[%s]", _key);
+					return result;
+				}
+			}
+			// o_diffuseColor
+			{
+				constexpr auto* const _key = "DiffuseIntensity";
+				float _tempHolder[3] = { 0 };
+				if (!(result = Assets::Lua_LoadVec3(luaState, _key, _tempHolder))) {
+					printf("LUA error: fail to load key[%s]", _key);
+					return result;
+				}
+				for (uint8_t i = 0; i < 3; ++i)
+				{
+					o_diffuseColor[i] = _tempHolder[i];
+				}
+			}
+			// o_specularColor
+			{
+				constexpr auto* const _key = "SpecularIntensity";
+				float _tempHolder[3] = { 0 };
+				if (!(result = Assets::Lua_LoadVec3(luaState, _key, _tempHolder))) {
+					printf("LUA error: fail to load key[%s]", _key);
+					return result;
+				}
+				for (uint8_t i = 0; i < 3; ++i)
+				{
+					o_specularColor[i] = _tempHolder[i];
+				}
+			}
+			// o_shineness
+			{
+				constexpr auto* const _key = "Shininess";
+				if (!(result = Assets::Lua_LoadFloat(luaState, _key, m_shininess))) {
+					printf("LUA error: fail to load key[%s]", _key);
+					return result;
+				}
+			}
+		}
 
-		result = ReleaseLUA(luaState);
+		//------------------------------
+		// Release Lua
+		//------------------------------
+		result = Assets::ReleaseLUA(luaState);
 		return result;
 	}
 
