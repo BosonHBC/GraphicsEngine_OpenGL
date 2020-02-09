@@ -45,6 +45,9 @@ namespace Graphics {
 		cMaterial() : m_matType(MT_INVALID) {}
 		cMaterial(const eMaterialType& i_matType) : m_matType(i_matType) {}
 
+		// ReleaseLUA must be called when a LUA table is initialized
+		bool InitializeLUA(const std::string& i_path, void*& io_luaState);
+		bool ReleaseLUA(void*& io_luaState);
 		// Type of the material
 		eMaterialType m_matType;
 	};

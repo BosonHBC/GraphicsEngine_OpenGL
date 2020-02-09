@@ -1,14 +1,22 @@
 #include "MatBlinn.h"
 #include "Engine/Constants/Constants.h"
 #include "assimp/scene.h"
+#include "Externals/Lua/Includes.h"
+
 namespace Graphics {
 
 
 	bool cMatBlinn::Initialize(const std::string& i_path, aiMaterial* const i_aiMat)
 	{
 		bool result = true;
-
+		std::string _diffusePath, _specularPath;
 		// TODO: load material data from LUA files
+		if (!(result = LoadFileFromLua(i_path, m_matType,_diffusePath, _specularPath, m_diffuseIntensity, m_specularIntensity, m_shininess))) {
+			printf("Fail to load material[%s] from LUA\n.");
+			return result;
+		}
+
+
 		// Load diffuse texture
 		std::string _texPath = "Contents/textures/";
 		std::string _fileName = "";
@@ -134,4 +142,19 @@ namespace Graphics {
 	{
 		m_specularIntensity = i_specularIntensity;
 	}
+
+	bool cMatBlinn::LoadFileFromLua(const std::string& i_path, eMaterialType& o_matType, std::string& o_diffusePath, std::string& o_specularPath, Color& o_IntensityColor, Color& o_SpecularColor, float& o_Shineness)
+	{
+		bool result;
+		lua_State* luaState = nullptr;
+		// Initialize LUA
+		if (!(result = InitializeLUA(i_path, luaState))) {
+			ReleaseLUA(luaState);
+			return result;
+		}
+
+		result = ReleaseLUA(luaState);
+		return result;
+	}
+
 }
