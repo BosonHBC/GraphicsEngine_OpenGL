@@ -28,6 +28,9 @@
     <ClInclude Include="Window\WindowInput.h" />
   </ItemGroup>
   <ItemGroup>
+    <ProjectReference Include="..\Graphics\Graphics.vcxproj">
+      <Project>{b0e1c99a-91d5-4193-ba88-a55244be0c2a}</Project>
+    </ProjectReference>
     <ProjectReference Include="..\Time\Time.vcxproj">
       <Project>{1be34fe3-4576-46f4-80bb-c49fac4f9e8d}</Project>
     </ProjectReference>

@@ -10,7 +10,7 @@ namespace Graphics {
 	{
 		UBT_Frame = 0,
 		UBT_Drawcall = 1,
-		UBT_Invalid = 0xffff,
+		UBT_Invalid = 0xff,
 	};
 
 	// ---------------------------------
@@ -28,7 +28,7 @@ namespace Graphics {
 		void Bind();
 		// Update data in GPU
 		void Update(const void* const i_data);
-
+		bool CleanUp();
 		bool IsValid() const { m_type == UBT_Invalid; }
 
 	private:

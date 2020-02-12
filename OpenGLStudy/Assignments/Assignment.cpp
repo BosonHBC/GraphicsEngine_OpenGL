@@ -5,7 +5,7 @@
 
 #include "assert.h"
 
-#include "GL/glew.h"
+
 #include "glm/glm.hpp"
 #include "glm/gtc/matrix_transform.hpp"
 #include "glm/gtc/type_ptr.hpp"
@@ -115,11 +115,6 @@ void Assignment::Run()
 
 		glfwPollEvents();
 
-		// for recompile shader
-		if (m_window->GetWindowInput()->IsKeyDown(GLFW_KEY_F6)) {
-			m_currentEffect->RecompileShader(Constants::CONST_PATH_DEFAULT_VERTEXSHADER, GL_VERTEX_SHADER);
-		}
-
 		m_currentEffect->UseEffect();
 
 		// Update camera location
@@ -184,6 +179,10 @@ void Assignment::Tick(float second_since_lastFrame)
 		m_editorCamera->MouseControl(_windowInput, 0.01667f);
 	}
 
+	// for recompile shader
+	if (m_window->GetWindowInput()->IsKeyDown(GLFW_KEY_F6)) {
+		m_currentEffect->RecompileShader(Constants::CONST_PATH_DEFAULT_VERTEXSHADER, GL_VERTEX_SHADER);
+	}
 
 	glm::vec3 _toLight = (m_PointLight->Transform()->GetWorldLocation() - m_teapot->Transform()->GetWorldLocation());
 	glm::vec3 _toForward = glm::normalize(glm::cross(glm::vec3(0, 1, 0), _toLight)) * (5 * second_since_lastFrame);

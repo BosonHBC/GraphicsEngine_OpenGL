@@ -3,6 +3,7 @@
 #include "Application.h"
 #include "Engine/Application/Window/Window.h"
 #include "Time/Time.h"
+#include "Graphics/Graphics.h"
 
 namespace Application {
 	cApplication::cApplication()
@@ -23,21 +24,25 @@ namespace Application {
 			m_tickCount_systemTime_WhenApplicationStart = Time::GetCurrentSystemTimeTickCount();
 		}
 		else {
-			assert(false && "Application can't be initialized without Time");
+			printf("Application can't be initialized without Time\n");
 			return result;
 		}
 
 		// Create a GLFW window
 		{
 			m_window = new cWindow(i_width, i_height, i_windowName);
-			if (!m_window->Initialzation()) {
-				printf("Failed to initialize openGL window!");
-				return false;
+			if (!(result = m_window->Initialzation())) {
+				printf("Failed to initialize openGL window!\n");
+				return result;
 			}
 		}
 
+		if (!(result = Graphics::Initialize())) {
+			printf("Failed to initialize Graphics module!\n");
+			return result;
+		}
 
-		return true;
+		return result;
 	}
 
 	void cApplication::PostInitialization()
@@ -114,6 +119,9 @@ namespace Application {
 			m_applicationThread->join();
 			delete m_applicationThread;
 			m_applicationThread = nullptr;
+		}
+		if (!Graphics::CleanUp()) {
+			printf("Fail to clean up Graphic Module.\n");
 		}
 		safe_delete(m_window);
 	}

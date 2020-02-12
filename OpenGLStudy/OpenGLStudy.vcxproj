@@ -113,7 +113,7 @@
       <AdditionalDependencies>opengl32.lib;glew32.lib;glfw3.lib;glfw3dll.lib;Cores.lib;Graphics.lib;LuaLib.lib;Application.lib;Assets.lib;Time.lib;Constants.lib;%(AdditionalDependencies)</AdditionalDependencies>
     </Link>
     <PreBuildEvent>
-      <Command>xcopy $(SolutionDir)Externals\GL\glew\bin\Release\$(Platform)\glew32.dll $(targetDir) /Y
+      <Command>xcopy $(SolutionDir)Externals\GL\glew\bin\$(Platform)\glew32.dll $(targetDir) /Y
 xcopy $(SolutionDir)Externals\ASSIMP_N\bin\$(Platform)\assimp-vc141-mt.dll $(targetDir) /Y
 xcopy $(SolutionDir)Contents $(targetDir)Contents /Y /E /I</Command>
     </PreBuildEvent>
@@ -137,7 +137,7 @@ xcopy $(SolutionDir)Contents $(targetDir)Contents /Y /E /I</Command>
       <AdditionalDependencies>opengl32.lib;glew32.lib;glfw3.lib;glfw3dll.lib;Cores.lib;Graphics.lib;LuaLib.lib;Application.lib;Assets.lib;Time.lib;Constants.lib;%(AdditionalDependencies)</AdditionalDependencies>
     </Link>
     <PreBuildEvent>
-      <Command>xcopy $(SolutionDir)Externals\GL\glew\bin\Release\$(Platform)\glew32.dll $(targetDir) /Y
+      <Command>xcopy $(SolutionDir)Externals\GL\glew\bin\$(Platform)\glew32.dll $(targetDir) /Y
 xcopy $(SolutionDir)Externals\ASSIMP_N\bin\$(Platform)\assimp-vc141-mt.dll $(targetDir) /Y
 xcopy $(SolutionDir)Contents $(targetDir)Contents /Y /E /I</Command>
     </PreBuildEvent>
@@ -165,7 +165,7 @@ xcopy $(SolutionDir)Contents $(targetDir)Contents /Y /E /I</Command>
       <AdditionalDependencies>opengl32.lib;glew32.lib;glfw3.lib;glfw3dll.lib;Cores.lib;Graphics.lib;LuaLib.lib;Application.lib;Assets.lib;Time.lib;Constants.lib;%(AdditionalDependencies)</AdditionalDependencies>
     </Link>
     <PreBuildEvent>
-      <Command>xcopy $(SolutionDir)Externals\GL\glew\bin\Release\$(Platform)\glew32.dll $(targetDir) /Y
+      <Command>xcopy $(SolutionDir)Externals\GL\glew\bin\$(Platform)\glew32.dll $(targetDir) /Y
 xcopy $(SolutionDir)Externals\ASSIMP_N\bin\$(Platform)\assimp-vc141-mt.dll $(targetDir) /Y
 xcopy $(SolutionDir)Contents $(targetDir)Contents /Y /E /I</Command>
     </PreBuildEvent>
@@ -193,7 +193,7 @@ xcopy $(SolutionDir)Contents $(targetDir)Contents /Y /E /I</Command>
       <AdditionalDependencies>opengl32.lib;glew32.lib;glfw3.lib;glfw3dll.lib;Cores.lib;Graphics.lib;LuaLib.lib;Application.lib;Assets.lib;Time.lib;Constants.lib;%(AdditionalDependencies)</AdditionalDependencies>
     </Link>
     <PreBuildEvent>
-      <Command>xcopy $(SolutionDir)Externals\GL\glew\bin\Release\$(Platform)\glew32.dll $(targetDir) /Y
+      <Command>xcopy $(SolutionDir)Externals\GL\glew\bin\$(Platform)\glew32.dll $(targetDir) /Y
 xcopy $(SolutionDir)Externals\ASSIMP_N\bin\$(Platform)\assimp-vc141-mt.dll $(targetDir) /Y
 xcopy $(SolutionDir)Contents $(targetDir)Contents /Y /E /I</Command>
     </PreBuildEvent>

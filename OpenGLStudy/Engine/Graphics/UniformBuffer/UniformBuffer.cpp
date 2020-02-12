@@ -5,18 +5,7 @@ namespace Graphics {
 
 	cUniformBuffer::~cUniformBuffer()
 	{
-		m_type = UBT_Invalid;
-		m_size = 0;
-		if (m_bufferID != 0)
-		{
-			glDeleteBuffers(1, &m_bufferID);
-			const auto errorCode = glGetError();
-			if (errorCode != GL_NO_ERROR)
-			{
-				printf("OpenGL failed to delete the constant buffer.");
-			}
-			m_bufferID = 0;
-		}
+		CleanUp();
 	}
 
 	bool cUniformBuffer::Initialize(const void* const i_data)
@@ -25,11 +14,11 @@ namespace Graphics {
 		switch (m_type)
 		{
 		case Graphics::UBT_Frame:
-			m_size = sizeof(UniformBufferFormats::sFrame);
+			m_size = UniformBufferFormats::sFrame::Size;
 			printf("Error: Invalid uniform buffer type %d.", m_type);
 			break;
 		case Graphics::UBT_Drawcall:
-			m_size = sizeof(UniformBufferFormats::sDrawCall);
+			m_size = UniformBufferFormats::sDrawCall::Size;
 			break;
 		case Graphics::UBT_Invalid:
 			result = false;
@@ -119,6 +108,24 @@ namespace Graphics {
 			printf("OpenGL failed to update data of uniform buffer %u.",m_bufferID);
 			return;
 		}
+	}
+
+	bool cUniformBuffer::CleanUp()
+	{
+		m_type = UBT_Invalid;
+		m_size = 0;
+		if (m_bufferID != 0)
+		{
+			glDeleteBuffers(1, &m_bufferID);
+			const auto errorCode = glGetError();
+			if (errorCode != GL_NO_ERROR)
+			{
+				printf("OpenGL failed to delete the constant buffer.");
+			}
+			m_bufferID = 0;
+			return false;
+		}
+		return true;
 	}
 
 }
