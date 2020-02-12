@@ -2,9 +2,9 @@
 #include "Math/Transform/Transform.h"
 #include "glm/gtc/type_ptr.hpp"
 
-#include "Model/Model.h"
-#include "Effect/Effect.h"
-#include "Material/Material.h"
+#include "Engine/Graphics/Model/Model.h"
+#include "Engine/Graphics/Effect/Effect.h"
+#include "Engine/Graphics/Material/Material.h"
 
 
 void cActor::Initialize()

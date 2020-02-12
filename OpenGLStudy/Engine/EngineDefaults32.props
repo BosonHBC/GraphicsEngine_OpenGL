@@ -18,6 +18,9 @@
       <PreprocessorDefinitions>_CRT_SECURE_NO_WARNINGS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <AdditionalIncludeDirectories>$(SolutionDir)Engine\;$(SolutionDir);$(SolutionDir)Externals\GL\;$(SolutionDir)Externals\GL\glew\include;$(SolutionDir)Externals\GL\glfw32\include</AdditionalIncludeDirectories>
     </ClCompile>
+    <Lib>
+      <AdditionalLibraryDirectories>$(OutDir)</AdditionalLibraryDirectories>
+    </Lib>
   </ItemDefinitionGroup>
   <ItemGroup>
     <BuildMacro Include="EngineDir">

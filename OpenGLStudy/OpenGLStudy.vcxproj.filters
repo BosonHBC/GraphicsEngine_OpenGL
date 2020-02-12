@@ -31,9 +31,6 @@
     <Filter Include="Source Files\Engine\Graphics\Camera">
       <UniqueIdentifier>{eb2d5f20-ba74-457e-a934-d7f697164fb5}</UniqueIdentifier>
     </Filter>
-    <Filter Include="Source Files\Engine\Time">
-      <UniqueIdentifier>{ec7da3fb-391a-4991-bc3c-8104f83ec143}</UniqueIdentifier>
-    </Filter>
     <Filter Include="Source Files\Contents">
       <UniqueIdentifier>{1501a9d2-9679-42e3-b98a-de993fcd568f}</UniqueIdentifier>
     </Filter>
@@ -120,9 +117,6 @@
     <ClCompile Include="Engine\Graphics\Window\Window.cpp">
       <Filter>Source Files\Engine\Graphics\Window</Filter>
     </ClCompile>
-    <ClCompile Include="Engine\Time\Time.cpp">
-      <Filter>Source Files\Engine\Time</Filter>
-    </ClCompile>
     <ClCompile Include="Engine\Graphics\Texture\Texture.cpp">
       <Filter>Source Files\Engine\Graphics\Texture</Filter>
     </ClCompile>
@@ -190,9 +184,6 @@
     </ClInclude>
     <ClInclude Include="Engine\Graphics\Window\WindowInput.h">
       <Filter>Source Files\Engine\Graphics\Window</Filter>
-    </ClInclude>
-    <ClInclude Include="Engine\Time\Time.h">
-      <Filter>Source Files\Engine\Time</Filter>
     </ClInclude>
     <ClInclude Include="Tool\stb_image.h">
       <Filter>Source Files\Tool</Filter>

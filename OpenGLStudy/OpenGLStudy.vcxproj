@@ -110,7 +110,7 @@
       <SubSystem>Console</SubSystem>
       <GenerateDebugInformation>true</GenerateDebugInformation>
       <AdditionalLibraryDirectories>$(OutputDir);$(SolutionDir)Externals\ASSIMP_N\lib\Release\$(Platform);$(SolutionDir)Externals\GL\glew\lib\Release\$(Platform);$(SolutionDir)Externals\GL\glfw32\lib-vc2017\</AdditionalLibraryDirectories>
-      <AdditionalDependencies>opengl32.lib;glew32.lib;glfw3.lib;glfw3dll.lib;assimp-vc141-mt.lib;LuaLib.lib;Application.lib;Assets.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalDependencies>opengl32.lib;glew32.lib;glfw3.lib;glfw3dll.lib;assimp-vc141-mt.lib;LuaLib.lib;Application.lib;Assets.lib;Time.lib;Constants.lib;%(AdditionalDependencies)</AdditionalDependencies>
     </Link>
     <PreBuildEvent>
       <Command>xcopy $(SolutionDir)Externals\GL\glew\bin\Release\$(Platform)\glew32.dll $(targetDir) /Y
@@ -134,7 +134,7 @@ xcopy $(SolutionDir)Contents $(targetDir)Contents /Y /E /I</Command>
       <SubSystem>Console</SubSystem>
       <GenerateDebugInformation>true</GenerateDebugInformation>
       <AdditionalLibraryDirectories>$(OutputDir);$(SolutionDir)Externals\ASSIMP_N\lib\Release\$(Platform);$(SolutionDir)Externals\GL\glew\lib\Release\$(Platform);$(SolutionDir)Externals\GL\glfw\lib-vc2017\;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
-      <AdditionalDependencies>opengl32.lib;glew32.lib;glfw3.lib;glfw3dll.lib;assimp-vc141-mt.lib;LuaLib.lib;Application.lib;Assets.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalDependencies>opengl32.lib;glew32.lib;glfw3.lib;glfw3dll.lib;assimp-vc141-mt.lib;LuaLib.lib;Application.lib;Assets.lib;Time.lib;Constants.lib;%(AdditionalDependencies)</AdditionalDependencies>
     </Link>
     <PreBuildEvent>
       <Command>xcopy $(SolutionDir)Externals\GL\glew\bin\Release\$(Platform)\glew32.dll $(targetDir) /Y
@@ -162,7 +162,7 @@ xcopy $(SolutionDir)Contents $(targetDir)Contents /Y /E /I</Command>
       <OptimizeReferences>true</OptimizeReferences>
       <GenerateDebugInformation>true</GenerateDebugInformation>
       <AdditionalLibraryDirectories>$(OutputDir);$(SolutionDir)Externals\ASSIMP_N\lib\Release\$(Platform);$(SolutionDir)Externals\GL\glew\lib\Release\$(Platform);$(SolutionDir)Externals\GL\glfw32\lib-vc2017\</AdditionalLibraryDirectories>
-      <AdditionalDependencies>opengl32.lib;glew32.lib;glfw3.lib;glfw3dll.lib;assimp-vc141-mt.lib;LuaLib.lib;Application.lib;Assets.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalDependencies>opengl32.lib;glew32.lib;glfw3.lib;glfw3dll.lib;assimp-vc141-mt.lib;LuaLib.lib;Application.lib;Assets.lib;Time.lib;Constants.lib;%(AdditionalDependencies)</AdditionalDependencies>
     </Link>
     <PreBuildEvent>
       <Command>xcopy $(SolutionDir)Externals\GL\glew\bin\Release\$(Platform)\glew32.dll $(targetDir) /Y
@@ -190,7 +190,7 @@ xcopy $(SolutionDir)Contents $(targetDir)Contents /Y /E /I</Command>
       <OptimizeReferences>true</OptimizeReferences>
       <GenerateDebugInformation>true</GenerateDebugInformation>
       <AdditionalLibraryDirectories>$(OutputDir);$(SolutionDir)Externals\ASSIMP_N\lib\Release\$(Platform);$(SolutionDir)Externals\GL\glew\lib\Release\$(Platform);$(SolutionDir)Externals\GL\glfw\lib-vc2017\;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
-      <AdditionalDependencies>opengl32.lib;glew32.lib;glfw3.lib;glfw3dll.lib;assimp-vc141-mt.lib;LuaLib.lib;Application.lib;Assets.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalDependencies>opengl32.lib;glew32.lib;glfw3.lib;glfw3dll.lib;assimp-vc141-mt.lib;LuaLib.lib;Application.lib;Assets.lib;Time.lib;Constants.lib;%(AdditionalDependencies)</AdditionalDependencies>
     </Link>
     <PreBuildEvent>
       <Command>xcopy $(SolutionDir)Externals\GL\glew\bin\Release\$(Platform)\glew32.dll $(targetDir) /Y
@@ -219,7 +219,6 @@ xcopy $(SolutionDir)Contents $(targetDir)Contents /Y /E /I</Command>
     <ClCompile Include="Engine\Graphics\UniformBuffer\UniformBuffer.cpp" />
     <ClCompile Include="Engine\Graphics\Window\Window.cpp" />
     <ClCompile Include="Engine\Math\Transform\Transform.cpp" />
-    <ClCompile Include="Engine\Time\Time.cpp" />
     <ClCompile Include="EntryPoint.cpp" />
   </ItemGroup>
   <ItemGroup>
@@ -249,7 +248,6 @@ xcopy $(SolutionDir)Contents $(targetDir)Contents /Y /E /I</Command>
     <ClInclude Include="Engine\Graphics\Window\Window.h" />
     <ClInclude Include="Engine\Graphics\Window\WindowInput.h" />
     <ClInclude Include="Engine\Math\Transform\Transform.h" />
-    <ClInclude Include="Engine\Time\Time.h" />
     <ClInclude Include="Tool\stb_image.h" />
   </ItemGroup>
   <ItemGroup>
@@ -264,6 +262,9 @@ xcopy $(SolutionDir)Contents $(targetDir)Contents /Y /E /I</Command>
   <ItemGroup>
     <ProjectReference Include="Engine\Assets\Assets.vcxproj">
       <Project>{e5bc07b4-4aab-4ce6-8a4e-a5b3ec116cc6}</Project>
+    </ProjectReference>
+    <ProjectReference Include="Engine\Cores\Cores.vcxproj">
+      <Project>{88be7857-2c02-4a7c-8aea-b06c518757c0}</Project>
     </ProjectReference>
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
