@@ -7,7 +7,7 @@
     <ExternalDir>$(SolutionDir)Externals\</ExternalDir>
     <TempDir>$(SolutionDir)temp\$(PlatformShortName)\$(Configuration)\</TempDir>
     <IntermediateDir>$(TempDir)intermediates\$(ProjectName)\</IntermediateDir>
-    <OutputDir>$(SolutionDir)output\</OutputDir>
+    <OutputDir>$(TempDir)output\</OutputDir>
   </PropertyGroup>
   <PropertyGroup>
     <OutDir>$(OutputDir)</OutDir>

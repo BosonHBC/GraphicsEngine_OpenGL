@@ -1,6 +1,6 @@
 #include "MatBlinn.h"
 #include "Engine/Constants/Constants.h"
-#include "assimp/scene.h"
+#include "Externals/ASSIMP_N/include/assimp/scene.h"
 #include "Assets/LoadTableFromLuaFile.h"
 
 namespace Graphics {

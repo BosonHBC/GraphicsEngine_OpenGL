@@ -1,6 +1,6 @@
 #include "Assignment.h"
-#include "Graphics/Window/Window.h"
-#include "Graphics/Window/WindowInput.h"
+#include "Application/Window/Window.h"
+#include "Application/Window/WindowInput.h"
 #include "Constants/Constants.h"
 
 #include "assert.h"

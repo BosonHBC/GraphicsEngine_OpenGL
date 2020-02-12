@@ -13,27 +13,18 @@
       <UniqueIdentifier>{67DA6AB6-F800-4c08-8B7A-83BB121AAD01}</UniqueIdentifier>
       <Extensions>rc;ico;cur;bmp;dlg;rc2;rct;bin;rgs;gif;jpg;jpeg;jpe;resx;tiff;tif;png;wav;mfcribbon-ms</Extensions>
     </Filter>
-    <Filter Include="Source Files\Window">
-      <UniqueIdentifier>{b7a738bf-614b-4d29-84ea-c38151733fe4}</UniqueIdentifier>
+    <Filter Include="Source Files\Transform">
+      <UniqueIdentifier>{d2536d59-02db-497b-9b3c-609c9ed6691a}</UniqueIdentifier>
     </Filter>
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="Application.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="Window\Window.cpp">
-      <Filter>Source Files\Window</Filter>
+    <ClCompile Include="..\Math\Transform\Transform.cpp">
+      <Filter>Source Files\Transform</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="Application.h">
-      <Filter>Source Files</Filter>
-    </ClInclude>
-    <ClInclude Include="Window\Window.h">
-      <Filter>Source Files\Window</Filter>
-    </ClInclude>
-    <ClInclude Include="Window\WindowInput.h">
-      <Filter>Source Files\Window</Filter>
+    <ClInclude Include="..\Math\Transform\Transform.h">
+      <Filter>Source Files\Transform</Filter>
     </ClInclude>
   </ItemGroup>
 </Project>

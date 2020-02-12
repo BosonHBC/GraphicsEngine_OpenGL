@@ -1,7 +1,7 @@
 #include <algorithm>
 #include "assert.h"
 #include "Application.h"
-#include "Engine/Graphics/Window/Window.h"
+#include "Engine/Application/Window/Window.h"
 #include "Time/Time.h"
 
 namespace Application {

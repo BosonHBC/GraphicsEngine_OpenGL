@@ -1,9 +1,9 @@
 #pragma once
 #include "GL/glew.h"
 #include "glm/glm.hpp"
-#include "Color/Color.h"
+#include "Engine/Graphics/Color/Color.h"
 #include "Cores/Core.h"
-#include "Transform/Transform.h"
+#include "Engine/Math/Transform/Transform.h"
 
 namespace Graphics {
 	// An Interface for all kinds of lights

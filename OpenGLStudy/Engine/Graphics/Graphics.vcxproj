@@ -19,28 +19,59 @@
     </ProjectConfiguration>
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="AssetManager.h" />
-    <ClInclude Include="Handle.h" />
-    <ClInclude Include="LoadTableFromLuaFile.h" />
-  </ItemGroup>
-  <ItemGroup>
-    <None Include="cAssetManager.inl" />
-  </ItemGroup>
-  <ItemGroup>
-    <ClCompile Include="empty.cpp" />
-    <ClCompile Include="LoadTableFromLuaFile.cpp" />
-  </ItemGroup>
-  <ItemGroup>
-    <ProjectReference Include="..\..\Externals\Lua\LuaCompiler.vcxproj">
-      <Project>{0b19945a-9ca2-4ed3-84d8-0924b5428925}</Project>
+    <ProjectReference Include="..\Assets\Assets.vcxproj">
+      <Project>{e5bc07b4-4aab-4ce6-8a4e-a5b3ec116cc6}</Project>
     </ProjectReference>
+    <ProjectReference Include="..\Constants\Constants.vcxproj">
+      <Project>{c382dd7e-e9fe-41f6-bef6-cc7d647a1d0f}</Project>
+    </ProjectReference>
+    <ProjectReference Include="..\Math\Maths.vcxproj">
+      <Project>{2b7eaa37-308e-4d6b-ba43-a36c0f99f6f0}</Project>
+    </ProjectReference>
+  </ItemGroup>
+  <ItemGroup>
+    <ClCompile Include="Camera\Camera.cpp" />
+    <ClCompile Include="Camera\EditorCamera\EditorCamera.cpp" />
+    <ClCompile Include="Effect\Effect.cpp" />
+    <ClCompile Include="Graphics.cpp" />
+    <ClCompile Include="Light\AmbientLight\AmbientLight.cpp" />
+    <ClCompile Include="Light\DirectionalLight\DirectionalLight.cpp" />
+    <ClCompile Include="Light\Light.cpp" />
+    <ClCompile Include="Light\PointLight\PointLight.cpp" />
+    <ClCompile Include="Light\SpotLight\SpotLight.cpp" />
+    <ClCompile Include="Material\Blinn\MatBlinn.cpp" />
+    <ClCompile Include="Material\Material.cpp" />
+    <ClCompile Include="Mesh\Mesh.cpp" />
+    <ClCompile Include="Model\Model.cpp" />
+    <ClCompile Include="Texture\Texture.cpp" />
+    <ClCompile Include="UniformBuffer\UniformBuffer.cpp" />
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="Camera\Camera.h" />
+    <ClInclude Include="Camera\EditorCamera\EditorCamera.h" />
+    <ClInclude Include="Color\Color.h" />
+    <ClInclude Include="Effect\Effect.h" />
+    <ClInclude Include="Effect\Shader\GLShader.h" />
+    <ClInclude Include="Graphics.h" />
+    <ClInclude Include="Light\AmbientLight\AmbientLight.h" />
+    <ClInclude Include="Light\DirectionalLight\DirectionalLight.h" />
+    <ClInclude Include="Light\Light.h" />
+    <ClInclude Include="Light\PointLight\PointLight.h" />
+    <ClInclude Include="Light\SpotLight\SpotLight.h" />
+    <ClInclude Include="Material\Blinn\MatBlinn.h" />
+    <ClInclude Include="Material\Material.h" />
+    <ClInclude Include="Mesh\Mesh.h" />
+    <ClInclude Include="Model\Model.h" />
+    <ClInclude Include="Texture\Texture.h" />
+    <ClInclude Include="UniformBuffer\UniformBuffer.h" />
+    <ClInclude Include="UniformBuffer\UniformBufferFormats.h" />
   </ItemGroup>
   <PropertyGroup Label="Globals">
     <VCProjectVersion>15.0</VCProjectVersion>
-    <ProjectGuid>{E5BC07B4-4AAB-4CE6-8A4E-A5B3EC116CC6}</ProjectGuid>
+    <ProjectGuid>{B0E1C99A-91D5-4193-BA88-A55244BE0C2A}</ProjectGuid>
     <Keyword>Win32Proj</Keyword>
-    <RootNamespace>Assets</RootNamespace>
-    <WindowsTargetPlatformVersion>10.0.17763.0</WindowsTargetPlatformVersion>
+    <RootNamespace>Graphics</RootNamespace>
+    <WindowsTargetPlatformVersion>10.0.18362.0</WindowsTargetPlatformVersion>
   </PropertyGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.Default.props" />
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'" Label="Configuration">
@@ -91,39 +122,18 @@
     <Import Project="..\EngineDefaults.props" />
   </ImportGroup>
   <PropertyGroup Label="UserMacros" />
-  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
-    <LinkIncremental>true</LinkIncremental>
-    <OutDir>$(OutputDir)</OutDir>
-  </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
     <LinkIncremental>true</LinkIncremental>
-    <OutDir>$(OutputDir)</OutDir>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
+    <LinkIncremental>true</LinkIncremental>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
     <LinkIncremental>false</LinkIncremental>
-    <OutDir>$(OutputDir)</OutDir>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
     <LinkIncremental>false</LinkIncremental>
-    <OutDir>$(OutputDir)</OutDir>
   </PropertyGroup>
-  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
-    <ClCompile>
-      <PrecompiledHeader>NotUsing</PrecompiledHeader>
-      <WarningLevel>Level3</WarningLevel>
-      <Optimization>Disabled</Optimization>
-      <SDLCheck>true</SDLCheck>
-      <PreprocessorDefinitions>_DEBUG;_LIB;%(PreprocessorDefinitions)</PreprocessorDefinitions>
-      <ConformanceMode>true</ConformanceMode>
-      <PrecompiledHeaderFile />
-      <PrecompiledHeaderOutputFile />
-      <AdditionalIncludeDirectories>$(SolutionDir);%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
-    </ClCompile>
-    <Link>
-      <SubSystem>Windows</SubSystem>
-      <GenerateDebugInformation>true</GenerateDebugInformation>
-    </Link>
-  </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
     <ClCompile>
       <PrecompiledHeader>NotUsing</PrecompiledHeader>
@@ -134,12 +144,37 @@
       <ConformanceMode>true</ConformanceMode>
       <PrecompiledHeaderFile />
       <PrecompiledHeaderOutputFile />
-      <AdditionalIncludeDirectories>$(SolutionDir);%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>$(SolutionDir)Externals\ASSIMP_N\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
     </ClCompile>
     <Link>
       <SubSystem>Windows</SubSystem>
       <GenerateDebugInformation>true</GenerateDebugInformation>
     </Link>
+    <Lib>
+      <AdditionalDependencies>assimp-vc141-mt.lib</AdditionalDependencies>
+      <AdditionalLibraryDirectories>$(OutDir);$(SolutionDir)Externals\ASSIMP_N\lib\Release\$(Platform)</AdditionalLibraryDirectories>
+    </Lib>
+  </ItemDefinitionGroup>
+  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
+    <ClCompile>
+      <PrecompiledHeader>NotUsing</PrecompiledHeader>
+      <WarningLevel>Level3</WarningLevel>
+      <Optimization>Disabled</Optimization>
+      <SDLCheck>true</SDLCheck>
+      <PreprocessorDefinitions>_DEBUG;_LIB;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <ConformanceMode>true</ConformanceMode>
+      <PrecompiledHeaderFile />
+      <PrecompiledHeaderOutputFile />
+      <AdditionalIncludeDirectories>$(SolutionDir)Externals\ASSIMP_N\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+    </ClCompile>
+    <Link>
+      <SubSystem>Windows</SubSystem>
+      <GenerateDebugInformation>true</GenerateDebugInformation>
+    </Link>
+    <Lib>
+      <AdditionalLibraryDirectories>$(OutDir);$(SolutionDir)Externals\ASSIMP_N\lib\Release\$(Platform)</AdditionalLibraryDirectories>
+      <AdditionalDependencies>assimp-vc141-mt.lib</AdditionalDependencies>
+    </Lib>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
     <ClCompile>
@@ -153,7 +188,7 @@
       <ConformanceMode>true</ConformanceMode>
       <PrecompiledHeaderFile />
       <PrecompiledHeaderOutputFile />
-      <AdditionalIncludeDirectories>$(SolutionDir);%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>$(SolutionDir)Externals\ASSIMP_N\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
     </ClCompile>
     <Link>
       <SubSystem>Windows</SubSystem>
@@ -161,6 +196,10 @@
       <OptimizeReferences>true</OptimizeReferences>
       <GenerateDebugInformation>true</GenerateDebugInformation>
     </Link>
+    <Lib>
+      <AdditionalDependencies>assimp-vc141-mt.lib</AdditionalDependencies>
+      <AdditionalLibraryDirectories>$(OutDir);$(SolutionDir)Externals\ASSIMP_N\lib\Release\$(Platform)</AdditionalLibraryDirectories>
+    </Lib>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
     <ClCompile>
@@ -174,7 +213,7 @@
       <ConformanceMode>true</ConformanceMode>
       <PrecompiledHeaderFile />
       <PrecompiledHeaderOutputFile />
-      <AdditionalIncludeDirectories>$(SolutionDir);%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>$(SolutionDir)Externals\ASSIMP_N\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
     </ClCompile>
     <Link>
       <SubSystem>Windows</SubSystem>
@@ -182,6 +221,10 @@
       <OptimizeReferences>true</OptimizeReferences>
       <GenerateDebugInformation>true</GenerateDebugInformation>
     </Link>
+    <Lib>
+      <AdditionalLibraryDirectories>$(OutDir);$(SolutionDir)Externals\ASSIMP_N\lib\Release\$(Platform)</AdditionalLibraryDirectories>
+      <AdditionalDependencies>assimp-vc141-mt.lib</AdditionalDependencies>
+    </Lib>
   </ItemDefinitionGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

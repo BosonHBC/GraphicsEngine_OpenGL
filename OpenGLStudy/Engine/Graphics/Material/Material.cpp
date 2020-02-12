@@ -1,5 +1,5 @@
 #include "Blinn/MatBlinn.h"
-#include "assimp/scene.h"
+#include "Externals/ASSIMP_N/include/assimp/scene.h"
 
 namespace Graphics {
 

@@ -20,9 +20,12 @@
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="Application.cpp" />
+    <ClCompile Include="Window\Window.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Application.h" />
+    <ClInclude Include="Window\Window.h" />
+    <ClInclude Include="Window\WindowInput.h" />
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\Time\Time.vcxproj">

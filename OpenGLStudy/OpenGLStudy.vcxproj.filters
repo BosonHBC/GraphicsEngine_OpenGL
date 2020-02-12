@@ -13,24 +13,6 @@
       <UniqueIdentifier>{67DA6AB6-F800-4c08-8B7A-83BB121AAD01}</UniqueIdentifier>
       <Extensions>rc;ico;cur;bmp;dlg;rc2;rct;bin;rgs;gif;jpg;jpeg;jpe;resx;tiff;tif;png;wav;mfcribbon-ms</Extensions>
     </Filter>
-    <Filter Include="Source Files\Engine">
-      <UniqueIdentifier>{975ea8ff-941b-4252-a843-239fd6290174}</UniqueIdentifier>
-    </Filter>
-    <Filter Include="Source Files\Engine\Graphics">
-      <UniqueIdentifier>{48d9d8ad-5af8-4995-9be9-81941c080737}</UniqueIdentifier>
-    </Filter>
-    <Filter Include="Source Files\Engine\Graphics\Mesh">
-      <UniqueIdentifier>{9da3f5b0-ac07-47d3-b1ee-42671e0d4ee2}</UniqueIdentifier>
-    </Filter>
-    <Filter Include="Source Files\Engine\Graphics\Effect">
-      <UniqueIdentifier>{be7d3c32-3959-49f0-8c30-9e3a2e4f0121}</UniqueIdentifier>
-    </Filter>
-    <Filter Include="Source Files\Engine\Graphics\Window">
-      <UniqueIdentifier>{95b24a94-9e82-408d-b203-ba924745e6f6}</UniqueIdentifier>
-    </Filter>
-    <Filter Include="Source Files\Engine\Graphics\Camera">
-      <UniqueIdentifier>{eb2d5f20-ba74-457e-a934-d7f697164fb5}</UniqueIdentifier>
-    </Filter>
     <Filter Include="Source Files\Contents">
       <UniqueIdentifier>{1501a9d2-9679-42e3-b98a-de993fcd568f}</UniqueIdentifier>
     </Filter>
@@ -40,216 +22,27 @@
     <Filter Include="Source Files\Tool">
       <UniqueIdentifier>{b9129976-be09-49ef-a4b6-e7324617dd2f}</UniqueIdentifier>
     </Filter>
-    <Filter Include="Source Files\Engine\Graphics\Texture">
-      <UniqueIdentifier>{6983bf0b-f8b3-4605-8293-f0ea42a81658}</UniqueIdentifier>
-    </Filter>
     <Filter Include="Source Files\Contents\textures">
       <UniqueIdentifier>{f2696715-db38-46c5-a147-beb181ea8124}</UniqueIdentifier>
-    </Filter>
-    <Filter Include="Source Files\Engine\Graphics\Light">
-      <UniqueIdentifier>{b1d29944-38a9-430c-a709-7c08ab12076f}</UniqueIdentifier>
-    </Filter>
-    <Filter Include="Source Files\Engine\Graphics\Light\AmbientLight">
-      <UniqueIdentifier>{f372e2f0-ea1c-4d4b-8b26-b6180766bb4c}</UniqueIdentifier>
-    </Filter>
-    <Filter Include="Source Files\Engine\Graphics\Light\DirectionLight">
-      <UniqueIdentifier>{c84de5d1-f8b6-4ed7-afaa-c125957672a6}</UniqueIdentifier>
-    </Filter>
-    <Filter Include="Source Files\Engine\Graphics\Material">
-      <UniqueIdentifier>{e74254c1-12cd-425b-accb-59c2288768e7}</UniqueIdentifier>
-    </Filter>
-    <Filter Include="Source Files\Engine\Graphics\Color">
-      <UniqueIdentifier>{52359260-46e6-4873-a1b2-2c6e7fe88d14}</UniqueIdentifier>
-    </Filter>
-    <Filter Include="Source Files\Engine\Graphics\Light\PointLight">
-      <UniqueIdentifier>{d2a5a549-e9f6-4b90-9b7d-7038139f8d54}</UniqueIdentifier>
     </Filter>
     <Filter Include="Source Files\Assignments">
       <UniqueIdentifier>{fa08801f-210b-41aa-97c6-07501b24a87d}</UniqueIdentifier>
     </Filter>
-    <Filter Include="Source Files\Engine\Graphics\Light\SpotLight">
-      <UniqueIdentifier>{76854aaf-e6a8-43de-b600-592cb271aece}</UniqueIdentifier>
-    </Filter>
-    <Filter Include="Source Files\Engine\Graphics\Model">
-      <UniqueIdentifier>{5dc153dd-e2e9-4ca4-b122-3e6d4b344b27}</UniqueIdentifier>
-    </Filter>
-    <Filter Include="Source Files\Engine\Constants">
-      <UniqueIdentifier>{a6e699f3-a45c-4c72-8666-3b547174ff18}</UniqueIdentifier>
-    </Filter>
-    <Filter Include="Source Files\Engine\Graphics\Effect\Shader">
-      <UniqueIdentifier>{1547c236-a253-4e69-bc4d-3636be221a24}</UniqueIdentifier>
-    </Filter>
-    <Filter Include="Source Files\Engine\Cores">
-      <UniqueIdentifier>{577e77b9-8ba6-4c8c-8fc5-c915df56a7a3}</UniqueIdentifier>
-    </Filter>
-    <Filter Include="Source Files\Engine\Cores\BirArray">
-      <UniqueIdentifier>{2c9065cc-bde5-426a-8ee5-512d51cbaf5e}</UniqueIdentifier>
-    </Filter>
-    <Filter Include="Source Files\Engine\Graphics\Camera\EditorCamera">
-      <UniqueIdentifier>{24b75239-6ef3-488c-bdfa-df421f63f68d}</UniqueIdentifier>
-    </Filter>
-    <Filter Include="Source Files\Engine\Math">
-      <UniqueIdentifier>{54a1789a-69b8-4130-8e55-b675fee99c8d}</UniqueIdentifier>
-    </Filter>
-    <Filter Include="Source Files\Engine\Cores\Actor">
-      <UniqueIdentifier>{57160238-6888-44a4-a7ed-9cfa40d113f8}</UniqueIdentifier>
-    </Filter>
-    <Filter Include="Source Files\Engine\Math\Transform">
-      <UniqueIdentifier>{92937dad-c7b2-4d94-97ba-c75cae129afa}</UniqueIdentifier>
-    </Filter>
-    <Filter Include="Source Files\Engine\Graphics\Material\Blinn">
-      <UniqueIdentifier>{cc2a0a84-b8b0-4cc7-9211-f97fdb7b890a}</UniqueIdentifier>
-    </Filter>
-    <Filter Include="Source Files\Engine\Graphics\UniformBuffer">
-      <UniqueIdentifier>{bcc98c7e-5478-4d40-9033-b945b3b760ed}</UniqueIdentifier>
-    </Filter>
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="Engine\Graphics\Camera\Camera.cpp">
-      <Filter>Source Files\Engine\Graphics\Camera</Filter>
-    </ClCompile>
-    <ClCompile Include="Engine\Graphics\Effect\Effect.cpp">
-      <Filter>Source Files\Engine\Graphics\Effect</Filter>
-    </ClCompile>
-    <ClCompile Include="Engine\Graphics\Mesh\Mesh.cpp">
-      <Filter>Source Files\Engine\Graphics\Mesh</Filter>
-    </ClCompile>
-    <ClCompile Include="Engine\Graphics\Window\Window.cpp">
-      <Filter>Source Files\Engine\Graphics\Window</Filter>
-    </ClCompile>
-    <ClCompile Include="Engine\Graphics\Texture\Texture.cpp">
-      <Filter>Source Files\Engine\Graphics\Texture</Filter>
-    </ClCompile>
-    <ClCompile Include="Engine\Graphics\Light\Light.cpp">
-      <Filter>Source Files\Engine\Graphics\Light</Filter>
-    </ClCompile>
-    <ClCompile Include="Engine\Graphics\Light\AmbientLight\AmbientLight.cpp">
-      <Filter>Source Files\Engine\Graphics\Light\AmbientLight</Filter>
-    </ClCompile>
-    <ClCompile Include="Engine\Graphics\Light\DirectionalLight\DirectionalLight.cpp">
-      <Filter>Source Files\Engine\Graphics\Light\DirectionLight</Filter>
-    </ClCompile>
-    <ClCompile Include="Engine\Graphics\Light\PointLight\PointLight.cpp">
-      <Filter>Source Files\Engine\Graphics\Light\PointLight</Filter>
-    </ClCompile>
     <ClCompile Include="EntryPoint.cpp">
       <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="Engine\Graphics\Light\SpotLight\SpotLight.cpp">
-      <Filter>Source Files\Engine\Graphics\Light\SpotLight</Filter>
-    </ClCompile>
-    <ClCompile Include="Engine\Graphics\Model\Model.cpp">
-      <Filter>Source Files\Engine\Graphics\Model</Filter>
     </ClCompile>
     <ClCompile Include="Assignments\Assignment.cpp">
       <Filter>Source Files\Assignments</Filter>
     </ClCompile>
-    <ClCompile Include="Engine\Cores\BitArray\BitArray.cpp">
-      <Filter>Source Files\Engine\Cores\BirArray</Filter>
-    </ClCompile>
-    <ClCompile Include="Engine\Graphics\Camera\EditorCamera\EditorCamera.cpp">
-      <Filter>Source Files\Engine\Graphics\Camera\EditorCamera</Filter>
-    </ClCompile>
-    <ClCompile Include="Engine\Cores\Actor\Actor.cpp">
-      <Filter>Source Files\Engine\Cores\Actor</Filter>
-    </ClCompile>
-    <ClCompile Include="Engine\Math\Transform\Transform.cpp">
-      <Filter>Source Files\Engine\Math\Transform</Filter>
-    </ClCompile>
-    <ClCompile Include="Engine\Graphics\Material\Material.cpp">
-      <Filter>Source Files\Engine\Graphics\Material</Filter>
-    </ClCompile>
-    <ClCompile Include="Engine\Graphics\Material\Blinn\MatBlinn.cpp">
-      <Filter>Source Files\Engine\Graphics\Material\Blinn</Filter>
-    </ClCompile>
-    <ClCompile Include="Engine\Graphics\UniformBuffer\UniformBuffer.cpp">
-      <Filter>Source Files\Engine\Graphics\UniformBuffer</Filter>
-    </ClCompile>
-    <ClCompile Include="Engine\Graphics\Graphics.cpp">
-      <Filter>Source Files\Engine\Graphics</Filter>
-    </ClCompile>
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="Engine\Graphics\Camera\Camera.h">
-      <Filter>Source Files\Engine\Graphics\Camera</Filter>
-    </ClInclude>
-    <ClInclude Include="Engine\Graphics\Effect\Effect.h">
-      <Filter>Source Files\Engine\Graphics\Effect</Filter>
-    </ClInclude>
-    <ClInclude Include="Engine\Graphics\Mesh\Mesh.h">
-      <Filter>Source Files\Engine\Graphics\Mesh</Filter>
-    </ClInclude>
-    <ClInclude Include="Engine\Graphics\Window\Window.h">
-      <Filter>Source Files\Engine\Graphics\Window</Filter>
-    </ClInclude>
-    <ClInclude Include="Engine\Graphics\Window\WindowInput.h">
-      <Filter>Source Files\Engine\Graphics\Window</Filter>
-    </ClInclude>
     <ClInclude Include="Tool\stb_image.h">
       <Filter>Source Files\Tool</Filter>
     </ClInclude>
-    <ClInclude Include="Engine\Graphics\Texture\Texture.h">
-      <Filter>Source Files\Engine\Graphics\Texture</Filter>
-    </ClInclude>
-    <ClInclude Include="Engine\Graphics\Light\Light.h">
-      <Filter>Source Files\Engine\Graphics\Light</Filter>
-    </ClInclude>
-    <ClInclude Include="Engine\Graphics\Light\AmbientLight\AmbientLight.h">
-      <Filter>Source Files\Engine\Graphics\Light\AmbientLight</Filter>
-    </ClInclude>
-    <ClInclude Include="Engine\Graphics\Light\DirectionalLight\DirectionalLight.h">
-      <Filter>Source Files\Engine\Graphics\Light\DirectionLight</Filter>
-    </ClInclude>
-    <ClInclude Include="Engine\Graphics\Material\Material.h">
-      <Filter>Source Files\Engine\Graphics\Material</Filter>
-    </ClInclude>
-    <ClInclude Include="Engine\Graphics\Color\Color.h">
-      <Filter>Source Files\Engine\Graphics\Color</Filter>
-    </ClInclude>
-    <ClInclude Include="Engine\Graphics\Light\PointLight\PointLight.h">
-      <Filter>Source Files\Engine\Graphics\Light\PointLight</Filter>
-    </ClInclude>
-    <ClInclude Include="Engine\Graphics\Light\SpotLight\SpotLight.h">
-      <Filter>Source Files\Engine\Graphics\Light\SpotLight</Filter>
-    </ClInclude>
-    <ClInclude Include="Engine\Graphics\Model\Model.h">
-      <Filter>Source Files\Engine\Graphics\Model</Filter>
-    </ClInclude>
-    <ClInclude Include="Engine\Constants\Constants.h">
-      <Filter>Source Files\Engine\Constants</Filter>
-    </ClInclude>
     <ClInclude Include="Assignments\Assignment.h">
       <Filter>Source Files\Assignments</Filter>
-    </ClInclude>
-    <ClInclude Include="Engine\Graphics\Effect\Shader\GLShader.h">
-      <Filter>Source Files\Engine\Graphics\Effect\Shader</Filter>
-    </ClInclude>
-    <ClInclude Include="Engine\Cores\BitArray\BitArray.h">
-      <Filter>Source Files\Engine\Cores\BirArray</Filter>
-    </ClInclude>
-    <ClInclude Include="Engine\Graphics\Camera\EditorCamera\EditorCamera.h">
-      <Filter>Source Files\Engine\Graphics\Camera\EditorCamera</Filter>
-    </ClInclude>
-    <ClInclude Include="Engine\Cores\Actor\Actor.h">
-      <Filter>Source Files\Engine\Cores\Actor</Filter>
-    </ClInclude>
-    <ClInclude Include="Engine\Math\Transform\Transform.h">
-      <Filter>Source Files\Engine\Math\Transform</Filter>
-    </ClInclude>
-    <ClInclude Include="Engine\Cores\Core.h">
-      <Filter>Source Files\Engine\Cores</Filter>
-    </ClInclude>
-    <ClInclude Include="Engine\Graphics\Material\Blinn\MatBlinn.h">
-      <Filter>Source Files\Engine\Graphics\Material\Blinn</Filter>
-    </ClInclude>
-    <ClInclude Include="Engine\Graphics\UniformBuffer\UniformBuffer.h">
-      <Filter>Source Files\Engine\Graphics\UniformBuffer</Filter>
-    </ClInclude>
-    <ClInclude Include="Engine\Graphics\UniformBuffer\UniformBufferFormats.h">
-      <Filter>Source Files\Engine\Graphics\UniformBuffer</Filter>
-    </ClInclude>
-    <ClInclude Include="Engine\Graphics\Graphics.h">
-      <Filter>Source Files\Engine\Graphics</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>
