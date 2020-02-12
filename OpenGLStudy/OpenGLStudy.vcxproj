@@ -110,7 +110,7 @@
       <SubSystem>Console</SubSystem>
       <GenerateDebugInformation>true</GenerateDebugInformation>
       <AdditionalLibraryDirectories>$(OutputDir);$(SolutionDir)Externals\ASSIMP_N\lib\Release\$(Platform);$(SolutionDir)Externals\GL\glew\lib\Release\$(Platform);$(SolutionDir)Externals\GL\glfw32\lib-vc2017\</AdditionalLibraryDirectories>
-      <AdditionalDependencies>opengl32.lib;glew32.lib;glfw3.lib;glfw3dll.lib;assimp-vc141-mt.lib;LuaLib.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalDependencies>opengl32.lib;glew32.lib;glfw3.lib;glfw3dll.lib;assimp-vc141-mt.lib;LuaLib.lib;Application.lib;Assets.lib;%(AdditionalDependencies)</AdditionalDependencies>
     </Link>
     <PreBuildEvent>
       <Command>xcopy $(SolutionDir)Externals\GL\glew\bin\Release\$(Platform)\glew32.dll $(targetDir) /Y
@@ -134,7 +134,7 @@ xcopy $(SolutionDir)Contents $(targetDir)Contents /Y /E /I</Command>
       <SubSystem>Console</SubSystem>
       <GenerateDebugInformation>true</GenerateDebugInformation>
       <AdditionalLibraryDirectories>$(OutputDir);$(SolutionDir)Externals\ASSIMP_N\lib\Release\$(Platform);$(SolutionDir)Externals\GL\glew\lib\Release\$(Platform);$(SolutionDir)Externals\GL\glfw\lib-vc2017\;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
-      <AdditionalDependencies>opengl32.lib;glew32.lib;glfw3.lib;glfw3dll.lib;assimp-vc141-mt.lib;LuaLib.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalDependencies>opengl32.lib;glew32.lib;glfw3.lib;glfw3dll.lib;assimp-vc141-mt.lib;LuaLib.lib;Application.lib;Assets.lib;%(AdditionalDependencies)</AdditionalDependencies>
     </Link>
     <PreBuildEvent>
       <Command>xcopy $(SolutionDir)Externals\GL\glew\bin\Release\$(Platform)\glew32.dll $(targetDir) /Y
@@ -162,7 +162,7 @@ xcopy $(SolutionDir)Contents $(targetDir)Contents /Y /E /I</Command>
       <OptimizeReferences>true</OptimizeReferences>
       <GenerateDebugInformation>true</GenerateDebugInformation>
       <AdditionalLibraryDirectories>$(OutputDir);$(SolutionDir)Externals\ASSIMP_N\lib\Release\$(Platform);$(SolutionDir)Externals\GL\glew\lib\Release\$(Platform);$(SolutionDir)Externals\GL\glfw32\lib-vc2017\</AdditionalLibraryDirectories>
-      <AdditionalDependencies>opengl32.lib;glew32.lib;glfw3.lib;glfw3dll.lib;assimp-vc141-mt.lib;LuaLib.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalDependencies>opengl32.lib;glew32.lib;glfw3.lib;glfw3dll.lib;assimp-vc141-mt.lib;LuaLib.lib;Application.lib;Assets.lib;%(AdditionalDependencies)</AdditionalDependencies>
     </Link>
     <PreBuildEvent>
       <Command>xcopy $(SolutionDir)Externals\GL\glew\bin\Release\$(Platform)\glew32.dll $(targetDir) /Y
@@ -190,7 +190,7 @@ xcopy $(SolutionDir)Contents $(targetDir)Contents /Y /E /I</Command>
       <OptimizeReferences>true</OptimizeReferences>
       <GenerateDebugInformation>true</GenerateDebugInformation>
       <AdditionalLibraryDirectories>$(OutputDir);$(SolutionDir)Externals\ASSIMP_N\lib\Release\$(Platform);$(SolutionDir)Externals\GL\glew\lib\Release\$(Platform);$(SolutionDir)Externals\GL\glfw\lib-vc2017\;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
-      <AdditionalDependencies>opengl32.lib;glew32.lib;glfw3.lib;glfw3dll.lib;assimp-vc141-mt.lib;LuaLib.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalDependencies>opengl32.lib;glew32.lib;glfw3.lib;glfw3dll.lib;assimp-vc141-mt.lib;LuaLib.lib;Application.lib;Assets.lib;%(AdditionalDependencies)</AdditionalDependencies>
     </Link>
     <PreBuildEvent>
       <Command>xcopy $(SolutionDir)Externals\GL\glew\bin\Release\$(Platform)\glew32.dll $(targetDir) /Y
@@ -200,12 +200,12 @@ xcopy $(SolutionDir)Contents $(targetDir)Contents /Y /E /I</Command>
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClCompile Include="Assignments\Assignment.cpp" />
-    <ClCompile Include="Engine\Application\Application.cpp" />
     <ClCompile Include="Engine\Cores\Actor\Actor.cpp" />
     <ClCompile Include="Engine\Cores\BitArray\BitArray.cpp" />
     <ClCompile Include="Engine\Graphics\Camera\Camera.cpp" />
     <ClCompile Include="Engine\Graphics\Camera\EditorCamera\EditorCamera.cpp" />
     <ClCompile Include="Engine\Graphics\Effect\Effect.cpp" />
+    <ClCompile Include="Engine\Graphics\Graphics.cpp" />
     <ClCompile Include="Engine\Graphics\Light\AmbientLight\AmbientLight.cpp" />
     <ClCompile Include="Engine\Graphics\Light\DirectionalLight\DirectionalLight.cpp" />
     <ClCompile Include="Engine\Graphics\Light\Light.cpp" />
@@ -216,6 +216,7 @@ xcopy $(SolutionDir)Contents $(targetDir)Contents /Y /E /I</Command>
     <ClCompile Include="Engine\Graphics\Mesh\Mesh.cpp" />
     <ClCompile Include="Engine\Graphics\Model\Model.cpp" />
     <ClCompile Include="Engine\Graphics\Texture\Texture.cpp" />
+    <ClCompile Include="Engine\Graphics\UniformBuffer\UniformBuffer.cpp" />
     <ClCompile Include="Engine\Graphics\Window\Window.cpp" />
     <ClCompile Include="Engine\Math\Transform\Transform.cpp" />
     <ClCompile Include="Engine\Time\Time.cpp" />
@@ -223,7 +224,6 @@ xcopy $(SolutionDir)Contents $(targetDir)Contents /Y /E /I</Command>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Assignments\Assignment.h" />
-    <ClInclude Include="Engine\Application\Application.h" />
     <ClInclude Include="Engine\Constants\Constants.h" />
     <ClInclude Include="Engine\Cores\Actor\Actor.h" />
     <ClInclude Include="Engine\Cores\BitArray\BitArray.h" />
@@ -233,6 +233,7 @@ xcopy $(SolutionDir)Contents $(targetDir)Contents /Y /E /I</Command>
     <ClInclude Include="Engine\Graphics\Color\Color.h" />
     <ClInclude Include="Engine\Graphics\Effect\Effect.h" />
     <ClInclude Include="Engine\Graphics\Effect\Shader\GLShader.h" />
+    <ClInclude Include="Engine\Graphics\Graphics.h" />
     <ClInclude Include="Engine\Graphics\Light\AmbientLight\AmbientLight.h" />
     <ClInclude Include="Engine\Graphics\Light\DirectionalLight\DirectionalLight.h" />
     <ClInclude Include="Engine\Graphics\Light\Light.h" />
@@ -243,6 +244,8 @@ xcopy $(SolutionDir)Contents $(targetDir)Contents /Y /E /I</Command>
     <ClInclude Include="Engine\Graphics\Mesh\Mesh.h" />
     <ClInclude Include="Engine\Graphics\Model\Model.h" />
     <ClInclude Include="Engine\Graphics\Texture\Texture.h" />
+    <ClInclude Include="Engine\Graphics\UniformBuffer\UniformBuffer.h" />
+    <ClInclude Include="Engine\Graphics\UniformBuffer\UniformBufferFormats.h" />
     <ClInclude Include="Engine\Graphics\Window\Window.h" />
     <ClInclude Include="Engine\Graphics\Window\WindowInput.h" />
     <ClInclude Include="Engine\Math\Transform\Transform.h" />

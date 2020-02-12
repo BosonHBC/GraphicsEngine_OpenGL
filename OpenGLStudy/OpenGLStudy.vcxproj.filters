@@ -40,9 +40,6 @@
     <Filter Include="Source Files\Contents\shaders">
       <UniqueIdentifier>{b7ad59ef-2c16-4d6b-a612-aea310f26a18}</UniqueIdentifier>
     </Filter>
-    <Filter Include="Source Files\Engine\Application">
-      <UniqueIdentifier>{e5c0b51a-62c6-4df5-a0ce-49ed6a6f839c}</UniqueIdentifier>
-    </Filter>
     <Filter Include="Source Files\Tool">
       <UniqueIdentifier>{b9129976-be09-49ef-a4b6-e7324617dd2f}</UniqueIdentifier>
     </Filter>
@@ -106,6 +103,9 @@
     <Filter Include="Source Files\Engine\Graphics\Material\Blinn">
       <UniqueIdentifier>{cc2a0a84-b8b0-4cc7-9211-f97fdb7b890a}</UniqueIdentifier>
     </Filter>
+    <Filter Include="Source Files\Engine\Graphics\UniformBuffer">
+      <UniqueIdentifier>{bcc98c7e-5478-4d40-9033-b945b3b760ed}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="Engine\Graphics\Camera\Camera.cpp">
@@ -122,9 +122,6 @@
     </ClCompile>
     <ClCompile Include="Engine\Time\Time.cpp">
       <Filter>Source Files\Engine\Time</Filter>
-    </ClCompile>
-    <ClCompile Include="Engine\Application\Application.cpp">
-      <Filter>Source Files\Engine\Application</Filter>
     </ClCompile>
     <ClCompile Include="Engine\Graphics\Texture\Texture.cpp">
       <Filter>Source Files\Engine\Graphics\Texture</Filter>
@@ -171,6 +168,12 @@
     <ClCompile Include="Engine\Graphics\Material\Blinn\MatBlinn.cpp">
       <Filter>Source Files\Engine\Graphics\Material\Blinn</Filter>
     </ClCompile>
+    <ClCompile Include="Engine\Graphics\UniformBuffer\UniformBuffer.cpp">
+      <Filter>Source Files\Engine\Graphics\UniformBuffer</Filter>
+    </ClCompile>
+    <ClCompile Include="Engine\Graphics\Graphics.cpp">
+      <Filter>Source Files\Engine\Graphics</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Engine\Graphics\Camera\Camera.h">
@@ -190,9 +193,6 @@
     </ClInclude>
     <ClInclude Include="Engine\Time\Time.h">
       <Filter>Source Files\Engine\Time</Filter>
-    </ClInclude>
-    <ClInclude Include="Engine\Application\Application.h">
-      <Filter>Source Files\Engine\Application</Filter>
     </ClInclude>
     <ClInclude Include="Tool\stb_image.h">
       <Filter>Source Files\Tool</Filter>
@@ -250,6 +250,15 @@
     </ClInclude>
     <ClInclude Include="Engine\Graphics\Material\Blinn\MatBlinn.h">
       <Filter>Source Files\Engine\Graphics\Material\Blinn</Filter>
+    </ClInclude>
+    <ClInclude Include="Engine\Graphics\UniformBuffer\UniformBuffer.h">
+      <Filter>Source Files\Engine\Graphics\UniformBuffer</Filter>
+    </ClInclude>
+    <ClInclude Include="Engine\Graphics\UniformBuffer\UniformBufferFormats.h">
+      <Filter>Source Files\Engine\Graphics\UniformBuffer</Filter>
+    </ClInclude>
+    <ClInclude Include="Engine\Graphics\Graphics.h">
+      <Filter>Source Files\Engine\Graphics</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>
