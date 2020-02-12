@@ -6,7 +6,11 @@
 
 #include "Color/Color.h"
 #include "Effect/Effect.h"
-#include "Camera/EditorCamera/EditorCamera.h"
+#include "Light/PointLight/PointLight.h"
+#include "Light/AmbientLight/AmbientLight.h"
+#include "Camera/Camera.h"
+#include "Model/Model.h"
+
 // Graphics stores, initializes, cleans up all data that needs to be rendered
 namespace Graphics {
 
@@ -15,10 +19,14 @@ namespace Graphics {
 	void Render();
 	bool CleanUp();
 
+	void SubmitDataToBeRendered(cCamera* i_camera, const std::vector<std::pair<Graphics::cModel::HANDLE, cTransform*>>& i_modelToTransform_map);
+
 	/** Usage function*/
 	bool CreateEffect(const char* i_key, const char* i_vertexShaderPath, const char* i_fragmentShaderPath);
 	cEffect* GetEffectByKey(const char* i_key);
+	cEffect* GetCurrentEffect();
 
-	bool CreateAmbientLight(const Color& i_color);
-	bool CreatePointLight(const glm::vec3& i_initialLocation,const Color& i_color, const GLfloat& i_const, const GLfloat& i_linear, const GLfloat& i_quadratic);
+	/** Lighting related*/
+	bool CreateAmbientLight(const Color& i_color, cAmbientLight*& o_ambientLight);
+	bool CreatePointLight(const glm::vec3& i_initialLocation,const Color& i_color, const GLfloat& i_const, const GLfloat& i_linear, const GLfloat& i_quadratic, cPointLight*& o_pointLight);
 }

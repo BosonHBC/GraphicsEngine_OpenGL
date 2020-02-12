@@ -33,6 +33,9 @@ EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "Constants", "Engine\Constants\Constants.vcxproj", "{C382DD7E-E9FE-41F6-BEF6-CC7D647A1D0F}"
 EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "Graphics", "Engine\Graphics\Graphics.vcxproj", "{B0E1C99A-91D5-4193-BA88-A55244BE0C2A}"
+	ProjectSection(ProjectDependencies) = postProject
+		{88BE7857-2C02-4A7C-8AEA-B06C518757C0} = {88BE7857-2C02-4A7C-8AEA-B06C518757C0}
+	EndProjectSection
 EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "Maths", "Engine\Math\Maths.vcxproj", "{2B7EAA37-308E-4D6B-BA43-A36C0F99F6F0}"
 EndProject

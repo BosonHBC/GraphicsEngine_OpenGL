@@ -29,7 +29,7 @@ namespace Graphics {
 		// Update data in GPU
 		void Update(const void* const i_data);
 		bool CleanUp();
-		bool IsValid() const { m_type == UBT_Invalid; }
+		bool IsValid() const { return m_type == UBT_Invalid; }
 
 	private:
 		// default is invalid

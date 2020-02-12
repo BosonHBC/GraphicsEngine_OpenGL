@@ -1,7 +1,8 @@
 #pragma once
-
 #include <vector>
 #include "Engine/Graphics/Material/Material.h"
+#include "Engine/Assets/AssetManager.h"
+#include "Engine/Assets/Handle.h"
 
 struct aiScene;
 struct aiNode;

@@ -15,7 +15,6 @@ namespace Graphics {
 		{
 		case Graphics::UBT_Frame:
 			m_size = UniformBufferFormats::sFrame::Size;
-			printf("Error: Invalid uniform buffer type %d.", m_type);
 			break;
 		case Graphics::UBT_Drawcall:
 			m_size = UniformBufferFormats::sDrawCall::Size;

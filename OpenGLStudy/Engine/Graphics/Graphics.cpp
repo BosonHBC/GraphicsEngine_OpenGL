@@ -1,17 +1,12 @@
 #include <map>
-
-
+#include "Graphics.h"
 
 #include "Cores/Core.h"
 #include "Math/Transform/Transform.h"
-#include "Graphics.h"
+
 #include "Constants/Constants.h"
 #include "UniformBuffer/UniformBufferFormats.h"
 #include "UniformBuffer/UniformBuffer.h"
-
-#include "Model/Model.h"
-#include "Light/PointLight/PointLight.h"
-#include "Light/AmbientLight/AmbientLight.h"
 
 namespace Graphics {
 
@@ -19,8 +14,8 @@ namespace Graphics {
 	// Data required to render a frame, right now do not support switching effect(shader)
 	struct sDataRequiredToRenderAFrame
 	{
-		cCamera* s_currentCamera;
-		std::map<Assets::cHandle<cModel>, cTransform*> ModelToTransform_map;
+		cCamera* CurrentCamera;
+		std::vector<std::pair<Graphics::cModel::HANDLE, cTransform*>> ModelToTransform_map;
 	};
 	// Global data
 	// ---------------------------------
@@ -97,9 +92,9 @@ namespace Graphics {
 
 		// Update camera
 		{
-			if (s_dataRequiredToRenderAFrame.s_currentCamera)
+			if (s_dataRequiredToRenderAFrame.CurrentCamera)
 				// Update his location for lighting, TODO: should not update here
-				s_dataRequiredToRenderAFrame.s_currentCamera->UpdateUniformLocation(s_currentEffect->GetProgramID());
+				s_dataRequiredToRenderAFrame.CurrentCamera->UpdateUniformLocation(s_currentEffect->GetProgramID());
 			else
 			{
 				printf("No camera in this frame, skip rendering.");
@@ -109,7 +104,7 @@ namespace Graphics {
 
 		// Update frame data
 		{
-			cCamera* _camera = s_dataRequiredToRenderAFrame.s_currentCamera;
+			cCamera* _camera = s_dataRequiredToRenderAFrame.CurrentCamera;
 
 			// 1. Copy frame data
 			UniformBufferFormats::sFrame _frame;
@@ -121,6 +116,8 @@ namespace Graphics {
 
 		// Update lighting data
 		{
+			if (s_ambientLight)
+				s_ambientLight->Illuminate();
 			for (auto it : s_pointLight_list)
 			{
 				it->Illuminate();
@@ -161,25 +158,31 @@ namespace Graphics {
 		if (!(result = s_uniformBuffer_drawcall.CleanUp())) {
 			printf("Fail to cleanup uniformBuffer_drawcall\n");
 		}
-		
+
 		// Clean up effect
 		for (auto it = s_KeyToEffect_map.begin(); it != s_KeyToEffect_map.end(); ++it)
 		{
 			safe_delete(it->second);
 		}
 		s_KeyToEffect_map.clear();
-		
+
 		// Clean up point light
 		for (auto it = s_pointLight_list.begin(); it != s_pointLight_list.end(); ++it)
 		{
 			safe_delete(*it);
 		}
 		s_pointLight_list.clear();
-		
+
 		// Clean up ambient light
 		safe_delete(s_ambientLight);
-		
+
 		return result;
+	}
+
+	void SubmitDataToBeRendered(cCamera* i_camera, const std::vector<std::pair<Graphics::cModel::HANDLE, cTransform*>>& i_modelToTransform_map)
+	{
+		s_dataRequiredToRenderAFrame.CurrentCamera = i_camera;
+		s_dataRequiredToRenderAFrame.ModelToTransform_map = i_modelToTransform_map;
 	}
 
 	bool CreateEffect(const char* i_key, const char* i_vertexShaderPath, const char* i_fragmentShaderPath)
@@ -206,11 +209,16 @@ namespace Graphics {
 		return nullptr;
 	}
 
-	bool CreateAmbientLight(const Color& i_color)
+	Graphics::cEffect* GetCurrentEffect()
+	{
+		return s_currentEffect;
+	}
+
+	bool CreateAmbientLight(const Color& i_color, cAmbientLight*& o_ambientLight)
 	{
 		auto result = true;
 
-		if (!(result = s_currentEffect->GetProgramID() == 0)) {
+		if (result = (s_currentEffect->GetProgramID() == 0)) {
 			printf("Can not create ambient light without a valid program id.\n");
 			return result;
 		}
@@ -220,20 +228,21 @@ namespace Graphics {
 		}
 		s_ambientLight = new  cAmbientLight(i_color);
 		s_ambientLight->SetupLight(s_currentEffect->GetProgramID(), 0);
-		
+		o_ambientLight = s_ambientLight;
 		return result;
 	}
 
-	bool CreatePointLight(const glm::vec3& i_initialLocation, const Color& i_color, const GLfloat& i_const, const GLfloat& i_linear, const GLfloat& i_quadratic)
+	bool CreatePointLight(const glm::vec3& i_initialLocation, const Color& i_color, const GLfloat& i_const, const GLfloat& i_linear, const GLfloat& i_quadratic, cPointLight*& o_pointLight)
 	{
 		auto result = true;
-		if (!(result = s_currentEffect->GetProgramID() == 0)) {
+		if (result = (s_currentEffect->GetProgramID() == 0)) {
 			printf("Can not create point light without a valid program id.\n");
 			return result;
 		}
 		cPointLight* newPointLight = new cPointLight(i_color, i_const, i_linear, i_quadratic);
 		newPointLight->SetLightInitialLocation(i_initialLocation);
 		newPointLight->SetupLight(s_currentEffect->GetProgramID(), s_pointLight_list.size());
+		o_pointLight = newPointLight;
 		s_pointLight_list.push_back(newPointLight);
 
 		// Update point light count
