@@ -6,11 +6,13 @@ layout (location = 2) in vec3 normal;
 out vec2 texCood0;
 out vec3 Normal;
 out vec3 fragPos;
+/*
 uniform	mat4 viewMatrix;
 uniform	mat4 projectionMatrix;
 uniform	mat4 modelMatrix;
 uniform	mat4 normalMatrix;
-/*layout(std140, binding = 0) uniform uniformBuffer_frame
+*/
+layout(std140, binding = 0) uniform uniformBuffer_frame
 {
 	mat4 viewMatrix;
 	mat4 projectionMatrix;
@@ -19,7 +21,8 @@ layout(std140, binding = 1) uniform uniformBuffer_drawcall
 {
 	mat4 modelMatrix;
 	mat4 normalMatrix;
-};*/
+};
+
 void main()
 {
 	// s_projectionMatrix * s_viewMatrix * s_ModelMatrix *

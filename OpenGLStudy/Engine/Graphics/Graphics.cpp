@@ -50,7 +50,6 @@ namespace Graphics {
 		}
 
 		// Initialize uniform buffer
-		if (false)
 		{
 			if (!(result = s_uniformBuffer_frame.Initialize(nullptr))) {
 				printf("Fail to initialize uniformBuffer_frame\n");
@@ -107,12 +106,14 @@ namespace Graphics {
 
 			// 1. Copy frame data
 			UniformBufferFormats::sFrame _frame;
-			_frame.ViewMatrix = const_cast<glm::f32*>(glm::value_ptr(_camera->GetViewMatrix()));
-			_frame.ProjectionMatrix = const_cast<glm::f32*>(glm::value_ptr(_camera->GetProjectionMatrix()));
+			memcpy(_frame.ViewMatrix, glm::value_ptr(_camera->GetViewMatrix()), sizeof(_frame.ViewMatrix));
+			memcpy(_frame.ProjectionMatrix, glm::value_ptr(_camera->GetProjectionMatrix()), sizeof(_frame.ProjectionMatrix));
+
 			// 2. Update frame data
-			//s_uniformBuffer_frame.Update(&_frame);
-			glUniformMatrix4fv(s_currentEffect->GetProjectionMatrixUniformID(), 1, GL_FALSE, glm::value_ptr(_camera->GetProjectionMatrix()));
-			glUniformMatrix4fv(s_currentEffect->GetViewMatrixUniformID(), 1, GL_FALSE, glm::value_ptr(_camera->GetViewMatrix()));
+			s_uniformBuffer_frame.Update(&_frame);
+
+			//glUniformMatrix4fv(s_currentEffect->GetProjectionMatrixUniformID(), 1, GL_FALSE, _frame.ProjectionMatrix);
+			//glUniformMatrix4fv(s_currentEffect->GetViewMatrixUniformID(), 1, GL_FALSE, _frame.ViewMatrix);
 
 		}
 
@@ -136,13 +137,14 @@ namespace Graphics {
 			{
 				// 1. Copy draw call data
 				UniformBufferFormats::sDrawCall _drawcall;
-				_drawcall.ModelMatrix = const_cast<glm::f32*>(glm::value_ptr(it->second->M()));
-				_drawcall.NormalMatrix = const_cast<glm::f32*>(glm::value_ptr(glm::transpose(it->second->MInv())));
+				memcpy(_drawcall.ModelMatrix, glm::value_ptr(it->second->M()), sizeof(_drawcall.ModelMatrix));
+				memcpy(_drawcall.NormalMatrix, glm::value_ptr(glm::transpose(it->second->MInv())), sizeof(_drawcall.NormalMatrix));
+
 				// 2. Update draw call data
-				//s_uniformBuffer_drawcall.Update(&_drawcall);
-				glUniformMatrix4fv(s_currentEffect->GetModelMatrixUniformID(), 1, GL_FALSE, glm::value_ptr(it->second->M()));
+				s_uniformBuffer_drawcall.Update(&_drawcall);
+				//glUniformMatrix4fv(s_currentEffect->GetModelMatrixUniformID(), 1, GL_FALSE, _drawcall.ModelMatrix);
 				// fix non-uniform scale
-				glUniformMatrix4fv(s_currentEffect->GetNormalMatrixUniformID(), 1, GL_FALSE, glm::value_ptr(glm::transpose(it->second->MInv())));
+				//glUniformMatrix4fv(s_currentEffect->GetNormalMatrixUniformID(), 1, GL_FALSE, _drawcall.NormalMatrix);
 				// 3. Draw
 				cModel* _model = cModel::s_manager.Get(it->first);
 				if (_model) {

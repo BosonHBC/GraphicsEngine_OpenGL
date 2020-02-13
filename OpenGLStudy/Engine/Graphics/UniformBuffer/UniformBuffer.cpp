@@ -14,10 +14,10 @@ namespace Graphics {
 		switch (m_type)
 		{
 		case Graphics::UBT_Frame:
-			m_size = UniformBufferFormats::sFrame::Size;
+			m_size = sizeof(UniformBufferFormats::sFrame);
 			break;
 		case Graphics::UBT_Drawcall:
-			m_size = UniformBufferFormats::sDrawCall::Size;
+			m_size = sizeof(UniformBufferFormats::sDrawCall);
 			break;
 		case Graphics::UBT_Invalid:
 			result = false;
