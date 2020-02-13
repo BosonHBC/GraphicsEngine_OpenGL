@@ -1,6 +1,6 @@
 #include "Camera.h"
 #include "glfw/glfw3.h"
-#include "Graphics/Window/WindowInput.h"
+#include "Application/Window/WindowInput.h"
 glm::vec3 cCamera::WorldUp = glm::vec3(0.0, 1.0, 0.0);
 glm::vec3 cCamera::WorldRight = glm::vec3(1.0, 0.0, 0.0);
 glm::vec3 cCamera::WorldForward = glm::vec3(0.0, 0.0, 1.0);
@@ -20,7 +20,8 @@ void cCamera::Update()
 
 void cCamera::UpdateUniformLocation(GLuint i_programID)
 {
-	glUniform3f(glGetUniformLocation(i_programID, "camPos"), m_position.x, m_position.y, m_position.z);
+	GLuint m_camPositionLocation = glGetUniformLocation(i_programID, "camPos"); 
+	glUniform3f(m_camPositionLocation , m_position.x, m_position.y, m_position.z);
 }
 
 cCamera::~cCamera()
@@ -57,10 +58,11 @@ void cCamera::MouseControl(sWindowInput* const i_windowInput, float i_dt)
 	Update();
 }
 
-glm::mat4 cCamera::GetViewMatrix() const
+glm::mat4 cCamera::GetViewMatrix()
 {
 	glm::vec3 _targetLoc = m_position + m_forward;
-	return glm::lookAt(m_position, _targetLoc, m_up);
+	m_viewMatrix = glm::lookAt(m_position, _targetLoc, m_up);
+	return m_viewMatrix;
 }
 
 void cCamera::CreateProjectionMatrix(GLfloat i_fov, GLfloat i_aspect, GLfloat i_nearPlane /*= 0.1f*/, GLfloat i_farPlane /*= 100.f*/)

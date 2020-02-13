@@ -2,10 +2,12 @@
 #include "Application/Application.h"
 #include <vector>
 #include "Color/Color.h"
+
 /** Forward deceleration*/
 //----------------------------------------------
 class cEditorCamera;
 class cActor;
+class cTransform;
 namespace Graphics {
 	class cEffect;
 	class cPointLight;
@@ -28,22 +30,19 @@ public:
 	void FixedTick();
 private:
 
-	void CreateEffect();
 	void CreateActor();
 	void CreateCamera();
 	void CreateLight();
 
 	Color m_clearColor;
 	cEditorCamera* m_editorCamera;
-	std::vector<Graphics::cEffect*> m_effectList;
-	Graphics::cEffect* m_currentEffect;
-	Graphics::cPointLight* m_PointLight;
-	Graphics::cPointLight* m_PointLight2;
-	Graphics::cAmbientLight* m_ambientLight;
+
+	Graphics::cPointLight* pLight1;
+	Graphics::cPointLight* pLight2;
+	Graphics::cAmbientLight* aLight;
 
 	cActor* m_teapot;
 	cActor* m_teapot2;
-
 	cActor* m_plane;
 };
 

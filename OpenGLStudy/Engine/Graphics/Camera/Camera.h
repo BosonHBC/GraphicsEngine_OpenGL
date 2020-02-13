@@ -35,7 +35,7 @@ public:
 	void UpdateUniformLocation(GLuint i_programID);
 
 	/** Getters*/
-	glm::mat4 GetViewMatrix() const;
+	glm::mat4 GetViewMatrix();
 	glm::vec3 CamLocation() const { return m_position; }
 	glm::vec3 CamForward() const { return m_forward; }
 	glm::vec3 CamRight() const { return m_right; }
@@ -54,9 +54,8 @@ protected:
 	GLfloat m_translationSpeed;
 	GLfloat m_turnSpeed;
 
+	glm::mat4 m_viewMatrix;
 	glm::mat4 m_projectionMatrix;
-
-	GLuint m_camPositionLocation;
 
 	/** private helper functions*/
 	virtual void Update();

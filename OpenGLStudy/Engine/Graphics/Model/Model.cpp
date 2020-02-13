@@ -1,13 +1,13 @@
-#include "Model/Model.h"
-
-#include "Mesh/Mesh.h"
+#include "Engine/Graphics/Model/Model.h"
+#include "Engine/Graphics/Material/Material.h"
+#include "Engine/Graphics/Mesh/Mesh.h"
 #include "Engine/Constants/Constants.h"
 
-#include "assimp/Importer.hpp"
-#include "assimp/scene.h"
-#include "assimp/postprocess.h"
+#include "Externals/ASSIMP_N/include/assimp/Importer.hpp"
+#include "Externals/ASSIMP_N/include/assimp/scene.h"
+#include "Externals/ASSIMP_N/include/assimp/postprocess.h"
 
-#include "Material/Material.h"
+
 #include "Assets/LoadTableFromLuaFile.h"
 // Static variable definition
 Assets::cAssetManager<Graphics::cModel> Graphics::cModel::s_manager;

@@ -351,8 +351,10 @@ MigrationBackup/
 
 # not GL
 !OpenGLStudy/Externals/GL/*
+!OpenGLStudy/Externals/GL/glew/*
 !OpenGLStudy/Externals/GL/glew/lib/*
 !OpenGLStudy/Externals/GL/glew/lib/*/x64
+!OpenGLStudy/Externals/GL/glew/bin/*
 # not assimp
 !OpenGLStudy/Externals/ASSIMP_N/*
 !OpenGLStudy/Externals/ASSIMP_N/bin/*
@@ -363,5 +365,4 @@ MigrationBackup/
 !OpenGLStudy/Contents/models/*
 
 # ignore output&temp file
-OpenGLStudy/output/*
 OpenGLStudy/temp/*

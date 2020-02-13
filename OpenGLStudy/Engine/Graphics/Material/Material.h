@@ -3,12 +3,13 @@
 	Right now it only support Blinn-Phong Shading.
 
 */
-#ifndef MATERIAL_DEFINED
-#define MATERIAL_DEFINED
+
 #pragma once
 #include "GL/glew.h"
 #include "Graphics/Color/Color.h"
 #include "Engine/Graphics/Texture/Texture.h"
+#include "Engine/Assets/AssetManager.h"
+#include "Engine/Assets/Handle.h"
 struct aiMaterial;
 namespace Graphics {
 	//--------------------------
@@ -50,4 +51,3 @@ namespace Graphics {
 	};
 
 }
-#endif

@@ -2,9 +2,9 @@
 #include "Math/Transform/Transform.h"
 #include "glm/gtc/type_ptr.hpp"
 
-#include "Model/Model.h"
-#include "Effect/Effect.h"
-#include "Material/Material.h"
+#include "Engine/Graphics/Model/Model.h"
+#include "Engine/Graphics/Effect/Effect.h"
+#include "Engine/Graphics/Material/Material.h"
 
 
 void cActor::Initialize()
@@ -24,10 +24,10 @@ void cActor::Update(Graphics::cEffect* const i_effect)
 {
 	// TransformUpdate
 	//---------------------------------
-	m_transform->Update();
-	glUniformMatrix4fv(i_effect->GetModelMatrixUniformID(), 1, GL_FALSE, glm::value_ptr(m_transform->M()));
+	//m_transform->Update();
+	//glUniformMatrix4fv(i_effect->GetModelMatrixUniformID(), 1, GL_FALSE, glm::value_ptr(m_transform->M()));
 	// fix non-uniform scale
-	glUniformMatrix4fv(i_effect->GetNormalMatrixUniformID(), 1, GL_FALSE, glm::value_ptr(glm::transpose(m_transform->MInv())));
+	//glUniformMatrix4fv(i_effect->GetNormalMatrixUniformID(), 1, GL_FALSE, glm::value_ptr(glm::transpose(m_transform->MInv())));
 
 	// Rendering Update
 	//---------------------------------

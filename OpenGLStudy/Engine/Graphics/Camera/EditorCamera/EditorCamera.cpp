@@ -1,5 +1,5 @@
 #include "EditorCamera.h"
-#include "Window/WindowInput.h"
+#include "Engine/Application/Window/WindowInput.h"
 #include "glfw/glfw3.h"
 
 void cEditorCamera::CameraControl(sWindowInput* const i_windowInput, float i_dt)

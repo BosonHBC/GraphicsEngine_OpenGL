@@ -1,5 +1,5 @@
 #pragma once
-#include "Material/Material.h"
+#include "Engine/Graphics/Material/Material.h"
 namespace Graphics {
 	class cMatBlinn : public cMaterial
 	{

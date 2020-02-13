@@ -1,0 +1,168 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <ItemGroup>
+    <Filter Include="Source Files">
+      <UniqueIdentifier>{4FC737F1-C7A5-4376-A066-2A32D752A2FF}</UniqueIdentifier>
+      <Extensions>cpp;c;cc;cxx;def;odl;idl;hpj;bat;asm;asmx</Extensions>
+    </Filter>
+    <Filter Include="Header Files">
+      <UniqueIdentifier>{93995380-89BD-4b04-88EB-625FBE52EBFB}</UniqueIdentifier>
+      <Extensions>h;hh;hpp;hxx;hm;inl;inc;ipp;xsd</Extensions>
+    </Filter>
+    <Filter Include="Resource Files">
+      <UniqueIdentifier>{67DA6AB6-F800-4c08-8B7A-83BB121AAD01}</UniqueIdentifier>
+      <Extensions>rc;ico;cur;bmp;dlg;rc2;rct;bin;rgs;gif;jpg;jpeg;jpe;resx;tiff;tif;png;wav;mfcribbon-ms</Extensions>
+    </Filter>
+    <Filter Include="Source Files\Camera">
+      <UniqueIdentifier>{86069187-6e75-4c07-84e6-392a90716576}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source Files\Color">
+      <UniqueIdentifier>{9fced73d-fbb2-4e99-ac0a-f1f364c04b09}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source Files\Effect">
+      <UniqueIdentifier>{d52dddea-4399-4856-a11e-03da4bca1f9f}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source Files\Light">
+      <UniqueIdentifier>{e6999150-3a47-476a-ac67-58e2dba8aad1}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source Files\Material">
+      <UniqueIdentifier>{b6f4064b-d4ce-4f15-8ac4-85098f6f3575}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source Files\Mesh">
+      <UniqueIdentifier>{c841c114-37af-440d-a419-458640c15982}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source Files\Model">
+      <UniqueIdentifier>{c03e45bc-c9f8-4115-a876-1de57b94f4a6}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source Files\Texture">
+      <UniqueIdentifier>{ff4ed4f3-8daa-4657-88f8-ddc7aa054f70}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source Files\UniformBuffer">
+      <UniqueIdentifier>{c4347a90-285a-41fa-a2c1-8159956838a5}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source Files\Camera\EditorCamera">
+      <UniqueIdentifier>{0a92aab6-82e0-41bc-93ef-7c60410437e9}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source Files\Effect\Shader">
+      <UniqueIdentifier>{715204b5-d4aa-42a2-a59a-391eb825314f}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source Files\Light\PointLight">
+      <UniqueIdentifier>{0768b4f7-b0c0-4d52-a614-9dd1318450d8}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source Files\Light\AmbientLight">
+      <UniqueIdentifier>{033d7c27-bc9f-4990-adc6-1a4f4de5ade2}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source Files\Light\DirectionalLight">
+      <UniqueIdentifier>{92250dd6-b7dd-4ad9-a6b1-b8a4bdba4131}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source Files\Light\SpotLight">
+      <UniqueIdentifier>{5cd14561-39d8-4e3e-a1d7-0541c49e9770}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source Files\Material\Blinn">
+      <UniqueIdentifier>{0c360477-45ea-4dbc-9012-00a881168fe0}</UniqueIdentifier>
+    </Filter>
+  </ItemGroup>
+  <ItemGroup>
+    <ClCompile Include="Graphics.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="Camera\Camera.cpp">
+      <Filter>Source Files\Camera</Filter>
+    </ClCompile>
+    <ClCompile Include="Camera\EditorCamera\EditorCamera.cpp">
+      <Filter>Source Files\Camera\EditorCamera</Filter>
+    </ClCompile>
+    <ClCompile Include="Effect\Effect.cpp">
+      <Filter>Source Files\Effect</Filter>
+    </ClCompile>
+    <ClCompile Include="Light\Light.cpp">
+      <Filter>Source Files\Light</Filter>
+    </ClCompile>
+    <ClCompile Include="Light\AmbientLight\AmbientLight.cpp">
+      <Filter>Source Files\Light\AmbientLight</Filter>
+    </ClCompile>
+    <ClCompile Include="Light\DirectionalLight\DirectionalLight.cpp">
+      <Filter>Source Files\Light\DirectionalLight</Filter>
+    </ClCompile>
+    <ClCompile Include="Light\SpotLight\SpotLight.cpp">
+      <Filter>Source Files\Light\SpotLight</Filter>
+    </ClCompile>
+    <ClCompile Include="Light\PointLight\PointLight.cpp">
+      <Filter>Source Files\Light\PointLight</Filter>
+    </ClCompile>
+    <ClCompile Include="Material\Material.cpp">
+      <Filter>Source Files\Material</Filter>
+    </ClCompile>
+    <ClCompile Include="Material\Blinn\MatBlinn.cpp">
+      <Filter>Source Files\Material\Blinn</Filter>
+    </ClCompile>
+    <ClCompile Include="Mesh\Mesh.cpp">
+      <Filter>Source Files\Mesh</Filter>
+    </ClCompile>
+    <ClCompile Include="Model\Model.cpp">
+      <Filter>Source Files\Model</Filter>
+    </ClCompile>
+    <ClCompile Include="UniformBuffer\UniformBuffer.cpp">
+      <Filter>Source Files\UniformBuffer</Filter>
+    </ClCompile>
+    <ClCompile Include="Texture\Texture.cpp">
+      <Filter>Source Files\Texture</Filter>
+    </ClCompile>
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="Graphics.h">
+      <Filter>Source Files</Filter>
+    </ClInclude>
+    <ClInclude Include="Camera\Camera.h">
+      <Filter>Source Files\Camera</Filter>
+    </ClInclude>
+    <ClInclude Include="Camera\EditorCamera\EditorCamera.h">
+      <Filter>Source Files\Camera\EditorCamera</Filter>
+    </ClInclude>
+    <ClInclude Include="Color\Color.h">
+      <Filter>Source Files\Color</Filter>
+    </ClInclude>
+    <ClInclude Include="Effect\Effect.h">
+      <Filter>Source Files\Effect</Filter>
+    </ClInclude>
+    <ClInclude Include="Effect\Shader\GLShader.h">
+      <Filter>Source Files\Effect\Shader</Filter>
+    </ClInclude>
+    <ClInclude Include="Light\Light.h">
+      <Filter>Source Files\Light</Filter>
+    </ClInclude>
+    <ClInclude Include="Light\AmbientLight\AmbientLight.h">
+      <Filter>Source Files\Light\AmbientLight</Filter>
+    </ClInclude>
+    <ClInclude Include="Light\DirectionalLight\DirectionalLight.h">
+      <Filter>Source Files\Light\DirectionalLight</Filter>
+    </ClInclude>
+    <ClInclude Include="Light\SpotLight\SpotLight.h">
+      <Filter>Source Files\Light\SpotLight</Filter>
+    </ClInclude>
+    <ClInclude Include="Light\PointLight\PointLight.h">
+      <Filter>Source Files\Light\PointLight</Filter>
+    </ClInclude>
+    <ClInclude Include="Material\Material.h">
+      <Filter>Source Files\Material</Filter>
+    </ClInclude>
+    <ClInclude Include="Material\Blinn\MatBlinn.h">
+      <Filter>Source Files\Material\Blinn</Filter>
+    </ClInclude>
+    <ClInclude Include="Mesh\Mesh.h">
+      <Filter>Source Files\Mesh</Filter>
+    </ClInclude>
+    <ClInclude Include="Model\Model.h">
+      <Filter>Source Files\Model</Filter>
+    </ClInclude>
+    <ClInclude Include="UniformBuffer\UniformBuffer.h">
+      <Filter>Source Files\UniformBuffer</Filter>
+    </ClInclude>
+    <ClInclude Include="UniformBuffer\UniformBufferFormats.h">
+      <Filter>Source Files\UniformBuffer</Filter>
+    </ClInclude>
+    <ClInclude Include="Texture\Texture.h">
+      <Filter>Source Files\Texture</Filter>
+    </ClInclude>
+  </ItemGroup>
+</Project>

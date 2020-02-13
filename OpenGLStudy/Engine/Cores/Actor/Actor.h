@@ -30,6 +30,7 @@ public:
 	/** Getters*/
 	cTransform* Transform() const { 
 		return m_transform; }
+	Graphics::cModel::HANDLE GetModelHandle() const { return m_modelHandle; }
 private:
 
 	cTransform* m_transform;

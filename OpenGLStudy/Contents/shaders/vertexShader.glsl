@@ -1,20 +1,32 @@
-#version 330
+#version 420
 layout (location = 0) in vec3 pos;
 layout (location = 1) in vec2 texcood;
 layout (location = 2) in vec3 normal;
 
-uniform mat4 projectionMatrix;
-uniform mat4 viewMatrix;
-uniform mat4 modelMatrix;
-uniform mat4 normalMatrix;
-
 out vec2 texCood0;
 out vec3 Normal;
 out vec3 fragPos;
+/*
+uniform	mat4 viewMatrix;
+uniform	mat4 projectionMatrix;
+uniform	mat4 modelMatrix;
+uniform	mat4 normalMatrix;
+*/
+layout(std140, binding = 0) uniform uniformBuffer_frame
+{
+	mat4 viewMatrix;
+	mat4 projectionMatrix;
+};
+layout(std140, binding = 1) uniform uniformBuffer_drawcall
+{
+	mat4 modelMatrix;
+	mat4 normalMatrix;
+};
 
 void main()
 {
-	gl_Position =  projectionMatrix * viewMatrix * modelMatrix *vec4(pos.x, pos.y, pos.z, 1.0);
+	// s_projectionMatrix * s_viewMatrix * s_ModelMatrix *
+	gl_Position = projectionMatrix * viewMatrix * modelMatrix * vec4(pos.x, pos.y, pos.z, 1.0);
 	texCood0 = texcood;
 
 	// Handle scaling in only one axis situation

@@ -1,6 +1,5 @@
 #include "Transform.h"
 
-#include "Effect/Effect.h"
 cTransform& cTransform::operator=(const cTransform& i_other)
 {
 	m = i_other.m;
