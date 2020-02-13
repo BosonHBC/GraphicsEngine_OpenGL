@@ -26,7 +26,7 @@ namespace Graphics {
 	{
 		glUniform3f(m_colorID, m_color.r, m_color.g, m_color.b);
 		glm::vec3 worldLoc = m_transform->GetWorldLocation();
-		glUniform3f(m_positionID, m_transform->GetWorldLocation().x, m_transform->GetWorldLocation().y, m_transform->GetWorldLocation().z);
+		glUniform3f(m_positionID, worldLoc.x, worldLoc.y, worldLoc.z);
 		glUniform1f(m_constID, m_const);
 		glUniform1f(m_linearID, m_linear);
 		glUniform1f(m_quadraticID, m_quadratic);

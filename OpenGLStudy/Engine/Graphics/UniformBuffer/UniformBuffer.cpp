@@ -107,6 +107,7 @@ namespace Graphics {
 			printf("OpenGL failed to update data of uniform buffer %u.",m_bufferID);
 			return;
 		}
+		glBindBuffer(GL_UNIFORM_BUFFER, 0);
 	}
 
 	bool cUniformBuffer::CleanUp()
@@ -117,12 +118,12 @@ namespace Graphics {
 		{
 			glDeleteBuffers(1, &m_bufferID);
 			const auto errorCode = glGetError();
+			m_bufferID = 0;
 			if (errorCode != GL_NO_ERROR)
 			{
 				printf("OpenGL failed to delete the constant buffer.");
+				return false;
 			}
-			m_bufferID = 0;
-			return false;
 		}
 		return true;
 	}

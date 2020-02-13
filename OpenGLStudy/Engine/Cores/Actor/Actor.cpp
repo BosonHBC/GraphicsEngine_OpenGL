@@ -24,10 +24,10 @@ void cActor::Update(Graphics::cEffect* const i_effect)
 {
 	// TransformUpdate
 	//---------------------------------
-	m_transform->Update();
-	glUniformMatrix4fv(i_effect->GetModelMatrixUniformID(), 1, GL_FALSE, glm::value_ptr(m_transform->M()));
+	//m_transform->Update();
+	//glUniformMatrix4fv(i_effect->GetModelMatrixUniformID(), 1, GL_FALSE, glm::value_ptr(m_transform->M()));
 	// fix non-uniform scale
-	glUniformMatrix4fv(i_effect->GetNormalMatrixUniformID(), 1, GL_FALSE, glm::value_ptr(glm::transpose(m_transform->MInv())));
+	//glUniformMatrix4fv(i_effect->GetNormalMatrixUniformID(), 1, GL_FALSE, glm::value_ptr(glm::transpose(m_transform->MInv())));
 
 	// Rendering Update
 	//---------------------------------

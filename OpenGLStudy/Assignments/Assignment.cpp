@@ -124,6 +124,9 @@ void Assignment::Run()
 		*/
 		// ----------------------
 		// Submit data to be render
+		m_teapot->Transform()->Update();
+		m_teapot2->Transform()->Update();
+		m_plane->Transform()->Update();
 		std::vector<std::pair<Graphics::cModel::HANDLE, cTransform*>> _renderingMap;
 		_renderingMap.push_back({ m_teapot->GetModelHandle(), m_teapot->Transform() });
 		_renderingMap.push_back({ m_teapot2->GetModelHandle(), m_teapot2->Transform() });

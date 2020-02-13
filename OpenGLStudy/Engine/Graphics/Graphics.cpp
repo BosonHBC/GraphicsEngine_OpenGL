@@ -50,9 +50,9 @@ namespace Graphics {
 		}
 
 		// Initialize uniform buffer
+		if (false)
 		{
-			UniformBufferFormats::sFrame _tempFrameData;
-			if (!(result = s_uniformBuffer_frame.Initialize(&_tempFrameData))) {
+			if (!(result = s_uniformBuffer_frame.Initialize(nullptr))) {
 				printf("Fail to initialize uniformBuffer_frame\n");
 				return result;
 			}
@@ -60,8 +60,7 @@ namespace Graphics {
 				// bind frame buffer
 				s_uniformBuffer_frame.Bind();
 			}
-			UniformBufferFormats::sDrawCall _tempDrawData;
-			if (!(result = s_uniformBuffer_drawcall.Initialize(&_tempDrawData))) {
+			if (!(result = s_uniformBuffer_drawcall.Initialize(nullptr))) {
 				printf("Fail to initialize uniformBuffer_drawcall\n");
 				return result;
 			}
@@ -111,13 +110,19 @@ namespace Graphics {
 			_frame.ViewMatrix = const_cast<glm::f32*>(glm::value_ptr(_camera->GetViewMatrix()));
 			_frame.ProjectionMatrix = const_cast<glm::f32*>(glm::value_ptr(_camera->GetProjectionMatrix()));
 			// 2. Update frame data
-			s_uniformBuffer_frame.Update(&_frame);
+			//s_uniformBuffer_frame.Update(&_frame);
+			glUniformMatrix4fv(s_currentEffect->GetProjectionMatrixUniformID(), 1, GL_FALSE, glm::value_ptr(_camera->GetProjectionMatrix()));
+			glUniformMatrix4fv(s_currentEffect->GetViewMatrixUniformID(), 1, GL_FALSE, glm::value_ptr(_camera->GetViewMatrix()));
+
 		}
 
 		// Update lighting data
 		{
+			s_currentEffect->SetPointLightCount(s_pointLight_list.size());
+
 			if (s_ambientLight)
 				s_ambientLight->Illuminate();
+
 			for (auto it : s_pointLight_list)
 			{
 				it->Illuminate();
@@ -134,7 +139,10 @@ namespace Graphics {
 				_drawcall.ModelMatrix = const_cast<glm::f32*>(glm::value_ptr(it->second->M()));
 				_drawcall.NormalMatrix = const_cast<glm::f32*>(glm::value_ptr(glm::transpose(it->second->MInv())));
 				// 2. Update draw call data
-				s_uniformBuffer_drawcall.Update(&_drawcall);
+				//s_uniformBuffer_drawcall.Update(&_drawcall);
+				glUniformMatrix4fv(s_currentEffect->GetModelMatrixUniformID(), 1, GL_FALSE, glm::value_ptr(it->second->M()));
+				// fix non-uniform scale
+				glUniformMatrix4fv(s_currentEffect->GetNormalMatrixUniformID(), 1, GL_FALSE, glm::value_ptr(glm::transpose(it->second->MInv())));
 				// 3. Draw
 				cModel* _model = cModel::s_manager.Get(it->first);
 				if (_model) {
@@ -245,8 +253,7 @@ namespace Graphics {
 		o_pointLight = newPointLight;
 		s_pointLight_list.push_back(newPointLight);
 
-		// Update point light count
-		s_currentEffect->SetPointLightCount(s_pointLight_list.size());
+
 		return result;
 	}
 
