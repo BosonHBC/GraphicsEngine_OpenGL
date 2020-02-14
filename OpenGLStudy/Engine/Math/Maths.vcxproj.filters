@@ -16,15 +16,24 @@
     <Filter Include="Source Files\Transform">
       <UniqueIdentifier>{d2536d59-02db-497b-9b3c-609c9ed6691a}</UniqueIdentifier>
     </Filter>
+    <Filter Include="Source Files\Quaternion">
+      <UniqueIdentifier>{d3e00633-5ed0-47c5-9f66-cad7005f98ba}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="..\Math\Transform\Transform.cpp">
       <Filter>Source Files\Transform</Filter>
     </ClCompile>
+    <ClCompile Include="Quaternion\Quaternion.cpp">
+      <Filter>Source Files\Quaternion</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\Math\Transform\Transform.h">
       <Filter>Source Files\Transform</Filter>
+    </ClInclude>
+    <ClInclude Include="Quaternion\Quaternion.h">
+      <Filter>Source Files\Quaternion</Filter>
     </ClInclude>
   </ItemGroup>
 </Project>

@@ -20,9 +20,11 @@
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="..\Math\Transform\Transform.cpp" />
+    <ClCompile Include="Quaternion\Quaternion.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\Math\Transform\Transform.h" />
+    <ClInclude Include="Quaternion\Quaternion.h" />
   </ItemGroup>
   <PropertyGroup Label="Globals">
     <VCProjectVersion>15.0</VCProjectVersion>
