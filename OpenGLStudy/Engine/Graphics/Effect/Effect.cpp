@@ -11,8 +11,6 @@ namespace Graphics {
 	cEffect::cEffect()
 	{
 		m_programID = 0;
-		m_modelMatrixID = 0;
-		m_projectionMatrixID = 0;
 	}
 
 	cEffect::~cEffect()
@@ -83,9 +81,7 @@ namespace Graphics {
 			glDeleteProgram(m_programID);
 			m_programID = 0;
 		}
-		m_modelMatrixID = 0;
-		m_viewMatrixID = 0;
-		m_projectionMatrixID = 0;
+
 		m_pointLightCountID = 0;
 		m_spotLightCountID = 0;
 	}
@@ -93,11 +89,6 @@ namespace Graphics {
 	bool cEffect::BindUniformVariables()
 	{
 		// Assign uniform ID
-		m_modelMatrixID = glGetUniformLocation(m_programID, "modelMatrix");
-		m_viewMatrixID = glGetUniformLocation(m_programID, "viewMatrix");
-		m_projectionMatrixID = glGetUniformLocation(m_programID, "projectionMatrix");
-		m_normalMatrixID = glGetUniformLocation(m_programID, "normalMatrix");
-
 		m_pointLightCountID = glGetUniformLocation(m_programID, "pointLightCount");
 		m_spotLightCountID = glGetUniformLocation(m_programID, "spotLightCount");
 		return true;

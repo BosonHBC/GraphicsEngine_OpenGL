@@ -1,4 +1,5 @@
 #include "DirectionalLight.h"
+#include "glm/gtc/type_ptr.hpp"
 namespace Graphics {
 
 	cDirectionalLight::~cDirectionalLight()
@@ -12,17 +13,39 @@ namespace Graphics {
 
 		m_colorID = glGetUniformLocation(i_programID, "directionalLight.base.color");
 		m_directionID = glGetUniformLocation(i_programID, "directionalLight.direction");
+		m_directionalLightTransformID = glGetUniformLocation(i_programID, "directionalLightTransform");
+		m_directionalShadowMapID = glGetUniformLocation(i_programID, "directionalShadowMap");
 	}
 
 	void cDirectionalLight::Illuminate()
 	{
 		glUniform3f(m_colorID, m_color.r, m_color.g, m_color.b);
 		glUniform3f(m_directionID, m_direction.x, m_direction.y, m_direction.z);
+
 	}
 
 	glm::vec3 cDirectionalLight::Direction(glm::vec3 i_position)
 	{
 		return m_direction;
+	}
+
+	void cDirectionalLight::CreateShadowMap(GLuint i_width, GLuint i_height)
+	{
+		cGenLight::CreateShadowMap(i_width, i_height);
+
+		// create light projection matrix for directional light
+		m_lightPrjectionMatrix = glm::ortho(-5.0f, 5.0f, -5.0f, 5.0f, 0.1f, 20.f);
+	}
+
+	glm::mat4 cDirectionalLight::CalculateLightTransform() const
+	{
+		return m_lightPrjectionMatrix * glm::lookAt(-m_direction, glm::vec3(0, 0, 0), glm::vec3(0, 1, 0));
+	}
+
+	void cDirectionalLight::SetLightUniformTransform()
+	{
+		// light transform
+		glUniformMatrix4fv(m_directionalLightTransformID, 1, GL_FALSE, glm::value_ptr(CalculateLightTransform()));
 	}
 
 }

@@ -8,6 +8,7 @@
 #include "Constants/Constants.h"
 #include "UniformBuffer/UniformBufferFormats.h"
 #include "UniformBuffer/UniformBuffer.h"
+#include "FrameBuffer/cFrameBuffer.h"
 
 namespace Graphics {
 
@@ -74,7 +75,24 @@ namespace Graphics {
 		return result;
 	}
 
-	void Render()
+	void ShadowMap_Pass()
+	{
+		s_currentEffect->UseEffect();
+
+		cFrameBuffer* _directionalLightFBO = s_directionalLight->GetShadowMap();
+		if (_directionalLightFBO) {
+			glViewport(0, 0, _directionalLightFBO->GetWidth(), _directionalLightFBO->GetHeight());
+			// write buffer to the texture
+			_directionalLightFBO->Write();
+			glClear(GL_DEPTH_BUFFER_BIT);
+
+			s_directionalLight->SetLightUniformTransform();
+
+			glBindFramebuffer(GL_FRAMEBUFFER, 0);
+		}
+	}
+
+	void Render_Pass()
 	{
 		// Clear color and poll events
 		{
@@ -83,7 +101,7 @@ namespace Graphics {
 			// A lot of things can be cleaned like color buffer, depth buffer, so we need to specify what to clear
 			glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
-			glfwPollEvents();
+
 		}
 		// Bind effect
 		{
@@ -108,8 +126,7 @@ namespace Graphics {
 
 			// 1. Copy frame data
 			UniformBufferFormats::sFrame _frame;
-			memcpy(_frame.ViewMatrix, glm::value_ptr(_camera->GetViewMatrix()), sizeof(_frame.ViewMatrix));
-			memcpy(_frame.ProjectionMatrix, glm::value_ptr(_camera->GetProjectionMatrix()), sizeof(_frame.ProjectionMatrix));
+			memcpy(_frame.PVMatrix, glm::value_ptr(_camera->GetProjectionMatrix() *_camera->GetViewMatrix()), sizeof(_frame.PVMatrix));
 
 			// 2. Update frame data
 			s_uniformBuffer_frame.Update(&_frame);
@@ -130,31 +147,34 @@ namespace Graphics {
 				it->Illuminate();
 			}
 		}
-
-		// Starts draw call
-		{
-			// loop through every single model
-			for (auto it = s_dataRequiredToRenderAFrame.ModelToTransform_map.begin(); it != s_dataRequiredToRenderAFrame.ModelToTransform_map.end(); ++it)
-			{
-				// 1. Copy draw call data
-				UniformBufferFormats::sDrawCall _drawcall;
-				memcpy(_drawcall.ModelMatrix, glm::value_ptr(it->second->M()), sizeof(_drawcall.ModelMatrix));
-				memcpy(_drawcall.NormalMatrix, glm::value_ptr(glm::transpose(it->second->MInv())), sizeof(_drawcall.NormalMatrix));
-
-				// 2. Update draw call data
-				s_uniformBuffer_drawcall.Update(&_drawcall);
-				// 3. Draw
-				cModel* _model = cModel::s_manager.Get(it->first);
-				if (_model) {
-					_model->Render();
-				}
-			}
-		}
+		// Start a draw call loop
+		RenderScene();
 		// clear program
 		{
 			glUseProgram(0);
 		}
 		// Swap buffers happens in main rendering loop, not in this render function.
+	}
+
+	void RenderScene()
+	{
+		// loop through every single model
+		for (auto it = s_dataRequiredToRenderAFrame.ModelToTransform_map.begin(); it != s_dataRequiredToRenderAFrame.ModelToTransform_map.end(); ++it)
+		{
+			// 1. Copy draw call data
+			UniformBufferFormats::sDrawCall _drawcall;
+			memcpy(_drawcall.ModelMatrix, glm::value_ptr(it->second->M()), sizeof(_drawcall.ModelMatrix));
+			memcpy(_drawcall.NormalMatrix, glm::value_ptr(glm::transpose(it->second->MInv())), sizeof(_drawcall.NormalMatrix));
+
+			// 2. Update draw call data
+			s_uniformBuffer_drawcall.Update(&_drawcall);
+			// 3. Draw
+			cModel* _model = cModel::s_manager.Get(it->first);
+			if (_model) {
+				_model->Render();
+			}
+		}
+
 	}
 
 	bool CleanUp()

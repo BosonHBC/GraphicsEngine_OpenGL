@@ -104,7 +104,7 @@ namespace Graphics {
 		const auto errorCode = glGetError();
 		if (errorCode != GL_NO_ERROR)
 		{
-			printf("OpenGL failed to update data of uniform buffer %u.",m_bufferID);
+			printf("OpenGL failed to update data of uniform buffer %u.\n",m_bufferID);
 			return;
 		}
 		glBindBuffer(GL_UNIFORM_BUFFER, 0);

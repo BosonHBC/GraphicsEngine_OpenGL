@@ -17,7 +17,9 @@ namespace Graphics {
 
 	/** Initialization and clean up function*/
 	bool Initialize();
-	void Render();
+	void ShadowMap_Pass();
+	void Render_Pass();
+	void RenderScene();
 	bool CleanUp();
 
 	void SubmitDataToBeRendered(cCamera* i_camera, const std::vector<std::pair<Graphics::cModel::HANDLE, cTransform*>>& i_modelToTransform_map);

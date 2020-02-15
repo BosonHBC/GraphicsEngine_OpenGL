@@ -61,6 +61,9 @@
     <Filter Include="Source Files\Material\Blinn">
       <UniqueIdentifier>{0c360477-45ea-4dbc-9012-00a881168fe0}</UniqueIdentifier>
     </Filter>
+    <Filter Include="Source Files\FrameBuffer">
+      <UniqueIdentifier>{8f180b88-74b1-4d02-9051-afe97b503e44}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="Graphics.cpp">
@@ -107,6 +110,9 @@
     </ClCompile>
     <ClCompile Include="Texture\Texture.cpp">
       <Filter>Source Files\Texture</Filter>
+    </ClCompile>
+    <ClCompile Include="FrameBuffer\cFrameBuffer.cpp">
+      <Filter>Source Files\FrameBuffer</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
@@ -163,6 +169,9 @@
     </ClInclude>
     <ClInclude Include="Texture\Texture.h">
       <Filter>Source Files\Texture</Filter>
+    </ClInclude>
+    <ClInclude Include="FrameBuffer\cFrameBuffer.h">
+      <Filter>Source Files\FrameBuffer</Filter>
     </ClInclude>
   </ItemGroup>
 </Project>

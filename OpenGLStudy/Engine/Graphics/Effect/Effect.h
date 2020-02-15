@@ -27,15 +27,10 @@ namespace Graphics {
 		bool RecompileShader(const char* i_shaderName, GLenum i_shaderType);
 
 		/** Getters */
-		const GLuint& GetModelMatrixUniformID() const { return m_modelMatrixID; }
-		const GLuint& GetViewMatrixUniformID() const { return m_viewMatrixID; }
-		const GLuint& GetProjectionMatrixUniformID() const { return m_projectionMatrixID; }
-		const GLuint& GetNormalMatrixUniformID() const { return m_normalMatrixID; }
 		const GLuint& GetProgramID() const { return m_programID; }
-	private:
+	protected:
 		/** private variables*/
 		GLuint m_programID;
-		GLuint m_modelMatrixID, m_viewMatrixID, m_projectionMatrixID, m_normalMatrixID;
 		GLuint m_pointLightCountID, m_spotLightCountID;
 
 		std::map<GLenum, sGLShader*> m_shaders;

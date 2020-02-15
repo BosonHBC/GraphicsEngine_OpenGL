@@ -87,6 +87,7 @@ void Assignment::Run()
 	// loop until window closed
 	while (!m_shouldApplicationLoopExit)
 	{
+		glfwPollEvents();
 		/*
 				// clear window
 				glClearColor(m_clearColor.r, m_clearColor.g, m_clearColor.b, 1.f);
@@ -135,7 +136,7 @@ void Assignment::Run()
 		Graphics::SubmitDataToBeRendered(m_editorCamera, _renderingMap);
 		// ----------------------
 		// Rendering
-		Graphics::Render();
+		Graphics::Render_Pass();
 		// ----------------------
 		// Swap buffers
 		m_window->SwapBuffers();
@@ -154,6 +155,7 @@ void Assignment::CleanUp()
 
 void Assignment::Tick(float second_since_lastFrame)
 {
+
 	sWindowInput* _windowInput = m_window->GetWindowInput();
 
 	// get + handle user input events

@@ -33,6 +33,7 @@
     <ClCompile Include="Camera\Camera.cpp" />
     <ClCompile Include="Camera\EditorCamera\EditorCamera.cpp" />
     <ClCompile Include="Effect\Effect.cpp" />
+    <ClCompile Include="FrameBuffer\cFrameBuffer.cpp" />
     <ClCompile Include="Graphics.cpp" />
     <ClCompile Include="Light\AmbientLight\AmbientLight.cpp" />
     <ClCompile Include="Light\DirectionalLight\DirectionalLight.cpp" />
@@ -52,6 +53,7 @@
     <ClInclude Include="Color\Color.h" />
     <ClInclude Include="Effect\Effect.h" />
     <ClInclude Include="Effect\Shader\GLShader.h" />
+    <ClInclude Include="FrameBuffer\cFrameBuffer.h" />
     <ClInclude Include="Graphics.h" />
     <ClInclude Include="Light\AmbientLight\AmbientLight.h" />
     <ClInclude Include="Light\DirectionalLight\DirectionalLight.h" />

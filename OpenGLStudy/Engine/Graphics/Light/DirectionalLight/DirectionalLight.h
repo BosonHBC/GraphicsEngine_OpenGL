@@ -21,9 +21,14 @@ namespace Graphics {
 
 		glm::vec3 Direction(glm::vec3 i_position);
 
+		/** Shadow map related*/
+		void CreateShadowMap(GLuint i_width, GLuint i_height) override;
+		glm::mat4 CalculateLightTransform() const override;
+		void SetLightUniformTransform() override;
 	private:
 		glm::vec3 m_direction;
 		GLuint m_directionID;
+		GLuint m_directionalLightTransformID, m_directionalShadowMapID;
 	};
 
 }
