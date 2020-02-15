@@ -14,8 +14,6 @@ namespace Graphics {
 		{}
 		virtual ~cPointLight() {
 		}
-		cPointLight(const cPointLight& i_other);
-		cPointLight& operator = (const cPointLight& i_other);
 
 		/** overriding virtual functions*/
 		virtual void Illuminate() override;

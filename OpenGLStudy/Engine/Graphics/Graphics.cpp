@@ -1,4 +1,5 @@
 #include <map>
+#include <stdio.h>
 #include "Graphics.h"
 
 #include "Cores/Core.h"
@@ -32,8 +33,9 @@ namespace Graphics {
 
 	// Lighting
 	// ---------------------------------
-	// There are only one ambient light
+	// There are only one ambient and directional light
 	cAmbientLight* s_ambientLight;
+	cDirectionalLight* s_directionalLight;
 	std::vector<cPointLight*> s_pointLight_list;
 
 	bool Initialize()
@@ -112,9 +114,6 @@ namespace Graphics {
 			// 2. Update frame data
 			s_uniformBuffer_frame.Update(&_frame);
 
-			//glUniformMatrix4fv(s_currentEffect->GetProjectionMatrixUniformID(), 1, GL_FALSE, _frame.ProjectionMatrix);
-			//glUniformMatrix4fv(s_currentEffect->GetViewMatrixUniformID(), 1, GL_FALSE, _frame.ViewMatrix);
-
 		}
 
 		// Update lighting data
@@ -123,6 +122,8 @@ namespace Graphics {
 
 			if (s_ambientLight)
 				s_ambientLight->Illuminate();
+			if (s_directionalLight)
+				s_directionalLight->Illuminate();
 
 			for (auto it : s_pointLight_list)
 			{
@@ -142,9 +143,6 @@ namespace Graphics {
 
 				// 2. Update draw call data
 				s_uniformBuffer_drawcall.Update(&_drawcall);
-				//glUniformMatrix4fv(s_currentEffect->GetModelMatrixUniformID(), 1, GL_FALSE, _drawcall.ModelMatrix);
-				// fix non-uniform scale
-				//glUniformMatrix4fv(s_currentEffect->GetNormalMatrixUniformID(), 1, GL_FALSE, _drawcall.NormalMatrix);
 				// 3. Draw
 				cModel* _model = cModel::s_manager.Get(it->first);
 				if (_model) {
@@ -185,7 +183,7 @@ namespace Graphics {
 
 		// Clean up ambient light
 		safe_delete(s_ambientLight);
-
+		safe_delete(s_directionalLight);
 		return result;
 	}
 
@@ -256,6 +254,20 @@ namespace Graphics {
 		s_pointLight_list.push_back(newPointLight);
 
 
+		return result;
+	}
+
+	bool CreateDirectionalLight(const Color& i_color, glm::vec3 i_direction, cDirectionalLight*& o_directionalLight)
+	{
+		auto result = true;
+		if (result = (s_currentEffect->GetProgramID() == 0)) {
+			printf("Can not create directional light without a valid program id.\n");
+			return result;
+		}
+		cDirectionalLight* newDirectionalLight = new cDirectionalLight(i_color, i_direction);
+		newDirectionalLight->SetupLight(s_currentEffect->GetProgramID(), 0);
+		o_directionalLight = newDirectionalLight;
+		s_directionalLight = newDirectionalLight;
 		return result;
 	}
 

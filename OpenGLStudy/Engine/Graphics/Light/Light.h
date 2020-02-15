@@ -15,8 +15,6 @@ namespace Graphics {
 		cGenLight(Color i_color);
 		// Rule of three
 		virtual ~cGenLight();
-		cGenLight(const cGenLight& i_other);
-		cGenLight& operator = (const cGenLight& i_other);
 
 		/**Usage function*/
 		virtual void SetupLight(const GLuint& i_programID, GLuint i_lightIndex = 0);

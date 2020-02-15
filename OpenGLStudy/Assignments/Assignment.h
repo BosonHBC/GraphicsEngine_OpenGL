@@ -12,6 +12,7 @@ namespace Graphics {
 	class cEffect;
 	class cPointLight;
 	class cAmbientLight;
+	class cDirectionalLight;
 }
 //----------------------------------------------
 class Assignment : public Application::cApplication
@@ -40,6 +41,7 @@ private:
 	Graphics::cPointLight* pLight1;
 	Graphics::cPointLight* pLight2;
 	Graphics::cAmbientLight* aLight;
+	Graphics::cDirectionalLight* dLight;
 
 	cActor* m_teapot;
 	cActor* m_teapot2;

@@ -8,6 +8,7 @@
 #include "Effect/Effect.h"
 #include "Light/PointLight/PointLight.h"
 #include "Light/AmbientLight/AmbientLight.h"
+#include "Light/DirectionalLight/DirectionalLight.h"
 #include "Camera/Camera.h"
 #include "Model/Model.h"
 
@@ -29,4 +30,5 @@ namespace Graphics {
 	/** Lighting related*/
 	bool CreateAmbientLight(const Color& i_color, cAmbientLight*& o_ambientLight);
 	bool CreatePointLight(const glm::vec3& i_initialLocation,const Color& i_color, const GLfloat& i_const, const GLfloat& i_linear, const GLfloat& i_quadratic, cPointLight*& o_pointLight);
+	bool CreateDirectionalLight(const Color& i_color, glm::vec3 i_direction, cDirectionalLight*& o_directionalLight);
 }

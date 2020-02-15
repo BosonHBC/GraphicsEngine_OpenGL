@@ -12,23 +12,6 @@ namespace Graphics {
 		m_transform = new cTransform();
 	}
 
-	cGenLight::cGenLight(const cGenLight& i_other)
-	{
-		m_color = i_other.m_color;
-		m_colorID = i_other.m_colorID;
-		m_lightIndex = i_other.m_lightIndex;
-		m_transform = new cTransform(*i_other.m_transform);
-	}
-
-	cGenLight& cGenLight::operator=(const cGenLight& i_other)
-	{
-		m_color = i_other.m_color;
-		m_colorID = i_other.m_colorID;
-		m_lightIndex = i_other.m_lightIndex;
-		m_transform = new cTransform(*i_other.m_transform);
-		return *this;
-	}
-
 	cGenLight::~cGenLight()
 	{
 		safe_delete(m_transform);

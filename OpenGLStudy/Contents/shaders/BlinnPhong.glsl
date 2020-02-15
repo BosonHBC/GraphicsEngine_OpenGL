@@ -99,6 +99,21 @@ vec4 IlluminateByDirection_Ks(Light light, vec3 vL){
 //-------------------------------------------------------------------------
 
 //-------------------------------------------------------------------------
+// DirectionalLight
+//-------------------------------------------------------------------------
+vec4 CalcDirectionalLight_Kd(){
+		vec3 dir = normalize(directionalLight.direction);
+		vec4 color = IlluminateByDirection_Kd(directionalLight.base, dir);
+		return color;
+}
+
+vec4 CalcDirectionalLight_Ks(){
+		vec3 dir = normalize(directionalLight.direction);
+		vec4 color = IlluminateByDirection_Ks(directionalLight.base, dir);
+		return color;
+}
+
+//-------------------------------------------------------------------------
 // PointLight
 //-------------------------------------------------------------------------
 vec4 CalcPointLight_Kd(PointLight pLight){
@@ -150,12 +165,22 @@ vec4 CalcPointLights_Ks(){
 
 void main(){
 	
+	// ambient light
 	vec4 ambientLightColor = vec4(ambientLight.base.color, 1.0f) * vec4(material.kd, 1.0f);
+	
+	// point light
 	vec4 pointLightColor_Kd = CalcPointLights_Kd();
 	vec4 pointLightColor_Ks = CalcPointLights_Ks();
 
+	// directional light
+	vec4 directionLightColor_kd = CalcDirectionalLight_Kd();
+	vec4 directionLightColor_ks = CalcDirectionalLight_Ks();
+
+
 	vec4 diffuseTexColor =texture(diffuseTex, texCood0);
 	vec4 specularTexColor =texture(specularTex, texCood0);
-	color =  diffuseTexColor * ( ambientLightColor + pointLightColor_Kd) + specularTexColor * pointLightColor_Ks;
+	
+	color =  diffuseTexColor * ( ambientLightColor + pointLightColor_Kd + directionLightColor_kd) 
+			+ specularTexColor * (pointLightColor_Ks + directionLightColor_ks);
 	//color = texture(diffuseTex, texCood0) * ( ambientLightColor + pointLightColor_Kd + pointLightColor_Ks);
 }
