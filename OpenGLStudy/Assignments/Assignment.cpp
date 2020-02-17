@@ -76,7 +76,7 @@ void Assignment::CreateActor()
 	m_wall->Transform()->Translate(glm::vec3(0, 2,-5.f));
 	m_wall->Transform()->Rotate(glm::vec3(1, 0, 0), 90);
 	m_wall->Transform()->Rotate(glm::vec3(0, 1, 0), 180);
-	m_wall->Transform()->Scale(glm::vec3(5, 1, 5));
+	m_wall->Transform()->Scale(glm::vec3(-5, 1, 5));
 
 }
 
