@@ -12,26 +12,30 @@ namespace Graphics {
 	{
 		auto result = true;
 		m_width = i_height; m_height = i_height;
+		GLuint mipMapLevel = 0;
+		// Generate render_to_texture texture
+		{
+			glGenTextures(1, &m_textureMapID);
+			glBindTexture(GL_TEXTURE_2D, m_textureMapID);
+
+			// allocate space for the texture with null data fill in
+			glTexImage2D(GL_TEXTURE_2D, mipMapLevel, GL_DEPTH_COMPONENT, m_width, m_height, 0, GL_DEPTH_COMPONENT, GL_FLOAT, nullptr);
+
+			// Set up texture wrapping in s,t axis
+			glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_BORDER);
+			glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_BORDER);
+			
+			const float borderColor[4] = { 1.f,1.f,1.f,1.f };
+			glTexParameterfv(GL_TEXTURE_2D, GL_TEXTURE_BORDER_COLOR, borderColor);
+
+			// Set up texture filtering for looking closer
+			glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+			// Set up texture filtering for looking further
+			glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+		}
 
 		// Generate another frame buffer
 		glGenFramebuffers(1, &m_fbo);
-
-		// Generate render_to_texture texture buffer
-		glGenTextures(1, &m_textureMapID);
-		glBindTexture(GL_TEXTURE_2D, m_textureMapID);
-
-		GLuint mipMapLevel = 0;
-		// allocate space for the texture with null data fill in
-		glTexImage2D(GL_TEXTURE_2D, mipMapLevel, GL_DEPTH_COMPONENT, m_width, m_height, 0, GL_DEPTH_COMPONENT, GL_FLOAT, nullptr);
-		
-		// Set up texture wrapping in s,t axis
-		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
-		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
-
-		// Set up texture filtering for looking closer
-		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
-		// Set up texture filtering for looking further
-		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
 
 		// bind the frame buffer, it can be read / draw. GL_DRAW_FRAMEBUFFER / GL_READ_FRAMEBUFFER
 		glBindFramebuffer(GL_FRAMEBUFFER, m_fbo);

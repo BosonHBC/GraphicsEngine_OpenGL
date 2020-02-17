@@ -26,6 +26,9 @@ namespace Graphics {
 		snprintf(_buff, sizeof(_buff), "spotLights[%d].base.base.color", m_lightIndex);
 		m_colorID = glGetUniformLocation(i_programID, _buff);
 
+		snprintf(_buff, sizeof(_buff), "spotLights[%d].base.base.enableShadow", m_lightIndex);
+		m_enableShadowID = glGetUniformLocation(i_programID, _buff);
+
 		snprintf(_buff, sizeof(_buff), "spotLights[%d].base.position", m_lightIndex);
 		m_positionID = glGetUniformLocation(i_programID, _buff);
 

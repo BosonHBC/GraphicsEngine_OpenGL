@@ -28,6 +28,9 @@ namespace Graphics {
 		/** Usage functions*/
 		void UpdateUniformVariables(GLuint i_programID);
 		void Render();
+		// This rendering only draw elements without using material data
+		// Usually is used for shadow map
+		void RenderWithoutMaterial();
 		void CleanUp();
 
 	private:

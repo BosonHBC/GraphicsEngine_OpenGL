@@ -6,14 +6,7 @@
 #include "Graphics/Graphics.h"
 
 namespace Application {
-	cApplication::cApplication()
-	{
-	}
 
-	cApplication::~cApplication()
-	{
-		CleanUp();
-	}
 
 	bool cApplication::Initialize(GLuint i_width, GLuint i_height, const char* i_windowName)
 	{
@@ -45,8 +38,10 @@ namespace Application {
 		return result;
 	}
 
-	void cApplication::PostInitialization()
+	bool cApplication::PostInitialization()
 	{
+		auto result = true;
+
 		// Create application thread by lambda
 		m_applicationThread = new std::thread(
 			[&](cApplication* app)
@@ -54,6 +49,7 @@ namespace Application {
 				app->UpdateUntilExit();
 			}
 		, this);
+		return result;
 	}
 
 	void cApplication::ApplicationLoopThread(void* const io_application)
@@ -88,7 +84,7 @@ namespace Application {
 				m_tickCount_systemTime_Current = tickCount_systemTime_currentLoop;
 
 				// calculate the delta tick between loop, make sure the update between will not be larger than the maxAllowable_time_per_Iteration
-				tickCount_systemTime_elapsedSinceLastLoop = 
+				tickCount_systemTime_elapsedSinceLastLoop =
 					std::min(tickCount_systemTime_currentLoop - tickCount_systemTime_previousLoop, tickCount_maxAllowable_time_per_Iteration);
 
 				// Update as soon as possible
@@ -124,6 +120,15 @@ namespace Application {
 			printf("Fail to clean up Graphic Module.\n");
 		}
 		safe_delete(m_window);
+	}
+
+	
+	cApplication* s_currentApplication = nullptr;
+
+
+	cApplication* GetCurrentApplication()
+	{
+		return s_currentApplication;
 	}
 
 }

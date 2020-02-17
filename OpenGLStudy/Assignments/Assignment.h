@@ -18,11 +18,6 @@ namespace Graphics {
 class Assignment : public Application::cApplication
 {
 public:
-	Assignment() {};
-	virtual ~Assignment()
-	{
-	};
-
 	virtual bool Initialize(GLuint i_width, GLuint i_height, const char* i_windowName = "Default Window");
 	virtual void Run();
 	virtual void CleanUp();

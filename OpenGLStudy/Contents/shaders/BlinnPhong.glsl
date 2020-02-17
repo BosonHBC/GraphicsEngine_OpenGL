@@ -25,6 +25,7 @@ const int MAX_COUNT_PER_LIGHT = 5;
 
 struct Light{	
 	vec3 color;
+	bool enableShadow;
 };
 
 // Lighting, no interpoloation
@@ -34,6 +35,7 @@ struct AmbientLight{
 struct DirectionalLight{
 	Light base;
 	vec3 direction;
+	
 };
 struct PointLight{
 	Light base;
@@ -77,19 +79,35 @@ uniform vec3 camPos;
 //-------------------------------------------------------------------------
 // Shadow Fucntions
 //-------------------------------------------------------------------------
-float CalcDirectionalLightShadowMap(DirectionalLight dLight)
+float CalcDirectionalLightShadowMap(vec3 vN)
 {
 	vec3 projcoords = DirectionalLightSpacePos.xyz / DirectionalLightSpacePos.w;
 	projcoords = (projcoords * 0.5) + 0.5;
 	// now projcoords is in normalized coordinate, locates in (0,1)
 
-	// get the depth value of this position in this light's perpective of view
-	float cloest = texture(directionalShadowMap, projcoords.xy).r;
 	float current = projcoords.z;
 
-	// if the current depth that is rendering is larger than the cloest depth,
-	// it is in shadow
-	float shadow = current > cloest ? 1.0 : 0.0;
+	// Calculate bias
+	vec3 lightDir = normalize(directionalLight.direction);
+	const float bias = max(0.005 * (1- dot(vN, lightDir)), 0.0005);
+
+	float shadow = 0.0;
+
+	const vec2 texelSize = 1.0 / textureSize(directionalShadowMap, 0);
+	// offset the pixel around center pixel, 3x3	
+	for(int x = -1; x <= 1; ++x)
+	{
+		for(int y = -1; y <= 1; ++y)
+		{
+			// get the depth value of this position in this light's perpective of view
+			float pcfDepth = texture(directionalShadowMap, projcoords.xy + vec2(x,y) * texelSize).r;
+			// if the current depth that is rendering is larger than the cloest depth,
+			// it is in shadow
+			shadow += (current - bias > pcfDepth) ? 1.0 : 0.0;
+		}
+	}
+	shadow /= 9.0;
+	shadow = current > 1.0 ? 0.0 : shadow;
 	return shadow;	
 }
 
@@ -178,8 +196,8 @@ void main(){
 	vec4 pointLightColor = CalcPointLights(diffuseTexColor, specularTexColor, nomr_normal);
 
 	// directional light
-	float directionalLightShadowFactor= 1.0 - CalcDirectionalLightShadowMap(directionalLight);
-	vec4 directionLightColor = CalcDirectionalLight(diffuseTexColor, specularTexColor, nomr_normal);
+	float directionalLightShadowFactor = directionalLight.base.enableShadow ? (1.0 - CalcDirectionalLightShadowMap(nomr_normal)): 1.0;
+	vec4 directionLightColor = directionalLightShadowFactor * CalcDirectionalLight(diffuseTexColor, specularTexColor, nomr_normal);
 
 	color =  ( ambientLightColor + pointLightColor + directionLightColor);
 }

@@ -8,6 +8,7 @@ out vec3 Normal;
 out vec3 fragPos;
 out vec4 DirectionalLightSpacePos;
 
+uniform mat4 directionalLightTransform;
 
 layout(std140, binding = 0) uniform uniformBuffer_frame
 {
@@ -21,7 +22,7 @@ layout(std140, binding = 1) uniform uniformBuffer_drawcall
 	mat4 normalMatrix;
 };
 
-uniform mat4 directionalLightTransform;
+
 
 void main()
 {

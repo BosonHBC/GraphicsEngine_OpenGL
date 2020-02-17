@@ -25,6 +25,7 @@ namespace Graphics {
 		void CreateShadowMap(GLuint i_width, GLuint i_height) override;
 		glm::mat4 CalculateLightTransform() const override;
 		void SetLightUniformTransform() override;
+		void UseShadowMap(GLuint i_textureUnit) override;
 	private:
 		glm::vec3 m_direction;
 		GLuint m_directionID;

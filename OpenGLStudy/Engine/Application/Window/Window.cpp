@@ -49,7 +49,7 @@ bool cWindow::Initialzation()
 
 	//05. Set up viewport, which part of the window will draw things
 	{
-		glViewport(0, 0, m_bufferWidth, m_bufferHeight);
+		SetViewportSize(m_bufferWidth, m_bufferHeight);
 	}
 
 	//06. enable features
@@ -179,4 +179,10 @@ void cWindow::HandleMouseButton(GLFWwindow* i_window, int i_button, int i_action
 void cWindow::SwapBuffers()
 {
 	glfwSwapBuffers(m_glfwWindow);
+}
+
+void cWindow::SetViewportSize(GLuint i_newWidth, GLuint i_newHeight)
+{
+	glViewport(0, 0, i_newWidth, i_newHeight);
+
 }

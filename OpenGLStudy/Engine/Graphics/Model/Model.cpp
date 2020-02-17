@@ -104,10 +104,14 @@ namespace Graphics {
 			}
 
 			m_meshList[i]->Render();
+		}
+	}
 
-			if (_matIndex < m_materialList.size() && _material) {
-				_material->CleanUpMaterialBind();
-			}
+	void cModel::RenderWithoutMaterial()
+	{
+		for (size_t i = 0; i < m_meshList.size(); ++i)
+		{
+			m_meshList[i]->Render();
 		}
 	}
 

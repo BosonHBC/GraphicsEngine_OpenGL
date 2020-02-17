@@ -9,7 +9,8 @@
 #include "UniformBuffer/UniformBufferFormats.h"
 #include "UniformBuffer/UniformBuffer.h"
 #include "FrameBuffer/cFrameBuffer.h"
-
+#include "Application/Application.h"
+#include "Application/Window/Window.h"
 namespace Graphics {
 
 	// TODO:
@@ -38,6 +39,10 @@ namespace Graphics {
 	cAmbientLight* s_ambientLight;
 	cDirectionalLight* s_directionalLight;
 	std::vector<cPointLight*> s_pointLight_list;
+
+	//functions
+	void RenderScene();
+	void RenderScene_shadowMap();
 
 	bool Initialize()
 	{
@@ -71,41 +76,75 @@ namespace Graphics {
 				s_uniformBuffer_drawcall.Bind();
 			}
 		}
-
+		// Create shadow map effect
+		{
+			if (!(result = CreateEffect("ShadowMap",
+				"directional_shadow_map_vert.glsl",
+				"directional_shadow_map_frag.glsl"))) {
+				printf("Fail to create shadow map effect.\n");
+				return result;
+			}
+		}
 		return result;
 	}
 
 	void ShadowMap_Pass()
 	{
+		s_currentEffect = GetEffectByKey("ShadowMap");
 		s_currentEffect->UseEffect();
+
+		s_directionalLight->SetupLight(s_currentEffect->GetProgramID(), 0);
 
 		cFrameBuffer* _directionalLightFBO = s_directionalLight->GetShadowMap();
 		if (_directionalLightFBO) {
-			glViewport(0, 0, _directionalLightFBO->GetWidth(), _directionalLightFBO->GetHeight());
+
+			{
+				Application::cApplication* _app = Application::GetCurrentApplication();
+				if (_app) {
+					_app->GetCurrentWindow()->SetViewportSize(_directionalLightFBO->GetWidth(), _directionalLightFBO->GetHeight());
+				}
+			}
+
 			// write buffer to the texture
 			_directionalLightFBO->Write();
 			glClear(GL_DEPTH_BUFFER_BIT);
 
+			//glClearColor(s_clearColor.r, s_clearColor.g, s_clearColor.b, 1.f);
+			//glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+
 			s_directionalLight->SetLightUniformTransform();
+
+			// Draw scenes
+			RenderScene_shadowMap();
 
 			glBindFramebuffer(GL_FRAMEBUFFER, 0);
 		}
+		glUseProgram(0);
 	}
 
 	void Render_Pass()
 	{
-		// Clear color and poll events
+
+		// Bind effect
+		{
+			s_currentEffect = GetEffectByKey(Constants::CONST_DEFAULT_EFFECT_KEY);
+			s_currentEffect->UseEffect();
+			s_directionalLight->SetupLight(s_currentEffect->GetProgramID(), 0);
+		}
+		// Reset window size
+		{
+			Application::cApplication* _app = Application::GetCurrentApplication();
+			if (_app) {
+				_app->GetCurrentWindow()->SetViewportSize(_app->GetCurrentWindow()->GetBufferWidth(), _app->GetCurrentWindow()->GetBufferHeight());
+			}
+		}
+		// Clear color and buffers
 		{
 			// clear window
 			glClearColor(s_clearColor.r, s_clearColor.g, s_clearColor.b, 1.f);
 			// A lot of things can be cleaned like color buffer, depth buffer, so we need to specify what to clear
 			glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
-
-		}
-		// Bind effect
-		{
-			s_currentEffect->UseEffect();
 		}
 
 		// Update camera
@@ -126,7 +165,8 @@ namespace Graphics {
 
 			// 1. Copy frame data
 			UniformBufferFormats::sFrame _frame;
-			memcpy(_frame.PVMatrix, glm::value_ptr(_camera->GetProjectionMatrix() *_camera->GetViewMatrix()), sizeof(_frame.PVMatrix));
+			glm::mat4 _pvMatrix = _camera->GetProjectionMatrix() *_camera->GetViewMatrix();
+			memcpy(_frame.PVMatrix, glm::value_ptr(_pvMatrix), sizeof(_frame.PVMatrix));
 
 			// 2. Update frame data
 			s_uniformBuffer_frame.Update(&_frame);
@@ -135,12 +175,16 @@ namespace Graphics {
 
 		// Update lighting data
 		{
-			s_currentEffect->SetPointLightCount(s_pointLight_list.size());
-
 			if (s_ambientLight)
 				s_ambientLight->Illuminate();
-			if (s_directionalLight)
+
+			if (s_directionalLight) {
 				s_directionalLight->Illuminate();
+				s_directionalLight->SetLightUniformTransform();
+				s_directionalLight->UseShadowMap(2);
+				s_directionalLight->GetShadowMap()->Read(GL_TEXTURE2);
+
+			}
 
 			for (auto it : s_pointLight_list)
 			{
@@ -155,7 +199,26 @@ namespace Graphics {
 		}
 		// Swap buffers happens in main rendering loop, not in this render function.
 	}
+	void RenderScene_shadowMap()
+	{
+		// loop through every single model
+		for (auto it = s_dataRequiredToRenderAFrame.ModelToTransform_map.begin(); it != s_dataRequiredToRenderAFrame.ModelToTransform_map.end(); ++it)
+		{
+			// 1. Copy draw call data
+			UniformBufferFormats::sDrawCall _drawcall;
+			memcpy(_drawcall.ModelMatrix, glm::value_ptr(it->second->M()), sizeof(_drawcall.ModelMatrix));
+			memcpy(_drawcall.NormalMatrix, glm::value_ptr(glm::transpose(it->second->MInv())), sizeof(_drawcall.NormalMatrix));
 
+			// 2. Update draw call data
+			s_uniformBuffer_drawcall.Update(&_drawcall);
+			// 3. Draw
+			cModel* _model = cModel::s_manager.Get(it->first);
+			if (_model) {
+				_model->RenderWithoutMaterial();
+			}
+		}
+
+	}
 	void RenderScene()
 	{
 		// loop through every single model
@@ -260,7 +323,7 @@ namespace Graphics {
 		return result;
 	}
 
-	bool CreatePointLight(const glm::vec3& i_initialLocation, const Color& i_color, const GLfloat& i_const, const GLfloat& i_linear, const GLfloat& i_quadratic, cPointLight*& o_pointLight)
+	bool CreatePointLight(const glm::vec3& i_initialLocation, const Color& i_color, const GLfloat& i_const, const GLfloat& i_linear, const GLfloat& i_quadratic, bool i_enableShadow, cPointLight*& o_pointLight)
 	{
 		auto result = true;
 		if (result = (s_currentEffect->GetProgramID() == 0)) {
@@ -270,6 +333,7 @@ namespace Graphics {
 		cPointLight* newPointLight = new cPointLight(i_color, i_const, i_linear, i_quadratic);
 		newPointLight->SetLightInitialLocation(i_initialLocation);
 		newPointLight->SetupLight(s_currentEffect->GetProgramID(), s_pointLight_list.size());
+		newPointLight->SetEnableShadow(i_enableShadow);
 		o_pointLight = newPointLight;
 		s_pointLight_list.push_back(newPointLight);
 
@@ -277,7 +341,7 @@ namespace Graphics {
 		return result;
 	}
 
-	bool CreateDirectionalLight(const Color& i_color, glm::vec3 i_direction, cDirectionalLight*& o_directionalLight)
+	bool CreateDirectionalLight(const Color& i_color, glm::vec3 i_direction, bool i_enableShadow, cDirectionalLight*& o_directionalLight)
 	{
 		auto result = true;
 		if (result = (s_currentEffect->GetProgramID() == 0)) {
@@ -286,6 +350,12 @@ namespace Graphics {
 		}
 		cDirectionalLight* newDirectionalLight = new cDirectionalLight(i_color, i_direction);
 		newDirectionalLight->SetupLight(s_currentEffect->GetProgramID(), 0);
+		newDirectionalLight->SetEnableShadow(i_enableShadow);
+		Application::cApplication* _app = Application::GetCurrentApplication();
+		if (_app) {
+			newDirectionalLight->CreateShadowMap(2048, 2048);
+		}
+
 		o_directionalLight = newDirectionalLight;
 		s_directionalLight = newDirectionalLight;
 		return result;

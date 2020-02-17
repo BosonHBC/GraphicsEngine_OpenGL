@@ -5,6 +5,7 @@ namespace Graphics {
 	void cPointLight::Illuminate()
 	{
 		glUniform3f(m_colorID, m_color.r, m_color.g, m_color.b);
+		glUniform1i(m_enableShadowID, m_enableShadow);
 		glm::vec3 worldLoc = m_transform->GetWorldLocation();
 		glUniform3f(m_positionID, worldLoc.x, worldLoc.y, worldLoc.z);
 		glUniform1f(m_constID, m_const);
@@ -20,6 +21,9 @@ namespace Graphics {
 
 		snprintf(_buff, sizeof(_buff), "pointLights[%d].base.color", m_lightIndex);
 		m_colorID = glGetUniformLocation(i_programID, _buff);
+
+		snprintf(_buff, sizeof(_buff), "pointLights[%d].base.enableShadow", m_lightIndex);
+		m_enableShadowID = glGetUniformLocation(i_programID, _buff);
 
 		snprintf(_buff, sizeof(_buff), "pointLights[%d].position", m_lightIndex);
 		m_positionID = glGetUniformLocation(i_programID, _buff);

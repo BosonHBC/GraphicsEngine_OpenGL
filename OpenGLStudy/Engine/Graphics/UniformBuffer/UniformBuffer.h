@@ -10,6 +10,7 @@ namespace Graphics {
 	{
 		UBT_Frame = 0,
 		UBT_Drawcall = 1,
+		UBT_ShadowMapDrawCall = 2,
 		UBT_Invalid = 0xff,
 	};
 

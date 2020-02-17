@@ -14,7 +14,7 @@ namespace Graphics {
 		{
 			glm::f32 ModelMatrix[16];
 			glm::f32 NormalMatrix[16];
-	
 		};
+
 	}
 }

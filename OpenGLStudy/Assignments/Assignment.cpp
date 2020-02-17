@@ -21,18 +21,16 @@
 bool Assignment::Initialize(GLuint i_width, GLuint i_height, const char* i_windowName /*= "Default Window"*/)
 {
 	auto result = true;
-	if (!(result = cApplication::Initialize(i_width, i_width, i_windowName))) {
+	if (!(result = cApplication::Initialize(i_width, i_height, i_windowName))) {
 		assert(false);
 		// TODO: LogError
 		printf("Failed to initialize Application!");
 		return false;
 	}
-	CreateActor();
 
+	CreateActor();
 	CreateCamera();
 	CreateLight();
-
-
 
 	return result;
 }
@@ -41,7 +39,7 @@ void Assignment::CreateActor()
 {
 	m_teapot = new cActor();
 	m_teapot->Initialize();
-	m_teapot->Transform()->Translate(glm::vec3(0, -0.4f, -2.f));
+	m_teapot->Transform()->Translate(glm::vec3(0,0, -2.f));
 	m_teapot->Transform()->Rotate(glm::vec3(1, 0, 0), -90.f);
 	m_teapot->Transform()->Scale(glm::vec3(0.05f, 0.05f, 0.05f));
 
@@ -50,7 +48,7 @@ void Assignment::CreateActor()
 
 	m_teapot2 = new cActor();
 	m_teapot2->Initialize();
-	m_teapot2->Transform()->Translate(glm::vec3(2, -0.4f, -3.f));
+	m_teapot2->Transform()->Translate(glm::vec3(2, 0, -3.f));
 	m_teapot2->Transform()->Rotate(glm::vec3(1, 0, 0), -90.f);
 	m_teapot2->Transform()->Scale(glm::vec3(0.03f, 0.03f, 0.03f));
 
@@ -62,14 +60,14 @@ void Assignment::CreateActor()
 	m_plane->SetModel("Contents/models/plane.model");
 	m_plane->UpdateUniformVariables(Graphics::GetCurrentEffect());
 	m_plane->Transform()->Translate(glm::vec3(0,-0.4f, -2.f));
-	m_plane->Transform()->Scale(glm::vec3(5, 1, 5));
+	m_plane->Transform()->Scale(glm::vec3(20, 1, 20));
 
 }
 
 void Assignment::CreateCamera()
 {
 	m_editorCamera = new  cEditorCamera(glm::vec3(0, 1.f, 0), -30.f, 0, 3, 10.f);
-	float _aspect = (float)(Get_GLFW_Window()->GetBufferWidth()) / (float)(Get_GLFW_Window()->GetBufferHeight());
+	float _aspect = (float)(GetCurrentWindow()->GetBufferWidth()) / (float)(GetCurrentWindow()->GetBufferHeight());
 	m_editorCamera->CreateProjectionMatrix(45.0f, _aspect, 0.1f, 150.0f);
 }
 
@@ -78,7 +76,7 @@ void Assignment::CreateLight()
 	Graphics::CreateAmbientLight(Color(0.1f, 0.1f, 0.1f), aLight);
 	//Graphics::CreatePointLight(glm::vec3(0, 1.5f, 0), Color(1.f, 1.f, 1.f), 0.3f, 0.1f, 0.1f, pLight1);
 	//Graphics::CreatePointLight(glm::vec3(-3, 0, -3), Color(1, 1, 1), 0.5f, 0.2f, 0.1f, pLight2);
-	Graphics::CreateDirectionalLight(Color(1, 1, 1), glm::vec3(0.3f,1, 0.3f), dLight);
+	Graphics::CreateDirectionalLight(Color(1, 1, 1), glm::vec3(0.8f,1, 0.3f), true, dLight);
 }
 
 void Assignment::Run()
@@ -136,6 +134,7 @@ void Assignment::Run()
 		Graphics::SubmitDataToBeRendered(m_editorCamera, _renderingMap);
 		// ----------------------
 		// Rendering
+		Graphics::ShadowMap_Pass();
 		Graphics::Render_Pass();
 		// ----------------------
 		// Swap buffers
@@ -175,7 +174,9 @@ void Assignment::Tick(float second_since_lastFrame)
 		glm::vec3 _toForward = glm::normalize(glm::cross(glm::vec3(0, 1, 0), _toLight)) * (5 * second_since_lastFrame);
 		pLight1->Transform()->Translate(_toForward);
 	}
-
+	if (m_teapot) {
+		m_teapot->Transform()->Rotate(glm::vec3(0, 0, 1), 100 * second_since_lastFrame);
+	}
 	/*
 		m_teapot->Transform()->PrintEulerAngle();
 

@@ -51,7 +51,6 @@ namespace Graphics {
 		glUniform1f(m_shininessID, m_shininess);
 		glUniform3f(m_diffuseIntensityID, m_diffuseIntensity.r, m_diffuseIntensity.g, m_diffuseIntensity.b);
 		glUniform3f(m_specularIntensityID, m_specularIntensity.r, m_specularIntensity.g, m_specularIntensity.b);
-
 	}
 
 	void cMatBlinn::CleanUpMaterialBind()
