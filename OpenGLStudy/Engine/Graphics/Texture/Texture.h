@@ -45,6 +45,8 @@ namespace Graphics {
 		bool LoadTextureAFromFile(const std::string& i_path);
 		// Load render_to_texture from frame buffer
 		bool LoadShadowMapTexture(const std::string& i_type_id, const GLuint& i_width, const GLuint& i_height);
+		// Load color format texture from frame buffer
+		bool LoadRGBTexture(const std::string& i_type_id, const GLuint& i_width, const GLuint& i_height);
 		/** private variables*/
 		GLuint m_textureID;
 		int m_width, m_height, m_bitDepth;

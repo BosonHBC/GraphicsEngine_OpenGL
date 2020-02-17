@@ -33,6 +33,7 @@ namespace Graphics {
 				result = _texture->LoadShadowMapTexture(i_path, i_override_width, i_override_height);
 				break;
 			case Graphics::ETT_FRAMEBUFFER_COLOR:
+				result = _texture->LoadRGBTexture(i_path, i_override_width, i_override_height);
 				break;
 			case Graphics::ETT_INVALID:
 				result = false;
@@ -174,7 +175,39 @@ namespace Graphics {
 		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
 		// Set up texture filtering for looking further
 		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+		
+		// unbind texture
+		glBindTexture(GL_TEXTURE_2D, 0);
+		return result;
+	}
 
+	bool cTexture::LoadRGBTexture(const std::string& i_type_id, const GLuint& i_width, const GLuint& i_height)
+	{
+		auto result = true;
+		m_width = i_width;
+		m_height = i_height;
+
+		const GLuint mipMapLevel = 0;
+		glGenTextures(1, &m_textureID);
+		glBindTexture(GL_TEXTURE_2D, m_textureID);
+
+		// allocate space for the texture with null data fill in
+		glTexImage2D(GL_TEXTURE_2D, mipMapLevel, GL_RGB, m_width, m_height, 0, GL_RGB, GL_FLOAT, nullptr);
+
+		// Set up texture wrapping in s,t axis
+		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_BORDER);
+		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_BORDER);
+
+		const float borderColor[4] = { 1.f,1.f,1.f,1.f };
+		glTexParameterfv(GL_TEXTURE_2D, GL_TEXTURE_BORDER_COLOR, borderColor);
+
+		// Set up texture filtering for looking closer
+		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+		// Set up texture filtering for looking further
+		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+
+		// unbind texture
+		glBindTexture(GL_TEXTURE_2D, 0);
 		return result;
 	}
 

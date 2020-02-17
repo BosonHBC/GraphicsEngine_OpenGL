@@ -1,0 +1,8 @@
+--[[
+    Default Model sheet
+]]
+return 
+{
+    ModelPath = "plane.obj",
+    MaterialPath = "wall.material",
+}

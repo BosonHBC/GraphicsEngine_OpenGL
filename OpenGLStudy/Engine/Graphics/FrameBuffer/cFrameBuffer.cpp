@@ -7,6 +7,9 @@ namespace Graphics {
 	{
 		auto result = true;
 		m_width = i_height; m_height = i_height;
+		GLint _prevBuffer;
+		glGetIntegerv(GL_FRAMEBUFFER_BINDING, &_prevBuffer);
+
 		const GLuint mipMapLevel = 0;
 
 		// Generate another frame buffer
@@ -21,12 +24,47 @@ namespace Graphics {
 			// bind the frame buffer, it can be read / draw. GL_DRAW_FRAMEBUFFER / GL_READ_FRAMEBUFFER
 			glBindFramebuffer(GL_FRAMEBUFFER, m_fbo);
 
-			// write depth map
-			glFramebufferTexture2D(GL_FRAMEBUFFER, GL_DEPTH_ATTACHMENT, GL_TEXTURE_2D, _texture->GetTextureID(), mipMapLevel);
+			auto _glAttachment = 0;
+			switch (i_textureType)
+			{
+			case Graphics::ETT_FRAMEBUFFER_SHADOWMAP:
+				_glAttachment = GL_DEPTH_ATTACHMENT;
+				break;
+			case Graphics::ETT_FRAMEBUFFER_COLOR:
+				_glAttachment = GL_COLOR_ATTACHMENT0;
+				break;
+			default:
+				result = false;
+				printf("Invalid texture type in creating frame buffer.\n");
+				return result;
+				break;
+			}
+			// Ref: https://open.gl/framebuffers
+			// bind the frame buffer to a texture
+			// The second parameter implies that you can have multiple color attachments. 
+			//A fragment shader can output different data to any of these by linking out variables to attachments with the glBindFragDataLocation function
+			glFramebufferTexture2D(GL_FRAMEBUFFER, _glAttachment, GL_TEXTURE_2D, _texture->GetTextureID(), mipMapLevel);
 
-			// no need to draw color values
-			glDrawBuffer(GL_NONE);
-			glReadBuffer(GL_NONE);
+			// no need to draw color values if it is a depth attachment
+			if (_glAttachment == GL_DEPTH_ATTACHMENT) {
+				glDrawBuffer(GL_NONE);
+				glReadBuffer(GL_NONE);
+			}
+			else if (_glAttachment == GL_COLOR_ATTACHMENT0) {
+				glDrawBuffer(GL_COLOR_ATTACHMENT0);
+
+				// We need depth too!
+				// Use render buffer with frame buffer such that we can have a depth and color at the same time
+				{
+					GLuint rboDepthStencil;
+					glGenRenderbuffers(1, &rboDepthStencil);
+					glBindRenderbuffer(GL_RENDERBUFFER, rboDepthStencil);
+					glRenderbufferStorage(GL_RENDERBUFFER, GL_DEPTH24_STENCIL8, m_width, m_height);
+					glFramebufferRenderbuffer(
+						GL_FRAMEBUFFER, GL_DEPTH_STENCIL_ATTACHMENT, GL_RENDERBUFFER, rboDepthStencil
+					);
+				}
+			}
 
 			GLenum status = glCheckFramebufferStatus(GL_FRAMEBUFFER);
 
@@ -36,8 +74,8 @@ namespace Graphics {
 				return result;
 			}
 
-			// cleanup frame buffer, go to default frame buffer
-			glBindFramebuffer(GL_FRAMEBUFFER, 0);
+			// cleanup frame buffer, go to previous buffer
+			glBindFramebuffer(GL_FRAMEBUFFER, _prevBuffer);
 		}
 		else {
 			printf("Initialize frame buffer error, can not create frame buffer without a texture id\n");

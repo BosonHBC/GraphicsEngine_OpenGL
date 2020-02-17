@@ -11,6 +11,7 @@
 #include "Light/DirectionalLight/DirectionalLight.h"
 #include "Camera/Camera.h"
 #include "Model/Model.h"
+#include "FrameBuffer/cFrameBuffer.h"
 
 // Graphics stores, initializes, cleans up all data that needs to be rendered
 namespace Graphics {
@@ -19,6 +20,8 @@ namespace Graphics {
 	bool Initialize();
 
 	void ShadowMap_Pass();
+	void Render_Pass_CaptureCameraView();
+	cFrameBuffer* GetCameraCaptureFrameBuffer();
 	void Render_Pass();
 
 	bool CleanUp();

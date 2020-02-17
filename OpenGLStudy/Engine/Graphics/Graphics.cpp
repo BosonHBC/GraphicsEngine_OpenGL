@@ -26,6 +26,9 @@ namespace Graphics {
 	cUniformBuffer s_uniformBuffer_drawcall(eUniformBufferType::UBT_Drawcall);
 	Color s_clearColor;
 
+	// This buffer capture the camera view
+	cFrameBuffer s_cameraCapture;
+
 	sDataRequiredToRenderAFrame s_dataRequiredToRenderAFrame;
 
 	// Effect
@@ -85,6 +88,12 @@ namespace Graphics {
 				return result;
 			}
 		}
+
+		if (!(result = s_cameraCapture.Initialize(2048, 2048, ETT_FRAMEBUFFER_COLOR))) {
+			printf("Fail to create camera capture frame buffer.\n");
+			return result;
+		}
+
 		return result;
 	}
 
@@ -107,9 +116,8 @@ namespace Graphics {
 
 			// write buffer to the texture
 			_directionalLightFBO->Write();
-			//glClear(GL_DEPTH_BUFFER_BIT);
 
-			glClearColor(s_clearColor.r, s_clearColor.g, s_clearColor.b, 1.f);
+			glClearColor(0, 0, 0, 1.f);
 			glClear(/*GL_COLOR_BUFFER_BIT | */GL_DEPTH_BUFFER_BIT);
 
 			s_directionalLight->SetLightUniformTransform();
@@ -121,6 +129,91 @@ namespace Graphics {
 			_directionalLightFBO->UnWrite();
 		}
 		s_currentEffect->UnUseEffect();
+	}
+
+	void Render_Pass_CaptureCameraView()
+	{
+		// Bind effect
+		{
+			s_currentEffect = GetEffectByKey(Constants::CONST_DEFAULT_EFFECT_KEY);
+			s_currentEffect->UseEffect();
+			s_directionalLight->SetupLight(s_currentEffect->GetProgramID(), 0);
+		}
+		// Reset window size
+		{
+			Application::cApplication* _app = Application::GetCurrentApplication();
+			if (_app) {
+				_app->GetCurrentWindow()->SetViewportSize(s_cameraCapture.GetWidth(), s_cameraCapture.GetHeight());
+			}
+		}
+		s_cameraCapture.Write();
+		// Clear color and buffers
+		{
+			// clear window
+			glClearColor(0.2f, 0.2f, 0.2f, 1.f);
+			// A lot of things can be cleaned like color buffer, depth buffer, so we need to specify what to clear
+			glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+
+		}
+
+		// Update camera
+		{
+			if (s_dataRequiredToRenderAFrame.CurrentCamera)
+				// Update his location for lighting, TODO: should not update here
+				s_dataRequiredToRenderAFrame.CurrentCamera->UpdateUniformLocation(s_currentEffect->GetProgramID());
+			else
+			{
+				printf("No camera in this frame, skip rendering.");
+				return;
+			}
+		}
+
+		// Update frame data
+		{
+			cCamera* _camera = s_dataRequiredToRenderAFrame.CurrentCamera;
+
+			// 1. Copy frame data
+			UniformBufferFormats::sFrame _frame;
+			glm::mat4 _pvMatrix = _camera->GetProjectionMatrix() *_camera->GetViewMatrix();
+			memcpy(_frame.PVMatrix, glm::value_ptr(_pvMatrix), sizeof(_frame.PVMatrix));
+
+			// 2. Update frame data
+			s_uniformBuffer_frame.Update(&_frame);
+
+		}
+
+		// Update lighting data
+		{
+			if (s_ambientLight)
+				s_ambientLight->Illuminate();
+
+			if (s_directionalLight) {
+				s_directionalLight->Illuminate();
+				s_directionalLight->SetLightUniformTransform();
+				if (s_directionalLight->IsShadowEnabled()) {
+					s_directionalLight->UseShadowMap(2);
+					s_directionalLight->GetShadowMap()->Read(GL_TEXTURE2);
+				}
+			}
+
+			for (auto it : s_pointLight_list)
+			{
+				it->Illuminate();
+			}
+		}
+		// Start a draw call loop
+		RenderScene();
+
+		s_cameraCapture.UnWrite();
+		// clear program
+		{
+			s_currentEffect->UnUseEffect();
+		}
+	}
+
+	Graphics::cFrameBuffer* GetCameraCaptureFrameBuffer()
+	{
+		return &s_cameraCapture;
 	}
 
 	void Render_Pass()
@@ -269,6 +362,8 @@ namespace Graphics {
 		// Clean up ambient light
 		safe_delete(s_ambientLight);
 		safe_delete(s_directionalLight);
+
+		s_cameraCapture.~cFrameBuffer();
 		return result;
 	}
 
