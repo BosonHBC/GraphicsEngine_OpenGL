@@ -114,6 +114,22 @@ namespace Graphics {
 		m_specularIntensity = i_specularIntensity;
 	}
 
+	void cMatBlinn::UpdateDiffuseTexture(const Assets::cHandle<cTexture>& i_other)
+	{
+		// release current handle
+		cTexture::s_manager.Release(m_diffuseTextureHandle);
+		// Copy from incoming texture handle
+		cTexture::s_manager.Copy(i_other, m_diffuseTextureHandle);
+	}
+
+	void cMatBlinn::UpdateSpecularTexture(const Assets::cHandle<cTexture>& i_other)
+	{
+		// release current handle
+		cTexture::s_manager.Release(m_specularTextureHandle);
+		// Copy from incoming texture handle
+		cTexture::s_manager.Copy(i_other, m_specularTextureHandle);
+	}
+
 	bool cMatBlinn::LoadFileFromLua(const std::string& i_path, eMaterialType& o_matType, std::string& o_diffusePath, std::string& o_specularPath, Color& o_diffuseColor, Color& o_specularColor, float& o_shineness)
 	{
 		bool result;

@@ -10,12 +10,14 @@
 #include "Time/Time.h"
 
 #include "Graphics/Camera/EditorCamera/EditorCamera.h"
-
+#include "Light/DirectionalLight/DirectionalLight.h"
+#include "FrameBuffer/cFrameBuffer.h"
 #include "Material/Material.h"
 #include "Actor/Actor.h"
 #include "Transform/Transform.h"
 #include "Engine/Graphics/Model/Model.h"
-
+#include "Material/Blinn/MatBlinn.h"
+#include "Graphics/Texture/Texture.h"
 #include <map>
 
 bool Assignment::Initialize(GLuint i_width, GLuint i_height, const char* i_windowName /*= "Default Window"*/)
@@ -32,6 +34,12 @@ bool Assignment::Initialize(GLuint i_width, GLuint i_height, const char* i_windo
 	CreateCamera();
 	CreateLight();
 
+/* // This is an example of how to switch current texture to an existing texture
+	// Let the plane use the shadow map texture
+	Graphics::cMatBlinn* _planeMat = reinterpret_cast<Graphics::cMatBlinn*>(Graphics::cModel::s_manager.Get(m_plane->GetModelHandle())->GetMaterialAt());
+	auto shadowMapHandle = dLight->GetShadowMap()->GetTextureHandle();
+	_planeMat->UpdateDiffuseTexture(shadowMapHandle);
+	_planeMat->UpdateSpecularTexture(shadowMapHandle);*/
 	return result;
 }
 
