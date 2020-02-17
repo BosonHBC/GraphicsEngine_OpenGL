@@ -89,7 +89,7 @@ namespace Graphics {
 			}
 		}
 
-		if (!(result = s_cameraCapture.Initialize(2048, 2048, ETT_FRAMEBUFFER_COLOR))) {
+		if (!(result = s_cameraCapture.Initialize(800, 600, ETT_FRAMEBUFFER_COLOR))) {
 			printf("Fail to create camera capture frame buffer.\n");
 			return result;
 		}
