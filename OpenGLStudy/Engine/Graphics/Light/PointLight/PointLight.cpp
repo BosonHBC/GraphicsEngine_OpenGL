@@ -2,29 +2,10 @@
 #include <stdio.h>
 namespace Graphics {
 
-
-	cPointLight::cPointLight(const cPointLight& i_other)
-		: cGenLight(i_other), m_const(i_other.m_const), m_linear(i_other.m_linear), m_quadratic(m_quadratic),
-		m_positionID(i_other.m_positionID), m_constID(i_other.m_constID), m_linearID(i_other.m_linearID), m_quadraticID(i_other.m_quadraticID)
-	{
-	}
-
-	cPointLight& cPointLight::operator=(const cPointLight& i_other)
-	{
-		cGenLight::operator=(i_other);
-		m_const = i_other.m_const;
-		m_linear = i_other.m_linear;
-		m_quadratic = i_other.m_quadratic;
-		m_positionID = i_other.m_positionID;
-		m_constID = i_other.m_constID;
-		m_linearID = i_other.m_linearID;
-		m_quadraticID = i_other.m_quadraticID;
-		return *this;
-	}
-
 	void cPointLight::Illuminate()
 	{
 		glUniform3f(m_colorID, m_color.r, m_color.g, m_color.b);
+		glUniform1i(m_enableShadowID, m_enableShadow);
 		glm::vec3 worldLoc = m_transform->GetWorldLocation();
 		glUniform3f(m_positionID, worldLoc.x, worldLoc.y, worldLoc.z);
 		glUniform1f(m_constID, m_const);
@@ -40,6 +21,9 @@ namespace Graphics {
 
 		snprintf(_buff, sizeof(_buff), "pointLights[%d].base.color", m_lightIndex);
 		m_colorID = glGetUniformLocation(i_programID, _buff);
+
+		snprintf(_buff, sizeof(_buff), "pointLights[%d].base.enableShadow", m_lightIndex);
+		m_enableShadowID = glGetUniformLocation(i_programID, _buff);
 
 		snprintf(_buff, sizeof(_buff), "pointLights[%d].position", m_lightIndex);
 		m_positionID = glGetUniformLocation(i_programID, _buff);

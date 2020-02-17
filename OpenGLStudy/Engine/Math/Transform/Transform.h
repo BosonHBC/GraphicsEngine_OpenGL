@@ -3,10 +3,6 @@
 #include "glm/glm.hpp"
 #include "glm/gtc/matrix_transform.hpp"
 
-namespace Graphics {
-	class cEffect;
-}
-
 class cTransform
 {
 public:

@@ -13,13 +13,13 @@ namespace Graphics {
 		bool result = true;
 		switch (m_type)
 		{
-		case Graphics::UBT_Frame:
+		case UBT_Frame:
 			m_size = sizeof(UniformBufferFormats::sFrame);
 			break;
-		case Graphics::UBT_Drawcall:
+		case UBT_Drawcall:
 			m_size = sizeof(UniformBufferFormats::sDrawCall);
 			break;
-		case Graphics::UBT_Invalid:
+		case UBT_Invalid:
 			result = false;
 			return result;
 			break;
@@ -74,7 +74,7 @@ namespace Graphics {
 	void cUniformBuffer::Bind()
 	{
 		if (m_bufferID == 0) {
-			printf("Error: Invalid buffer id. Should not bind it to shader.");
+			printf("Error: Invalid buffer id. Should not bind it to shader.\n");
 			return;
 		}
 
@@ -83,7 +83,7 @@ namespace Graphics {
 		const auto errorCode = glGetError();
 		if (errorCode != GL_NO_ERROR)
 		{
-			printf("OpenGL failed to bind the uniform buffer %u.",	 m_bufferID);
+			printf("OpenGL failed to bind the uniform buffer %u.\n",	 m_bufferID);
 			return;
 		}
 	}
@@ -97,15 +97,18 @@ namespace Graphics {
 
 		// Activate the uniform buffer
 		glBindBuffer(GL_UNIFORM_BUFFER, m_bufferID);
-
+		auto errorCode = glGetError();
+		if (errorCode != GL_NO_ERROR)
+		{
+			printf("OpenGL failed to bind uniform buffer %u.\n", m_bufferID);
+		}
 		// Copy the updated memory to the GPU
 		GLintptr updateAtTheBeginning = 0;
 		glBufferSubData(GL_UNIFORM_BUFFER, updateAtTheBeginning, static_cast<GLsizeiptr>(m_size), i_data);
-		const auto errorCode = glGetError();
+		
 		if (errorCode != GL_NO_ERROR)
 		{
-			printf("OpenGL failed to update data of uniform buffer %u.",m_bufferID);
-			return;
+			printf("OpenGL failed to update data of uniform buffer %u.\n",m_bufferID);
 		}
 		glBindBuffer(GL_UNIFORM_BUFFER, 0);
 	}

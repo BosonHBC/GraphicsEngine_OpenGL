@@ -12,16 +12,12 @@ namespace Graphics {
 	class cEffect;
 	class cPointLight;
 	class cAmbientLight;
+	class cDirectionalLight;
 }
 //----------------------------------------------
 class Assignment : public Application::cApplication
 {
 public:
-	Assignment() {};
-	virtual ~Assignment()
-	{
-	};
-
 	virtual bool Initialize(GLuint i_width, GLuint i_height, const char* i_windowName = "Default Window");
 	virtual void Run();
 	virtual void CleanUp();
@@ -40,6 +36,7 @@ private:
 	Graphics::cPointLight* pLight1;
 	Graphics::cPointLight* pLight2;
 	Graphics::cAmbientLight* aLight;
+	Graphics::cDirectionalLight* dLight;
 
 	cActor* m_teapot;
 	cActor* m_teapot2;

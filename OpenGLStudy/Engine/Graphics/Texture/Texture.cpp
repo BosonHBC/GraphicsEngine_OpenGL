@@ -135,7 +135,6 @@ namespace Graphics {
 		// this allow multiples texture to be bound to one shader
 		// so in one object, it can be multiple texture
 		glBindTexture(GL_TEXTURE_2D, m_textureID);
-		
 	}
 
 	void cTexture::CleanUpTextureBind(int i_textureLocation)

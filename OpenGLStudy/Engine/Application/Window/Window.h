@@ -27,6 +27,8 @@ public:
 
 	/** Usage function*/
 	void SwapBuffers();
+	// Update the viewport size
+	void SetViewportSize(GLuint i_newWidth, GLuint i_newHeight);
 
 	/** Getters */
 	const GLint& GetBufferWidth() const { return m_bufferWidth; }

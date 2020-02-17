@@ -4,6 +4,6 @@
 return 
 {
     ModelPath = "plane.obj",
-    MaterialPath = "DefaultBlinnPhong.material",
+    MaterialPath = "plane.material",
 
 }

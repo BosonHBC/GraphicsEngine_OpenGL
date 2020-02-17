@@ -4,20 +4,21 @@
 #include "gl/glew.h"
 #include "glfw/glfw3.h"
 #include <thread>
-
+#include <typeinfo>
 /** Forward deceleration*/
 //----------------------------------------------
 class cWindow;
 //----------------------------------------------
 namespace Application {
+
 	class cApplication
 	{
 	public:
-		cApplication();
-		virtual ~cApplication();
+		cApplication() {}
+		~cApplication() { CleanUp(); };
 
 		virtual bool Initialize(GLuint i_width, GLuint i_height, const char* i_windowName = "Default Window");
-		virtual void PostInitialization();
+		virtual bool PostInitialization();
 		virtual void CleanUp();
 		virtual void Run() {};
 
@@ -28,10 +29,11 @@ namespace Application {
 		
 		void UpdateUntilExit();
 
-		cWindow* Get_GLFW_Window() const { return m_window; }
+		cWindow* GetCurrentWindow() const { return m_window; }
 
 	protected:
-		cWindow* m_window;
+		cApplication(const cApplication& i_other) = delete;
+		cApplication& operator = (const cApplication& i_other) = delete;
 
 		/** Handle timing*/
 		//---------------------------------------------------
@@ -47,7 +49,48 @@ namespace Application {
 		std::thread* m_applicationThread;
 		void ApplicationLoopThread(void* const io_application);
 
+
+		/** protected variables */
+		//---------------------------------------------------
+		//Current window 
+		cWindow* m_window;
 	};
 
+	extern cApplication* s_currentApplication;
+
+	// global functions
+	template<class APP >
+	bool CreateApplication(APP*& o_app, GLuint i_width, GLuint i_height, const char* i_windowName/* = "Default Window"*/)
+	{
+		auto result = true;
+
+		cApplication* _newApp = new APP();
+		s_currentApplication = reinterpret_cast<APP*>(_newApp);
+		if (!(result = _newApp->Initialize(i_width, i_height, i_windowName)))
+		{
+			printf("Failed to create application!");
+			safe_delete(_newApp);
+			return result;
+		}
+		o_app = reinterpret_cast<APP*>(_newApp);
+		return result;
+	}
+
+	template<class APP>
+	void DestroyApplication(APP*& io_app)
+	{
+		cApplication* _tempApp;
+		if (_tempApp = reinterpret_cast<cApplication*>(io_app)) 
+		{
+			_tempApp->CleanUp();
+			safe_delete(io_app);
+		}
+		else
+		{
+			printf("This is not an application!\n");
+		}
+	}
+
+	cApplication* GetCurrentApplication();
 
 }
