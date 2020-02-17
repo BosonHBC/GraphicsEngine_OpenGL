@@ -107,19 +107,20 @@ namespace Graphics {
 
 			// write buffer to the texture
 			_directionalLightFBO->Write();
-			glClear(GL_DEPTH_BUFFER_BIT);
+			//glClear(GL_DEPTH_BUFFER_BIT);
 
-			//glClearColor(s_clearColor.r, s_clearColor.g, s_clearColor.b, 1.f);
-			//glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+			glClearColor(s_clearColor.r, s_clearColor.g, s_clearColor.b, 1.f);
+			glClear(/*GL_COLOR_BUFFER_BIT | */GL_DEPTH_BUFFER_BIT);
 
 			s_directionalLight->SetLightUniformTransform();
 
 			// Draw scenes
 			RenderScene_shadowMap();
 
-			glBindFramebuffer(GL_FRAMEBUFFER, 0);
+			// switch back to original buffer
+			_directionalLightFBO->UnWrite();
 		}
-		glUseProgram(0);
+		s_currentEffect->UnUseEffect();
 	}
 
 	void Render_Pass()
@@ -181,9 +182,10 @@ namespace Graphics {
 			if (s_directionalLight) {
 				s_directionalLight->Illuminate();
 				s_directionalLight->SetLightUniformTransform();
-				s_directionalLight->UseShadowMap(2);
-				s_directionalLight->GetShadowMap()->Read(GL_TEXTURE2);
-
+				if (s_directionalLight->IsShadowEnabled()) {
+					s_directionalLight->UseShadowMap(2);
+					s_directionalLight->GetShadowMap()->Read(GL_TEXTURE2);
+				}
 			}
 
 			for (auto it : s_pointLight_list)
@@ -195,7 +197,7 @@ namespace Graphics {
 		RenderScene();
 		// clear program
 		{
-			glUseProgram(0);
+			s_currentEffect->UnUseEffect();
 		}
 		// Swap buffers happens in main rendering loop, not in this render function.
 	}

@@ -48,8 +48,13 @@ namespace Graphics {
 
 	void cFrameBuffer::Write()
 	{
-		// right now, it will draw to this frame buffer 
+		// right now, it will write current buffer to this frame buffer 
 		glBindFramebuffer(GL_FRAMEBUFFER, m_fbo);
+	}
+
+	void cFrameBuffer::UnWrite()
+	{
+		glBindFramebuffer(GL_FRAMEBUFFER, 0);
 	}
 
 	void cFrameBuffer::Read(GLenum i_textureID)
@@ -70,6 +75,11 @@ namespace Graphics {
 
 		cTexture::s_manager.Release(m_renderToTexture);
 
+	}
+
+	bool cFrameBuffer::IsValid() const
+	{
+		return (m_fbo!=0);
 	}
 
 }

@@ -35,7 +35,8 @@ namespace Graphics {
 		virtual void SetLightUniformTransform() {};
 		virtual void UseShadowMap(GLuint i_textureUnit) {}
 		cFrameBuffer* GetShadowMap() const { return m_shadowMap; }
-		bool IsShadowMapValid() const { return m_shadowMap != nullptr; }
+		bool IsShadowMapValid() const;
+		bool IsShadowEnabled() const { return IsShadowMapValid()&&m_enableShadow; }
 	protected:
 		Color m_color;
 		GLuint m_colorID, m_enableShadowID;

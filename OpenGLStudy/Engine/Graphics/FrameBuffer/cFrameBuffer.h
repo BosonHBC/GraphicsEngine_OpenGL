@@ -12,14 +12,18 @@ namespace Graphics {
 		
 		virtual bool Initialize(GLuint i_width, GLuint i_height, ETextureType i_textureType);
 		
-		// bind fbo and write the texture
+		// Write current buffer data to this frame buffer
 		virtual void Write();
+		// Switch back to original frame buffer
+		virtual void UnWrite();
 
+		// Use the texture loaded from the frame buffer
 		virtual void Read(GLenum i_textureID);
 
 		virtual ~cFrameBuffer();
 
 		/** Getters */
+		bool IsValid() const;
 		GLuint GetWidth() const { return m_width; }
 		GLuint GetHeight() const { return m_height; }
 

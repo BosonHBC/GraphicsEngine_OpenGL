@@ -32,4 +32,9 @@ namespace Graphics {
 		m_shadowMap->Initialize(i_width, i_height, ETextureType::ETT_FRAMEBUFFER_SHADOWMAP);
 	}
 
+	bool cGenLight::IsShadowMapValid() const
+	{
+		return m_shadowMap->IsValid();
+	}
+
 }
