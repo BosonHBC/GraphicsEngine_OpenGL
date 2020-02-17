@@ -11,7 +11,7 @@ namespace Graphics {
 		bool result = true;
 		std::string _diffusePath, _specularPath;
 		// load material data from LUA files
-		if (!(result = LoadFileFromLua(i_path, m_matType,_diffusePath, _specularPath, m_diffuseIntensity, m_specularIntensity, m_shininess))) {
+		if (!(result = LoadFileFromLua(i_path, m_matType, _diffusePath, _specularPath, m_diffuseIntensity, m_specularIntensity, m_shininess))) {
 			printf("Fail to load material[%s] from LUA.\n", i_path.c_str());
 			return result;
 		}
@@ -75,15 +75,12 @@ namespace Graphics {
 	{
 		auto result = true;
 		std::string _path = i_diffusePath;
-		if (!(result = cTexture::s_manager.Load(_path.insert(0, Constants::CONST_PATH_TEXTURE_ROOT), m_diffuseTextureHandle, false))) {
-			if (result = cTexture::s_manager.Load(Constants::CONST_PATH_DEFAULT_TEXTURE, m_diffuseTextureHandle, false))
+		if (!(result = cTexture::s_manager.Load(_path.insert(0, Constants::CONST_PATH_TEXTURE_ROOT), m_diffuseTextureHandle, ETextureType::ETT_FILE))) {
+			printf("Texture[%s] is invalid, use default texture instead.\n", _path.c_str());
+			//Use default texture, which is the white board
+			if (!(result = cTexture::s_manager.Load(Constants::CONST_PATH_DEFAULT_TEXTURE, m_diffuseTextureHandle, ETextureType::ETT_FILE)))
 			{
-				//TODO: Use default texture, which is the white board
-
-			}
-			else {
-				//TODO: print Fail to load default texture
-
+				printf("Fail to load default texture.\n");
 			}
 		}
 	}
@@ -92,14 +89,11 @@ namespace Graphics {
 	{
 		auto result = true;
 		std::string _path = i_specularPath;
-		if (!(result = cTexture::s_manager.Load(_path.insert(0, Constants::CONST_PATH_TEXTURE_ROOT), m_specularTextureHandle, false))) {
-			if (result = cTexture::s_manager.Load(Constants::CONST_PATH_DEFAULT_TEXTURE, m_specularTextureHandle, false))
+		if (!(result = cTexture::s_manager.Load(_path.insert(0, Constants::CONST_PATH_TEXTURE_ROOT), m_specularTextureHandle, ETextureType::ETT_FILE))) {
+			printf("Texture[%s] is invalid, use default texture instead.\n", _path.c_str());
+			//Use default texture, which is the white board
+			if (!(result = cTexture::s_manager.Load(Constants::CONST_PATH_DEFAULT_TEXTURE, m_specularTextureHandle, ETextureType::ETT_FILE)))
 			{
-				//TODO: Use default texture, which is the white board
-				printf("Texture[%s] is invalid, use default texture instead.\n",_path.c_str());
-			}
-			else {
-				//TODO: print Fail to load default texture
 				printf("Fail to load default texture.\n");
 			}
 		}

@@ -7,7 +7,7 @@
 Assets::cAssetManager < Graphics::cTexture > Graphics::cTexture::s_manager;
 namespace Graphics {
 
-	bool cTexture::Load(const std::string& i_path, cTexture*& o_texture,bool i_isAlpha)
+	bool cTexture::Load(const std::string& i_path, cTexture*& o_texture, ETextureType i_ett /* = FILE*/, const GLuint& i_override_width/* = 0*/, const GLuint& i_override_height /*= 0*/)
 	{
 		auto result = true;
 		cTexture* _texture = nullptr;
@@ -21,19 +21,36 @@ namespace Graphics {
 		}
 		else
 		{
-			if (i_isAlpha) {
-				result = _texture->LoadTextureA(i_path);
-			}
-			else {
-				result = _texture->LoadTexture(i_path);
-			}
-			if (!result) {
-				// TODO: Print load texture fail
-				delete _texture;
-				return result;
+			switch (i_ett)
+			{
+			case Graphics::ETT_FILE:
+				result = _texture->LoadTextureFromFile(i_path);
+				break;
+			case Graphics::ETT_FILE_ALPHA:
+				result = _texture->LoadTextureAFromFile(i_path);
+				break;
+			case Graphics::ETT_FRAMEBUFFER_SHADOWMAP:
+				result = _texture->LoadShadowMapTexture(i_path, i_override_width, i_override_height);
+				break;
+			case Graphics::ETT_FRAMEBUFFER_COLOR:
+				break;
+			case Graphics::ETT_INVALID:
+				result = false;
+				printf("Load texture error: Invalid texture type: %d in\n", i_ett);
+				break;
+			default:
+				break;
 			}
 		}
-		
+
+
+		if (!result) {
+			// TODO: Print load texture fail
+			delete _texture;
+			return result;
+		}
+
+
 		o_texture = _texture;
 
 		//TODO: Loading information succeed!
@@ -42,7 +59,7 @@ namespace Graphics {
 		return result;
 	}
 
-	bool cTexture::LoadTexture(const std::string& i_path)
+	bool cTexture::LoadTextureFromFile(const std::string& i_path)
 	{
 		unsigned char* _data = stbi_load(i_path.c_str(), &m_width, &m_height, &m_bitDepth, 0);
 		if (!_data) {
@@ -81,10 +98,16 @@ namespace Graphics {
 
 		// clear data of stb_image
 		stbi_image_free(_data);
+
+		auto errorCode = glGetError();
+		if (errorCode != GL_NO_ERROR)
+		{
+			printf("OpenGL failed to load texture %s, with error ID: %d.\n", i_path, errorCode);
+		}
 		return true;
 	}
 
-	bool cTexture::LoadTextureA(const std::string& i_path)
+	bool cTexture::LoadTextureAFromFile(const std::string& i_path)
 	{
 		unsigned char* _data = stbi_load(i_path.c_str(), &m_width, &m_height, &m_bitDepth, 0);
 		if (!_data) {
@@ -125,6 +148,34 @@ namespace Graphics {
 		// clear data of stb_image
 		stbi_image_free(_data);
 		return true;
+	}
+
+	bool cTexture::LoadShadowMapTexture(const std::string& i_type_id, const GLuint& i_width, const GLuint& i_height)
+	{
+		auto result = true;
+		m_width = i_width;
+		m_height = i_height;
+
+		const GLuint mipMapLevel = 0;
+		glGenTextures(1, &m_textureID);
+		glBindTexture(GL_TEXTURE_2D, m_textureID);
+
+		// allocate space for the texture with null data fill in
+		glTexImage2D(GL_TEXTURE_2D, mipMapLevel, GL_DEPTH_COMPONENT, m_width, m_height, 0, GL_DEPTH_COMPONENT, GL_FLOAT, nullptr);
+
+		// Set up texture wrapping in s,t axis
+		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_BORDER);
+		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_BORDER);
+
+		const float borderColor[4] = { 1.f,1.f,1.f,1.f };
+		glTexParameterfv(GL_TEXTURE_2D, GL_TEXTURE_BORDER_COLOR, borderColor);
+
+		// Set up texture filtering for looking closer
+		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+		// Set up texture filtering for looking further
+		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+
+		return result;
 	}
 
 	void cTexture::UseTexture(int i_textureLocation)
