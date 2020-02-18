@@ -92,7 +92,7 @@ void Assignment::CreateLight()
 	Graphics::CreateAmbientLight(Color(0.1f, 0.1f, 0.1f), aLight);
 	Graphics::CreatePointLight(glm::vec3(0, 1.5f, 0), Color(1.f, 1.f, 1.f), 0.3f, 0.1f, 0.1f, false,pLight1);
 	Graphics::CreatePointLight(glm::vec3(-3, 0, -3), Color(1, 1, 1), 0.5f, 0.2f, 0.1f, false,pLight2);
-	Graphics::CreateDirectionalLight(Color(1, 1, 1), glm::vec3(0.8f,1, 0.3f), false, dLight);
+	Graphics::CreateDirectionalLight(Color(1, 1, 1), glm::vec3(0.8f,1, 0.3f), true, dLight);
 }
 
 void Assignment::Run()
@@ -144,6 +144,7 @@ void Assignment::Run()
 		m_teapot2->Transform()->Update();
 		m_plane->Transform()->Update();
 		m_wall->Transform()->Update();
+
 		std::vector<std::pair<Graphics::cModel::HANDLE, cTransform*>> _renderingMap;
 		_renderingMap.push_back({ m_plane->GetModelHandle(), m_plane->Transform() });
 		_renderingMap.push_back({ m_teapot->GetModelHandle(), m_teapot->Transform() });
@@ -152,7 +153,7 @@ void Assignment::Run()
 		Graphics::SubmitDataToBeRendered(m_editorCamera, _renderingMap);
 		// ----------------------
 		// Rendering
-		//Graphics::ShadowMap_Pass();
+		Graphics::ShadowMap_Pass();
 		Graphics::Render_Pass_CaptureCameraView();
 
 		std::vector<std::pair<Graphics::cModel::HANDLE, cTransform*>> _renderingMap2;
