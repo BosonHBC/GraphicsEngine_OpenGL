@@ -21,6 +21,7 @@ namespace Graphics {
 
 		/** Usage functions*/
 		void UseEffect();
+		void UnUseEffect();
 		void SetPointLightCount(int i_pointLightCount);
 		void SetSpotLightCount(int i_spotLightCount);
 

@@ -96,9 +96,14 @@ namespace Graphics {
 
 	void cEffect::UseEffect()
 	{
-		// Bind program and VAO
+		// Bind program
 		glUseProgram(m_programID);
 
+	}
+
+	void cEffect::UnUseEffect()
+	{
+		glUseProgram(0);
 	}
 
 	void cEffect::SetPointLightCount(int i_pointLightCount)

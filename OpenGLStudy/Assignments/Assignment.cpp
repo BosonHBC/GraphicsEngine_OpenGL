@@ -10,12 +10,14 @@
 #include "Time/Time.h"
 
 #include "Graphics/Camera/EditorCamera/EditorCamera.h"
-
+#include "Light/DirectionalLight/DirectionalLight.h"
+#include "FrameBuffer/cFrameBuffer.h"
 #include "Material/Material.h"
 #include "Actor/Actor.h"
 #include "Transform/Transform.h"
 #include "Engine/Graphics/Model/Model.h"
-
+#include "Material/Blinn/MatBlinn.h"
+#include "Graphics/Texture/Texture.h"
 #include <map>
 
 bool Assignment::Initialize(GLuint i_width, GLuint i_height, const char* i_windowName /*= "Default Window"*/)
@@ -32,6 +34,10 @@ bool Assignment::Initialize(GLuint i_width, GLuint i_height, const char* i_windo
 	CreateCamera();
 	CreateLight();
 
+	Graphics::cMatBlinn* _wallMat = dynamic_cast<Graphics::cMatBlinn*>(Graphics::cModel::s_manager.Get(m_wall->GetModelHandle())->GetMaterialAt());
+	auto cameraViewTextureHandle = Graphics::GetCameraCaptureFrameBuffer()->GetTextureHandle();
+	_wallMat->UpdateDiffuseTexture(cameraViewTextureHandle);
+	_wallMat->UpdateSpecularTexture(cameraViewTextureHandle);
 	return result;
 }
 
@@ -60,13 +66,23 @@ void Assignment::CreateActor()
 	m_plane->SetModel("Contents/models/plane.model");
 	m_plane->UpdateUniformVariables(Graphics::GetCurrentEffect());
 	m_plane->Transform()->Translate(glm::vec3(0,-0.4f, -2.f));
+	m_plane->Transform()->Rotate(glm::vec3(0, 1, 0), 180);
 	m_plane->Transform()->Scale(glm::vec3(20, 1, 20));
+
+	m_wall = new cActor();
+	m_wall->Initialize();
+	m_wall->SetModel("Contents/models/wall.model");
+	m_wall->UpdateUniformVariables(Graphics::GetCurrentEffect());
+	m_wall->Transform()->Translate(glm::vec3(0, 1,-5.f));
+	m_wall->Transform()->Rotate(glm::vec3(1, 0, 0), 90);
+	m_wall->Transform()->Rotate(glm::vec3(0, 1, 0), 180);
+	m_wall->Transform()->Scale(glm::vec3(-5, 1, 3.75f));
 
 }
 
 void Assignment::CreateCamera()
 {
-	m_editorCamera = new  cEditorCamera(glm::vec3(0, 1.f, 0), -30.f, 0, 3, 10.f);
+	m_editorCamera = new  cEditorCamera(glm::vec3(0, 1.f, 0), -10.f, 0, 3, 10.f);
 	float _aspect = (float)(GetCurrentWindow()->GetBufferWidth()) / (float)(GetCurrentWindow()->GetBufferHeight());
 	m_editorCamera->CreateProjectionMatrix(45.0f, _aspect, 0.1f, 150.0f);
 }
@@ -74,8 +90,8 @@ void Assignment::CreateCamera()
 void Assignment::CreateLight()
 {
 	Graphics::CreateAmbientLight(Color(0.1f, 0.1f, 0.1f), aLight);
-	//Graphics::CreatePointLight(glm::vec3(0, 1.5f, 0), Color(1.f, 1.f, 1.f), 0.3f, 0.1f, 0.1f, pLight1);
-	//Graphics::CreatePointLight(glm::vec3(-3, 0, -3), Color(1, 1, 1), 0.5f, 0.2f, 0.1f, pLight2);
+	Graphics::CreatePointLight(glm::vec3(0, 1.5f, 0), Color(1.f, 1.f, 1.f), 0.3f, 0.1f, 0.1f, false,pLight1);
+	Graphics::CreatePointLight(glm::vec3(-3, 0, -3), Color(1, 1, 1), 0.5f, 0.2f, 0.1f, false,pLight2);
 	Graphics::CreateDirectionalLight(Color(1, 1, 1), glm::vec3(0.8f,1, 0.3f), true, dLight);
 }
 
@@ -127,14 +143,25 @@ void Assignment::Run()
 		m_teapot->Transform()->Update();
 		m_teapot2->Transform()->Update();
 		m_plane->Transform()->Update();
+		m_wall->Transform()->Update();
+
 		std::vector<std::pair<Graphics::cModel::HANDLE, cTransform*>> _renderingMap;
+		_renderingMap.push_back({ m_plane->GetModelHandle(), m_plane->Transform() });
 		_renderingMap.push_back({ m_teapot->GetModelHandle(), m_teapot->Transform() });
 		_renderingMap.push_back({ m_teapot2->GetModelHandle(), m_teapot2->Transform() });
-		_renderingMap.push_back({ m_plane->GetModelHandle(), m_plane->Transform() });
+		
 		Graphics::SubmitDataToBeRendered(m_editorCamera, _renderingMap);
 		// ----------------------
 		// Rendering
 		Graphics::ShadowMap_Pass();
+		Graphics::Render_Pass_CaptureCameraView();
+
+		std::vector<std::pair<Graphics::cModel::HANDLE, cTransform*>> _renderingMap2;
+		_renderingMap2.push_back({ m_teapot->GetModelHandle(), m_teapot->Transform() });
+		_renderingMap2.push_back({ m_teapot2->GetModelHandle(), m_teapot2->Transform() });
+		_renderingMap2.push_back({ m_plane->GetModelHandle(), m_plane->Transform() });
+		_renderingMap2.push_back({ m_wall->GetModelHandle(), m_wall->Transform() });
+		Graphics::SubmitDataToBeRendered(m_editorCamera, _renderingMap2);
 		Graphics::Render_Pass();
 		// ----------------------
 		// Swap buffers
@@ -149,6 +176,7 @@ void Assignment::CleanUp()
 	safe_delete(m_teapot);
 	safe_delete(m_teapot2);
 	safe_delete(m_plane);
+	safe_delete(m_wall);
 
 }
 

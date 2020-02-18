@@ -41,5 +41,6 @@ private:
 	cActor* m_teapot;
 	cActor* m_teapot2;
 	cActor* m_plane;
+	cActor* m_wall;
 };
 

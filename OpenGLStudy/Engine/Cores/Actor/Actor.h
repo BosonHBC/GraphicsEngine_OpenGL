@@ -28,8 +28,7 @@ public:
 	void SetModel(const std::string i_modelPath);
 
 	/** Getters*/
-	cTransform* Transform() const { 
-		return m_transform; }
+	cTransform* Transform() const { return m_transform; }
 	Graphics::cModel::HANDLE GetModelHandle() const { return m_modelHandle; }
 private:
 

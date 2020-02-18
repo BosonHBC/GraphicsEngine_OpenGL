@@ -138,6 +138,13 @@ namespace Graphics {
 		m_mesh_to_material.~vector();
 	}
 
+	Graphics::cMaterial* cModel::GetMaterialAt(GLuint i_idx /*= 0*/)
+	{
+		if (i_idx < m_materialList.size()) {
+			return cMaterial::s_manager.Get(m_materialList[i_idx+1]);
+		}
+	}
+
 	bool cModel::LoadFileFromLua(const char* i_path, std::string& o_modelPath, std::string& o_materialPath)
 	{
 		auto result = true;

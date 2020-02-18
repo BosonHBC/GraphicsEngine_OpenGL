@@ -1,75 +1,107 @@
 #include "cFrameBuffer.h"
 #include "stdio.h"
-
+#include <string>
 namespace Graphics {
-	cFrameBuffer::cFrameBuffer()
-	{
-		m_fbo = m_textureMapID = m_width = m_height = 0;
-	}
 
-
-	bool cFrameBuffer::Initialize(GLuint i_width, GLuint i_height)
+	bool cFrameBuffer::Initialize(GLuint i_width, GLuint i_height, ETextureType i_textureType)
 	{
 		auto result = true;
 		m_width = i_height; m_height = i_height;
-		GLuint mipMapLevel = 0;
-		// Generate render_to_texture texture
-		{
-			glGenTextures(1, &m_textureMapID);
-			glBindTexture(GL_TEXTURE_2D, m_textureMapID);
+		GLint _prevBuffer;
+		glGetIntegerv(GL_FRAMEBUFFER_BINDING, &_prevBuffer);
 
-			// allocate space for the texture with null data fill in
-			glTexImage2D(GL_TEXTURE_2D, mipMapLevel, GL_DEPTH_COMPONENT, m_width, m_height, 0, GL_DEPTH_COMPONENT, GL_FLOAT, nullptr);
-
-			// Set up texture wrapping in s,t axis
-			glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_BORDER);
-			glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_BORDER);
-			
-			const float borderColor[4] = { 1.f,1.f,1.f,1.f };
-			glTexParameterfv(GL_TEXTURE_2D, GL_TEXTURE_BORDER_COLOR, borderColor);
-
-			// Set up texture filtering for looking closer
-			glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
-			// Set up texture filtering for looking further
-			glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
-		}
+		const GLuint mipMapLevel = 0;
 
 		// Generate another frame buffer
 		glGenFramebuffers(1, &m_fbo);
+		std::string key = "FB_" +std::to_string(m_fbo) + "_ETT_" + std::to_string(i_textureType);
 
-		// bind the frame buffer, it can be read / draw. GL_DRAW_FRAMEBUFFER / GL_READ_FRAMEBUFFER
-		glBindFramebuffer(GL_FRAMEBUFFER, m_fbo);
+		// Generate render_to_texture texture
+		cTexture::s_manager.Load(key, m_renderToTexture, i_textureType, m_width, m_height);
+		cTexture* _texture = cTexture::s_manager.Get(m_renderToTexture);
+		if (_texture) {
 
-		// write depth map
-		glFramebufferTexture2D(GL_FRAMEBUFFER, GL_DEPTH_ATTACHMENT, GL_TEXTURE_2D, m_textureMapID, mipMapLevel);
-		
-		// no need to draw color values
-		glDrawBuffer(GL_NONE);
-		glReadBuffer(GL_NONE);
+			// bind the frame buffer, it can be read / draw. GL_DRAW_FRAMEBUFFER / GL_READ_FRAMEBUFFER
+			glBindFramebuffer(GL_FRAMEBUFFER, m_fbo);
 
-		GLenum status = glCheckFramebufferStatus(GL_FRAMEBUFFER);
+			auto _glAttachment = 0;
+			switch (i_textureType)
+			{
+			case Graphics::ETT_FRAMEBUFFER_SHADOWMAP:
+				_glAttachment = GL_DEPTH_ATTACHMENT;
+				break;
+			case Graphics::ETT_FRAMEBUFFER_COLOR:
+				_glAttachment = GL_COLOR_ATTACHMENT0;
+				break;
+			default:
+				result = false;
+				printf("Invalid texture type in creating frame buffer.\n");
+				return result;
+				break;
+			}
+			// Ref: https://open.gl/framebuffers
+			// bind the frame buffer to a texture
+			// The second parameter implies that you can have multiple color attachments. 
+			//A fragment shader can output different data to any of these by linking out variables to attachments with the glBindFragDataLocation function
+			glFramebufferTexture2D(GL_FRAMEBUFFER, _glAttachment, GL_TEXTURE_2D, _texture->GetTextureID(), mipMapLevel);
 
-		if (!(result = (status == GL_FRAMEBUFFER_COMPLETE)))
-		{
-			printf("Frame buffer error in initializing: %i.\n", status);
-			return result;
+			// no need to draw color values if it is a depth attachment
+			if (_glAttachment == GL_DEPTH_ATTACHMENT) {
+				glDrawBuffer(GL_NONE);
+				glReadBuffer(GL_NONE);
+			}
+			else if (_glAttachment == GL_COLOR_ATTACHMENT0) {
+				glDrawBuffer(GL_COLOR_ATTACHMENT0);
+
+				// We need depth too!
+				// Use render buffer with frame buffer such that we can have a depth and color at the same time
+				{
+					GLuint rboDepthStencil;
+					glGenRenderbuffers(1, &rboDepthStencil);
+					glBindRenderbuffer(GL_RENDERBUFFER, rboDepthStencil);
+					glRenderbufferStorage(GL_RENDERBUFFER, GL_DEPTH24_STENCIL8, m_width, m_height);
+					glFramebufferRenderbuffer(
+						GL_FRAMEBUFFER, GL_DEPTH_STENCIL_ATTACHMENT, GL_RENDERBUFFER, rboDepthStencil
+					);
+				}
+			}
+
+			GLenum status = glCheckFramebufferStatus(GL_FRAMEBUFFER);
+
+			if (!(result = (status == GL_FRAMEBUFFER_COMPLETE)))
+			{
+				printf("Frame buffer error in initializing: %i.\n", status);
+				return result;
+			}
+
+			// cleanup frame buffer, go to previous buffer
+			glBindFramebuffer(GL_FRAMEBUFFER, _prevBuffer);
 		}
-
-		// cleanup frame buffer, go to default frame buffer
-		glBindFramebuffer(GL_FRAMEBUFFER, 0);
+		else {
+			printf("Initialize frame buffer error, can not create frame buffer without a texture id\n");
+			result = false;
+		}
 		return result;
 	}
 
 	void cFrameBuffer::Write()
 	{
-		// right now, it will draw to this frame buffer 
+		// right now, it will write current buffer to this frame buffer 
 		glBindFramebuffer(GL_FRAMEBUFFER, m_fbo);
+	}
+
+	void cFrameBuffer::UnWrite()
+	{
+		glBindFramebuffer(GL_FRAMEBUFFER, 0);
 	}
 
 	void cFrameBuffer::Read(GLenum i_textureID)
 	{
-		glActiveTexture(i_textureID);
-		glBindTexture(GL_TEXTURE_2D, m_textureMapID);
+		cTexture* _texture = cTexture::s_manager.Get(m_renderToTexture);
+		if (_texture) {
+			_texture->UseTexture(i_textureID);
+		}
+
 	}
 
 	cFrameBuffer::~cFrameBuffer()
@@ -78,10 +110,14 @@ namespace Graphics {
 			glDeleteFramebuffers(1, &m_fbo);
 			m_fbo = 0;
 		}
-		if (m_textureMapID) {
-			glDeleteTextures(1, &m_textureMapID);
-			m_textureMapID = 0;
-		}
+
+		cTexture::s_manager.Release(m_renderToTexture);
+
+	}
+
+	bool cFrameBuffer::IsValid() const
+	{
+		return (m_fbo!=0);
 	}
 
 }

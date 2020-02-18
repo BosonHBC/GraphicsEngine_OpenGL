@@ -11,7 +11,18 @@ namespace Assets {
 
 		// If the key exist in the map, get the existing one
 		if (m_keyToAssetHandle_Map.find(i_key) != m_keyToAssetHandle_Map.end()) {
-			o_asset = m_keyToAssetHandle_Map[i_key];
+			auto _handle = m_keyToAssetHandle_Map[i_key];
+
+			const auto _index = _handle.GetIndex();
+			if (_index < m_assetList.size()) {
+				// increase the reference count
+				m_assetList[_index].ReferenceCount++;
+				o_asset = _handle;
+			}
+			else {
+				// Wrong Index
+				result = false;
+			}
 		}
 		else {
 			tAsset* _pAsset = nullptr;
@@ -37,6 +48,29 @@ namespace Assets {
 				result = false;
 			}
 		}
+		return result;
+	}
+
+	template< class tAsset, class tKey /*= std::string*/>
+	bool Assets::cAssetManager<tAsset, tKey>::Copy(const cHandle<tAsset> & i_handle, cHandle<tAsset> & o_handle)
+	{
+		auto result = true;
+		tAsset* const _asset = Get(i_handle);
+		if (!(result = (_asset != nullptr))) {
+			// Invalid input handle id
+			return result;
+		}
+		const auto _index = i_handle.GetIndex();
+		if (_index < m_assetList.size()) {
+			// increase the reference count
+			m_assetList[_index].ReferenceCount++;
+			o_handle = i_handle;
+		}
+		else {
+			// Index wrong
+			result = false;
+		}
+
 		return result;
 	}
 

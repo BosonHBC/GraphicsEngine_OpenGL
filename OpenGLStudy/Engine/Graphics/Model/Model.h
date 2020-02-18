@@ -33,6 +33,8 @@ namespace Graphics {
 		void RenderWithoutMaterial();
 		void CleanUp();
 
+		/** Getters */
+		cMaterial* GetMaterialAt(GLuint i_idx = 0);
 	private:
 
 		/** private default constructor, that can not be used by others*/

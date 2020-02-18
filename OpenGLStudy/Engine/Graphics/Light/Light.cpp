@@ -29,7 +29,12 @@ namespace Graphics {
 	void cGenLight::CreateShadowMap(GLuint i_width, GLuint i_height)
 	{
 		m_shadowMap = new cFrameBuffer();
-		m_shadowMap->Initialize(i_width, i_height);
+		m_shadowMap->Initialize(i_width, i_height, ETextureType::ETT_FRAMEBUFFER_SHADOWMAP);
+	}
+
+	bool cGenLight::IsShadowMapValid() const
+	{
+		return m_shadowMap->IsValid();
 	}
 
 }
