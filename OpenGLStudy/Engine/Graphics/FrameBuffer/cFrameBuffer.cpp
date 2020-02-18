@@ -34,13 +34,15 @@ namespace Graphics {
 				glFramebufferTexture2D(GL_FRAMEBUFFER, GL_DEPTH_ATTACHMENT, GL_TEXTURE_2D, _texture->GetTextureID(), mipMapLevel);
 				glDrawBuffer(GL_NONE);
 				glReadBuffer(GL_NONE);
+
 				break;
 			case Graphics::ETT_FRAMEBUFFER_COLOR:
 
+				glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, _texture->GetTextureID(), mipMapLevel);
 				glDrawBuffer(GL_COLOR_ATTACHMENT0);
 
 				// We need depth too!
-				// Use create depth&stencil render buffer in the frame buffer such that we can have a depth and color at the same time
+				// Use render buffer with frame buffer such that we can have a depth and color at the same time
 				{
 					GLuint rboDepthStencil;
 					glGenRenderbuffers(1, &rboDepthStencil);
@@ -73,7 +75,6 @@ namespace Graphics {
 			printf("Initialize frame buffer error, can not create frame buffer without a texture id\n");
 			result = false;
 		}
-		
 		return result;
 	}
 
