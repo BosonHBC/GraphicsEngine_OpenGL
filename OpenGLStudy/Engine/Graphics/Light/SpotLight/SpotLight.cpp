@@ -1,6 +1,7 @@
 #include "Graphics/Light/SpotLight/SpotLight.h"
 #include <stdio.h>
-
+#include "Graphics/Graphics.h"
+#include "Graphics/UniformBuffer/UniformBufferFormats.h"
 namespace Graphics {
 
 	void cSpotLight::SetSpotLightInitialLocation(glm::vec3 i_pos, glm::vec3 i_dir)
@@ -11,43 +12,21 @@ namespace Graphics {
 
 	void cSpotLight::Illuminate()
 	{
-		cPointLight::Illuminate();
-
-		glUniform3f(m_directionID, m_dir.x, m_dir.y, m_dir.z);
-		glUniform1f(m_edgeID, m_procEdge);
+		auto& gLighting = Graphics::GetGlobalLightingData();
+		gLighting.spotLights[m_lightIndex].base.base.color = m_color;
+		gLighting.spotLights[m_lightIndex].base.base.enableShadow = m_enableShadow;
+		gLighting.spotLights[m_lightIndex].base.position = m_transform->GetWorldLocation();
+		gLighting.spotLights[m_lightIndex].base.quadratic = m_quadratic;
+		gLighting.spotLights[m_lightIndex].base.linear = m_linear;
+		gLighting.spotLights[m_lightIndex].base.constant = m_const;
+		gLighting.spotLights[m_lightIndex].direction = m_dir;
+		gLighting.spotLights[m_lightIndex].edge = m_edge;
 	}
 
 	void cSpotLight::SetupLight(const GLuint& i_programID, GLuint i_lightIndex /*= 0*/)
 	{
 		cGenLight::SetupLight(i_programID, i_lightIndex);
 
-		char _buff[100] = { '\0' };
-
-		snprintf(_buff, sizeof(_buff), "spotLights[%d].base.base.color", m_lightIndex);
-		m_colorID = glGetUniformLocation(i_programID, _buff);
-
-		snprintf(_buff, sizeof(_buff), "spotLights[%d].base.base.enableShadow", m_lightIndex);
-		m_enableShadowID = glGetUniformLocation(i_programID, _buff);
-
-		snprintf(_buff, sizeof(_buff), "spotLights[%d].base.position", m_lightIndex);
-		m_positionID = glGetUniformLocation(i_programID, _buff);
-
-		snprintf(_buff, sizeof(_buff), "spotLights[%d].base.constant", m_lightIndex);
-		m_constID = glGetUniformLocation(i_programID, _buff);
-
-		snprintf(_buff, sizeof(_buff), "spotLights[%d].base.linear", m_lightIndex);
-		m_linearID = glGetUniformLocation(i_programID, _buff);
-
-		snprintf(_buff, sizeof(_buff), "spotLights[%d].base.quadratic", m_lightIndex);
-		m_quadraticID = glGetUniformLocation(i_programID, _buff);
-
-		// Spot light stuffs
-
-		snprintf(_buff, sizeof(_buff), "spotLights[%d].direction", m_lightIndex);
-		m_directionID = glGetUniformLocation(i_programID, _buff);
-
-		snprintf(_buff, sizeof(_buff), "spotLights[%d].edge", m_lightIndex);
-		m_edgeID = glGetUniformLocation(i_programID, _buff);
 	}
 
 }

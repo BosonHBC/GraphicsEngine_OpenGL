@@ -23,6 +23,9 @@ namespace Graphics {
 		case UBT_BlinnPhongMaterial:
 			m_size = sizeof(UniformBufferFormats::sBlinnPhongMaterial);
 			break;
+		case UBT_Lighting:
+			m_size = sizeof(UniformBufferFormats::sLighting);
+			break;
 		case UBT_Invalid:
 			result = false;
 			return result;
@@ -118,6 +121,38 @@ namespace Graphics {
 		if (errorCode != GL_NO_ERROR)
 		{
 			printf("OpenGL failed to update data of uniform buffer %u.\n",m_bufferID);
+		}
+		glBindBuffer(GL_UNIFORM_BUFFER, 0);
+	}
+
+	void cUniformBuffer::UpdatePartially(const void* const i_data, GLintptr i_offset, GLintptr i_size)
+	{
+		if (m_bufferID == 0) {
+			printf("Error: Invalid buffer id. Should not bind it to shader.");
+			return;
+		}
+		if (i_offset >= m_size || i_size > m_size) 
+		{
+			printf("Error: Invalid data size of update request with id: %d.", m_bufferID);
+			return;
+		}
+
+		// Activate the uniform buffer
+		glBindBuffer(GL_UNIFORM_BUFFER, m_bufferID);
+		auto errorCode = glGetError();
+		if (errorCode != GL_NO_ERROR)
+		{
+			printf("OpenGL failed to bind uniform buffer %u.\n", m_bufferID);
+		}
+
+		// Update data partially
+		{
+			glBufferSubData(GL_UNIFORM_BUFFER, i_offset, i_size, i_data);
+		}
+
+		if (errorCode != GL_NO_ERROR)
+		{
+			printf("OpenGL failed to update data of uniform buffer %u.\n", m_bufferID);
 		}
 		glBindBuffer(GL_UNIFORM_BUFFER, 0);
 	}

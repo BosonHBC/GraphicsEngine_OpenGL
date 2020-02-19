@@ -1,5 +1,7 @@
 #include "DirectionalLight.h"
 #include "glm/gtc/type_ptr.hpp"
+#include "Graphics/Graphics.h"
+#include "Graphics/UniformBuffer/UniformBufferFormats.h"
 namespace Graphics {
 
 	cDirectionalLight::~cDirectionalLight()
@@ -11,19 +13,16 @@ namespace Graphics {
 	{
 		cGenLight::SetupLight(i_programID, i_lightIndex);
 
-		m_colorID = glGetUniformLocation(i_programID, "directionalLight.base.color");
-		m_enableShadowID = glGetUniformLocation(i_programID, "directionalLight.base.enableShadow");
-		m_directionID = glGetUniformLocation(i_programID, "directionalLight.direction");
 		m_directionalLightTransformID = glGetUniformLocation(i_programID, "directionalLightTransform");
 		m_directionalShadowMapID = glGetUniformLocation(i_programID, "directionalShadowMap");
 	}
 
 	void cDirectionalLight::Illuminate()
 	{
-		glUniform3f(m_colorID, m_color.r, m_color.g, m_color.b);
-		glUniform1i(m_enableShadowID, m_enableShadow);
-		glUniform3f(m_directionID, m_direction.x, m_direction.y, m_direction.z);
-
+		auto& gLighting = Graphics::GetGlobalLightingData();
+		gLighting.directionalLight.base.color = m_color;
+		gLighting.directionalLight.base.enableShadow = m_enableShadow;
+		gLighting.directionalLight.direction = m_direction;
 	}
 
 	glm::vec3 cDirectionalLight::Direction(glm::vec3 i_position)

@@ -25,8 +25,12 @@ namespace Graphics {
 	// ---------------------------------
 	cUniformBuffer s_uniformBuffer_frame(eUniformBufferType::UBT_Frame);
 	cUniformBuffer s_uniformBuffer_drawcall(eUniformBufferType::UBT_Drawcall);
+	cUniformBuffer s_uniformBuffer_Lighting(eUniformBufferType::UBT_Lighting);
+
+	UniformBufferFormats::sLighting s_globalLightingData;
 
 	Color s_clearColor;
+
 
 	// This buffer capture the camera view
 	cFrameBuffer s_cameraCapture;
@@ -65,22 +69,28 @@ namespace Graphics {
 		// Initialize uniform buffer
 		{
 			// Frame buffer
-			if (!(result = s_uniformBuffer_frame.Initialize(nullptr))) {
+			if (result = s_uniformBuffer_frame.Initialize(nullptr)) {
+				s_uniformBuffer_frame.Bind();
+			}
+			else {
 				printf("Fail to initialize uniformBuffer_frame\n");
 				return result;
 			}
-			else {
-				// bind frame buffer
-				s_uniformBuffer_frame.Bind();
-			}
 			// draw call
-			if (!(result = s_uniformBuffer_drawcall.Initialize(nullptr))) {
+			if (result = s_uniformBuffer_drawcall.Initialize(nullptr)) {
+				s_uniformBuffer_drawcall.Bind();
+			}
+			else {
 				printf("Fail to initialize uniformBuffer_drawcall\n");
 				return result;
 			}
-			else {
-				// Bind draw call buffer
-				s_uniformBuffer_drawcall.Bind();
+			if (result = s_uniformBuffer_Lighting.Initialize(nullptr)) {
+				s_uniformBuffer_Lighting.Bind();
+			}
+			else
+			{
+				printf("Fail to initialize uniformBuffer_Lighting\n");
+				return result;
 			}
 		}
 		// Create shadow map effect
@@ -183,6 +193,7 @@ namespace Graphics {
 
 		// Update lighting data
 		{
+
 			if (s_ambientLight)
 				s_ambientLight->Illuminate();
 
@@ -199,6 +210,8 @@ namespace Graphics {
 			{
 				it->Illuminate();
 			}
+			s_globalLightingData.pointLightCount = s_pointLight_list.size();
+			s_uniformBuffer_Lighting.Update(&s_globalLightingData);
 		}
 		// Start a draw call loop
 		RenderScene();
@@ -278,6 +291,10 @@ namespace Graphics {
 			{
 				it->Illuminate();
 			}
+		
+			s_globalLightingData.pointLightCount = s_pointLight_list.size();
+			s_uniformBuffer_Lighting.Update(&s_globalLightingData);
+		
 		}
 		// Start a draw call loop
 		RenderScene();
@@ -330,7 +347,9 @@ namespace Graphics {
 		if (!(result = cMatBlinn::GetUniformBuffer().CleanUp())) {
 			printf("Fail to cleanup uniformBuffer_MatBlinnPhong\n");
 		}
-
+		if (!(result = s_uniformBuffer_Lighting.CleanUp())) {
+			printf("Fail to cleanup uniformBuffer_MatBlinnPhong\n");
+		}
 
 		// Clean up effect
 		for (auto it = s_KeyToEffect_map.begin(); it != s_KeyToEffect_map.end(); ++it)
@@ -387,6 +406,11 @@ namespace Graphics {
 	Graphics::cEffect* GetCurrentEffect()
 	{
 		return s_currentEffect;
+	}
+
+	Graphics::UniformBufferFormats::sLighting& GetGlobalLightingData()
+	{
+		return s_globalLightingData;
 	}
 
 	bool CreateAmbientLight(const Color& i_color, cAmbientLight*& o_ambientLight)

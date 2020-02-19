@@ -19,8 +19,7 @@ out vec4 color;
 
 const int MAX_COUNT_PER_LIGHT = 5;
 
-
-layout(std140, binding = 2) uniform uniformBuffer_blinnPhongMaterial
+layout(std140, binding = 2) uniform g_uniformBuffer_blinnPhongMaterial
 {
 	vec3 kd;
 	vec3 ks;
@@ -42,7 +41,8 @@ struct AmbientLight{
 struct DirectionalLight{
 	Light base;
 	vec3 direction;
-	
+	// For vec4 alignment
+	float v1Padding;
 };
 struct PointLight{
 	Light base;
@@ -56,19 +56,21 @@ struct SpotLight{
 	vec3 direction;
 	float edge;
 };
-
+layout(std140, binding = 3) uniform g_uniformBuffer_Lighting
+{
+	int g_pointLightCount; // 4 bytes
+	int g_spotLightCount; // 4 bytes
+	// For vec4 alignment
+	vec2 g_v2Padding;
+	AmbientLight g_ambientLight; // 16 bytes
+	DirectionalLight g_directionalLight; // 32 bytes
+	PointLight g_pointLights[MAX_COUNT_PER_LIGHT]; // 48 * MAX_COUNT_PER_LIGHT = 240 bytes
+	SpotLight g_spotLights[MAX_COUNT_PER_LIGHT]; // 64 * MAX_COUNT_PER_LIGHT = 320 bytes
+}; // 624 bytes per lighting data
 
 //-------------------------------------------------------------------------
 // Uniform Variables
 //-------------------------------------------------------------------------
-
-uniform int pointLightCount;
-uniform int spotLightCount;
-
-uniform AmbientLight ambientLight;
-uniform DirectionalLight directionalLight;
-uniform PointLight pointLights[MAX_COUNT_PER_LIGHT];
-uniform SpotLight spotLights[MAX_COUNT_PER_LIGHT];
 
 uniform vec3 camPos;
 
@@ -88,7 +90,7 @@ float CalcDirectionalLightShadowMap(vec3 vN)
 	float current = projcoords.z;
 
 	// Calculate bias
-	vec3 lightDir = normalize(directionalLight.direction);
+	vec3 lightDir = normalize(g_directionalLight.direction);
 	const float bias = max(0.005 * (1- dot(vN, lightDir)), 0.0005);
 
 	float shadow = 0.0;
@@ -145,9 +147,9 @@ vec4 IlluminateByDirection_Ks(Light light, vec3 vN, vec3 vL){
 // DirectionalLight
 //-------------------------------------------------------------------------
 vec4 CalcDirectionalLight(vec4 diffusTexCol, vec4 specTexCol, vec3 vN){
-		vec3 dir = normalize(directionalLight.direction);
-		vec4 color_kd = diffusTexCol * IlluminateByDirection_Kd(directionalLight.base, vN, dir);
-		vec4 color_ks = specTexCol * IlluminateByDirection_Ks(directionalLight.base, vN, dir);
+		vec3 dir = normalize(g_directionalLight.direction);
+		vec4 color_kd = diffusTexCol * IlluminateByDirection_Kd(g_directionalLight.base, vN, dir);
+		vec4 color_ks = specTexCol * IlluminateByDirection_Ks(g_directionalLight.base, vN, dir);
 		return color_kd + color_ks;
 }
 
@@ -172,8 +174,8 @@ vec4 CalcPointLight(PointLight pLight,vec4 diffusTexCol, vec4 specTexCol,vec3 vN
 vec4 CalcPointLights(vec4 diffusTexCol, vec4 specTexCol,vec3 vN){
 	vec4 outColor = vec4(0,0,0,0);
 
-	for(int i = 0; i < pointLightCount; ++i){
-		outColor += CalcPointLight(pointLights[i],diffusTexCol, specTexCol,vN);
+	for(int i = 0; i < g_pointLightCount; ++i){
+		outColor += CalcPointLight(g_pointLights[i],diffusTexCol, specTexCol,vN);
 	}
 	return outColor;
 }
@@ -190,13 +192,13 @@ void main(){
 	vec4 specularTexColor =texture(specularTex, texCood0);
 
 	// ambient light
-	vec4 ambientLightColor = diffuseTexColor * vec4(ambientLight.base.color, 1.0f) * vec4(kd, 1.0f);
+	vec4 ambientLightColor = diffuseTexColor * vec4(g_ambientLight.base.color, 1.0f) * vec4(kd, 1.0f);
 	
 	// point light
 	vec4 pointLightColor = CalcPointLights(diffuseTexColor, specularTexColor, nomr_normal);
 
 	// directional light
-	float directionalLightShadowFactor = directionalLight.base.enableShadow ? (1.0 - CalcDirectionalLightShadowMap(nomr_normal)): 1.0;
+	float directionalLightShadowFactor = g_directionalLight.base.enableShadow ? (1.0 - CalcDirectionalLightShadowMap(nomr_normal)): 1.0;
 	vec4 directionLightColor = directionalLightShadowFactor * CalcDirectionalLight(diffuseTexColor, specularTexColor, nomr_normal);
 
 	color =  ( ambientLightColor + pointLightColor + directionLightColor);

@@ -24,7 +24,6 @@ namespace Graphics {
 		protected:
 		// for attenuation calculation: c+bx+ax^2
 		GLfloat m_const, m_linear, m_quadratic;
-		GLuint m_positionID, m_constID, m_linearID, m_quadraticID;
 	};
 
 }

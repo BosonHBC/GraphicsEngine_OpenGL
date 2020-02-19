@@ -11,6 +11,7 @@ namespace Graphics {
 		UBT_Frame = 0,
 		UBT_Drawcall = 1,
 		UBT_BlinnPhongMaterial = 2,
+		UBT_Lighting = 3,
 		UBT_Invalid = 0xff,
 	};
 
@@ -24,11 +25,18 @@ namespace Graphics {
 		cUniformBuffer(const eUniformBufferType i_ubt) : m_type(i_ubt), m_initialized(false){}
 		~cUniformBuffer();
 
+		// Create the uniform buffer
 		bool Initialize(const void* const i_data);
+		
 		// Bind the buffer
 		void Bind();
-		// Update data in GPU
+
+		// Update all data in GPU
 		void Update(const void* const i_data);
+
+		// Update data partially in the GPU, use this carefully !!!
+		void UpdatePartially(const void* const i_data, GLintptr i_offset, GLintptr i_size);
+
 		bool CleanUp();
 		bool IsValid() const { return m_type == UBT_Invalid; }
 

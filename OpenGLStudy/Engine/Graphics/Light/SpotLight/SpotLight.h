@@ -12,7 +12,6 @@ namespace Graphics {
 			m_edge(i_edge),
 			cPointLight(i_color, i_const, i_linear, i_quadratic) 
 		{
-
 			m_procEdge = cosf(glm::radians(m_edge));
 		}
 
@@ -27,8 +26,6 @@ namespace Graphics {
 	private:
 		glm::vec3 m_dir;
 		GLfloat m_edge, m_procEdge;
-
-		GLuint m_directionID, m_edgeID;
 	};
 
 }
