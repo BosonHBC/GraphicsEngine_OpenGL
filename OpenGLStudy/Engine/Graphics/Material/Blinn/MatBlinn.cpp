@@ -3,7 +3,7 @@
 #include "Externals/ASSIMP_N/include/assimp/scene.h"
 #include "Assets/LoadTableFromLuaFile.h"
 #include "Graphics/UniformBuffer/UniformBufferFormats.h"
-#include "glm/gtc/type_ptr.hpp"
+
 namespace Graphics {
 	// Definition of static blinnPhongUniformBlock
 	cUniformBuffer cMatBlinn::s_BlinnPhongUniformBlock(eUniformBufferType::UBT_BlinnPhongMaterial);
@@ -55,14 +55,7 @@ namespace Graphics {
 			_specularTex->UseTexture(GL_TEXTURE1);
 		}
 
-		UniformBufferFormats::sBlinnPhongMaterial _tempBlinnPhong;
-		_tempBlinnPhong.kd = glm::vec3(m_diffuseIntensity.r, m_diffuseIntensity.g, m_diffuseIntensity.b);
-		_tempBlinnPhong.ks = glm::vec3(m_specularIntensity.r, m_specularIntensity.g, m_specularIntensity.b);
-		_tempBlinnPhong.shininess = m_shininess;
-		//memcpy(&_tempBlinnPhong.kd, glm::value_ptr(diffuseColor), sizeof(_tempBlinnPhong.kd));
-		//memcpy(&_tempBlinnPhong.ks, color, sizeof(_tempBlinnPhong.ks));
-		//memcpy(&_tempBlinnPhong.shininess, &m_shininess, sizeof(_tempBlinnPhong.shininess));
-		s_BlinnPhongUniformBlock.Update(&_tempBlinnPhong);
+		s_BlinnPhongUniformBlock.Update(&UniformBufferFormats::sBlinnPhongMaterial(m_diffuseIntensity, m_specularIntensity, m_shininess));
 	}
 
 	void cMatBlinn::CleanUpMaterialBind()

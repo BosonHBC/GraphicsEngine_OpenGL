@@ -176,13 +176,8 @@ namespace Graphics {
 		{
 			cCamera* _camera = s_dataRequiredToRenderAFrame.CurrentCamera;
 
-			// 1. Copy frame data
-			UniformBufferFormats::sFrame _frame;
-			glm::mat4 _pvMatrix = _camera->GetProjectionMatrix() *_camera->GetViewMatrix();
-			memcpy(_frame.PVMatrix, glm::value_ptr(_pvMatrix), sizeof(_frame.PVMatrix));
-
-			// 2. Update frame data
-			s_uniformBuffer_frame.Update(&_frame);
+			// 1. Update frame data
+			s_uniformBuffer_frame.Update(&UniformBufferFormats::sFrame(_camera->GetProjectionMatrix(), _camera->GetViewMatrix()));
 
 		}
 
@@ -260,14 +255,8 @@ namespace Graphics {
 		// Update frame data
 		{
 			cCamera* _camera = s_dataRequiredToRenderAFrame.CurrentCamera;
-
-			// 1. Copy frame data
-			UniformBufferFormats::sFrame _frame;
-			glm::mat4 _pvMatrix = _camera->GetProjectionMatrix() *_camera->GetViewMatrix();
-			memcpy(_frame.PVMatrix, glm::value_ptr(_pvMatrix), sizeof(_frame.PVMatrix));
-
-			// 2. Update frame data
-			s_uniformBuffer_frame.Update(&_frame);
+			// 1. Update frame data
+			s_uniformBuffer_frame.Update(&UniformBufferFormats::sFrame(_camera->GetProjectionMatrix(), _camera->GetViewMatrix()));
 
 		}
 
@@ -303,14 +292,9 @@ namespace Graphics {
 		// loop through every single model
 		for (auto it = s_dataRequiredToRenderAFrame.ModelToTransform_map.begin(); it != s_dataRequiredToRenderAFrame.ModelToTransform_map.end(); ++it)
 		{
-			// 1. Copy draw call data
-			UniformBufferFormats::sDrawCall _drawcall;
-			memcpy(_drawcall.ModelMatrix, glm::value_ptr(it->second->M()), sizeof(_drawcall.ModelMatrix));
-			memcpy(_drawcall.NormalMatrix, glm::value_ptr(glm::transpose(it->second->MInv())), sizeof(_drawcall.NormalMatrix));
-
-			// 2. Update draw call data
-			s_uniformBuffer_drawcall.Update(&_drawcall);
-			// 3. Draw
+			// 1. Update draw call data
+			s_uniformBuffer_drawcall.Update(&UniformBufferFormats::sDrawCall(it->second->M(), it->second->TranspostInverse()));
+			// 2. Draw
 			cModel* _model = cModel::s_manager.Get(it->first);
 			if (_model) {
 				_model->RenderWithoutMaterial();
@@ -323,14 +307,9 @@ namespace Graphics {
 		// loop through every single model
 		for (auto it = s_dataRequiredToRenderAFrame.ModelToTransform_map.begin(); it != s_dataRequiredToRenderAFrame.ModelToTransform_map.end(); ++it)
 		{
-			// 1. Copy draw call data
-			UniformBufferFormats::sDrawCall _drawcall;
-			memcpy(_drawcall.ModelMatrix, glm::value_ptr(it->second->M()), sizeof(_drawcall.ModelMatrix));
-			memcpy(_drawcall.NormalMatrix, glm::value_ptr(glm::transpose(it->second->MInv())), sizeof(_drawcall.NormalMatrix));
-
-			// 2. Update draw call data
-			s_uniformBuffer_drawcall.Update(&_drawcall);
-			// 3. Draw
+			// 1. Update draw call data
+			s_uniformBuffer_drawcall.Update(&UniformBufferFormats::sDrawCall(it->second->M(), it->second->TranspostInverse()));
+			// 2. Draw
 			cModel* _model = cModel::s_manager.Get(it->first);
 			if (_model) {
 				_model->Render();
