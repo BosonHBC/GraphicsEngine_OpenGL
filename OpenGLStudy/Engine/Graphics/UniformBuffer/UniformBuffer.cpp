@@ -11,6 +11,7 @@ namespace Graphics {
 	bool cUniformBuffer::Initialize(const void* const i_data)
 	{
 		bool result = true;
+		if (m_initialized) return result;
 		switch (m_type)
 		{
 		case UBT_Frame:
@@ -18,6 +19,9 @@ namespace Graphics {
 			break;
 		case UBT_Drawcall:
 			m_size = sizeof(UniformBufferFormats::sDrawCall);
+			break;
+		case UBT_BlinnPhongMaterial:
+			m_size = sizeof(UniformBufferFormats::sBlinnPhongMaterial);
 			break;
 		case UBT_Invalid:
 			result = false;
@@ -68,11 +72,14 @@ namespace Graphics {
 				return result;
 			}
 		}
+
 		return result;
 	}
 
 	void cUniformBuffer::Bind()
 	{
+		if (m_initialized) return;
+
 		if (m_bufferID == 0) {
 			printf("Error: Invalid buffer id. Should not bind it to shader.\n");
 			return;
@@ -86,6 +93,8 @@ namespace Graphics {
 			printf("OpenGL failed to bind the uniform buffer %u.\n",	 m_bufferID);
 			return;
 		}
+
+		if (!m_initialized) m_initialized = true;
 	}
 
 	void cUniformBuffer::Update(const void* const i_data)
@@ -115,8 +124,7 @@ namespace Graphics {
 
 	bool cUniformBuffer::CleanUp()
 	{
-		m_type = UBT_Invalid;
-		m_size = 0;
+
 		if (m_bufferID != 0)
 		{
 			glDeleteBuffers(1, &m_bufferID);
@@ -124,9 +132,11 @@ namespace Graphics {
 			m_bufferID = 0;
 			if (errorCode != GL_NO_ERROR)
 			{
-				printf("OpenGL failed to delete the constant buffer.");
+				printf("OpenGL failed to delete the constant buffer with type: %d.", m_type);
 				return false;
 			}
+			m_type = UBT_Invalid;
+			m_size = 0;
 		}
 		return true;
 	}

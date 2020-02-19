@@ -10,7 +10,7 @@ namespace Graphics {
 	{
 		UBT_Frame = 0,
 		UBT_Drawcall = 1,
-		UBT_ShadowMapDrawCall = 2,
+		UBT_BlinnPhongMaterial = 2,
 		UBT_Invalid = 0xff,
 	};
 
@@ -21,7 +21,7 @@ namespace Graphics {
 	{
 	public:
 		// only allow this constructor
-		cUniformBuffer(const eUniformBufferType i_ubt) : m_type(i_ubt) {}
+		cUniformBuffer(const eUniformBufferType i_ubt) : m_type(i_ubt), m_initialized(false){}
 		~cUniformBuffer();
 
 		bool Initialize(const void* const i_data);
@@ -37,6 +37,8 @@ namespace Graphics {
 		eUniformBufferType m_type = UBT_Invalid;
 		uint32_t m_size;
 		GLuint m_bufferID;
+		// prevent repeated initialization
+		bool m_initialized;
 
 		// Remove all default constructors
 		cUniformBuffer() = delete;

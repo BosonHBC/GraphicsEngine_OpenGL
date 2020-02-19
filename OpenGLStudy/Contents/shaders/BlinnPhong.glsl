@@ -19,6 +19,13 @@ out vec4 color;
 
 const int MAX_COUNT_PER_LIGHT = 5;
 
+
+layout(std140, binding = 2) uniform uniformBuffer_blinnPhongMaterial
+{
+	vec3 kd;
+	vec3 ks;
+	float shininess;
+};
 //-------------------------------------------------------------------------
 // Struct definitions
 //-------------------------------------------------------------------------
@@ -50,11 +57,6 @@ struct SpotLight{
 	float edge;
 };
 
-struct Material{
-	vec3 kd;
-	vec3 ks;
-	float shininess;
-};
 
 //-------------------------------------------------------------------------
 // Uniform Variables
@@ -67,8 +69,6 @@ uniform AmbientLight ambientLight;
 uniform DirectionalLight directionalLight;
 uniform PointLight pointLights[MAX_COUNT_PER_LIGHT];
 uniform SpotLight spotLights[MAX_COUNT_PER_LIGHT];
-
-uniform Material material;
 
 uniform vec3 camPos;
 
@@ -120,7 +120,7 @@ vec4 IlluminateByDirection_Kd(Light light, vec3 vN, vec3 vL){
 
 	float vN_Dot_vL = max( dot( vN , vL), 0.0f );
 
-	vec4 diffuseColor = vec4(material.kd, 1.0f) * vN_Dot_vL;
+	vec4 diffuseColor = vec4(kd, 1.0f) * vN_Dot_vL;
 	outColor += vec4(light.color , 1.0f) * diffuseColor;
 
 	return outColor;
@@ -131,8 +131,8 @@ vec4 IlluminateByDirection_Ks(Light light, vec3 vN, vec3 vL){
 
 	vec3 vV = normalize(camPos - fragPos);
 	vec3 vH = normalize(vV + vL);
-	float specularFactor = max(pow(dot(vH, vN),material.shininess),0.0f);
-	vec4 specularColor = vec4(material.ks, 1.0f) * specularFactor;
+	float specularFactor = max(pow(dot(vH, vN),shininess),0.0f);
+	vec4 specularColor = vec4(ks, 1.0f) * specularFactor;
 	outColor += vec4(light.color , 1.0f) *specularColor;
 
 	return outColor;
@@ -190,7 +190,7 @@ void main(){
 	vec4 specularTexColor =texture(specularTex, texCood0);
 
 	// ambient light
-	vec4 ambientLightColor = diffuseTexColor * vec4(ambientLight.base.color, 1.0f) * vec4(material.kd, 1.0f);
+	vec4 ambientLightColor = diffuseTexColor * vec4(ambientLight.base.color, 1.0f) * vec4(kd, 1.0f);
 	
 	// point light
 	vec4 pointLightColor = CalcPointLights(diffuseTexColor, specularTexColor, nomr_normal);

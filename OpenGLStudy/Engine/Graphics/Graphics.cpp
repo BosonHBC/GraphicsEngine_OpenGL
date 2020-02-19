@@ -11,6 +11,7 @@
 #include "FrameBuffer/cFrameBuffer.h"
 #include "Application/Application.h"
 #include "Application/Window/Window.h"
+#include "Material/Blinn/MatBlinn.h"
 namespace Graphics {
 
 	// TODO:
@@ -24,6 +25,7 @@ namespace Graphics {
 	// ---------------------------------
 	cUniformBuffer s_uniformBuffer_frame(eUniformBufferType::UBT_Frame);
 	cUniformBuffer s_uniformBuffer_drawcall(eUniformBufferType::UBT_Drawcall);
+
 	Color s_clearColor;
 
 	// This buffer capture the camera view
@@ -62,6 +64,7 @@ namespace Graphics {
 
 		// Initialize uniform buffer
 		{
+			// Frame buffer
 			if (!(result = s_uniformBuffer_frame.Initialize(nullptr))) {
 				printf("Fail to initialize uniformBuffer_frame\n");
 				return result;
@@ -70,6 +73,7 @@ namespace Graphics {
 				// bind frame buffer
 				s_uniformBuffer_frame.Bind();
 			}
+			// draw call
 			if (!(result = s_uniformBuffer_drawcall.Initialize(nullptr))) {
 				printf("Fail to initialize uniformBuffer_drawcall\n");
 				return result;
@@ -344,6 +348,10 @@ namespace Graphics {
 		if (!(result = s_uniformBuffer_drawcall.CleanUp())) {
 			printf("Fail to cleanup uniformBuffer_drawcall\n");
 		}
+		if (!(result = cMatBlinn::GetUniformBuffer().CleanUp())) {
+			printf("Fail to cleanup uniformBuffer_MatBlinnPhong\n");
+		}
+
 
 		// Clean up effect
 		for (auto it = s_KeyToEffect_map.begin(); it != s_KeyToEffect_map.end(); ++it)
