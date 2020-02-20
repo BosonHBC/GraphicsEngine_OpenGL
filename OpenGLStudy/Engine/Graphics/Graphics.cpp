@@ -31,7 +31,6 @@ namespace Graphics {
 
 	Color s_clearColor;
 
-
 	// This buffer capture the camera view
 	cFrameBuffer s_cameraCapture;
 
