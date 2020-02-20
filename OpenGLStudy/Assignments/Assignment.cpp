@@ -78,6 +78,11 @@ void Assignment::CreateActor()
 	m_wall->Transform()->Rotate(glm::vec3(0, 1, 0), 180);
 	m_wall->Transform()->Scale(glm::vec3(-5, 1, 3.75f));
 
+	m_cubemap = new cActor();
+	m_cubemap->Initialize();
+	m_cubemap->SetModel("Contents/models/cubemap.model");
+	m_cubemap->UpdateUniformVariables(Graphics::GetEffectByKey("CubemapEffect"));
+
 }
 
 void Assignment::CreateCamera()
@@ -184,7 +189,7 @@ void Assignment::CleanUp()
 	safe_delete(m_teapot2);
 	safe_delete(m_plane);
 	safe_delete(m_wall);
-
+	safe_delete(m_cubemap);
 }
 
 void Assignment::Tick(float second_since_lastFrame)

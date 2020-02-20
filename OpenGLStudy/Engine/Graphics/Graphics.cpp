@@ -64,7 +64,24 @@ namespace Graphics {
 			}
 			s_currentEffect = GetEffectByKey(Constants::CONST_DEFAULT_EFFECT_KEY);
 		}
-
+		// Create shadow map effect
+		{
+			if (!(result = CreateEffect("ShadowMap",
+				"shadowmaps/directionalShadowMap/directional_shadow_map_vert.glsl",
+				"shadowmaps/directionalShadowMap/directional_shadow_map_frag.glsl"))) {
+				printf("Fail to create shadow map effect.\n");
+				return result;
+			}
+		}
+		// Create cube map effect
+		{
+			if (!(result = CreateEffect("CubemapEffect",
+				"cubemap/cubemap_vert.glsl",
+				"cubemap/cubemap_frag.glsl"))) {
+				printf("Fail to create cube map effect.\n");
+				return result;
+			}
+		}
 		// Initialize uniform buffer
 		{
 			// Frame buffer
@@ -92,15 +109,7 @@ namespace Graphics {
 				return result;
 			}
 		}
-		// Create shadow map effect
-		{
-			if (!(result = CreateEffect("ShadowMap",
-				"shadowmaps/directionalShadowMap/directional_shadow_map_vert.glsl",
-				"shadowmaps/directionalShadowMap/directional_shadow_map_frag.glsl"))) {
-				printf("Fail to create shadow map effect.\n");
-				return result;
-			}
-		}
+
 
 		if (!(result = s_cameraCapture.Initialize(800, 600, ETT_FRAMEBUFFER_COLOR))) {
 			printf("Fail to create camera capture frame buffer.\n");

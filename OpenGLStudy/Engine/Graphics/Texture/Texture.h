@@ -36,8 +36,8 @@ namespace Graphics {
 
 		GLuint GetTextureID() const { return m_textureID; }
 
-		// Load Cube map
-		bool LoadCubemap(const std::string& i_cubeMapName);
+		// Load Cube map externally
+		bool LoadCubemap(const std::vector<std::string>& i_paths);
 
 	private:
 		/** private constructors */

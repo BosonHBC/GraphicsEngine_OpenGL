@@ -6,7 +6,7 @@ namespace Graphics {
 	{
 	public:
 
-		~cMatCubemap() {};
+		~cMatCubemap() { CleanUp(); };
 
 		bool Initialize(const std::string& i_path) override;
 		bool UpdateUniformVariables(GLuint i_programID) override;
@@ -18,8 +18,9 @@ namespace Graphics {
 	private:
 		cMatCubemap(): cMaterial(eMaterialType::MT_CUBEMAP) 
 		{}
-
-		bool LoadFileFromLua(const std::string& i_path, )
+		// cube map texture handle
+		Assets::cHandle<cTexture> m_cubeMapHandle;
+		bool LoadFileFromLua(const std::string& i_path, std::vector<std::string>& o_textures);
 
 		GLuint m_cubemapTexID;
 	};
