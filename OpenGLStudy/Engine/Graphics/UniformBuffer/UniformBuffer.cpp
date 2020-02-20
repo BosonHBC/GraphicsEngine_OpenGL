@@ -11,6 +11,7 @@ namespace Graphics {
 	bool cUniformBuffer::Initialize(const void* const i_data)
 	{
 		bool result = true;
+		if (m_initialized) return result;
 		switch (m_type)
 		{
 		case UBT_Frame:
@@ -18,6 +19,12 @@ namespace Graphics {
 			break;
 		case UBT_Drawcall:
 			m_size = sizeof(UniformBufferFormats::sDrawCall);
+			break;
+		case UBT_BlinnPhongMaterial:
+			m_size = sizeof(UniformBufferFormats::sBlinnPhongMaterial);
+			break;
+		case UBT_Lighting:
+			m_size = sizeof(UniformBufferFormats::sLighting);
 			break;
 		case UBT_Invalid:
 			result = false;
@@ -68,11 +75,14 @@ namespace Graphics {
 				return result;
 			}
 		}
+
 		return result;
 	}
 
 	void cUniformBuffer::Bind()
 	{
+		if (m_initialized) return;
+
 		if (m_bufferID == 0) {
 			printf("Error: Invalid buffer id. Should not bind it to shader.\n");
 			return;
@@ -86,6 +96,8 @@ namespace Graphics {
 			printf("OpenGL failed to bind the uniform buffer %u.\n",	 m_bufferID);
 			return;
 		}
+
+		if (!m_initialized) m_initialized = true;
 	}
 
 	void cUniformBuffer::Update(const void* const i_data)
@@ -113,10 +125,41 @@ namespace Graphics {
 		glBindBuffer(GL_UNIFORM_BUFFER, 0);
 	}
 
+	void cUniformBuffer::UpdatePartially(const void* const i_data, GLintptr i_offset, GLintptr i_size)
+	{
+		if (m_bufferID == 0) {
+			printf("Error: Invalid buffer id. Should not bind it to shader.");
+			return;
+		}
+		if (i_offset >= m_size || i_size > m_size) 
+		{
+			printf("Error: Invalid data size of update request with id: %d.", m_bufferID);
+			return;
+		}
+
+		// Activate the uniform buffer
+		glBindBuffer(GL_UNIFORM_BUFFER, m_bufferID);
+		auto errorCode = glGetError();
+		if (errorCode != GL_NO_ERROR)
+		{
+			printf("OpenGL failed to bind uniform buffer %u.\n", m_bufferID);
+		}
+
+		// Update data partially
+		{
+			glBufferSubData(GL_UNIFORM_BUFFER, i_offset, i_size, i_data);
+		}
+
+		if (errorCode != GL_NO_ERROR)
+		{
+			printf("OpenGL failed to update data of uniform buffer %u.\n", m_bufferID);
+		}
+		glBindBuffer(GL_UNIFORM_BUFFER, 0);
+	}
+
 	bool cUniformBuffer::CleanUp()
 	{
-		m_type = UBT_Invalid;
-		m_size = 0;
+
 		if (m_bufferID != 0)
 		{
 			glDeleteBuffers(1, &m_bufferID);
@@ -124,9 +167,11 @@ namespace Graphics {
 			m_bufferID = 0;
 			if (errorCode != GL_NO_ERROR)
 			{
-				printf("OpenGL failed to delete the constant buffer.");
+				printf("OpenGL failed to delete the constant buffer with type: %d.", m_type);
 				return false;
 			}
+			m_type = UBT_Invalid;
+			m_size = 0;
 		}
 		return true;
 	}

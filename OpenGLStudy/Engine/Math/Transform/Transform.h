@@ -30,6 +30,7 @@ public:
 	glm::vec3 GetEulerAngle() const;
 	const glm::mat4& M() const { return m; }
 	const glm::mat4& MInv() const { return mInv; }
+	const glm::mat4 TranspostInverse() const { return transpose(mInv); }
 
 	/** Helper functions*/
 	bool HasScale() const;

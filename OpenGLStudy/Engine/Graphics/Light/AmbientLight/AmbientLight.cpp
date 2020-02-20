@@ -1,4 +1,6 @@
 #include "AmbientLight.h"
+#include "Graphics/Graphics.h"
+#include "Graphics/UniformBuffer/UniformBufferFormats.h"
 namespace Graphics {
 
 	cAmbientLight::cAmbientLight(const cAmbientLight& i_other)
@@ -22,13 +24,13 @@ namespace Graphics {
 	{
 		cGenLight::SetupLight( i_programID, i_lightIndex);
 
-		m_colorID = glGetUniformLocation(i_programID, "ambientLight.base.color");
-
 	}
 
 	void cAmbientLight::Illuminate()
 	{
-		glUniform3f(m_colorID, m_color.r, m_color.g, m_color.b);
+		auto& gLighting = Graphics::GetGlobalLightingData();
+		gLighting.ambientLight.base.color = m_color;
+		gLighting.ambientLight.base.enableShadow = m_enableShadow;
 	}
 
 

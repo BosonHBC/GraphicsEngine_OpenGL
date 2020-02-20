@@ -28,7 +28,6 @@ namespace Graphics {
 		void UseShadowMap(GLuint i_textureUnit) override;
 	private:
 		glm::vec3 m_direction;
-		GLuint m_directionID;
 		GLuint m_directionalLightTransformID, m_directionalShadowMapID;
 	};
 

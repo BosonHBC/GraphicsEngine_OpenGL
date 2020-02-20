@@ -65,7 +65,7 @@ void Assignment::CreateActor()
 	m_plane->Initialize();
 	m_plane->SetModel("Contents/models/plane.model");
 	m_plane->UpdateUniformVariables(Graphics::GetCurrentEffect());
-	m_plane->Transform()->Translate(glm::vec3(0,-0.4f, -2.f));
+	m_plane->Transform()->Translate(glm::vec3(0,-0.2f, -2.f));
 	m_plane->Transform()->Rotate(glm::vec3(0, 1, 0), 180);
 	m_plane->Transform()->Scale(glm::vec3(20, 1, 20));
 
@@ -90,9 +90,9 @@ void Assignment::CreateCamera()
 void Assignment::CreateLight()
 {
 	Graphics::CreateAmbientLight(Color(0.1f, 0.1f, 0.1f), aLight);
-	Graphics::CreatePointLight(glm::vec3(0, 1.5f, 0), Color(1.f, 1.f, 1.f), 0.3f, 0.1f, 0.1f, false,pLight1);
-	Graphics::CreatePointLight(glm::vec3(-3, 0, -3), Color(1, 1, 1), 0.5f, 0.2f, 0.1f, false,pLight2);
-	Graphics::CreateDirectionalLight(Color(1, 1, 1), glm::vec3(0.8f,1, 0.3f), true, dLight);
+	//Graphics::CreatePointLight(glm::vec3(0, 1.5f, 0), Color(1.f, 1.f, 1.f), 0.3f, 0.1f, 0.1f, false,pLight1);
+	Graphics::CreatePointLight(glm::vec3(-3, 0, -3), Color(0.8, 0.2, 0.2), 0.5f, 0.2f, 0.1f, false,pLight2);
+	Graphics::CreateDirectionalLight(Color(1, 1, 1), glm::vec3(-0.3f,0.3, 0), true, dLight);
 }
 
 void Assignment::Run()
@@ -149,19 +149,26 @@ void Assignment::Run()
 		_renderingMap.push_back({ m_plane->GetModelHandle(), m_plane->Transform() });
 		_renderingMap.push_back({ m_teapot->GetModelHandle(), m_teapot->Transform() });
 		_renderingMap.push_back({ m_teapot2->GetModelHandle(), m_teapot2->Transform() });
+		_renderingMap.push_back({ m_wall->GetModelHandle(), m_wall->Transform() });
 		
 		Graphics::SubmitDataToBeRendered(m_editorCamera, _renderingMap);
+		Graphics::ShadowMap_Pass();
 		// ----------------------
 		// Rendering
-		Graphics::ShadowMap_Pass();
-		Graphics::Render_Pass_CaptureCameraView();
 
 		std::vector<std::pair<Graphics::cModel::HANDLE, cTransform*>> _renderingMap2;
+		_renderingMap2.push_back({ m_plane->GetModelHandle(), m_plane->Transform() });
 		_renderingMap2.push_back({ m_teapot->GetModelHandle(), m_teapot->Transform() });
 		_renderingMap2.push_back({ m_teapot2->GetModelHandle(), m_teapot2->Transform() });
-		_renderingMap2.push_back({ m_plane->GetModelHandle(), m_plane->Transform() });
-		_renderingMap2.push_back({ m_wall->GetModelHandle(), m_wall->Transform() });
 		Graphics::SubmitDataToBeRendered(m_editorCamera, _renderingMap2);
+		Graphics::Render_Pass_CaptureCameraView();
+
+		std::vector<std::pair<Graphics::cModel::HANDLE, cTransform*>> _renderingMap3;
+		_renderingMap3.push_back({ m_teapot->GetModelHandle(), m_teapot->Transform() });
+		_renderingMap3.push_back({ m_teapot2->GetModelHandle(), m_teapot2->Transform() });
+		_renderingMap3.push_back({ m_plane->GetModelHandle(), m_plane->Transform() });
+		_renderingMap3.push_back({ m_wall->GetModelHandle(), m_wall->Transform() });
+		Graphics::SubmitDataToBeRendered(m_editorCamera, _renderingMap3);
 		Graphics::Render_Pass();
 		// ----------------------
 		// Swap buffers

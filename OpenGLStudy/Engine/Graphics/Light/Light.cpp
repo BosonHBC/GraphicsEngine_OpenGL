@@ -3,7 +3,7 @@
 
 namespace Graphics {
 
-	cGenLight::cGenLight(): m_color(Color::White()), m_colorID(0)
+	cGenLight::cGenLight(): m_color(Color::White())
 	{
 		m_transform = new cTransform();
 	}

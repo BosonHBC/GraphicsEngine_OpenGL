@@ -10,7 +10,8 @@ namespace Graphics {
 	{
 		UBT_Frame = 0,
 		UBT_Drawcall = 1,
-		UBT_ShadowMapDrawCall = 2,
+		UBT_BlinnPhongMaterial = 2,
+		UBT_Lighting = 3,
 		UBT_Invalid = 0xff,
 	};
 
@@ -21,14 +22,21 @@ namespace Graphics {
 	{
 	public:
 		// only allow this constructor
-		cUniformBuffer(const eUniformBufferType i_ubt) : m_type(i_ubt) {}
+		cUniformBuffer(const eUniformBufferType i_ubt) : m_type(i_ubt), m_initialized(false){}
 		~cUniformBuffer();
 
+		// Create the uniform buffer
 		bool Initialize(const void* const i_data);
+		
 		// Bind the buffer
 		void Bind();
-		// Update data in GPU
+
+		// Update all data in GPU
 		void Update(const void* const i_data);
+
+		// Update data partially in the GPU, use this carefully !!!
+		void UpdatePartially(const void* const i_data, GLintptr i_offset, GLintptr i_size);
+
 		bool CleanUp();
 		bool IsValid() const { return m_type == UBT_Invalid; }
 
@@ -37,6 +45,8 @@ namespace Graphics {
 		eUniformBufferType m_type = UBT_Invalid;
 		uint32_t m_size;
 		GLuint m_bufferID;
+		// prevent repeated initialization
+		bool m_initialized;
 
 		// Remove all default constructors
 		cUniformBuffer() = delete;

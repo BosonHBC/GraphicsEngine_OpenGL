@@ -12,7 +12,7 @@
 #include "Camera/Camera.h"
 #include "Model/Model.h"
 #include "FrameBuffer/cFrameBuffer.h"
-
+#include "Graphics/UniformBuffer/UniformBufferFormats.h"
 // Graphics stores, initializes, cleans up all data that needs to be rendered
 namespace Graphics {
 
@@ -34,6 +34,7 @@ namespace Graphics {
 	cEffect* GetCurrentEffect();
 
 	/** Lighting related*/
+	UniformBufferFormats::sLighting& GetGlobalLightingData();
 	bool CreateAmbientLight(const Color& i_color, cAmbientLight*& o_ambientLight);
 	bool CreatePointLight(const glm::vec3& i_initialLocation,const Color& i_color, const GLfloat& i_const, const GLfloat& i_linear, const GLfloat& i_quadratic, bool i_enableShadow, cPointLight*& o_pointLight);
 	bool CreateDirectionalLight(const Color& i_color, glm::vec3 i_direction, bool i_enableShadow, cDirectionalLight*& o_directionalLight);

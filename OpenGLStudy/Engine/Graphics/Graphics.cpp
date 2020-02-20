@@ -11,6 +11,7 @@
 #include "FrameBuffer/cFrameBuffer.h"
 #include "Application/Application.h"
 #include "Application/Window/Window.h"
+#include "Material/Blinn/MatBlinn.h"
 namespace Graphics {
 
 	// TODO:
@@ -24,6 +25,10 @@ namespace Graphics {
 	// ---------------------------------
 	cUniformBuffer s_uniformBuffer_frame(eUniformBufferType::UBT_Frame);
 	cUniformBuffer s_uniformBuffer_drawcall(eUniformBufferType::UBT_Drawcall);
+	cUniformBuffer s_uniformBuffer_Lighting(eUniformBufferType::UBT_Lighting);
+
+	UniformBufferFormats::sLighting s_globalLightingData;
+
 	Color s_clearColor;
 
 	// This buffer capture the camera view
@@ -62,21 +67,29 @@ namespace Graphics {
 
 		// Initialize uniform buffer
 		{
-			if (!(result = s_uniformBuffer_frame.Initialize(nullptr))) {
+			// Frame buffer
+			if (result = s_uniformBuffer_frame.Initialize(nullptr)) {
+				s_uniformBuffer_frame.Bind();
+			}
+			else {
 				printf("Fail to initialize uniformBuffer_frame\n");
 				return result;
 			}
-			else {
-				// bind frame buffer
-				s_uniformBuffer_frame.Bind();
+			// draw call
+			if (result = s_uniformBuffer_drawcall.Initialize(nullptr)) {
+				s_uniformBuffer_drawcall.Bind();
 			}
-			if (!(result = s_uniformBuffer_drawcall.Initialize(nullptr))) {
+			else {
 				printf("Fail to initialize uniformBuffer_drawcall\n");
 				return result;
 			}
-			else {
-				// Bind draw call buffer
-				s_uniformBuffer_drawcall.Bind();
+			if (result = s_uniformBuffer_Lighting.Initialize(nullptr)) {
+				s_uniformBuffer_Lighting.Bind();
+			}
+			else
+			{
+				printf("Fail to initialize uniformBuffer_Lighting\n");
+				return result;
 			}
 		}
 		// Create shadow map effect
@@ -172,18 +185,14 @@ namespace Graphics {
 		{
 			cCamera* _camera = s_dataRequiredToRenderAFrame.CurrentCamera;
 
-			// 1. Copy frame data
-			UniformBufferFormats::sFrame _frame;
-			glm::mat4 _pvMatrix = _camera->GetProjectionMatrix() *_camera->GetViewMatrix();
-			memcpy(_frame.PVMatrix, glm::value_ptr(_pvMatrix), sizeof(_frame.PVMatrix));
-
-			// 2. Update frame data
-			s_uniformBuffer_frame.Update(&_frame);
+			// 1. Update frame data
+			s_uniformBuffer_frame.Update(&UniformBufferFormats::sFrame(_camera->GetProjectionMatrix(), _camera->GetViewMatrix()));
 
 		}
 
 		// Update lighting data
 		{
+
 			if (s_ambientLight)
 				s_ambientLight->Illuminate();
 
@@ -200,6 +209,8 @@ namespace Graphics {
 			{
 				it->Illuminate();
 			}
+			s_globalLightingData.pointLightCount = s_pointLight_list.size();
+			s_uniformBuffer_Lighting.Update(&s_globalLightingData);
 		}
 		// Start a draw call loop
 		RenderScene();
@@ -256,14 +267,8 @@ namespace Graphics {
 		// Update frame data
 		{
 			cCamera* _camera = s_dataRequiredToRenderAFrame.CurrentCamera;
-
-			// 1. Copy frame data
-			UniformBufferFormats::sFrame _frame;
-			glm::mat4 _pvMatrix = _camera->GetProjectionMatrix() *_camera->GetViewMatrix();
-			memcpy(_frame.PVMatrix, glm::value_ptr(_pvMatrix), sizeof(_frame.PVMatrix));
-
-			// 2. Update frame data
-			s_uniformBuffer_frame.Update(&_frame);
+			// 1. Update frame data
+			s_uniformBuffer_frame.Update(&UniformBufferFormats::sFrame(_camera->GetProjectionMatrix(), _camera->GetViewMatrix()));
 
 		}
 
@@ -285,6 +290,10 @@ namespace Graphics {
 			{
 				it->Illuminate();
 			}
+		
+			s_globalLightingData.pointLightCount = s_pointLight_list.size();
+			s_uniformBuffer_Lighting.Update(&s_globalLightingData);
+		
 		}
 		// Start a draw call loop
 		RenderScene();
@@ -299,14 +308,9 @@ namespace Graphics {
 		// loop through every single model
 		for (auto it = s_dataRequiredToRenderAFrame.ModelToTransform_map.begin(); it != s_dataRequiredToRenderAFrame.ModelToTransform_map.end(); ++it)
 		{
-			// 1. Copy draw call data
-			UniformBufferFormats::sDrawCall _drawcall;
-			memcpy(_drawcall.ModelMatrix, glm::value_ptr(it->second->M()), sizeof(_drawcall.ModelMatrix));
-			memcpy(_drawcall.NormalMatrix, glm::value_ptr(glm::transpose(it->second->MInv())), sizeof(_drawcall.NormalMatrix));
-
-			// 2. Update draw call data
-			s_uniformBuffer_drawcall.Update(&_drawcall);
-			// 3. Draw
+			// 1. Update draw call data
+			s_uniformBuffer_drawcall.Update(&UniformBufferFormats::sDrawCall(it->second->M(), it->second->TranspostInverse()));
+			// 2. Draw
 			cModel* _model = cModel::s_manager.Get(it->first);
 			if (_model) {
 				_model->RenderWithoutMaterial();
@@ -319,14 +323,9 @@ namespace Graphics {
 		// loop through every single model
 		for (auto it = s_dataRequiredToRenderAFrame.ModelToTransform_map.begin(); it != s_dataRequiredToRenderAFrame.ModelToTransform_map.end(); ++it)
 		{
-			// 1. Copy draw call data
-			UniformBufferFormats::sDrawCall _drawcall;
-			memcpy(_drawcall.ModelMatrix, glm::value_ptr(it->second->M()), sizeof(_drawcall.ModelMatrix));
-			memcpy(_drawcall.NormalMatrix, glm::value_ptr(glm::transpose(it->second->MInv())), sizeof(_drawcall.NormalMatrix));
-
-			// 2. Update draw call data
-			s_uniformBuffer_drawcall.Update(&_drawcall);
-			// 3. Draw
+			// 1. Update draw call data
+			s_uniformBuffer_drawcall.Update(&UniformBufferFormats::sDrawCall(it->second->M(), it->second->TranspostInverse()));
+			// 2. Draw
 			cModel* _model = cModel::s_manager.Get(it->first);
 			if (_model) {
 				_model->Render();
@@ -343,6 +342,12 @@ namespace Graphics {
 		}
 		if (!(result = s_uniformBuffer_drawcall.CleanUp())) {
 			printf("Fail to cleanup uniformBuffer_drawcall\n");
+		}
+		if (!(result = cMatBlinn::GetUniformBuffer().CleanUp())) {
+			printf("Fail to cleanup uniformBuffer_MatBlinnPhong\n");
+		}
+		if (!(result = s_uniformBuffer_Lighting.CleanUp())) {
+			printf("Fail to cleanup uniformBuffer_MatBlinnPhong\n");
 		}
 
 		// Clean up effect
@@ -400,6 +405,11 @@ namespace Graphics {
 	Graphics::cEffect* GetCurrentEffect()
 	{
 		return s_currentEffect;
+	}
+
+	Graphics::UniformBufferFormats::sLighting& GetGlobalLightingData()
+	{
+		return s_globalLightingData;
 	}
 
 	bool CreateAmbientLight(const Color& i_color, cAmbientLight*& o_ambientLight)

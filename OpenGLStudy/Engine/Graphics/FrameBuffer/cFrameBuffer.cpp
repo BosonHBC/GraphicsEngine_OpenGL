@@ -14,7 +14,7 @@ namespace Graphics {
 
 		// Generate another frame buffer
 		glGenFramebuffers(1, &m_fbo);
-		std::string key = "FB_" +std::to_string(m_fbo) + "_ETT_" + std::to_string(i_textureType);
+		std::string key = "FB_" + std::to_string(m_fbo) + "_ETT_" + std::to_string(i_textureType);
 
 		// Generate render_to_texture texture
 		cTexture::s_manager.Load(key, m_renderToTexture, i_textureType, m_width, m_height);
@@ -24,33 +24,21 @@ namespace Graphics {
 			// bind the frame buffer, it can be read / draw. GL_DRAW_FRAMEBUFFER / GL_READ_FRAMEBUFFER
 			glBindFramebuffer(GL_FRAMEBUFFER, m_fbo);
 
-			auto _glAttachment = 0;
 			switch (i_textureType)
 			{
 			case Graphics::ETT_FRAMEBUFFER_SHADOWMAP:
-				_glAttachment = GL_DEPTH_ATTACHMENT;
-				break;
-			case Graphics::ETT_FRAMEBUFFER_COLOR:
-				_glAttachment = GL_COLOR_ATTACHMENT0;
-				break;
-			default:
-				result = false;
-				printf("Invalid texture type in creating frame buffer.\n");
-				return result;
-				break;
-			}
-			// Ref: https://open.gl/framebuffers
-			// bind the frame buffer to a texture
-			// The second parameter implies that you can have multiple color attachments. 
-			//A fragment shader can output different data to any of these by linking out variables to attachments with the glBindFragDataLocation function
-			glFramebufferTexture2D(GL_FRAMEBUFFER, _glAttachment, GL_TEXTURE_2D, _texture->GetTextureID(), mipMapLevel);
-
-			// no need to draw color values if it is a depth attachment
-			if (_glAttachment == GL_DEPTH_ATTACHMENT) {
+				// Ref: https://open.gl/framebuffers
+				// bind the frame buffer to a texture
+				// The second parameter implies that you can have multiple color attachments. 
+				//A fragment shader can output different data to any of these by linking out variables to attachments with the glBindFragDataLocation function
+				glFramebufferTexture2D(GL_FRAMEBUFFER, GL_DEPTH_ATTACHMENT, GL_TEXTURE_2D, _texture->GetTextureID(), mipMapLevel);
 				glDrawBuffer(GL_NONE);
 				glReadBuffer(GL_NONE);
-			}
-			else if (_glAttachment == GL_COLOR_ATTACHMENT0) {
+
+				break;
+			case Graphics::ETT_FRAMEBUFFER_COLOR:
+
+				glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, _texture->GetTextureID(), mipMapLevel);
 				glDrawBuffer(GL_COLOR_ATTACHMENT0);
 
 				// We need depth too!
@@ -64,6 +52,12 @@ namespace Graphics {
 						GL_FRAMEBUFFER, GL_DEPTH_STENCIL_ATTACHMENT, GL_RENDERBUFFER, rboDepthStencil
 					);
 				}
+				break;
+			default:
+				result = false;
+				printf("Invalid texture type in creating frame buffer.\n");
+				return result;
+				break;
 			}
 
 			GLenum status = glCheckFramebufferStatus(GL_FRAMEBUFFER);
@@ -117,7 +111,7 @@ namespace Graphics {
 
 	bool cFrameBuffer::IsValid() const
 	{
-		return (m_fbo!=0);
+		return (m_fbo != 0);
 	}
 
 }

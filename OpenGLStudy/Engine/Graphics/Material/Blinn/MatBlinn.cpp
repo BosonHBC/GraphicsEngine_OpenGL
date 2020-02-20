@@ -2,9 +2,11 @@
 #include "Engine/Constants/Constants.h"
 #include "Externals/ASSIMP_N/include/assimp/scene.h"
 #include "Assets/LoadTableFromLuaFile.h"
+#include "Graphics/UniformBuffer/UniformBufferFormats.h"
 
 namespace Graphics {
-
+	// Definition of static blinnPhongUniformBlock
+	cUniformBuffer cMatBlinn::s_BlinnPhongUniformBlock(eUniformBufferType::UBT_BlinnPhongMaterial);
 
 	bool cMatBlinn::Initialize(const std::string& i_path)
 	{
@@ -18,6 +20,14 @@ namespace Graphics {
 
 		SetDiffuse(_diffusePath);
 		SetSpecular(_specularPath);
+
+		if (!(result = s_BlinnPhongUniformBlock.Initialize(nullptr))) {
+			printf("Fail to initialize uniformBuffer_BlinnPhong\n");
+			return result;
+		}
+		else {
+			s_BlinnPhongUniformBlock.Bind();
+		}
 		return result;
 	}
 
@@ -28,9 +38,6 @@ namespace Graphics {
 		m_diffuseTexID = glGetUniformLocation(i_programID, "diffuseTex");
 		m_specularTexID = glGetUniformLocation(i_programID, "specularTex");
 
-		m_shininessID = glGetUniformLocation(i_programID, "material.shininess");
-		m_diffuseIntensityID = glGetUniformLocation(i_programID, "material.kd");
-		m_specularIntensityID = glGetUniformLocation(i_programID, "material.ks");
 		return result;
 	}
 
@@ -48,9 +55,7 @@ namespace Graphics {
 			_specularTex->UseTexture(GL_TEXTURE1);
 		}
 
-		glUniform1f(m_shininessID, m_shininess);
-		glUniform3f(m_diffuseIntensityID, m_diffuseIntensity.r, m_diffuseIntensity.g, m_diffuseIntensity.b);
-		glUniform3f(m_specularIntensityID, m_specularIntensity.r, m_specularIntensity.g, m_specularIntensity.b);
+		s_BlinnPhongUniformBlock.Update(&UniformBufferFormats::sBlinnPhongMaterial(m_diffuseIntensity, m_specularIntensity, m_shininess));
 	}
 
 	void cMatBlinn::CleanUpMaterialBind()

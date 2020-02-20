@@ -39,8 +39,6 @@ namespace Graphics {
 		bool IsShadowEnabled() const { return IsShadowMapValid()&&m_enableShadow; }
 	protected:
 		Color m_color;
-		GLuint m_colorID, m_enableShadowID;
-
 		// record the index of this light
 		GLuint m_lightIndex;
 		bool m_enableShadow;
