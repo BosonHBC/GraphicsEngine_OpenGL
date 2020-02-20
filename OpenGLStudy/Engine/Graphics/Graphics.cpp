@@ -95,8 +95,8 @@ namespace Graphics {
 		// Create shadow map effect
 		{
 			if (!(result = CreateEffect("ShadowMap",
-				"directional_shadow_map_vert.glsl",
-				"directional_shadow_map_frag.glsl"))) {
+				"shadowmaps/directionalShadowMap/directional_shadow_map_vert.glsl",
+				"shadowmaps/directionalShadowMap/directional_shadow_map_frag.glsl"))) {
 				printf("Fail to create shadow map effect.\n");
 				return result;
 			}

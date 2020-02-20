@@ -5,6 +5,9 @@
 #include "Tool/stb_image.h"
 #include "Constants/Constants.h"
 Assets::cAssetManager < Graphics::cTexture > Graphics::cTexture::s_manager;
+
+std::string s_cubeMapPrefixs[6] = { "posx_", "negx_", "posy_", "negy_", "posz_", "negz_" };
+
 namespace Graphics {
 
 	bool cTexture::Load(const std::string& i_path, cTexture*& o_texture, ETextureType i_ett /* = FILE*/, const GLuint& i_override_width/* = 0*/, const GLuint& i_override_height /*= 0*/)
@@ -23,17 +26,20 @@ namespace Graphics {
 		{
 			switch (i_ett)
 			{
-			case Graphics::ETT_FILE:
+			case ETT_FILE:
 				result = _texture->LoadTextureFromFile(i_path);
 				break;
-			case Graphics::ETT_FILE_ALPHA:
+			case ETT_FILE_ALPHA:
 				result = _texture->LoadTextureAFromFile(i_path);
 				break;
-			case Graphics::ETT_FRAMEBUFFER_SHADOWMAP:
+			case ETT_FRAMEBUFFER_SHADOWMAP:
 				result = _texture->LoadShadowMapTexture(i_path, i_override_width, i_override_height);
 				break;
-			case Graphics::ETT_FRAMEBUFFER_COLOR:
+			case ETT_FRAMEBUFFER_COLOR:
 				result = _texture->LoadRGBTexture(i_path, i_override_width, i_override_height);
+				break;
+			case  ETT_CUBEMAP:
+				// Cube map is loaded in the cubemap material, so it will not load here
 				break;
 			case Graphics::ETT_INVALID:
 				result = false;
@@ -175,7 +181,7 @@ namespace Graphics {
 		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
 		// Set up texture filtering for looking further
 		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
-		
+
 		// unbind texture
 		glBindTexture(GL_TEXTURE_2D, 0);
 		return result;
@@ -208,6 +214,42 @@ namespace Graphics {
 
 		// unbind texture
 		glBindTexture(GL_TEXTURE_2D, 0);
+		return result;
+	}
+
+	bool cTexture::LoadCubemap(const std::string& i_cubeMapName)
+	{
+		auto result = true;
+
+		glGenTextures(1, &m_textureID);
+		glBindTexture(GL_TEXTURE_CUBE_MAP, m_textureID);
+
+		unsigned char* _data = nullptr;
+		for (int i = 0; i < 6; ++i)
+		{
+			std::string _path = Constants::CONST_PATH_CUBEMAP_ROOT;
+			_path.append(i_cubeMapName + "/" + s_cubeMapPrefixs[i] + i_cubeMapName+".png");
+
+			_data = stbi_load(_path.c_str(), &m_width, &m_height, &m_bitDepth, 0);
+			if (_data) {
+				glTexImage2D(
+					GL_TEXTURE_CUBE_MAP_POSITIVE_X + i,
+					0, GL_RGB, m_width, m_height, 0, GL_RGB, GL_UNSIGNED_BYTE, _data);
+				stbi_image_free(_data);
+			}
+			else {
+				result = false;
+				printf("Fail to load cube map: %s\n", _path.c_str());
+				stbi_image_free(_data);
+				return result;
+			}
+		}
+		glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+		glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+		glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
+		glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
+		glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_WRAP_R, GL_CLAMP_TO_EDGE);
+
 		return result;
 	}
 

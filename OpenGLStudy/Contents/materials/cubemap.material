@@ -1,0 +1,9 @@
+--[[
+    Default Cube map material
+]]
+return 
+{
+
+    MaterialType = 2,
+    CubemapTexture = "cubemap",
+}
