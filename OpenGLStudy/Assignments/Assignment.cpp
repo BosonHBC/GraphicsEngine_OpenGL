@@ -161,20 +161,23 @@ void Assignment::Run()
 		// ----------------------
 		// Rendering
 
-		std::vector<std::pair<Graphics::cModel::HANDLE, cTransform*>> _renderingMap2;
-		_renderingMap2.push_back({ m_plane->GetModelHandle(), m_plane->Transform() });
-		_renderingMap2.push_back({ m_teapot->GetModelHandle(), m_teapot->Transform() });
-		_renderingMap2.push_back({ m_teapot2->GetModelHandle(), m_teapot2->Transform() });
-		Graphics::SubmitDataToBeRendered(m_editorCamera, _renderingMap2);
+		_renderingMap.clear();
+		_renderingMap.push_back({ m_plane->GetModelHandle(), m_plane->Transform() });
+		_renderingMap.push_back({ m_teapot->GetModelHandle(), m_teapot->Transform() });
+		_renderingMap.push_back({ m_teapot2->GetModelHandle(), m_teapot2->Transform() });
+		Graphics::SubmitDataToBeRendered(m_editorCamera, _renderingMap);
 		Graphics::Render_Pass_CaptureCameraView();
 
-		std::vector<std::pair<Graphics::cModel::HANDLE, cTransform*>> _renderingMap3;
-		_renderingMap3.push_back({ m_teapot->GetModelHandle(), m_teapot->Transform() });
-		_renderingMap3.push_back({ m_teapot2->GetModelHandle(), m_teapot2->Transform() });
-		_renderingMap3.push_back({ m_plane->GetModelHandle(), m_plane->Transform() });
-		_renderingMap3.push_back({ m_wall->GetModelHandle(), m_wall->Transform() });
-		Graphics::SubmitDataToBeRendered(m_editorCamera, _renderingMap3);
+		_renderingMap.clear();
+		_renderingMap.push_back({ m_teapot->GetModelHandle(), m_teapot->Transform() });
+		_renderingMap.push_back({ m_teapot2->GetModelHandle(), m_teapot2->Transform() });
+		_renderingMap.push_back({ m_plane->GetModelHandle(), m_plane->Transform() });
+		_renderingMap.push_back({ m_wall->GetModelHandle(), m_wall->Transform() });
+		Graphics::SubmitDataToBeRendered(m_editorCamera, _renderingMap);
 		Graphics::Render_Pass();
+
+		// Cube map
+		_renderingMap.push_back({ m_cubemap->GetModelHandle(), m_cubemap->Transform() });
 		// ----------------------
 		// Swap buffers
 		m_window->SwapBuffers();
