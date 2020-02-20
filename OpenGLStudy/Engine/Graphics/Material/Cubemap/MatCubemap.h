@@ -19,6 +19,8 @@ namespace Graphics {
 		cMatCubemap(): cMaterial(eMaterialType::MT_CUBEMAP) 
 		{}
 
+		bool LoadFileFromLua(const std::string& i_path, )
+
 		GLuint m_cubemapTexID;
 	};
 }

@@ -42,7 +42,6 @@ namespace Graphics {
 		GLfloat m_shininess;
 
 		GLuint m_diffuseTexID, m_specularTexID;
-		GLuint m_shininessID, m_diffuseIntensityID, m_specularIntensityID;
 
 		static cUniformBuffer s_BlinnPhongUniformBlock;
 		friend class cMaterial;
