@@ -54,6 +54,7 @@ namespace Graphics {
 
 		/** private variables*/
 		GLuint m_textureID;
+		ETextureType m_textureType;
 		int m_width, m_height, m_bitDepth;
 	};
 

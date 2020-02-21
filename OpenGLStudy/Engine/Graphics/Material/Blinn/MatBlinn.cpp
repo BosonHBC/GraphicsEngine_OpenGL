@@ -46,6 +46,7 @@ namespace Graphics {
 	{
 		glUniform1i(m_diffuseTexID, 0);
 		glUniform1i(m_specularTexID, 1);
+		glUniform1i(m_cubemapTexID, 3);
 
 		cTexture* _diffuseTex = cTexture::s_manager.Get(m_diffuseTextureHandle);
 		if (_diffuseTex) {
@@ -55,7 +56,11 @@ namespace Graphics {
 		if (_specularTex) {
 			_specularTex->UseTexture(GL_TEXTURE1);
 		}
-
+		cTexture* _cubemapTex = cTexture::s_manager.Get(m_cubemapTextureHandle);
+		if (_cubemapTex) 
+		{
+			_cubemapTex->UseTexture(GL_TEXTURE3);
+		}
 		s_BlinnPhongUniformBlock.Update(&UniformBufferFormats::sBlinnPhongMaterial(m_diffuseIntensity, m_specularIntensity, m_environmentIntensity,m_shininess));
 	}
 
@@ -69,12 +74,18 @@ namespace Graphics {
 		if (_specularTex) {
 			_specularTex->CleanUpTextureBind(GL_TEXTURE1);
 		}
+		cTexture* _cubemapTex = cTexture::s_manager.Get(m_cubemapTextureHandle);
+		if (_cubemapTex)
+		{
+			_cubemapTex->CleanUpTextureBind(GL_TEXTURE3);
+		}
 	}
 
 	void cMatBlinn::CleanUp()
 	{
 		cTexture::s_manager.Release(m_diffuseTextureHandle);
 		cTexture::s_manager.Release(m_specularTextureHandle);
+		cTexture::s_manager.Release(m_cubemapTextureHandle);
 
 	}
 	void cMatBlinn::SetDiffuse(const std::string& i_diffusePath)

@@ -13,6 +13,8 @@ namespace Graphics {
 		void CleanUpMaterialBind() override;
 		void CleanUp() override;
 
+		/** Getters */
+		Assets::cHandle<cTexture> GetCubemapHandle() const { return m_cubeMapHandle; }
 
 	private:
 		cMatCubemap(): cMaterial(eMaterialType::MT_CUBEMAP) 

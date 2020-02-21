@@ -22,6 +22,7 @@ namespace Graphics {
 		}
 		else
 		{
+			
 			switch (i_ett)
 			{
 			case ETT_FILE:
@@ -55,7 +56,7 @@ namespace Graphics {
 			return result;
 		}
 
-
+		_texture->m_textureType = i_ett;
 		o_texture = _texture;
 
 		//TODO: Loading information succeed!
@@ -221,7 +222,7 @@ namespace Graphics {
 
 		glGenTextures(1, &m_textureID);
 		glBindTexture(GL_TEXTURE_CUBE_MAP, m_textureID);
-
+		assert(glGetError() == GL_NO_ERROR);
 		unsigned char* _data = nullptr;
 		if (i_paths.size() < 6) {
 			result = false;
@@ -265,16 +266,24 @@ namespace Graphics {
 	{
 		// activate the texture unit at i_textureLocation
 		glActiveTexture(i_textureLocation);
+		assert(glGetError() == GL_NO_ERROR);
+
+		GLenum _textureType = GL_TEXTURE_2D;
+		if (m_textureType == ETT_CUBEMAP)
+			_textureType = GL_TEXTURE_CUBE_MAP;
 		// bind texture to texture unit i_textureLocation
 		// this allow multiples texture to be bound to one shader
 		// so in one object, it can be multiple texture
-		glBindTexture(GL_TEXTURE_2D, m_textureID);
+		glBindTexture(_textureType, m_textureID);
+		assert(glGetError() == GL_NO_ERROR);
 	}
 
 	void cTexture::CleanUpTextureBind(int i_textureLocation)
 	{
 		glActiveTexture(i_textureLocation);
+		assert(glGetError() == GL_NO_ERROR);
 		glBindTexture(GL_TEXTURE_2D, 0);
+		assert(glGetError() == GL_NO_ERROR);
 	}
 
 	void cTexture::CleanUp()

@@ -104,6 +104,10 @@ namespace Graphics {
 			}
 
 			m_meshList[i]->Render();
+
+			if (_matIndex < m_materialList.size() && _material) {
+				_material->CleanUpMaterialBind();
+			}
 		}
 	}
 

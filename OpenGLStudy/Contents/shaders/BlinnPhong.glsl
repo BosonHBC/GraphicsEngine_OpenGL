@@ -144,9 +144,8 @@ vec4 IlluminateByDirection_Ks(Light light, vec3 vN, vec3 vV,vec3 vL){
 vec4 IlluminateByCubemap(vec4 diffuseColor, vec3 vN, vec3 vV)
 {
 	vec4 outColor = vec4(0,0,0,0);
-	vec3 vR = reflect(vV, vN);
-	outColor = diffuseColor * texture(cubemapTex, vR);
-	outColor *= vec4(ke,1.0);
+	vec3 vR = reflect(-vV, vN);
+	outColor = vec4(ke,1.0) * diffuseColor * texture(cubemapTex, vR);
 	return outColor;
 }
 
@@ -200,7 +199,7 @@ void main(){
 	// shared values
 	vec3 normalized_normal = normalize(Normal);
 	vec3 normalized_view = normalize(ViewPosition - fragPos);
-	vec4 diffuseTexColor =texture(diffuseTex, texCood0);
+	vec4 diffuseTexColor = texture(diffuseTex, texCood0);
 	vec4 specularTexColor =texture(specularTex, texCood0);
 
 	// ambient light
@@ -216,5 +215,5 @@ void main(){
 	float directionalLightShadowFactor = g_directionalLight.base.enableShadow ? (1.0 - CalcDirectionalLightShadowMap(normalized_normal)): 1.0;
 	vec4 directionLightColor = directionalLightShadowFactor * CalcDirectionalLight(diffuseTexColor, specularTexColor, normalized_normal, normalized_view);
 
-	color =  ( ambientLightColor + pointLightColor + directionLightColor);
+	color =  ( ambientLightColor + cubemapColor + pointLightColor + directionLightColor);
 }

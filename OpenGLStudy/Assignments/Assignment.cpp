@@ -17,6 +17,7 @@
 #include "Transform/Transform.h"
 #include "Engine/Graphics/Model/Model.h"
 #include "Material/Blinn/MatBlinn.h"
+#include "Material/Cubemap/MatCubemap.h"
 #include "UniformBuffer/UniformBufferFormats.h"
 #include "Graphics/Texture/Texture.h"
 #include <map>
@@ -39,6 +40,10 @@ bool Assignment::Initialize(GLuint i_width, GLuint i_height, const char* i_windo
 	auto cameraViewTextureHandle = Graphics::GetCameraCaptureFrameBuffer()->GetTextureHandle();
 	_wallMat->UpdateDiffuseTexture(cameraViewTextureHandle);
 	_wallMat->UpdateSpecularTexture(cameraViewTextureHandle);
+
+	Graphics::cMatBlinn* _planeMat = dynamic_cast<Graphics::cMatBlinn*>(Graphics::cModel::s_manager.Get(m_plane->GetModelHandle())->GetMaterialAt());
+	Graphics::cMatCubemap* _cubemapMat = dynamic_cast<Graphics::cMatCubemap*>(Graphics::cModel::s_manager.Get(m_cubemap->GetModelHandle())->GetMaterialAt());
+	_planeMat->UpdateCubemapTexture(_cubemapMat->GetCubemapHandle());
 	return result;
 }
 
@@ -79,6 +84,13 @@ void Assignment::CreateActor()
 	m_wall->Transform()->Rotate(glm::vec3(0, 1, 0), 180);
 	m_wall->Transform()->Scale(glm::vec3(-5, 1, 3.75f));
 
+	m_sphere = new cActor();
+	m_sphere->Initialize();
+	m_sphere->SetModel("Contents/models/sphere.model");
+	m_sphere->UpdateUniformVariables(Graphics::GetCurrentEffect());
+	m_sphere->Transform()->Translate(glm::vec3(-1, 0.3, -1.f));
+	m_sphere->Transform()->Scale(glm::vec3(0.5f, 0.5f, 0.5f));
+
 	m_cubemap = new cActor();
 	m_cubemap->Initialize();
 	m_cubemap->SetModel("Contents/models/cubemap.model");
@@ -114,6 +126,7 @@ void Assignment::Run()
 		m_teapot2->Transform()->Update();
 		m_plane->Transform()->Update();
 		m_wall->Transform()->Update();
+		m_sphere->Transform()->Update();
 
 		// Submit data to be render
 		std::vector<std::pair<Graphics::cModel::HANDLE, cTransform*>> _renderingMap;
@@ -123,7 +136,7 @@ void Assignment::Run()
 		_renderingMap.push_back({ m_teapot->GetModelHandle(), m_teapot->Transform() });
 		_renderingMap.push_back({ m_teapot2->GetModelHandle(), m_teapot2->Transform() });
 		_renderingMap.push_back({ m_wall->GetModelHandle(), m_wall->Transform() });
-
+		_renderingMap.push_back({ m_sphere->GetModelHandle(), m_sphere->Transform() });
 		Graphics::SubmitDataToBeRendered(_frameData_Shadow, _renderingMap);
 		Graphics::ShadowMap_Pass();
 
@@ -136,6 +149,7 @@ void Assignment::Run()
 		_renderingMap.push_back({ m_plane->GetModelHandle(), m_plane->Transform() });
 		_renderingMap.push_back({ m_teapot->GetModelHandle(), m_teapot->Transform() });
 		_renderingMap.push_back({ m_teapot2->GetModelHandle(), m_teapot2->Transform() });
+		_renderingMap.push_back({ m_sphere->GetModelHandle(), m_sphere->Transform() });
 		Graphics::SubmitDataToBeRendered(_frameData_Camera, _renderingMap);
 		Graphics::Render_Pass_CaptureCameraView();
 
@@ -144,12 +158,14 @@ void Assignment::Run()
 		_renderingMap.push_back({ m_teapot2->GetModelHandle(), m_teapot2->Transform() });
 		_renderingMap.push_back({ m_plane->GetModelHandle(), m_plane->Transform() });
 		_renderingMap.push_back({ m_wall->GetModelHandle(), m_wall->Transform() });
+		_renderingMap.push_back({ m_sphere->GetModelHandle(), m_sphere->Transform() });
 		Graphics::SubmitDataToBeRendered(_frameData_Camera, _renderingMap);
 		Graphics::Render_Pass();
 
 		// Cube map
 		_renderingMap.clear();
 		_renderingMap.push_back({ m_cubemap->GetModelHandle(), m_cubemap->Transform() });
+		Graphics::UniformBufferFormats::sFrame _frameData_Cubemap(m_editorCamera->GetProjectionMatrix(), glm::mat4(glm::mat3(m_editorCamera->GetViewMatrix())));
 		Graphics::SubmitDataToBeRendered(_frameData_Camera, _renderingMap);
 		Graphics::CubeMap_Pass();
 
@@ -167,6 +183,7 @@ void Assignment::CleanUp()
 	safe_delete(m_teapot2);
 	safe_delete(m_plane);
 	safe_delete(m_wall);
+	safe_delete(m_sphere);
 	safe_delete(m_cubemap);
 }
 
