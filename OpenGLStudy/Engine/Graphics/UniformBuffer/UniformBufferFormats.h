@@ -10,6 +10,7 @@ namespace Graphics {
 #ifndef _BufferPaddingDefined
 #define _BufferPaddingDefined
 #define V1Padding float v1Padding = 0
+#define V1Padding2 float v1Padding2 = 0
 #define V2Padding glm::vec2 v2Padding = glm::vec2(0,0)
 #define V3Padding glm::vec3 v3Padding= glm::vec2(0,0,0)
 #endif
@@ -55,13 +56,14 @@ namespace Graphics {
 		{
 			Color kd;
 			V1Padding;
-
 			Color ks;
 			float shininess;
+			Color ke;
+			V1Padding2;
 
 			sBlinnPhongMaterial() { }
-			sBlinnPhongMaterial(const Color& i_kd, const Color& i_ks, const float& i_shininess) :
-				kd(i_kd), ks(i_ks), shininess(i_shininess)
+			sBlinnPhongMaterial(const Color& i_kd, const Color& i_ks, const Color& i_ke, const float& i_shininess) :
+				kd(i_kd), ks(i_ks), ke(i_ke), shininess(i_shininess)
 			{ }
 		};
 

@@ -4,6 +4,7 @@
 // this uniform is default 0, if we need more texture unit, we need to bind manually
 uniform sampler2D diffuseTex;
 uniform sampler2D specularTex;
+uniform samplerCube cubemapTex;
 
 // shadow maps
 uniform sampler2D directionalShadowMap;
@@ -31,6 +32,7 @@ layout(std140, binding = 2) uniform g_uniformBuffer_blinnPhongMaterial
 	vec3 kd;
 	vec3 ks;
 	float shininess;
+	vec3 ke;
 };
 //-------------------------------------------------------------------------
 // Struct definitions
@@ -128,11 +130,9 @@ vec4 IlluminateByDirection_Kd(Light light, vec3 vN, vec3 vL){
 
 	return outColor;
 }
-vec4 IlluminateByDirection_Ks(Light light, vec3 vN, vec3 vL){
+vec4 IlluminateByDirection_Ks(Light light, vec3 vN, vec3 vV,vec3 vL){
 
 	vec4 outColor = vec4(0,0,0,0);
-
-	vec3 vV = normalize(ViewPosition - fragPos);
 	vec3 vH = normalize(vV + vL);
 	float specularFactor = max(pow(dot(vH, vN),shininess),0.0f);
 	vec4 specularColor = vec4(ks, 1.0f) * specularFactor;
@@ -140,6 +140,16 @@ vec4 IlluminateByDirection_Ks(Light light, vec3 vN, vec3 vL){
 
 	return outColor;
 }
+
+vec4 IlluminateByCubemap(vec4 diffuseColor, vec3 vN, vec3 vV)
+{
+	vec4 outColor = vec4(0,0,0,0);
+	vec3 vR = reflect(vV, vN);
+	outColor = diffuseColor * texture(cubemapTex, vR);
+	outColor *= vec4(ke,1.0);
+	return outColor;
+}
+
 //-------------------------------------------------------------------------
 // Light calculation
 //-------------------------------------------------------------------------
@@ -147,10 +157,10 @@ vec4 IlluminateByDirection_Ks(Light light, vec3 vN, vec3 vL){
 //-------------------------------------------------------------------------
 // DirectionalLight
 //-------------------------------------------------------------------------
-vec4 CalcDirectionalLight(vec4 diffusTexCol, vec4 specTexCol, vec3 vN){
+vec4 CalcDirectionalLight(vec4 diffusTexCol, vec4 specTexCol, vec3 vN, vec3 vV){
 		vec3 dir = normalize(g_directionalLight.direction);
 		vec4 color_kd = diffusTexCol * IlluminateByDirection_Kd(g_directionalLight.base, vN, dir);
-		vec4 color_ks = specTexCol * IlluminateByDirection_Ks(g_directionalLight.base, vN, dir);
+		vec4 color_ks = specTexCol * IlluminateByDirection_Ks(g_directionalLight.base, vN, vV, dir);
 		return color_kd + color_ks;
 }
 
@@ -158,13 +168,13 @@ vec4 CalcDirectionalLight(vec4 diffusTexCol, vec4 specTexCol, vec3 vN){
 // PointLight
 //-------------------------------------------------------------------------
 
-vec4 CalcPointLight(PointLight pLight,vec4 diffusTexCol, vec4 specTexCol,vec3 vN){
+vec4 CalcPointLight(PointLight pLight,vec4 diffusTexCol, vec4 specTexCol,vec3 vN, vec3 vV){
 		vec3 dir = pLight.position - fragPos;
 		float dist = length(dir);
 		dir = normalize(dir);
 
 		vec4 color_kd = diffusTexCol * IlluminateByDirection_Kd(pLight.base, vN, dir);
-		vec4 color_ks = specTexCol * IlluminateByDirection_Ks(pLight.base, vN, dir);
+		vec4 color_ks = specTexCol * IlluminateByDirection_Ks(pLight.base, vN, dir, vV);
 		float attenuationFactor = pLight.quadratic * dist * dist + 
 													pLight.linear * dist + 
 													pLight.constant;
@@ -172,11 +182,11 @@ vec4 CalcPointLight(PointLight pLight,vec4 diffusTexCol, vec4 specTexCol,vec3 vN
 		return ((color_kd + color_ks) / attenuationFactor);
 }
 
-vec4 CalcPointLights(vec4 diffusTexCol, vec4 specTexCol,vec3 vN){
+vec4 CalcPointLights(vec4 diffusTexCol, vec4 specTexCol,vec3 vN, vec3 vV){
 	vec4 outColor = vec4(0,0,0,0);
 
 	for(int i = 0; i < g_pointLightCount; ++i){
-		outColor += CalcPointLight(g_pointLights[i],diffusTexCol, specTexCol,vN);
+		outColor += CalcPointLight(g_pointLights[i],diffusTexCol, specTexCol,vN,vV);
 	}
 	return outColor;
 }
@@ -188,19 +198,23 @@ vec4 CalcPointLights(vec4 diffusTexCol, vec4 specTexCol,vec3 vN){
 void main(){
 	
 	// shared values
-	vec3 nomr_normal = normalize(Normal);
+	vec3 normalized_normal = normalize(Normal);
+	vec3 normalized_view = normalize(ViewPosition - fragPos);
 	vec4 diffuseTexColor =texture(diffuseTex, texCood0);
 	vec4 specularTexColor =texture(specularTex, texCood0);
 
 	// ambient light
 	vec4 ambientLightColor = diffuseTexColor * vec4(g_ambientLight.base.color, 1.0f) * vec4(kd, 1.0f);
 	
+	// cubemap light
+	vec4 cubemapColor = IlluminateByCubemap(diffuseTexColor, normalized_normal, normalized_view);
+
 	// point light
-	vec4 pointLightColor = CalcPointLights(diffuseTexColor, specularTexColor, nomr_normal);
+	vec4 pointLightColor = CalcPointLights(diffuseTexColor, specularTexColor, normalized_normal, normalized_view);
 
 	// directional light
-	float directionalLightShadowFactor = g_directionalLight.base.enableShadow ? (1.0 - CalcDirectionalLightShadowMap(nomr_normal)): 1.0;
-	vec4 directionLightColor = directionalLightShadowFactor * CalcDirectionalLight(diffuseTexColor, specularTexColor, nomr_normal);
+	float directionalLightShadowFactor = g_directionalLight.base.enableShadow ? (1.0 - CalcDirectionalLightShadowMap(normalized_normal)): 1.0;
+	vec4 directionLightColor = directionalLightShadowFactor * CalcDirectionalLight(diffuseTexColor, specularTexColor, normalized_normal, normalized_view);
 
 	color =  ( ambientLightColor + pointLightColor + directionLightColor);
 }

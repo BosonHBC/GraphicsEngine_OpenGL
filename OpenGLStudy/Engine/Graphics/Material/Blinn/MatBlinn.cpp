@@ -13,7 +13,7 @@ namespace Graphics {
 		bool result = true;
 		std::string _diffusePath, _specularPath;
 		// load material data from LUA files
-		if (!(result = LoadFileFromLua(i_path, m_matType, _diffusePath, _specularPath, m_diffuseIntensity, m_specularIntensity, m_shininess))) {
+		if (!(result = LoadFileFromLua(i_path, m_matType, _diffusePath, _specularPath, m_diffuseIntensity, m_specularIntensity, m_environmentIntensity,m_shininess))) {
 			printf("Fail to load material[%s] from LUA.\n", i_path.c_str());
 			return result;
 		}
@@ -37,6 +37,7 @@ namespace Graphics {
 
 		m_diffuseTexID = glGetUniformLocation(i_programID, "diffuseTex");
 		m_specularTexID = glGetUniformLocation(i_programID, "specularTex");
+		m_cubemapTexID = glGetUniformLocation(i_programID, "cubemapTex");
 
 		return result;
 	}
@@ -55,7 +56,7 @@ namespace Graphics {
 			_specularTex->UseTexture(GL_TEXTURE1);
 		}
 
-		s_BlinnPhongUniformBlock.Update(&UniformBufferFormats::sBlinnPhongMaterial(m_diffuseIntensity, m_specularIntensity, m_shininess));
+		s_BlinnPhongUniformBlock.Update(&UniformBufferFormats::sBlinnPhongMaterial(m_diffuseIntensity, m_specularIntensity, m_environmentIntensity,m_shininess));
 	}
 
 	void cMatBlinn::CleanUpMaterialBind()
@@ -135,7 +136,15 @@ namespace Graphics {
 		cTexture::s_manager.Copy(i_other, m_specularTextureHandle);
 	}
 
-	bool cMatBlinn::LoadFileFromLua(const std::string& i_path, eMaterialType& o_matType, std::string& o_diffusePath, std::string& o_specularPath, Color& o_diffuseColor, Color& o_specularColor, float& o_shineness)
+	void cMatBlinn::UpdateCubemapTexture(const Assets::cHandle<cTexture>& i_other)
+	{
+		// release current handle
+		cTexture::s_manager.Release(m_cubemapTextureHandle);
+		// Copy from incoming texture handle
+		cTexture::s_manager.Copy(i_other, m_cubemapTextureHandle);
+	}
+
+	bool cMatBlinn::LoadFileFromLua(const std::string& i_path, eMaterialType& o_matType, std::string& o_diffusePath, std::string& o_specularPath, Color& o_diffuseColor, Color& o_specularColor, Color& o_environmentIntensity, float& o_shineness)
 	{
 		bool result;
 		lua_State* luaState = nullptr;
@@ -190,6 +199,19 @@ namespace Graphics {
 				for (uint8_t i = 0; i < 3; ++i)
 				{
 					o_specularColor[i] = _tempHolder[i];
+				}
+			}
+			// o_environmentIntensity
+			{
+				constexpr auto* const _key = "EnvironmentIntensity";
+				float _tempHolder[3] = { 0 };
+				if (!(result = Assets::Lua_LoadVec3(luaState, _key, _tempHolder))) {
+					printf("LUA error: fail to load key[%s]", _key);
+					return result;
+				}
+				for (uint8_t i = 0; i < 3; ++i)
+				{
+					o_environmentIntensity[i] = _tempHolder[i];
 				}
 			}
 			// o_shineness
