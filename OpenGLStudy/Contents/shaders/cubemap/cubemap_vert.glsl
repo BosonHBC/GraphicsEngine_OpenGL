@@ -6,6 +6,9 @@ out vec3 TexCoords;
 layout(std140, binding = 0) uniform uniformBuffer_frame
 {
 	mat4 PVMatrix;
+    // The position of the viewpoint
+    vec3 ViewPosition;
+    float padding;
 };
 
 void main()

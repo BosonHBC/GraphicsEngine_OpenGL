@@ -14,6 +14,8 @@ layout(std140, binding = 0) uniform uniformBuffer_frame
 {
 	// PVMatrix stands for projection * view matrix
 	mat4 PVMatrix;
+	vec3 ViewPosition;
+	float padding;
 	//mat4 projectionMatrix;
 };
 layout(std140, binding = 1) uniform uniformBuffer_drawcall

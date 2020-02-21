@@ -117,6 +117,7 @@ void Assignment::Run()
 
 		// Submit data to be render
 		std::vector<std::pair<Graphics::cModel::HANDLE, cTransform*>> _renderingMap;
+		// Frame data from directional light
 		Graphics::UniformBufferFormats::sFrame _frameData_Shadow(dLight->CalculateLightTransform());
 		_renderingMap.push_back({ m_plane->GetModelHandle(), m_plane->Transform() });
 		_renderingMap.push_back({ m_teapot->GetModelHandle(), m_teapot->Transform() });
@@ -125,12 +126,12 @@ void Assignment::Run()
 
 		Graphics::SubmitDataToBeRendered(_frameData_Shadow, _renderingMap);
 		Graphics::ShadowMap_Pass();
+
 		// ----------------------
 		// Rendering
-
-			// Update his location for lighting, TODO: should not update here
-		m_editorCamera->UpdateUniformLocation(Graphics::GetCurrentEffect()->GetProgramID());
+		// Frame data from camera
 		Graphics::UniformBufferFormats::sFrame _frameData_Camera(m_editorCamera->GetProjectionMatrix(), m_editorCamera->GetViewMatrix());
+		_frameData_Camera.ViewPosition = m_editorCamera->CamLocation();
 		_renderingMap.clear();
 		_renderingMap.push_back({ m_plane->GetModelHandle(), m_plane->Transform() });
 		_renderingMap.push_back({ m_teapot->GetModelHandle(), m_teapot->Transform() });

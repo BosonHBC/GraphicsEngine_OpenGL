@@ -21,7 +21,7 @@ namespace Graphics {
 		{
 			// PVMatrix stands for projection * view matrix
 			glm::f32 PVMatrix[16];
-			//glm::f32 ProjectionMatrix[16];
+			glm::vec3 ViewPosition;
 
 			sFrame(){}
 

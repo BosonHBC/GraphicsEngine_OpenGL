@@ -13,7 +13,14 @@ in vec3 Normal;
 in vec3 fragPos;
 
 in vec4 DirectionalLightSpacePos;
-
+layout(std140, binding = 0) uniform uniformBuffer_frame
+{
+	// PVMatrix stands for projection * view matrix
+	mat4 PVMatrix;
+	vec3 ViewPosition;
+	float padding;
+	//mat4 projectionMatrix;
+};
 // the color of the pixel
 out vec4 color;
 
@@ -67,12 +74,6 @@ layout(std140, binding = 3) uniform g_uniformBuffer_Lighting
 	PointLight g_pointLights[MAX_COUNT_PER_LIGHT]; // 48 * MAX_COUNT_PER_LIGHT = 240 bytes
 	SpotLight g_spotLights[MAX_COUNT_PER_LIGHT]; // 64 * MAX_COUNT_PER_LIGHT = 320 bytes
 }; // 624 bytes per lighting data
-
-//-------------------------------------------------------------------------
-// Uniform Variables
-//-------------------------------------------------------------------------
-
-uniform vec3 camPos;
 
 //-------------------------------------------------------------------------
 // Fucntions
@@ -131,7 +132,7 @@ vec4 IlluminateByDirection_Ks(Light light, vec3 vN, vec3 vL){
 
 	vec4 outColor = vec4(0,0,0,0);
 
-	vec3 vV = normalize(camPos - fragPos);
+	vec3 vV = normalize(ViewPosition - fragPos);
 	vec3 vH = normalize(vV + vL);
 	float specularFactor = max(pow(dot(vH, vN),shininess),0.0f);
 	vec4 specularColor = vec4(ks, 1.0f) * specularFactor;

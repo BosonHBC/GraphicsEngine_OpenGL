@@ -20,8 +20,7 @@ void cCamera::Update()
 
 void cCamera::UpdateUniformLocation(GLuint i_programID)
 {
-	GLuint m_camPositionLocation = glGetUniformLocation(i_programID, "camPos"); 
-	glUniform3f(m_camPositionLocation , m_position.x, m_position.y, m_position.z);
+
 }
 
 cCamera::~cCamera()

@@ -127,8 +127,6 @@ namespace Graphics {
 
 		s_directionalLight->SetupLight(s_currentEffect->GetProgramID(), 0);
 
-
-
 		cFrameBuffer* _directionalLightFBO = s_directionalLight->GetShadowMap();
 		if (_directionalLightFBO) {
 
@@ -138,7 +136,6 @@ namespace Graphics {
 					_app->GetCurrentWindow()->SetViewportSize(_directionalLightFBO->GetWidth(), _directionalLightFBO->GetHeight());
 				}
 			}
-
 			// write buffer to the texture
 			_directionalLightFBO->Write();
 
@@ -149,6 +146,7 @@ namespace Graphics {
 			{
 				// 1. Update frame data
 				s_uniformBuffer_frame.Update(&s_dataRequiredToRenderAFrame.FrameData);
+
 			}
 
 			// Draw scenes
@@ -167,6 +165,7 @@ namespace Graphics {
 			s_currentEffect = GetEffectByKey(Constants::CONST_DEFAULT_EFFECT_KEY);
 			s_currentEffect->UseEffect();
 			s_directionalLight->SetupLight(s_currentEffect->GetProgramID(), 0);
+
 		}
 		// Reset window size
 		{
@@ -176,12 +175,14 @@ namespace Graphics {
 			}
 		}
 		s_cameraCapture.Write();
+
 		// Clear color and buffers
 		{
 			// clear window
 			glClearColor(0.2f, 0.2f, 0.2f, 1.f);
 			// A lot of things can be cleaned like color buffer, depth buffer, so we need to specify what to clear
 			glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+
 
 		}
 
