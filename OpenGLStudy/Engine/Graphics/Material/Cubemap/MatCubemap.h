@@ -5,7 +5,6 @@ namespace Graphics {
 	class cMatCubemap : public cMaterial
 	{
 	public:
-
 		~cMatCubemap() { CleanUp(); };
 
 		bool Initialize(const std::string& i_path) override;

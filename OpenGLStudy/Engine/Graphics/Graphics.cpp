@@ -18,8 +18,9 @@ namespace Graphics {
 	// Data required to render a frame, right now do not support switching effect(shader)
 	struct sDataRequiredToRenderAFrame
 	{
-		cCamera* CurrentCamera;
+		UniformBufferFormats::sFrame FrameData;
 		std::vector<std::pair<Graphics::cModel::HANDLE, cTransform*>> ModelToTransform_map;
+		sDataRequiredToRenderAFrame() {}
 	};
 	// Global data
 	// ---------------------------------
@@ -126,6 +127,8 @@ namespace Graphics {
 
 		s_directionalLight->SetupLight(s_currentEffect->GetProgramID(), 0);
 
+
+
 		cFrameBuffer* _directionalLightFBO = s_directionalLight->GetShadowMap();
 		if (_directionalLightFBO) {
 
@@ -142,7 +145,11 @@ namespace Graphics {
 			glClearColor(0, 0, 0, 1.f);
 			glClear(/*GL_COLOR_BUFFER_BIT | */GL_DEPTH_BUFFER_BIT);
 
-			s_directionalLight->SetLightUniformTransform();
+			// Update frame data
+			{
+				// 1. Update frame data
+				s_uniformBuffer_frame.Update(&s_dataRequiredToRenderAFrame.FrameData);
+			}
 
 			// Draw scenes
 			RenderScene_shadowMap();
@@ -178,24 +185,10 @@ namespace Graphics {
 
 		}
 
-		// Update camera
-		{
-			if (s_dataRequiredToRenderAFrame.CurrentCamera)
-				// Update his location for lighting, TODO: should not update here
-				s_dataRequiredToRenderAFrame.CurrentCamera->UpdateUniformLocation(s_currentEffect->GetProgramID());
-			else
-			{
-				printf("No camera in this frame, skip rendering.");
-				return;
-			}
-		}
-
 		// Update frame data
 		{
-			cCamera* _camera = s_dataRequiredToRenderAFrame.CurrentCamera;
-
 			// 1. Update frame data
-			s_uniformBuffer_frame.Update(&UniformBufferFormats::sFrame(_camera->GetProjectionMatrix(), _camera->GetViewMatrix()));
+			s_uniformBuffer_frame.Update(&s_dataRequiredToRenderAFrame.FrameData);
 
 		}
 
@@ -261,24 +254,10 @@ namespace Graphics {
 
 		}
 
-		// Update camera
-		{
-			if (s_dataRequiredToRenderAFrame.CurrentCamera)
-				// Update his location for lighting, TODO: should not update here
-				s_dataRequiredToRenderAFrame.CurrentCamera->UpdateUniformLocation(s_currentEffect->GetProgramID());
-			else
-			{
-				printf("No camera in this frame, skip rendering.");
-				return;
-			}
-		}
-
 		// Update frame data
 		{
-			cCamera* _camera = s_dataRequiredToRenderAFrame.CurrentCamera;
 			// 1. Update frame data
-			s_uniformBuffer_frame.Update(&UniformBufferFormats::sFrame(_camera->GetProjectionMatrix(), _camera->GetViewMatrix()));
-
+			s_uniformBuffer_frame.Update(&s_dataRequiredToRenderAFrame.FrameData);
 		}
 
 		// Update lighting data
@@ -318,15 +297,15 @@ namespace Graphics {
 		s_currentEffect = GetEffectByKey("CubemapEffect");
 		s_currentEffect->UseEffect();
 
-		cCamera* _camera = s_dataRequiredToRenderAFrame.CurrentCamera;
-		s_uniformBuffer_frame.Update(&UniformBufferFormats::sFrame(_camera->GetProjectionMatrix(), glm::mat4(glm::mat3(_camera->GetViewMatrix()))));
+		s_uniformBuffer_frame.Update(&s_dataRequiredToRenderAFrame.FrameData);
 
 		for (auto it = s_dataRequiredToRenderAFrame.ModelToTransform_map.begin(); it != s_dataRequiredToRenderAFrame.ModelToTransform_map.end(); ++it)
 		{
 			// 1. Do not need to update drawcall data because in cubemap.vert, there is no model matrix and normal matrix
 			// 2. Draw
 			cModel* _model = cModel::s_manager.Get(it->first);
-			if (_model) {
+			if (_model) 
+			{
 				_model->Render();
 			}
 		}
@@ -403,9 +382,9 @@ namespace Graphics {
 		return result;
 	}
 
-	void SubmitDataToBeRendered(cCamera* i_camera, const std::vector<std::pair<Graphics::cModel::HANDLE, cTransform*>>& i_modelToTransform_map)
+	void SubmitDataToBeRendered(const UniformBufferFormats::sFrame& i_frameData, const std::vector<std::pair<Graphics::cModel::HANDLE, cTransform*>>& i_modelToTransform_map)
 	{
-		s_dataRequiredToRenderAFrame.CurrentCamera = i_camera;
+		s_dataRequiredToRenderAFrame.FrameData = i_frameData;
 		s_dataRequiredToRenderAFrame.ModelToTransform_map = i_modelToTransform_map;
 	}
 

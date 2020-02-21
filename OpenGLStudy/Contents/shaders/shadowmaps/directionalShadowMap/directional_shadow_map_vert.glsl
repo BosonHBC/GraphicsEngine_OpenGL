@@ -13,9 +13,7 @@ layout(std140, binding = 1) uniform uniformBuffer_drawcall
 	mat4 normalMatrix;
 };
 
-uniform mat4 directionalLightTransform; // projection(ortho or perpective) * view
-
 void main()
 {
-	gl_Position = directionalLightTransform * modelMatrix * vec4(pos, 1.0);
+	gl_Position = PVMatrix * modelMatrix * vec4(pos, 1.0);
 }

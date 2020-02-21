@@ -23,9 +23,15 @@ namespace Graphics {
 			glm::f32 PVMatrix[16];
 			//glm::f32 ProjectionMatrix[16];
 
+			sFrame(){}
+
 			sFrame(const glm::mat4& i_projectionMatrix, const glm::mat4& i_viewMatrix)
 			{
 				memcpy(PVMatrix, glm::value_ptr(i_projectionMatrix * i_viewMatrix), sizeof(PVMatrix));
+			}
+			sFrame(const glm::mat4& i_PVMatrix) 
+			{
+				memcpy(PVMatrix, glm::value_ptr(i_PVMatrix), sizeof(PVMatrix));
 			}
 		};
 
