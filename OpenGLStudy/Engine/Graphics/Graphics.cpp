@@ -312,6 +312,28 @@ namespace Graphics {
 		}
 		// Swap buffers happens in main rendering loop, not in this render function.
 	}
+
+	void CubeMap_Pass()
+	{
+		s_currentEffect = GetEffectByKey("CubemapEffect");
+		s_currentEffect->UseEffect();
+
+		cCamera* _camera = s_dataRequiredToRenderAFrame.CurrentCamera;
+		s_uniformBuffer_frame.Update(&UniformBufferFormats::sFrame(_camera->GetProjectionMatrix(), glm::mat4(glm::mat3(_camera->GetViewMatrix()))));
+
+		for (auto it = s_dataRequiredToRenderAFrame.ModelToTransform_map.begin(); it != s_dataRequiredToRenderAFrame.ModelToTransform_map.end(); ++it)
+		{
+			// 1. Do not need to update drawcall data because in cubemap.vert, there is no model matrix and normal matrix
+			// 2. Draw
+			cModel* _model = cModel::s_manager.Get(it->first);
+			if (_model) {
+				_model->Render();
+			}
+		}
+
+		s_currentEffect->UnUseEffect();
+	}
+
 	void RenderScene_shadowMap()
 	{
 		// loop through every single model

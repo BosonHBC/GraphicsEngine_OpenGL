@@ -23,5 +23,7 @@ namespace Graphics {
 		bool LoadFileFromLua(const std::string& i_path, std::vector<std::string>& o_textures);
 
 		GLuint m_cubemapTexID;
+
+		friend class cMaterial;
 	};
 }

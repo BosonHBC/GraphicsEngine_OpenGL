@@ -84,7 +84,7 @@ namespace Assets {
 				return result;
 			}
 		}
-		printf("LUA initialized successfully.\n");
+		//printf("LUA initialized successfully.\n");
 		return result;
 	}
 
@@ -114,7 +114,7 @@ namespace Assets {
 			printf("LUA error: Can not close an empty lua table");
 			return false;
 		}
-		printf("LUA released successfully.\n");
+		//printf("LUA released successfully.\n");
 		return result;
 	}
 

@@ -49,6 +49,9 @@ namespace Graphics {
 
 		// Type of the material
 		eMaterialType m_matType;
+	
+	private:
+		static bool LoadMaterialTypeInLUA(const std::string& i_path, eMaterialType& o_matType);
 	};
 
 }

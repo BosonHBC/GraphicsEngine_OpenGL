@@ -177,7 +177,10 @@ void Assignment::Run()
 		Graphics::Render_Pass();
 
 		// Cube map
+		_renderingMap.clear();
 		_renderingMap.push_back({ m_cubemap->GetModelHandle(), m_cubemap->Transform() });
+		Graphics::SubmitDataToBeRendered(m_editorCamera, _renderingMap);
+		Graphics::CubeMap_Pass();
 		// ----------------------
 		// Swap buffers
 		m_window->SwapBuffers();

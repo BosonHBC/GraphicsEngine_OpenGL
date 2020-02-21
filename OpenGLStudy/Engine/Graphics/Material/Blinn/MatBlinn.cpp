@@ -150,15 +150,6 @@ namespace Graphics {
 		// Load data
 		//------------------------------
 		{
-			// o_matType
-			{
-				constexpr auto* const _key = "MaterialType";
-				int _tempType = 0;
-				if (!(result = Assets::Lua_LoadInteger(luaState, _key, _tempType))) {
-					printf("LUA error: fail to load key[%s]", _key);
-					return result;
-				}
-			}
 			// o_diffusePath
 			{
 				constexpr auto* const _key = "DiffuseTexture";

@@ -3,7 +3,6 @@
 ]]
 return 
 {
-
     MaterialType = 2,
     tex_PosX = "Cubemaps/cubemap/posx_cubemap.png",
     tex_NegX = "Cubemaps/cubemap/negx_cubemap.png",

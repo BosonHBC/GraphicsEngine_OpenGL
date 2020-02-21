@@ -23,6 +23,7 @@ namespace Graphics {
 	void Render_Pass_CaptureCameraView();
 	cFrameBuffer* GetCameraCaptureFrameBuffer();
 	void Render_Pass();
+	void CubeMap_Pass();
 
 	bool CleanUp();
 

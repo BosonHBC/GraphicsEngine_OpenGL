@@ -231,7 +231,9 @@ namespace Graphics {
 			
 		for (int i = 0; i < 6; ++i)
 		{
-			_data = stbi_load(i_paths[i].c_str(), &m_width, &m_height, &m_bitDepth, 0);
+			std::string _path = i_paths[i];
+			_path.insert(0, Constants::CONST_PATH_TEXTURE_ROOT);
+			_data = stbi_load(_path.c_str(), &m_width, &m_height, &m_bitDepth, 0);
 			if (_data) {
 				glTexImage2D(
 					GL_TEXTURE_CUBE_MAP_POSITIVE_X + i,
@@ -250,6 +252,11 @@ namespace Graphics {
 		glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
 		glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
 		glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_WRAP_R, GL_CLAMP_TO_EDGE);
+
+		const auto errorCode = glGetError();
+		if (errorCode != GL_NO_ERROR) {
+			printf("Cube map error: fail to load cube map.\n");
+		}
 
 		return result;
 	}
