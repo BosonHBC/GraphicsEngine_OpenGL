@@ -295,6 +295,9 @@ namespace Graphics {
 
 	void CubeMap_Pass()
 	{
+		// change depth function so depth test passes when values are equal to depth buffer's content
+		glDepthFunc(GL_LEQUAL); 
+
 		s_currentEffect = GetEffectByKey("CubemapEffect");
 		s_currentEffect->UseEffect();
 
@@ -312,6 +315,8 @@ namespace Graphics {
 		}
 
 		s_currentEffect->UnUseEffect();
+		// set depth function back to default
+		glDepthFunc(GL_LESS); 
 	}
 
 	void RenderScene_shadowMap()

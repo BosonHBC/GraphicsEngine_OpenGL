@@ -19,8 +19,6 @@ layout(std140, binding = 0) uniform uniformBuffer_frame
 	// PVMatrix stands for projection * view matrix
 	mat4 PVMatrix;
 	vec3 ViewPosition;
-	float padding;
-	//mat4 projectionMatrix;
 };
 // the color of the pixel
 out vec4 color;
@@ -141,11 +139,17 @@ vec4 IlluminateByDirection_Ks(Light light, vec3 vN, vec3 vV,vec3 vL){
 	return outColor;
 }
 
-vec4 IlluminateByCubemap(vec4 diffuseColor, vec3 vN, vec3 vV)
+vec4 IlluminateByCubemap(vec4 diffuseColor, vec4 specularColor,vec3 vN, vec3 vV)
 {
 	vec4 outColor = vec4(0,0,0,0);
 	vec3 vR = reflect(-vV, vN);
-	outColor = vec4(ke,1.0) * diffuseColor * texture(cubemapTex, vR);
+	
+	float vN_Dot_vL = max( dot( vN , vR), 0.0f );
+
+	vec4 _diffuse = vec4(kd, 1.0f) * diffuseColor * vN_Dot_vL;
+	vec4 _specular = vec4(ks, 1.0f) * specularColor * 1; // * 1 because VH is normal
+
+	outColor = vec4(ke,1.0) *  texture(cubemapTex, vR) * (_diffuse + _specular);
 	return outColor;
 }
 
@@ -206,7 +210,7 @@ void main(){
 	vec4 ambientLightColor = diffuseTexColor * vec4(g_ambientLight.base.color, 1.0f) * vec4(kd, 1.0f);
 	
 	// cubemap light
-	vec4 cubemapColor = IlluminateByCubemap(diffuseTexColor, normalized_normal, normalized_view);
+	vec4 cubemapColor = IlluminateByCubemap(diffuseTexColor,specularTexColor, normalized_normal, normalized_view);
 
 	// point light
 	vec4 pointLightColor = CalcPointLights(diffuseTexColor, specularTexColor, normalized_normal, normalized_view);

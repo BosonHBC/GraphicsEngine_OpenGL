@@ -44,6 +44,9 @@ bool Assignment::Initialize(GLuint i_width, GLuint i_height, const char* i_windo
 	Graphics::cMatBlinn* _planeMat = dynamic_cast<Graphics::cMatBlinn*>(Graphics::cModel::s_manager.Get(m_plane->GetModelHandle())->GetMaterialAt());
 	Graphics::cMatCubemap* _cubemapMat = dynamic_cast<Graphics::cMatCubemap*>(Graphics::cModel::s_manager.Get(m_cubemap->GetModelHandle())->GetMaterialAt());
 	_planeMat->UpdateCubemapTexture(_cubemapMat->GetCubemapHandle());
+
+	Graphics::cMatBlinn* _teapot2Mat = dynamic_cast<Graphics::cMatBlinn*>(Graphics::cModel::s_manager.Get(m_teapot2->GetModelHandle())->GetMaterialAt());
+	_teapot2Mat->UpdateCubemapTexture(_cubemapMat->GetCubemapHandle());
 	return result;
 }
 

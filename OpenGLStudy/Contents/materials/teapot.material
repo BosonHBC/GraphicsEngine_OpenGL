@@ -8,6 +8,6 @@ return
     SpecularTexture = "brick-specular.png",
     DiffuseIntensity = {1,1.0,1},
     SpecularIntensity = {1.0,1.0,1.0}, 
-    EnvironmentIntensity = {0,0,0},
+    EnvironmentIntensity = {1,1,1},
     Shininess = 64,
 }
