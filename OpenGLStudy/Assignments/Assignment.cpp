@@ -64,9 +64,8 @@ void Assignment::CreateActor()
 	m_teapot2 = new cActor();
 	m_teapot2->Initialize();
 	m_teapot2->Transform()->Translate(glm::vec3(2, 0, -3.f));
-	//m_teapot2->Transform()->Rotate(glm::vec3(1, 0, 0), -90.f);
-	m_teapot2->Transform()->Rotate(glm::vec3(0, 1, 0), 30.f);
-	m_teapot2->Transform()->Scale(glm::vec3(0.03f, 0.03f, -0.03f));
+	m_teapot2->Transform()->Rotate(glm::vec3(1, 0, 0), -90.f);
+	m_teapot2->Transform()->Scale(glm::vec3(0.03f, 0.03f, 0.03f));
 
 	m_teapot2->SetModel("Contents/models/teapot.model");
 	m_teapot2->UpdateUniformVariables(Graphics::GetCurrentEffect());
@@ -83,15 +82,16 @@ void Assignment::CreateActor()
 	m_wall->Initialize();
 	m_wall->SetModel("Contents/models/wall.model");
 	m_wall->UpdateUniformVariables(Graphics::GetCurrentEffect());
-	m_wall->Transform()->Translate(glm::vec3(0, 0, -2));
-	m_wall->Transform()->Scale(glm::vec3(3, 1, 3));
+	m_wall->Transform()->Translate(glm::vec3(0, 1, -5.f));
+	m_wall->Transform()->Rotate(glm::vec3(1, 0, 0), 90);
+	m_wall->Transform()->Rotate(glm::vec3(0, 1, 0), 180);
+	m_wall->Transform()->Scale(glm::vec3(-5, 1, 3.75f));
 
 	m_sphere = new cActor();
 	m_sphere->Initialize();
 	m_sphere->SetModel("Contents/models/sphere.model");
 	m_sphere->UpdateUniformVariables(Graphics::GetCurrentEffect());
 	m_sphere->Transform()->Translate(glm::vec3(-1, 0.3, -1.f));
-	m_sphere->Transform()->Rotate(glm::vec3(1, 0, 0), -90.f);
 	m_sphere->Transform()->Scale(glm::vec3(0.5f, 0.5f, 0.5f));
 
 	m_cubemap = new cActor();
@@ -123,19 +123,19 @@ void Assignment::Run()
 	while (!m_shouldApplicationLoopExit)
 	{
 		glfwPollEvents();
-		std::vector<std::pair<Graphics::cModel::HANDLE, cTransform*>> _renderingMap;
+
 		// Update transforms
 		m_teapot->Transform()->Update();
-	/*	m_teapot2->Transform()->Update();
-		//m_plane->Transform()->Update();
+		m_teapot2->Transform()->Update();
+		m_plane->Transform()->Update();
 		m_wall->Transform()->Update();
-		m_sphere->Transform()->Update();*/
+		m_sphere->Transform()->Update();
 
-		/*// Submit data to be render
-		
+		// Submit data to be render
+		std::vector<std::pair<Graphics::cModel::HANDLE, cTransform*>> _renderingMap;
 		// Frame data from directional light
 		Graphics::UniformBufferFormats::sFrame _frameData_Shadow(dLight->CalculateLightTransform());
-		//_renderingMap.push_back({ m_plane->GetModelHandle(), m_plane->Transform() });
+		_renderingMap.push_back({ m_plane->GetModelHandle(), m_plane->Transform() });
 		_renderingMap.push_back({ m_teapot->GetModelHandle(), m_teapot->Transform() });
 		_renderingMap.push_back({ m_teapot2->GetModelHandle(), m_teapot2->Transform() });
 		_renderingMap.push_back({ m_wall->GetModelHandle(), m_wall->Transform() });
@@ -149,37 +149,28 @@ void Assignment::Run()
 		Graphics::UniformBufferFormats::sFrame _frameData_Camera(m_editorCamera->GetProjectionMatrix(), m_editorCamera->GetViewMatrix());
 		_frameData_Camera.ViewPosition = m_editorCamera->CamLocation();
 		_renderingMap.clear();
-		//cTransform trHolder1(m_teapot->Transform()->MirrorAccordingTo(*m_wall->Transform()));
-	//	cTransform trHolder2(m_teapot2->Transform()->MirrorAccordingTo(*m_wall->Transform()));
-		//cTransform trHolder3(m_sphere->Transform()->MirrorAccordingTo(*m_wall->Transform()));
-
-		//_renderingMap.push_back({ m_plane->GetModelHandle(), m_plane->Transform() });
+		_renderingMap.push_back({ m_plane->GetModelHandle(), m_plane->Transform() });
 		_renderingMap.push_back({ m_teapot->GetModelHandle(), m_teapot->Transform() });
 		_renderingMap.push_back({ m_teapot2->GetModelHandle(), m_teapot2->Transform() });
 		_renderingMap.push_back({ m_sphere->GetModelHandle(), m_sphere->Transform() });
 		Graphics::SubmitDataToBeRendered(_frameData_Camera, _renderingMap);
 		Graphics::Render_Pass_CaptureCameraView();
 
-		_renderingMap.clear();*/
-		Graphics::UniformBufferFormats::sFrame _frameData_Camera(m_editorCamera->GetProjectionMatrix(), m_editorCamera->GetViewMatrix());
-		_frameData_Camera.ViewPosition = m_editorCamera->CamLocation();
-		//_renderingMap.push_back({ m_teapot->GetModelHandle(), &trHolder1 });
+		_renderingMap.clear();
 		_renderingMap.push_back({ m_teapot->GetModelHandle(), m_teapot->Transform() });
-		//_renderingMap.push_back({ m_teapot2->GetModelHandle(), &trHolder2 });
 		_renderingMap.push_back({ m_teapot2->GetModelHandle(), m_teapot2->Transform() });
-		//_renderingMap.push_back({ m_plane->GetModelHandle(), m_plane->Transform() });
+		_renderingMap.push_back({ m_plane->GetModelHandle(), m_plane->Transform() });
 		_renderingMap.push_back({ m_wall->GetModelHandle(), m_wall->Transform() });
-		//_renderingMap.push_back({ m_sphere->GetModelHandle(), &trHolder3 });
 		_renderingMap.push_back({ m_sphere->GetModelHandle(), m_sphere->Transform() });
 		Graphics::SubmitDataToBeRendered(_frameData_Camera, _renderingMap);
 		Graphics::Render_Pass();
 
 		// Cube map
-		/*_renderingMap.clear();
+		_renderingMap.clear();
 		_renderingMap.push_back({ m_cubemap->GetModelHandle(), m_cubemap->Transform() });
 		Graphics::UniformBufferFormats::sFrame _frameData_Cubemap(m_editorCamera->GetProjectionMatrix(), glm::mat4(glm::mat3(m_editorCamera->GetViewMatrix())));
 		Graphics::SubmitDataToBeRendered(_frameData_Camera, _renderingMap);
-		Graphics::CubeMap_Pass();*/
+		Graphics::CubeMap_Pass();
 
 		// ----------------------
 		// Swap buffers
@@ -224,7 +215,6 @@ void Assignment::Tick(float second_since_lastFrame)
 	if (m_teapot) {
 		m_teapot->Transform()->Rotate(glm::vec3(0, 0, 1), 100 * second_since_lastFrame);
 	}
-	
 	/*
 		m_teapot->Transform()->PrintEulerAngle();
 
@@ -240,19 +230,6 @@ void Assignment::Tick(float second_since_lastFrame)
 		if (_windowInput->IsKeyDown(GLFW_KEY_DOWN)) {
 			m_teapot->Transform()->Rotate(glm::vec3(1, 0, 0), (-50 * second_since_lastFrame));
 		}*/
-
-	if (_windowInput->IsKeyDown(GLFW_KEY_UP)) {
-		m_teapot2->Transform()->Translate(glm::vec3(0, 1, 0) * 20.f * second_since_lastFrame);
-	}
-	if (_windowInput->IsKeyDown(GLFW_KEY_DOWN)) {
-		m_teapot2->Transform()->Translate(glm::vec3(0, -1, 0) * 20.f * second_since_lastFrame);
-	}
-	if (_windowInput->IsKeyDown(GLFW_KEY_LEFT)) {
-		m_teapot2->Transform()->Translate(glm::vec3(0, 0, -1) * 20.f * second_since_lastFrame);
-	}
-	if (_windowInput->IsKeyDown(GLFW_KEY_RIGHT)) {
-		m_teapot2->Transform()->Translate(glm::vec3(0,0, 1) * 20.f * second_since_lastFrame);
-	}
 }
 
 void Assignment::FixedTick()
