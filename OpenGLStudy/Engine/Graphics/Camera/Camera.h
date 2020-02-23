@@ -3,6 +3,7 @@
 #include "GL/glew.h"
 #include "glm/glm.hpp"
 #include "glm/gtc/matrix_transform.hpp"
+#include "Math/Transform/Transform.h"
 
 // Forward declaration
 // ------------------------
@@ -11,17 +12,17 @@ class cCamera
 {
 public:
 	/** Constructors and destructor */
-	cCamera() : m_position(glm::vec3(0, 0, 0)), m_forward(glm::vec3(0, 0, -1)), m_up(glm::vec3(0, 1, 0)),
-		m_right(glm::vec3(1, 0, 0)), m_pitch(0), m_yaw(0),m_translationSpeed(1), m_turnSpeed(0.1f)
+	cCamera() : m_translationSpeed(1), m_turnSpeed(0.1f)
 	{
-		Update();
+		m_transform = new cTransform();
 	}
 	cCamera(glm::vec3 i_initialPos, GLfloat i_initialPitch = 0.0, GLfloat i_initialYaw = 0.0, GLfloat i_moveSpeed = 1.0, GLfloat i_turnSpeed = 1.0f):
-		m_position(i_initialPos), m_forward(glm::vec3(0, 0, -1)), m_up(glm::vec3(0, 1, 0)), m_right(glm::vec3(1, 0, 0)),
-		m_pitch(i_initialPitch), m_yaw(i_initialYaw),
 		m_translationSpeed(i_moveSpeed), m_turnSpeed(i_turnSpeed)
 	{
-		Update();
+		m_transform = new cTransform();
+		glm::quat _pitch(glm::vec3(i_initialPitch, 0, 0));
+		glm::quat _yaw(glm::vec3(0, i_initialYaw, 0));
+		m_transform->SetTransform(i_initialPos, _pitch * _yaw, glm::vec3(1, 1, 1));
 	}
 	virtual ~cCamera();
 
@@ -36,21 +37,12 @@ public:
 
 	/** Getters*/
 	glm::mat4 GetViewMatrix();
-	glm::vec3 CamLocation() const { return m_position; }
-	glm::vec3 CamForward() const { return m_forward; }
-	glm::vec3 CamRight() const { return m_right; }
-	glm::vec3 CamUp() const { return m_up; }
+	glm::vec3 CamLocation() const { return m_transform->Position(); }
+
 	const glm::mat4& GetProjectionMatrix() const { return m_projectionMatrix; }
 protected:
 	/** private member variables*/
-	glm::vec3 m_position;
-	glm::vec3 m_forward;
-	glm::vec3 m_up;
-	glm::vec3 m_right;
-
-	GLfloat m_pitch;
-	GLfloat m_yaw;
-
+	cTransform* m_transform;
 	GLfloat m_translationSpeed;
 	GLfloat m_turnSpeed;
 
@@ -60,10 +52,6 @@ protected:
 	/** private helper functions*/
 	virtual void Update();
 
-	/** private static variables*/
-	static glm::vec3 WorldUp;
-	static glm::vec3 WorldRight;
-	static glm::vec3 WorldForward;
 
 };
 

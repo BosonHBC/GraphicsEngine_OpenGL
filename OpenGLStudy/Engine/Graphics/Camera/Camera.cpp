@@ -1,9 +1,6 @@
 #include "Camera.h"
 #include "glfw/glfw3.h"
 #include "Application/Window/WindowInput.h"
-glm::vec3 cCamera::WorldUp = glm::vec3(0.0, 1.0, 0.0);
-glm::vec3 cCamera::WorldRight = glm::vec3(1.0, 0.0, 0.0);
-glm::vec3 cCamera::WorldForward = glm::vec3(0.0, 0.0, 1.0);
 
 void cCamera::Update()
 {
@@ -11,9 +8,9 @@ void cCamera::Update()
 
 	m_pitch = glm::clamp(m_pitch, -89.f, 89.f);
 
-	m_forward = WorldUp * sin(glm::radians(m_pitch)) + cos(glm::radians(m_pitch)) * (-WorldForward * cos(glm::radians(m_yaw)) + WorldRight * sin(glm::radians(m_yaw)));
+	m_forward = cTransform::WorldUp * sin(glm::radians(m_pitch)) + cos(glm::radians(m_pitch)) * (-cTransform::WorldForward * cos(glm::radians(m_yaw)) + cTransform::WorldRight * sin(glm::radians(m_yaw)));
 
-	m_right = glm::normalize(glm::cross(m_forward, WorldUp));
+	m_right = glm::normalize(glm::cross(m_forward, cTransform::WorldUp));
 	m_up = glm::normalize(glm::cross(m_right, m_forward));
 
 }

@@ -36,6 +36,12 @@ public:
 	glm::mat4 GetTranslationMatrix() const;
 	glm::mat4 GetRotationMatrix() const;
 	glm::mat4 GetScaleMatrix() const;
+	const glm::vec3& Position() const { return m_position; }
+	const glm::quat& Rotation() const { return m_rotation; }
+	const glm::vec3& Scale() const { return m_scale; }
+	glm::vec3 Forward() const;
+	glm::vec3 Right() const;
+	glm::vec3 Up() const;
 
 	const glm::mat4& M() const { return m; }
 	const glm::mat4& MInv() const { return mInv; }
@@ -49,6 +55,10 @@ public:
 	void PrintEulerAngle() const;
 #endif // _DEBUG
 
+public:
+	static glm::vec3 WorldUp;
+	static glm::vec3 WorldRight;
+	static glm::vec3 WorldForward;
 
 private:
 	/** private data*/

@@ -99,6 +99,21 @@ glm::mat4 cTransform::GetScaleMatrix() const
 
 }
 
+glm::vec3 cTransform::Forward() const
+{
+	return m_rotation * cTransform::WorldForward;
+}
+
+glm::vec3 cTransform::Right() const
+{
+	return m_rotation * cTransform::WorldRight;
+}
+
+glm::vec3 cTransform::Up() const
+{
+	return m_rotation * cTransform::WorldUp;
+}
+
 bool cTransform::HasScale() const
 {
 #define NOT_ONE(x) ((x) < .999f || (x) > 1.001f)
@@ -121,4 +136,12 @@ void cTransform::PrintEulerAngle() const
 
 	printf("angle: %f, %f, %f\n", ToDegree(angle.x), ToDegree(angle.y), ToDegree(angle.z));
 }
+
+glm::vec3 cTransform::WorldUp = glm::vec3(0.0, 1.0, 0.0);
+
+glm::vec3 cTransform::WorldRight = glm::vec3(1.0, 0.0, 0.0);
+
+glm::vec3 cTransform::WorldForward = glm::vec3(0.0, 0.0, 1.0);
+
+
 #endif
