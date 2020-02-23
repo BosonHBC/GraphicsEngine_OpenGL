@@ -23,6 +23,25 @@ cTransform::~cTransform()
 {
 }
 
+glm::quat cTransform::ToQuaternian(const double yaw, const double pitch, const double roll)
+{
+	// Abbreviations for the various angular functions
+	double cy = cos(yaw * 0.5);
+	double sy = sin(yaw * 0.5);
+	double cp = cos(pitch * 0.5);
+	double sp = sin(pitch * 0.5);
+	double cr = cos(roll * 0.5);
+	double sr = sin(roll * 0.5);
+
+	glm::quat q;
+	q.w = cy * cp * cr + sy * sp * sr;
+	q.x = cy * cp * sr - sy * sp * cr;
+	q.y = sy * cp * sr + cy * sp * cr;
+	q.z = sy * cp * cr - cy * sp * sr;
+
+	return q;
+}
+
 void cTransform::Translate(const glm::vec3& i_location)
 {
 	m_position += i_location;
@@ -38,19 +57,32 @@ void cTransform::Scale(const glm::vec3& i_scale)
 	m_scale *= i_scale;
 }
 
+void cTransform::gRotate(const glm::vec3& i_axis, const float& i_angle)
+{
+	glm::vec3 _worldAxis = glm::inverse(m_rotation) * i_axis;
+	m_rotation *= glm::angleAxis(i_angle, _worldAxis);
+}
+
+void cTransform::gScale(const glm::vec3& i_scale)
+{
+	glm::vec3 _worldScale = glm::inverse(m_rotation) * i_scale;
+	m_scale *= _worldScale;
+}
+
 void cTransform::SetTransform(const glm::vec3 & i_initialTranslation, const glm::quat & i_intialRotation, const glm::vec3 & i_initialScale)
 {
-/*
-	m = glm::toMat4(i_intialRotation);
-	m[3] = glm::vec4(i_initialTranslation, 1);
-	m = glm::scale(m, i_initialScale);
+	/*
+		m = glm::toMat4(i_intialRotation);
+		m[3] = glm::vec4(i_initialTranslation, 1);
+		m = glm::scale(m, i_initialScale);
 
-	mInv = glm::inverse(m);*/
+		mInv = glm::inverse(m);*/
 
 	m_position = i_initialTranslation;
 	m_rotation = i_intialRotation;
 	m_scale = i_initialScale;
 }
+
 
 glm::vec3 cTransform::GetWorldLocation() const
 {

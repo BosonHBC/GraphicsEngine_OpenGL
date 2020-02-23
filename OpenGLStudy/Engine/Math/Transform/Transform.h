@@ -19,6 +19,7 @@ public:
 
 
 	/** static functions*/
+	static glm::quat ToQuaternian(const double yaw, const double pitch, const double roll);
 /*
 	static cTransform Inverse(const cTransform& t) { return cTransform(t.mInv, t.m); }
 	static cTransform Transpose(const cTransform& t) { return cTransform(transpose(t.m), transpose(t.mInv)); }
@@ -26,10 +27,16 @@ public:
 
 	/** Usage function*/
 	void Translate(const glm::vec3& i_location);
+	// Local transformation
 	void Rotate(const glm::vec3& i_axis, const float& i_angle);
 	void Scale(const glm::vec3& i_scale);
+	// Local transformation
+	void gRotate(const glm::vec3& i_axis, const float& i_angle);
+	void gScale(const glm::vec3& i_scale);
+	
+	/** Setters */
 	void SetTransform(const glm::vec3& i_initialTranslation, const glm::quat& i_intialRotation, const glm::vec3& i_initialScale);
-
+	void SetRotation(const glm::quat& i_rotation) { m_rotation = i_rotation; };
 	/** Getters */
 	glm::vec3 GetWorldLocation() const;
 	glm::vec3 GetEulerAngle() const;

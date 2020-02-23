@@ -63,25 +63,25 @@ void Assignment::CreateActor()
 
 	m_teapot2 = new cActor();
 	m_teapot2->Initialize();
-	m_teapot2->Transform()->SetTransform(glm::vec3(2, 0, -3.f), glm::quat(glm::vec3(-glm::radians(90.f), 0, 0)), glm::vec3(0.03f, 0.03f, 0.03f));
+	m_teapot2->Transform()->SetTransform(glm::vec3(1.5, 0, -2.f), glm::quat(glm::vec3(-glm::radians(90.f), 0,0)), glm::vec3(0.03f, 0.03f, 0.03f));
 	m_teapot2->SetModel("Contents/models/teapot.model");
 	m_teapot2->UpdateUniformVariables(Graphics::GetCurrentEffect());
 
 	m_plane = new cActor();
 	m_plane->Initialize();
-	m_plane->Transform()->SetTransform(glm::vec3(0, -0.2f, -2.f), glm::quat(), glm::vec3(20, 1, 20));
+	m_plane->Transform()->SetTransform(glm::vec3(0, -0.2f, -2.f), glm::quat(1, 0, 0, 0), glm::vec3(20, 1, 20));
 	m_plane->SetModel("Contents/models/plane.model");
 	m_plane->UpdateUniformVariables(Graphics::GetCurrentEffect());
 
 	m_wall = new cActor();
 	m_wall->Initialize();
-	m_wall->Transform()->SetTransform(glm::vec3(0, 0.1, -5.f), glm::quat(), glm::vec3(5, 1, 3.75));
+	m_wall->Transform()->SetTransform(glm::vec3(0, 0.1, -5.f), glm::quat(1, 0, 0, 0), glm::vec3(5, 1, 3.75));
 	m_wall->SetModel("Contents/models/wall.model");
 	m_wall->UpdateUniformVariables(Graphics::GetCurrentEffect());
 
 	m_sphere = new cActor();
 	m_sphere->Initialize();
-	m_sphere->Transform()->SetTransform(glm::vec3(-1, 0.3, -1.f), glm::quat(), glm::vec3(0.5f, 0.5f, 0.5f));
+	m_sphere->Transform()->SetTransform(glm::vec3(-1, 0.3, -1.f), glm::quat(1, 0, 0, 0), glm::vec3(0.5f, 0.5f, 0.5f));
 	m_sphere->SetModel("Contents/models/sphere.model");
 	m_sphere->UpdateUniformVariables(Graphics::GetCurrentEffect());
 
@@ -94,7 +94,7 @@ void Assignment::CreateActor()
 
 void Assignment::CreateCamera()
 {
-	m_editorCamera = new  cEditorCamera(glm::vec3(0, 1.f, 0), -10.f, 0, 3, 1.f);
+	m_editorCamera = new  cEditorCamera(glm::vec3(0, 1.f, 0), 30.f, 180, 3, 10.f);
 	float _aspect = (float)(GetCurrentWindow()->GetBufferWidth()) / (float)(GetCurrentWindow()->GetBufferHeight());
 	m_editorCamera->CreateProjectionMatrix(45.0f, _aspect, 0.1f, 150.0f);
 }
@@ -210,7 +210,7 @@ void Assignment::Tick(float second_since_lastFrame)
 		pLight1->Transform()->Translate(_toForward);
 	}
 	if (m_teapot) {
-		m_teapot->Transform()->Rotate(glm::vec3(0, 0, 1.f), second_since_lastFrame);
+		m_teapot->Transform()->gRotate(glm::vec3(0, 1, 0), second_since_lastFrame);
 
 		if (_windowInput->IsKeyDown(GLFW_KEY_LEFT)) {
 			m_teapot->Transform()->Translate(glm::vec3(-1, 0, 0) * second_since_lastFrame);
@@ -224,7 +224,12 @@ void Assignment::Tick(float second_since_lastFrame)
 		if (_windowInput->IsKeyDown(GLFW_KEY_DOWN)) {
 			m_teapot->Transform()->Translate(glm::vec3(0, 0, 1) * second_since_lastFrame);
 		}
-
+		if (_windowInput->IsKeyDown(GLFW_KEY_SPACE)) {
+			m_teapot->Transform()->Translate(glm::vec3(0, 1, 0) * second_since_lastFrame);
+		}
+		if (_windowInput->IsKeyDown(GLFW_KEY_LEFT_CONTROL)) {
+			m_teapot->Transform()->Translate(glm::vec3(0, -1, 0) * second_since_lastFrame);
+		}
 	}
 	/*
 		m_teapot->Transform()->PrintEulerAngle();

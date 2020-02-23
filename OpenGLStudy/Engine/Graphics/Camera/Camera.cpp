@@ -5,7 +5,12 @@
 void cCamera::Update()
 {
 	// Clamp the domain of pitch and yaw
+	m_pitch = glm::clamp(m_pitch, -89.f, 89.f);
+	glm::vec3 _forward = cTransform::WorldUp * sin(glm::radians(m_pitch)) + cos(glm::radians(m_pitch)) * (-cTransform::WorldForward * cos(glm::radians(m_yaw)) + cTransform::WorldRight * sin(glm::radians(m_yaw)));
+	glm::vec3 _right = glm::normalize(glm::cross(_forward, cTransform::WorldUp));
+	glm::vec3 _up = glm::normalize(glm::cross(_right, _forward));
 
+	m_transform->SetRotation(glm::quatLookAt(_forward, _up));
 	m_transform->Update();
 
 }
@@ -44,16 +49,13 @@ void cCamera::CameraControl(sWindowInput* const i_windowInput, float i_dt)
 
 void cCamera::MouseControl(sWindowInput* const i_windowInput, float i_dt)
 {
-	m_transform->Rotate(glm::vec3(0, 1, 0), i_windowInput->DX() * m_turnSpeed);
-	m_transform->Rotate(glm::vec3(1, 0, 0), i_windowInput->DY() * m_turnSpeed);
-
 	Update();
 }
 
 glm::mat4 cCamera::GetViewMatrix()
 {
 	glm::vec3 _targetLoc = m_transform->Position() + m_transform->Forward();
-	m_viewMatrix = glm::lookAt(m_transform->Position(), _targetLoc, -m_transform->Up());
+	m_viewMatrix = glm::lookAt(m_transform->Position(), _targetLoc, cTransform::WorldUp);
 	return m_viewMatrix;
 }
 

@@ -454,7 +454,7 @@ namespace Graphics {
 			return result;
 		}
 		cPointLight* newPointLight = new cPointLight(i_color, i_const, i_linear, i_quadratic);
-		newPointLight->Transform()->SetTransform(i_initialLocation, glm::quat(), glm::vec3(1, 1, 1));
+		newPointLight->Transform()->SetTransform(i_initialLocation, glm::quat(1, 0, 0, 0), glm::vec3(1, 1, 1));
 		newPointLight->SetupLight(s_currentEffect->GetProgramID(), s_pointLight_list.size());
 		newPointLight->SetEnableShadow(i_enableShadow);
 		o_pointLight = newPointLight;
