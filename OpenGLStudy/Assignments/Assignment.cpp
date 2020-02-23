@@ -94,7 +94,7 @@ void Assignment::CreateActor()
 
 void Assignment::CreateCamera()
 {
-	m_editorCamera = new  cEditorCamera(glm::vec3(0, 1.f, 0), -10.f, 0, 3, 10.f);
+	m_editorCamera = new  cEditorCamera(glm::vec3(0, 1.f, 0), -10.f, 0, 3, 1.f);
 	float _aspect = (float)(GetCurrentWindow()->GetBufferWidth()) / (float)(GetCurrentWindow()->GetBufferHeight());
 	m_editorCamera->CreateProjectionMatrix(45.0f, _aspect, 0.1f, 150.0f);
 }
