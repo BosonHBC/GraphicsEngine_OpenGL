@@ -14,24 +14,42 @@ cTransform& cTransform::operator=(const glm::mat4& i_m)
 	return *this;
 }
 
+cTransform::cTransform(const glm::vec3& i_initialTranslation, const glm::quat& i_intialRotation, const glm::vec3& i_initialScale)
+{
+	SetTransform(i_initialTranslation, i_intialRotation, i_initialScale);
+}
+
 cTransform::~cTransform()
 {
 }
 
 void cTransform::Translate(const glm::vec3& i_location)
 {
-	m = glm::translate(m, i_location);
-	// mInv = ? // should not inverse the m every time it translate
+	m_position += i_location;
 }
 
 void cTransform::Rotate(const glm::vec3& i_axis, const float& i_angle)
 {
-	m = glm::rotate(m, glm::radians(i_angle), i_axis);
+	m_rotation *= glm::angleAxis(i_angle, i_axis);
 }
 
 void cTransform::Scale(const glm::vec3& i_scale)
 {
-	m = glm::scale(m, i_scale);
+	m_scale *= i_scale;
+}
+
+void cTransform::SetTransform(const glm::vec3 & i_initialTranslation, const glm::quat & i_intialRotation, const glm::vec3 & i_initialScale)
+{
+/*
+	m = glm::toMat4(i_intialRotation);
+	m[3] = glm::vec4(i_initialTranslation, 1);
+	m = glm::scale(m, i_initialScale);
+
+	mInv = glm::inverse(m);*/
+
+	m_position = i_initialTranslation;
+	m_rotation = i_intialRotation;
+	m_scale = i_initialScale;
 }
 
 glm::vec3 cTransform::GetWorldLocation() const
@@ -61,6 +79,26 @@ glm::vec3 cTransform::GetEulerAngle() const
 	return glm::vec3(x, y, z);
 }
 
+glm::mat4 cTransform::GetTranslationMatrix() const
+{
+	glm::mat4 _m = glm::mat4(1.0);
+	_m[3] = glm::vec4(m_position, 1);
+	return _m;
+}
+
+glm::mat4 cTransform::GetRotationMatrix() const
+{
+	return glm::toMat4(m_rotation);
+}
+
+glm::mat4 cTransform::GetScaleMatrix() const
+{
+	glm::mat4 _m = glm::mat4(1.0);
+	_m[0][0] = m_scale.x; _m[1][1] = m_scale.y; _m[2][2] = m_scale.z;
+	return _m;
+
+}
+
 bool cTransform::HasScale() const
 {
 #define NOT_ONE(x) ((x) < .999f || (x) > 1.001f)
@@ -70,8 +108,8 @@ bool cTransform::HasScale() const
 
 void cTransform::Update()
 {
+	m = GetTranslationMatrix() * GetRotationMatrix() * GetScaleMatrix();
 	mInv = glm::inverse(m);
-
 }
 
 #ifdef _DEBUG

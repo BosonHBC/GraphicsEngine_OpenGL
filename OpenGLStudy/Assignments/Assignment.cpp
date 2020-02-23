@@ -36,6 +36,7 @@ bool Assignment::Initialize(GLuint i_width, GLuint i_height, const char* i_windo
 	CreateCamera();
 	CreateLight();
 
+
 	Graphics::cMatBlinn* _wallMat = dynamic_cast<Graphics::cMatBlinn*>(Graphics::cModel::s_manager.Get(m_wall->GetModelHandle())->GetMaterialAt());
 	auto cameraViewTextureHandle = Graphics::GetCameraCaptureFrameBuffer()->GetTextureHandle();
 	_wallMat->UpdateDiffuseTexture(cameraViewTextureHandle);
@@ -47,6 +48,7 @@ bool Assignment::Initialize(GLuint i_width, GLuint i_height, const char* i_windo
 
 	Graphics::cMatBlinn* _teapot2Mat = dynamic_cast<Graphics::cMatBlinn*>(Graphics::cModel::s_manager.Get(m_teapot2->GetModelHandle())->GetMaterialAt());
 	_teapot2Mat->UpdateCubemapTexture(_cubemapMat->GetCubemapHandle());
+
 	return result;
 }
 
@@ -54,45 +56,34 @@ void Assignment::CreateActor()
 {
 	m_teapot = new cActor();
 	m_teapot->Initialize();
-	m_teapot->Transform()->Translate(glm::vec3(0, 0, -2.f));
-	m_teapot->Transform()->Rotate(glm::vec3(1, 0, 0), -90.f);
-	m_teapot->Transform()->Scale(glm::vec3(0.05f, 0.05f, 0.05f));
+	m_teapot->Transform()->SetTransform(glm::vec3(0, 0, -2.f), glm::quat(glm::vec3(-glm::radians(90.f), 0, 0)), glm::vec3(0.05f, 0.05f, 0.05f));
 
 	m_teapot->SetModel("Contents/models/teapot.model");
 	m_teapot->UpdateUniformVariables(Graphics::GetCurrentEffect());
 
 	m_teapot2 = new cActor();
 	m_teapot2->Initialize();
-	m_teapot2->Transform()->Translate(glm::vec3(2, 0, -3.f));
-	m_teapot2->Transform()->Rotate(glm::vec3(1, 0, 0), -90.f);
-	m_teapot2->Transform()->Scale(glm::vec3(0.03f, 0.03f, 0.03f));
-
+	m_teapot2->Transform()->SetTransform(glm::vec3(2, 0, -3.f), glm::quat(glm::vec3(-glm::radians(90.f), 0, 0)), glm::vec3(0.03f, 0.03f, 0.03f));
 	m_teapot2->SetModel("Contents/models/teapot.model");
 	m_teapot2->UpdateUniformVariables(Graphics::GetCurrentEffect());
 
 	m_plane = new cActor();
 	m_plane->Initialize();
+	m_plane->Transform()->SetTransform(glm::vec3(0, -0.2f, -2.f), glm::quat(), glm::vec3(20, 1, 20));
 	m_plane->SetModel("Contents/models/plane.model");
 	m_plane->UpdateUniformVariables(Graphics::GetCurrentEffect());
-	m_plane->Transform()->Translate(glm::vec3(0, -0.2f, -2.f));
-	m_plane->Transform()->Rotate(glm::vec3(0, 1, 0), 180);
-	m_plane->Transform()->Scale(glm::vec3(20, 1, 20));
 
 	m_wall = new cActor();
 	m_wall->Initialize();
+	m_wall->Transform()->SetTransform(glm::vec3(0, 0.1, -5.f), glm::quat(), glm::vec3(5, 1, 3.75));
 	m_wall->SetModel("Contents/models/wall.model");
 	m_wall->UpdateUniformVariables(Graphics::GetCurrentEffect());
-	m_wall->Transform()->Translate(glm::vec3(0, 1, -5.f));
-	m_wall->Transform()->Rotate(glm::vec3(1, 0, 0), 90);
-	m_wall->Transform()->Rotate(glm::vec3(0, 1, 0), 180);
-	m_wall->Transform()->Scale(glm::vec3(-5, 1, 3.75f));
 
 	m_sphere = new cActor();
 	m_sphere->Initialize();
+	m_sphere->Transform()->SetTransform(glm::vec3(-1, 0.3, -1.f), glm::quat(), glm::vec3(0.5f, 0.5f, 0.5f));
 	m_sphere->SetModel("Contents/models/sphere.model");
 	m_sphere->UpdateUniformVariables(Graphics::GetCurrentEffect());
-	m_sphere->Transform()->Translate(glm::vec3(-1, 0.3, -1.f));
-	m_sphere->Transform()->Scale(glm::vec3(0.5f, 0.5f, 0.5f));
 
 	m_cubemap = new cActor();
 	m_cubemap->Initialize();
@@ -124,12 +115,6 @@ void Assignment::Run()
 	{
 		glfwPollEvents();
 
-		// Update transforms
-		m_teapot->Transform()->Update();
-		m_teapot2->Transform()->Update();
-		m_plane->Transform()->Update();
-		m_wall->Transform()->Update();
-		m_sphere->Transform()->Update();
 
 		// Submit data to be render
 		std::vector<std::pair<Graphics::cModel::HANDLE, cTransform*>> _renderingMap;
@@ -149,6 +134,7 @@ void Assignment::Run()
 		Graphics::UniformBufferFormats::sFrame _frameData_Camera(m_editorCamera->GetProjectionMatrix(), m_editorCamera->GetViewMatrix());
 		_frameData_Camera.ViewPosition = m_editorCamera->CamLocation();
 		_renderingMap.clear();
+
 		_renderingMap.push_back({ m_plane->GetModelHandle(), m_plane->Transform() });
 		_renderingMap.push_back({ m_teapot->GetModelHandle(), m_teapot->Transform() });
 		_renderingMap.push_back({ m_teapot2->GetModelHandle(), m_teapot2->Transform() });
@@ -192,6 +178,17 @@ void Assignment::CleanUp()
 
 void Assignment::Tick(float second_since_lastFrame)
 {
+	// Update transforms
+	m_teapot->Transform()->Update();
+	m_teapot2->Transform()->Update();
+	m_wall->Transform()->Update();
+	m_sphere->Transform()->Update();
+	m_plane->Transform()->Update();
+
+	if (pLight1)
+		pLight1->Transform()->Update();
+	pLight2->Transform()->Update();
+	dLight->Transform()->Update();
 
 	sWindowInput* _windowInput = m_window->GetWindowInput();
 
@@ -213,23 +210,26 @@ void Assignment::Tick(float second_since_lastFrame)
 		pLight1->Transform()->Translate(_toForward);
 	}
 	if (m_teapot) {
-		m_teapot->Transform()->Rotate(glm::vec3(0, 0, 1), 100 * second_since_lastFrame);
+		m_teapot->Transform()->Rotate(glm::vec3(0, 0, 1.f), second_since_lastFrame);
+
+		if (_windowInput->IsKeyDown(GLFW_KEY_LEFT)) {
+			m_teapot->Transform()->Translate(glm::vec3(-1, 0, 0) * second_since_lastFrame);
+		}
+		if (_windowInput->IsKeyDown(GLFW_KEY_RIGHT)) {
+			m_teapot->Transform()->Translate(glm::vec3(1, 0, 0 ) * second_since_lastFrame);
+		}
+		if (_windowInput->IsKeyDown(GLFW_KEY_UP)) {
+			m_teapot->Transform()->Translate(glm::vec3(0, 0, -1) * second_since_lastFrame);
+		}
+		if (_windowInput->IsKeyDown(GLFW_KEY_DOWN)) {
+			m_teapot->Transform()->Translate(glm::vec3(0, 0, 1) * second_since_lastFrame);
+		}
+
 	}
 	/*
 		m_teapot->Transform()->PrintEulerAngle();
 
-		if (_windowInput->IsKeyDown(GLFW_KEY_LEFT)) {
-			m_teapot->Transform()->Rotate(glm::vec3(0, 0, 1), (50 * second_since_lastFrame));
-		}
-		if (_windowInput->IsKeyDown(GLFW_KEY_RIGHT)) {
-			m_teapot->Transform()->Rotate(glm::vec3(0, 0, 1), (-50 * second_since_lastFrame));
-		}
-		if (_windowInput->IsKeyDown(GLFW_KEY_UP)) {
-			m_teapot->Transform()->Rotate(glm::vec3(1, 0, 0), (50 * second_since_lastFrame));
-		}
-		if (_windowInput->IsKeyDown(GLFW_KEY_DOWN)) {
-			m_teapot->Transform()->Rotate(glm::vec3(1, 0, 0), (-50 * second_since_lastFrame));
-		}*/
+	*/
 }
 
 void Assignment::FixedTick()
