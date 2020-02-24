@@ -17,14 +17,14 @@ namespace Graphics {
 		/** Initializations and clean up*/
 		/** Create program with default vertex shader and fragment shader*/
 		bool CreateProgram(const char* const i_vertexShaderPath, const char* const i_fragmentShaderPath);
+		bool LinkProgram();
+		bool ValidateProgram();
+		void FixSamplerError();
 		void CleanUp();
 
 		/** Usage functions*/
 		void UseEffect();
 		void UnUseEffect();
-		void SetPointLightCount(int i_pointLightCount);
-		void SetSpotLightCount(int i_spotLightCount);
-
 		bool RecompileShader(const char* i_shaderName, GLenum i_shaderType);
 
 		/** Getters */

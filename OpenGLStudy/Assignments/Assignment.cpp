@@ -226,7 +226,7 @@ void Assignment::Tick(float second_since_lastFrame)
 		pLight1->Transform()->Translate(_toForward);
 	}
 	if (m_teapot) {
-		m_teapot->Transform()->gRotate(glm::vec3(0, 1, 0), second_since_lastFrame);
+		m_teapot->Transform()->gRotate(glm::vec3(0, 1.f, 0), second_since_lastFrame);
 
 		if (_windowInput->IsKeyDown(GLFW_KEY_LEFT)) {
 			m_teapot->Transform()->Translate(glm::vec3(-1, 0, 0) * second_since_lastFrame);

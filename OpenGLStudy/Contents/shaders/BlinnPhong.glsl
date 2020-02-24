@@ -4,11 +4,10 @@
 // this uniform is default 0, if we need more texture unit, we need to bind manually
 uniform sampler2D diffuseTex; // 0
 uniform sampler2D specularTex; // 1
+uniform sampler2D directionalShadowMap; // 2
 uniform samplerCube cubemapTex; // 3
 uniform sampler2D reflectionTex; // 4
 
-// shadow maps
-uniform sampler2D directionalShadowMap;
 
 in vec2 texCood0;
 in vec3 Normal;

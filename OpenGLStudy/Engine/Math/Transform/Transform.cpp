@@ -110,24 +110,8 @@ glm::vec3 cTransform::GetWorldLocation() const
 
 glm::vec3 cTransform::GetEulerAngle() const
 {
-	double sy = sqrt(m[0][0] * m[0][0] + m[1][0] * m[1][0]);
-
-	bool singular = sy < 1e-6;
-
-	float x, y, z;
-	if (!singular)
-	{
-		x = atan2(m[2][1], m[2][2]);
-		y = atan2(-m[2][0], sy);
-		z = atan2(m[1][0], m[0][0]);
-	}
-	else
-	{
-		x = atan2(-m[1][2], m[1][1]);
-		y = atan2(-m[2][0], sy);
-		z = 0;
-	}
-	return glm::vec3(x, y, z);
+	glm::vec3 _euler = glm::eulerAngles(m_rotation);
+	return _euler;
 }
 
 glm::mat4 cTransform::GetTranslationMatrix() const
@@ -177,7 +161,11 @@ void cTransform::Update()
 	m = GetTranslationMatrix() * GetRotationMatrix() * GetScaleMatrix();
 	mInv = glm::inverse(m);
 }
+glm::vec3 cTransform::WorldUp = glm::vec3(0.0, 1.0, 0.0);
 
+glm::vec3 cTransform::WorldRight = glm::vec3(1.0, 0.0, 0.0);
+
+glm::vec3 cTransform::WorldForward = glm::vec3(0.0, 0.0, 1.0);
 #ifdef _DEBUG
 #include "stdio.h"
 #define ToDegree(x) (x*57.2958f)
@@ -187,12 +175,4 @@ void cTransform::PrintEulerAngle() const
 
 	printf("angle: %f, %f, %f\n", ToDegree(angle.x), ToDegree(angle.y), ToDegree(angle.z));
 }
-
-glm::vec3 cTransform::WorldUp = glm::vec3(0.0, 1.0, 0.0);
-
-glm::vec3 cTransform::WorldRight = glm::vec3(1.0, 0.0, 0.0);
-
-glm::vec3 cTransform::WorldForward = glm::vec3(0.0, 0.0, 1.0);
-
-
 #endif

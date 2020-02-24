@@ -65,7 +65,9 @@ namespace Graphics {
 				printf("Fail to create default effect.\n");
 				return result;
 			}
+
 			s_currentEffect = GetEffectByKey(Constants::CONST_DEFAULT_EFFECT_KEY);
+			s_currentEffect->FixSamplerError();
 		}
 		// Create shadow map effect
 		{
@@ -125,6 +127,14 @@ namespace Graphics {
 		if (!(result = s_cameraCapture.Initialize(800, 600, ETT_FRAMEBUFFER_COLOR))) {
 			printf("Fail to create camera capture frame buffer.\n");
 			return result;
+		}
+
+		for (auto it : s_KeyToEffect_map)
+		{
+			if (!(result = it.second->ValidateProgram()))
+			{
+				return result;
+			}
 		}
 
 		return result;
