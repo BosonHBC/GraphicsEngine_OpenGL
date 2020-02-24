@@ -18,14 +18,16 @@ namespace Graphics {
 	// Data required to render a frame, right now do not support switching effect(shader)
 	struct sDataRequiredToRenderAFrame
 	{
-		cCamera* CurrentCamera;
+		UniformBufferFormats::sFrame FrameData;
 		std::vector<std::pair<Graphics::cModel::HANDLE, cTransform*>> ModelToTransform_map;
+		sDataRequiredToRenderAFrame() {}
 	};
 	// Global data
 	// ---------------------------------
 	cUniformBuffer s_uniformBuffer_frame(eUniformBufferType::UBT_Frame);
 	cUniformBuffer s_uniformBuffer_drawcall(eUniformBufferType::UBT_Drawcall);
 	cUniformBuffer s_uniformBuffer_Lighting(eUniformBufferType::UBT_Lighting);
+	cUniformBuffer s_uniformBuffer_ClipPlane(eUniformBufferType::UBT_ClipPlane);
 
 	UniformBufferFormats::sLighting s_globalLightingData;
 
@@ -48,6 +50,7 @@ namespace Graphics {
 	cDirectionalLight* s_directionalLight;
 	std::vector<cPointLight*> s_pointLight_list;
 
+
 	//functions
 	void RenderScene();
 	void RenderScene_shadowMap();
@@ -64,7 +67,24 @@ namespace Graphics {
 			}
 			s_currentEffect = GetEffectByKey(Constants::CONST_DEFAULT_EFFECT_KEY);
 		}
-
+		// Create shadow map effect
+		{
+			if (!(result = CreateEffect("ShadowMap",
+				"shadowmaps/directionalShadowMap/directional_shadow_map_vert.glsl",
+				"shadowmaps/directionalShadowMap/directional_shadow_map_frag.glsl"))) {
+				printf("Fail to create shadow map effect.\n");
+				return result;
+			}
+		}
+		// Create cube map effect
+		{
+			if (!(result = CreateEffect("CubemapEffect",
+				"cubemap/cubemap_vert.glsl",
+				"cubemap/cubemap_frag.glsl"))) {
+				printf("Fail to create cube map effect.\n");
+				return result;
+			}
+		}
 		// Initialize uniform buffer
 		{
 			// Frame buffer
@@ -91,16 +111,16 @@ namespace Graphics {
 				printf("Fail to initialize uniformBuffer_Lighting\n");
 				return result;
 			}
-		}
-		// Create shadow map effect
-		{
-			if (!(result = CreateEffect("ShadowMap",
-				"directional_shadow_map_vert.glsl",
-				"directional_shadow_map_frag.glsl"))) {
-				printf("Fail to create shadow map effect.\n");
+			if (result = s_uniformBuffer_ClipPlane.Initialize(nullptr)) 
+			{
+				s_uniformBuffer_ClipPlane.Bind();
+			}
+			else {
+				printf("Fail to initialize uniformBuffer_ClipPlane\n");
 				return result;
 			}
 		}
+
 
 		if (!(result = s_cameraCapture.Initialize(800, 600, ETT_FRAMEBUFFER_COLOR))) {
 			printf("Fail to create camera capture frame buffer.\n");
@@ -126,14 +146,18 @@ namespace Graphics {
 					_app->GetCurrentWindow()->SetViewportSize(_directionalLightFBO->GetWidth(), _directionalLightFBO->GetHeight());
 				}
 			}
-
 			// write buffer to the texture
 			_directionalLightFBO->Write();
 
 			glClearColor(0, 0, 0, 1.f);
 			glClear(/*GL_COLOR_BUFFER_BIT | */GL_DEPTH_BUFFER_BIT);
 
-			s_directionalLight->SetLightUniformTransform();
+			// Update frame data
+			{
+				// 1. Update frame data
+				s_uniformBuffer_frame.Update(&s_dataRequiredToRenderAFrame.FrameData);
+
+			}
 
 			// Draw scenes
 			RenderScene_shadowMap();
@@ -146,11 +170,16 @@ namespace Graphics {
 
 	void Render_Pass_CaptureCameraView()
 	{
+		// Enable clip plane0
+		{
+			glEnable(GL_CLIP_PLANE0);
+		}
 		// Bind effect
 		{
 			s_currentEffect = GetEffectByKey(Constants::CONST_DEFAULT_EFFECT_KEY);
 			s_currentEffect->UseEffect();
 			s_directionalLight->SetupLight(s_currentEffect->GetProgramID(), 0);
+
 		}
 		// Reset window size
 		{
@@ -160,6 +189,7 @@ namespace Graphics {
 			}
 		}
 		s_cameraCapture.Write();
+
 		// Clear color and buffers
 		{
 			// clear window
@@ -167,26 +197,13 @@ namespace Graphics {
 			// A lot of things can be cleaned like color buffer, depth buffer, so we need to specify what to clear
 			glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
-		}
 
-		// Update camera
-		{
-			if (s_dataRequiredToRenderAFrame.CurrentCamera)
-				// Update his location for lighting, TODO: should not update here
-				s_dataRequiredToRenderAFrame.CurrentCamera->UpdateUniformLocation(s_currentEffect->GetProgramID());
-			else
-			{
-				printf("No camera in this frame, skip rendering.");
-				return;
-			}
 		}
 
 		// Update frame data
 		{
-			cCamera* _camera = s_dataRequiredToRenderAFrame.CurrentCamera;
-
 			// 1. Update frame data
-			s_uniformBuffer_frame.Update(&UniformBufferFormats::sFrame(_camera->GetProjectionMatrix(), _camera->GetViewMatrix()));
+			s_uniformBuffer_frame.Update(&s_dataRequiredToRenderAFrame.FrameData);
 
 		}
 
@@ -220,11 +237,20 @@ namespace Graphics {
 		{
 			s_currentEffect->UnUseEffect();
 		}
+		// Enable clip plane0
+		{
+			glDisable(GL_CLIP_PLANE0);
+		}
 	}
 
 	Graphics::cFrameBuffer* GetCameraCaptureFrameBuffer()
 	{
 		return &s_cameraCapture;
+	}
+
+	Graphics::cUniformBuffer* GetClipPlaneBuffer()
+	{
+		return &s_uniformBuffer_ClipPlane;
 	}
 
 	void Render_Pass()
@@ -252,24 +278,10 @@ namespace Graphics {
 
 		}
 
-		// Update camera
-		{
-			if (s_dataRequiredToRenderAFrame.CurrentCamera)
-				// Update his location for lighting, TODO: should not update here
-				s_dataRequiredToRenderAFrame.CurrentCamera->UpdateUniformLocation(s_currentEffect->GetProgramID());
-			else
-			{
-				printf("No camera in this frame, skip rendering.");
-				return;
-			}
-		}
-
 		// Update frame data
 		{
-			cCamera* _camera = s_dataRequiredToRenderAFrame.CurrentCamera;
 			// 1. Update frame data
-			s_uniformBuffer_frame.Update(&UniformBufferFormats::sFrame(_camera->GetProjectionMatrix(), _camera->GetViewMatrix()));
-
+			s_uniformBuffer_frame.Update(&s_dataRequiredToRenderAFrame.FrameData);
 		}
 
 		// Update lighting data
@@ -303,6 +315,33 @@ namespace Graphics {
 		}
 		// Swap buffers happens in main rendering loop, not in this render function.
 	}
+
+	void CubeMap_Pass()
+	{
+		// change depth function so depth test passes when values are equal to depth buffer's content
+		glDepthFunc(GL_LEQUAL); 
+
+		s_currentEffect = GetEffectByKey("CubemapEffect");
+		s_currentEffect->UseEffect();
+
+		s_uniformBuffer_frame.Update(&s_dataRequiredToRenderAFrame.FrameData);
+
+		for (auto it = s_dataRequiredToRenderAFrame.ModelToTransform_map.begin(); it != s_dataRequiredToRenderAFrame.ModelToTransform_map.end(); ++it)
+		{
+			// 1. Do not need to update drawcall data because in cubemap.vert, there is no model matrix and normal matrix
+			// 2. Draw
+			cModel* _model = cModel::s_manager.Get(it->first);
+			if (_model) 
+			{
+				_model->Render();
+			}
+		}
+
+		s_currentEffect->UnUseEffect();
+		// set depth function back to default
+		glDepthFunc(GL_LESS); 
+	}
+
 	void RenderScene_shadowMap()
 	{
 		// loop through every single model
@@ -347,9 +386,11 @@ namespace Graphics {
 			printf("Fail to cleanup uniformBuffer_MatBlinnPhong\n");
 		}
 		if (!(result = s_uniformBuffer_Lighting.CleanUp())) {
-			printf("Fail to cleanup uniformBuffer_MatBlinnPhong\n");
+			printf("Fail to cleanup uniformBuffer_Lighting\n");
 		}
-
+		if (!(result = s_uniformBuffer_ClipPlane.CleanUp())) {
+			printf("Fail to cleanup uniformBuffer_ClipPlane\n");
+		}
 		// Clean up effect
 		for (auto it = s_KeyToEffect_map.begin(); it != s_KeyToEffect_map.end(); ++it)
 		{
@@ -372,9 +413,9 @@ namespace Graphics {
 		return result;
 	}
 
-	void SubmitDataToBeRendered(cCamera* i_camera, const std::vector<std::pair<Graphics::cModel::HANDLE, cTransform*>>& i_modelToTransform_map)
+	void SubmitDataToBeRendered(const UniformBufferFormats::sFrame& i_frameData, const std::vector<std::pair<Graphics::cModel::HANDLE, cTransform*>>& i_modelToTransform_map)
 	{
-		s_dataRequiredToRenderAFrame.CurrentCamera = i_camera;
+		s_dataRequiredToRenderAFrame.FrameData = i_frameData;
 		s_dataRequiredToRenderAFrame.ModelToTransform_map = i_modelToTransform_map;
 	}
 
@@ -438,7 +479,7 @@ namespace Graphics {
 			return result;
 		}
 		cPointLight* newPointLight = new cPointLight(i_color, i_const, i_linear, i_quadratic);
-		newPointLight->SetLightInitialLocation(i_initialLocation);
+		newPointLight->Transform()->SetTransform(i_initialLocation, glm::quat(1, 0, 0, 0), glm::vec3(1, 1, 1));
 		newPointLight->SetupLight(s_currentEffect->GetProgramID(), s_pointLight_list.size());
 		newPointLight->SetEnableShadow(i_enableShadow);
 		o_pointLight = newPointLight;

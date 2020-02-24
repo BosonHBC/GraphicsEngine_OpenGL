@@ -13,7 +13,7 @@ namespace Graphics {
 		bool result = true;
 		std::string _diffusePath, _specularPath;
 		// load material data from LUA files
-		if (!(result = LoadFileFromLua(i_path, m_matType, _diffusePath, _specularPath, m_diffuseIntensity, m_specularIntensity, m_shininess))) {
+		if (!(result = LoadFileFromLua(i_path, m_matType, _diffusePath, _specularPath, m_diffuseIntensity, m_specularIntensity, m_environmentIntensity,m_shininess))) {
 			printf("Fail to load material[%s] from LUA.\n", i_path.c_str());
 			return result;
 		}
@@ -37,6 +37,8 @@ namespace Graphics {
 
 		m_diffuseTexID = glGetUniformLocation(i_programID, "diffuseTex");
 		m_specularTexID = glGetUniformLocation(i_programID, "specularTex");
+		m_cubemapTexID = glGetUniformLocation(i_programID, "cubemapTex");
+		m_reflectionTexID = glGetUniformLocation(i_programID, "reflectionTex");
 
 		return result;
 	}
@@ -45,6 +47,8 @@ namespace Graphics {
 	{
 		glUniform1i(m_diffuseTexID, 0);
 		glUniform1i(m_specularTexID, 1);
+		glUniform1i(m_cubemapTexID, 3);
+		glUniform1i(m_reflectionTexID, 4);
 
 		cTexture* _diffuseTex = cTexture::s_manager.Get(m_diffuseTextureHandle);
 		if (_diffuseTex) {
@@ -54,8 +58,18 @@ namespace Graphics {
 		if (_specularTex) {
 			_specularTex->UseTexture(GL_TEXTURE1);
 		}
+		cTexture* _cubemapTex = cTexture::s_manager.Get(m_cubemapTextureHandle);
+		if (_cubemapTex) 
+		{
+			_cubemapTex->UseTexture(GL_TEXTURE3);
+		}
+		cTexture* _reflectionTex = cTexture::s_manager.Get(m_reflectionTextureHandle);
+		if (_reflectionTex)
+		{
+			_reflectionTex->UseTexture(GL_TEXTURE4);
+		}
 
-		s_BlinnPhongUniformBlock.Update(&UniformBufferFormats::sBlinnPhongMaterial(m_diffuseIntensity, m_specularIntensity, m_shininess));
+		s_BlinnPhongUniformBlock.Update(&UniformBufferFormats::sBlinnPhongMaterial(m_diffuseIntensity, m_specularIntensity, m_environmentIntensity,m_shininess));
 	}
 
 	void cMatBlinn::CleanUpMaterialBind()
@@ -68,12 +82,23 @@ namespace Graphics {
 		if (_specularTex) {
 			_specularTex->CleanUpTextureBind(GL_TEXTURE1);
 		}
+		cTexture* _cubemapTex = cTexture::s_manager.Get(m_cubemapTextureHandle);
+		if (_cubemapTex)
+		{
+			_cubemapTex->CleanUpTextureBind(GL_TEXTURE3);
+		}
+		cTexture* _reflectionTex = cTexture::s_manager.Get(m_reflectionTextureHandle);
+		if (_reflectionTex)
+		{
+			_reflectionTex->CleanUpTextureBind(GL_TEXTURE4);
+		}
 	}
 
 	void cMatBlinn::CleanUp()
 	{
 		cTexture::s_manager.Release(m_diffuseTextureHandle);
 		cTexture::s_manager.Release(m_specularTextureHandle);
+		cTexture::s_manager.Release(m_cubemapTextureHandle);
 
 	}
 	void cMatBlinn::SetDiffuse(const std::string& i_diffusePath)
@@ -135,7 +160,23 @@ namespace Graphics {
 		cTexture::s_manager.Copy(i_other, m_specularTextureHandle);
 	}
 
-	bool cMatBlinn::LoadFileFromLua(const std::string& i_path, eMaterialType& o_matType, std::string& o_diffusePath, std::string& o_specularPath, Color& o_diffuseColor, Color& o_specularColor, float& o_shineness)
+	void cMatBlinn::UpdateCubemapTexture(const Assets::cHandle<cTexture>& i_other)
+	{
+		// release current handle
+		cTexture::s_manager.Release(m_cubemapTextureHandle);
+		// Copy from incoming texture handle
+		cTexture::s_manager.Copy(i_other, m_cubemapTextureHandle);
+	}
+
+	void cMatBlinn::UpdateReflectionTexture(const Assets::cHandle<cTexture>& i_other)
+	{
+		// release current handle
+		cTexture::s_manager.Release(m_reflectionTextureHandle);
+		// Copy from incoming texture handle
+		cTexture::s_manager.Copy(i_other, m_reflectionTextureHandle);
+	}
+
+	bool cMatBlinn::LoadFileFromLua(const std::string& i_path, eMaterialType& o_matType, std::string& o_diffusePath, std::string& o_specularPath, Color& o_diffuseColor, Color& o_specularColor, Color& o_environmentIntensity, float& o_shineness)
 	{
 		bool result;
 		lua_State* luaState = nullptr;
@@ -150,15 +191,6 @@ namespace Graphics {
 		// Load data
 		//------------------------------
 		{
-			// o_matType
-			{
-				constexpr auto* const _key = "MaterialType";
-				int _tempType = 0;
-				if (!(result = Assets::Lua_LoadInteger(luaState, _key, _tempType))) {
-					printf("LUA error: fail to load key[%s]", _key);
-					return result;
-				}
-			}
 			// o_diffusePath
 			{
 				constexpr auto* const _key = "DiffuseTexture";
@@ -199,6 +231,19 @@ namespace Graphics {
 				for (uint8_t i = 0; i < 3; ++i)
 				{
 					o_specularColor[i] = _tempHolder[i];
+				}
+			}
+			// o_environmentIntensity
+			{
+				constexpr auto* const _key = "EnvironmentIntensity";
+				float _tempHolder[3] = { 0 };
+				if (!(result = Assets::Lua_LoadVec3(luaState, _key, _tempHolder))) {
+					printf("LUA error: fail to load key[%s]", _key);
+					return result;
+				}
+				for (uint8_t i = 0; i < 3; ++i)
+				{
+					o_environmentIntensity[i] = _tempHolder[i];
 				}
 			}
 			// o_shineness

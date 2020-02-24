@@ -41,7 +41,7 @@ namespace Graphics {
 		// Load nodes
 		LoadNode(_scene->mRootNode, _scene);
 		//  Load materials
-		LoadMaterials(_scene,_materialPath.c_str());
+		LoadMaterials(_scene, _materialPath.c_str());
 
 		return true;
 	}
@@ -104,6 +104,10 @@ namespace Graphics {
 			}
 
 			m_meshList[i]->Render();
+
+			if (_matIndex < m_materialList.size() && _material) {
+				_material->CleanUpMaterialBind();
+			}
 		}
 	}
 
@@ -141,7 +145,7 @@ namespace Graphics {
 	Graphics::cMaterial* cModel::GetMaterialAt(GLuint i_idx /*= 0*/)
 	{
 		if (i_idx < m_materialList.size()) {
-			return cMaterial::s_manager.Get(m_materialList[i_idx+1]);
+			return cMaterial::s_manager.Get(m_materialList[i_idx + 1]);
 		}
 	}
 
@@ -241,24 +245,23 @@ namespace Graphics {
 		m_meshList.push_back(_newMesh);
 		m_mesh_to_material.push_back(i_mesh->mMaterialIndex);
 
-
 	}
 
 	void cModel::LoadMaterials(const aiScene* i_scene, const char* i_matName)
 	{
-		const size_t _numOfMaterials = i_scene->mNumMaterials;
-		m_materialList.resize(_numOfMaterials);
+		//const size_t _numOfMaterials = i_scene->mNumMaterials;
+		m_materialList.resize(2);
 
-		for (size_t i = 1; i < _numOfMaterials; ++i)
-		{
-			// TODO: right now, the material path is meaningless
-			std::string _path = Constants::CONST_PATH_MATERIAL_ROOT;
-			_path.append(i_matName);
-			if (!cMaterial::s_manager.Load(_path, m_materialList[i])) {
-				printf("Fail to load material file[%s]\n", _path.c_str());
-				continue;
-			}
+		//	for (size_t i = 1; i < _numOfMaterials; ++i)
+		//	{
+				// TODO: right now, the material path is meaningless
+		std::string _path = Constants::CONST_PATH_MATERIAL_ROOT;
+		_path.append(i_matName);
+		if (!cMaterial::s_manager.Load(_path, m_materialList[1])) {
+			printf("Fail to load material file[%s]\n", _path.c_str());
+			//	continue;
 		}
+		//	}
 
 	}
 

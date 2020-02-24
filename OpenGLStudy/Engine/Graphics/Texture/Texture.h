@@ -13,6 +13,7 @@ namespace Graphics {
 		ETT_FILE_ALPHA = 1,
 		ETT_FRAMEBUFFER_SHADOWMAP = 2,
 		ETT_FRAMEBUFFER_COLOR = 3,
+		ETT_CUBEMAP = 4,
 		ETT_INVALID = 0xff
 	};
 
@@ -35,6 +36,9 @@ namespace Graphics {
 
 		GLuint GetTextureID() const { return m_textureID; }
 
+		// Load Cube map externally
+		bool LoadCubemap(const std::vector<std::string>& i_paths);
+
 	private:
 		/** private constructors */
 		cTexture() : m_textureID(0), m_width(0), m_height(0), m_bitDepth(0){}
@@ -47,8 +51,10 @@ namespace Graphics {
 		bool LoadShadowMapTexture(const std::string& i_type_id, const GLuint& i_width, const GLuint& i_height);
 		// Load color format texture from frame buffer
 		bool LoadRGBTexture(const std::string& i_type_id, const GLuint& i_width, const GLuint& i_height);
+
 		/** private variables*/
 		GLuint m_textureID;
+		ETextureType m_textureType;
 		int m_width, m_height, m_bitDepth;
 	};
 

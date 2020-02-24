@@ -1,27 +1,23 @@
 #include "Camera.h"
 #include "glfw/glfw3.h"
 #include "Application/Window/WindowInput.h"
-glm::vec3 cCamera::WorldUp = glm::vec3(0.0, 1.0, 0.0);
-glm::vec3 cCamera::WorldRight = glm::vec3(1.0, 0.0, 0.0);
-glm::vec3 cCamera::WorldForward = glm::vec3(0.0, 0.0, 1.0);
 
 void cCamera::Update()
 {
 	// Clamp the domain of pitch and yaw
-
 	m_pitch = glm::clamp(m_pitch, -89.f, 89.f);
+	glm::vec3 _forward = cTransform::WorldUp * sin(glm::radians(m_pitch)) + cos(glm::radians(m_pitch)) * (-cTransform::WorldForward * cos(glm::radians(m_yaw)) + cTransform::WorldRight * sin(glm::radians(m_yaw)));
+	glm::vec3 _right = glm::normalize(glm::cross(_forward, cTransform::WorldUp));
+	glm::vec3 _up = glm::normalize(glm::cross(_right, _forward));
 
-	m_forward = WorldUp * sin(glm::radians(m_pitch)) + cos(glm::radians(m_pitch)) * (-WorldForward * cos(glm::radians(m_yaw)) + WorldRight * sin(glm::radians(m_yaw)));
-
-	m_right = glm::normalize(glm::cross(m_forward, WorldUp));
-	m_up = glm::normalize(glm::cross(m_right, m_forward));
+	m_transform->SetRotation(glm::quatLookAt(_forward, _up));
+	m_transform->Update();
 
 }
 
 void cCamera::UpdateUniformLocation(GLuint i_programID)
 {
-	GLuint m_camPositionLocation = glGetUniformLocation(i_programID, "camPos"); 
-	glUniform3f(m_camPositionLocation , m_position.x, m_position.y, m_position.z);
+
 }
 
 cCamera::~cCamera()
@@ -33,35 +29,33 @@ void cCamera::CameraControl(sWindowInput* const i_windowInput, float i_dt)
 {
 	if (i_windowInput->IsKeyDown(GLFW_KEY_W))
 	{
-		m_position += m_forward * m_translationSpeed * i_dt;
+		m_transform->Translate(m_transform->Forward() * m_translationSpeed * i_dt);
 	}
 	if (i_windowInput->IsKeyDown(GLFW_KEY_S))
 	{
-		m_position -= m_forward * m_translationSpeed * i_dt;
+		m_transform->Translate(-m_transform->Forward() * m_translationSpeed * i_dt);
 	}
 	if (i_windowInput->IsKeyDown(GLFW_KEY_A))
 	{
-		m_position -= m_right * m_translationSpeed * i_dt;
+		m_transform->Translate(m_transform->Right() * m_translationSpeed * i_dt);
 	}
 	if (i_windowInput->IsKeyDown(GLFW_KEY_D))
 	{
-		m_position += m_right * m_translationSpeed * i_dt;
+		m_transform->Translate(-m_transform->Right() * m_translationSpeed * i_dt);
 	}
-
+	Update();
 }
 
 
 void cCamera::MouseControl(sWindowInput* const i_windowInput, float i_dt)
 {
-	m_yaw += i_windowInput->DX() * m_turnSpeed ;
-	m_pitch += i_windowInput->DY() * m_turnSpeed;
 	Update();
 }
 
 glm::mat4 cCamera::GetViewMatrix()
 {
-	glm::vec3 _targetLoc = m_position + m_forward;
-	m_viewMatrix = glm::lookAt(m_position, _targetLoc, m_up);
+	glm::vec3 _targetLoc = m_transform->Position() + m_transform->Forward();
+	m_viewMatrix = glm::lookAt(m_transform->Position(), _targetLoc, cTransform::WorldUp);
 	return m_viewMatrix;
 }
 

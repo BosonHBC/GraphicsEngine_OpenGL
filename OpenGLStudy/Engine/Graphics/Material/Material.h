@@ -19,6 +19,7 @@ namespace Graphics {
 	{
 		MT_INVALID,
 		MT_BLINN_PHONG,
+		MT_CUBEMAP
 		//... will support more in the future
 	};
 	//--------------------------
@@ -48,6 +49,9 @@ namespace Graphics {
 
 		// Type of the material
 		eMaterialType m_matType;
+	
+	private:
+		static bool LoadMaterialTypeInLUA(const std::string& i_path, eMaterialType& o_matType);
 	};
 
 }

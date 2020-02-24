@@ -3,7 +3,7 @@
 cQuaternion::cQuaternion(const glm::vec3& v, float a)
 {
 	a = glm::radians(a);
-	
+
 	float aby2 = a / 2.f;
 
 	w = cos(aby2);
@@ -16,7 +16,7 @@ cQuaternion::cQuaternion(const glm::vec3& v, float a)
 glm::vec3 cQuaternion::operator*(const glm::vec3& i_rhs) const
 {
 	glm::vec3 vcV = glm::cross(glm::vec3(x, y, z), i_rhs);
-	return i_rhs + vcV * (2.f * w) + 2.f * glm::cross(glm::vec3(x, y, z), vcV) ;
+	return i_rhs + vcV * (2.f * w) + 2.f * glm::cross(glm::vec3(x, y, z), vcV);
 }
 
 cQuaternion cQuaternion::operator*(const cQuaternion& i_rhs) const

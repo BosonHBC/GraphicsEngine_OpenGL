@@ -10,6 +10,7 @@ namespace Graphics {
 #ifndef _BufferPaddingDefined
 #define _BufferPaddingDefined
 #define V1Padding float v1Padding = 0
+#define V1Padding2 float v1Padding2 = 0
 #define V2Padding glm::vec2 v2Padding = glm::vec2(0,0)
 #define V3Padding glm::vec3 v3Padding= glm::vec2(0,0,0)
 #endif
@@ -21,11 +22,17 @@ namespace Graphics {
 		{
 			// PVMatrix stands for projection * view matrix
 			glm::f32 PVMatrix[16];
-			//glm::f32 ProjectionMatrix[16];
+			glm::vec3 ViewPosition;
+
+			sFrame() {}
 
 			sFrame(const glm::mat4& i_projectionMatrix, const glm::mat4& i_viewMatrix)
 			{
 				memcpy(PVMatrix, glm::value_ptr(i_projectionMatrix * i_viewMatrix), sizeof(PVMatrix));
+			}
+			sFrame(const glm::mat4& i_PVMatrix)
+			{
+				memcpy(PVMatrix, glm::value_ptr(i_PVMatrix), sizeof(PVMatrix));
 			}
 		};
 
@@ -49,13 +56,14 @@ namespace Graphics {
 		{
 			Color kd;
 			V1Padding;
-
 			Color ks;
 			float shininess;
+			Color ke;
+			V1Padding2;
 
 			sBlinnPhongMaterial() { }
-			sBlinnPhongMaterial(const Color& i_kd, const Color& i_ks, const float& i_shininess) :
-				kd(i_kd), ks(i_ks), shininess(i_shininess)
+			sBlinnPhongMaterial(const Color& i_kd, const Color& i_ks, const Color& i_ke, const float& i_shininess) :
+				kd(i_kd), ks(i_ks), ke(i_ke), shininess(i_shininess)
 			{ }
 		};
 
@@ -103,5 +111,21 @@ namespace Graphics {
 			SupportingData::PointLight48 pointLights[MAX_COUNT_PER_LIGHT]; // 48 * MAX_COUNT_PER_LIGHT = 240 bytes
 			SupportingData::SpotLight64 spotLights[MAX_COUNT_PER_LIGHT]; // 64 * MAX_COUNT_PER_LIGHT = 320 bytes
 		}; // 624 bytes per lighting data
+
+		// Clipping plane data
+		// --------------------------------------------------------------------------------------------------------------------------------------------
+		// Allow maximum 4 clip planes in the uniform buffer
+		struct sClipPlane
+		{
+			glm::vec4 Planes[4];
+
+			sClipPlane(const glm::vec4& i_first, const glm::vec4& i_second = glm::vec4(0, 0, 0, 0), const glm::vec4& i_third = glm::vec4(0, 0, 0, 0), const glm::vec4& i_fourth = glm::vec4(0, 0, 0, 0))
+			{
+				Planes[0] = i_first;
+				Planes[1] = i_second;
+				Planes[2] = i_third;
+				Planes[3] = i_fourth;
+			}
+		};
 	}
 }

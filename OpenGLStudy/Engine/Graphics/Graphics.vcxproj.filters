@@ -64,6 +64,9 @@
     <Filter Include="Source Files\FrameBuffer">
       <UniqueIdentifier>{8f180b88-74b1-4d02-9051-afe97b503e44}</UniqueIdentifier>
     </Filter>
+    <Filter Include="Source Files\Material\Cubemap">
+      <UniqueIdentifier>{b8455dab-3f6f-44fc-9511-89022ba46774}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="Graphics.cpp">
@@ -113,6 +116,9 @@
     </ClCompile>
     <ClCompile Include="FrameBuffer\cFrameBuffer.cpp">
       <Filter>Source Files\FrameBuffer</Filter>
+    </ClCompile>
+    <ClCompile Include="Material\Cubemap\MatCubemap.cpp">
+      <Filter>Source Files\Material\Cubemap</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
@@ -172,6 +178,9 @@
     </ClInclude>
     <ClInclude Include="FrameBuffer\cFrameBuffer.h">
       <Filter>Source Files\FrameBuffer</Filter>
+    </ClInclude>
+    <ClInclude Include="Material\Cubemap\MatCubemap.h">
+      <Filter>Source Files\Material\Cubemap</Filter>
     </ClInclude>
   </ItemGroup>
 </Project>

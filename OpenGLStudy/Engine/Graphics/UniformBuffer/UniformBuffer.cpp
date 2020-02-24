@@ -26,6 +26,9 @@ namespace Graphics {
 		case UBT_Lighting:
 			m_size = sizeof(UniformBufferFormats::sLighting);
 			break;
+		case UBT_ClipPlane:
+			m_size = sizeof(UniformBufferFormats::sClipPlane);
+			break;
 		case UBT_Invalid:
 			result = false;
 			return result;

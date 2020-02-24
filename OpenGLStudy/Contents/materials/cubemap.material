@@ -1,0 +1,13 @@
+--[[
+    Default Cube map material
+]]
+return 
+{
+    MaterialType = 2,
+    tex_PosX = "Cubemaps/cubemap/posx_cubemap.png",
+    tex_NegX = "Cubemaps/cubemap/negx_cubemap.png",
+    tex_PosY = "Cubemaps/cubemap/posy_cubemap.png",
+    tex_NegY = "Cubemaps/cubemap/negy_cubemap.png",
+    tex_PosZ = "Cubemaps/cubemap/posz_cubemap.png",
+    tex_NegZ = "Cubemaps/cubemap/negz_cubemap.png",
+}

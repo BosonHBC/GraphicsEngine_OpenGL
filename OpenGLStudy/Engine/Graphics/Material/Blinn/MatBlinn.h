@@ -16,6 +16,9 @@ namespace Graphics {
 
 		void UpdateDiffuseTexture(const Assets::cHandle<cTexture>& i_other);
 		void UpdateSpecularTexture(const Assets::cHandle<cTexture>& i_other);
+		void UpdateCubemapTexture(const Assets::cHandle<cTexture>& i_other);
+		void UpdateReflectionTexture(const Assets::cHandle<cTexture>& i_other);
+
 	private:
 		cMatBlinn()
 			: m_shininess(0), m_diffuseIntensity(Color::White()), m_specularIntensity(Color::White()), cMaterial(eMaterialType::MT_BLINN_PHONG)
@@ -30,21 +33,22 @@ namespace Graphics {
 		void SetDiffuseIntensity(Color i_diffuseIntensity);
 		void SetSpecularIntensity(Color i_diffuseIntensity);
 
-
-
 		// LUA Load function
-		bool LoadFileFromLua(const std::string& i_path, eMaterialType& o_matType,std::string& o_diffusePath, std::string& o_specularPath, Color& o_diffuseColor, Color& o_specularColor, float& o_shineness);
+		bool LoadFileFromLua(const std::string& i_path, eMaterialType& o_matType,std::string& o_diffusePath, std::string& o_specularPath, Color& o_diffuseColor, Color& o_specularColor, Color& o_environmentIntensity, float& o_shineness);
 
 		// diffuse texture handle
 		Assets::cHandle<cTexture> m_diffuseTextureHandle;
 		// specular texture handle
 		Assets::cHandle<cTexture> m_specularTextureHandle;
+		// cube map texture handle
+		Assets::cHandle<cTexture> m_cubemapTextureHandle;
+		// reflection texture handle
+		Assets::cHandle<cTexture> m_reflectionTextureHandle;
 
-		Color m_diffuseIntensity, m_specularIntensity;
+		Color m_diffuseIntensity, m_specularIntensity, m_environmentIntensity;
 		GLfloat m_shininess;
 
-		GLuint m_diffuseTexID, m_specularTexID;
-		GLuint m_shininessID, m_diffuseIntensityID, m_specularIntensityID;
+		GLuint m_diffuseTexID, m_specularTexID, m_cubemapTexID, m_reflectionTexID;
 
 		static cUniformBuffer s_BlinnPhongUniformBlock;
 		friend class cMaterial;
