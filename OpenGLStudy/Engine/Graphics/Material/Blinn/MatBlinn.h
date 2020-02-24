@@ -17,6 +17,8 @@ namespace Graphics {
 		void UpdateDiffuseTexture(const Assets::cHandle<cTexture>& i_other);
 		void UpdateSpecularTexture(const Assets::cHandle<cTexture>& i_other);
 		void UpdateCubemapTexture(const Assets::cHandle<cTexture>& i_other);
+		void UpdateReflectionTexture(const Assets::cHandle<cTexture>& i_other);
+
 	private:
 		cMatBlinn()
 			: m_shininess(0), m_diffuseIntensity(Color::White()), m_specularIntensity(Color::White()), cMaterial(eMaterialType::MT_BLINN_PHONG)
@@ -38,12 +40,15 @@ namespace Graphics {
 		Assets::cHandle<cTexture> m_diffuseTextureHandle;
 		// specular texture handle
 		Assets::cHandle<cTexture> m_specularTextureHandle;
-		// cubemap texture handle
+		// cube map texture handle
 		Assets::cHandle<cTexture> m_cubemapTextureHandle;
+		// reflection texture handle
+		Assets::cHandle<cTexture> m_reflectionTextureHandle;
+
 		Color m_diffuseIntensity, m_specularIntensity, m_environmentIntensity;
 		GLfloat m_shininess;
 
-		GLuint m_diffuseTexID, m_specularTexID, m_cubemapTexID;
+		GLuint m_diffuseTexID, m_specularTexID, m_cubemapTexID, m_reflectionTexID;
 
 		static cUniformBuffer s_BlinnPhongUniformBlock;
 		friend class cMaterial;

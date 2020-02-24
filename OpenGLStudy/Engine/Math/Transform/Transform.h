@@ -10,7 +10,7 @@ public:
 	/** Constructors&destructor and assignment operators*/
 	cTransform(): m(glm::identity<glm::mat4>()), mInv(glm::identity<glm::mat4>()) {}
 	cTransform(const glm::vec3& i_initialTranslation, const glm::quat& i_intialRotation, const glm::vec3& i_initialScale);
-	cTransform(const cTransform& i_other) : m(i_other.m), mInv(i_other.mInv) {}
+	cTransform(const cTransform& i_other) ;
 	cTransform(const glm::mat4& i_m) :m(i_m), mInv(glm::inverse(m)) {}
 	cTransform(const glm::mat4& i_m, const glm::mat4& i_mInv) :m(i_m), mInv(i_mInv) {}
 	cTransform& operator = (const cTransform& i_other);
@@ -32,8 +32,11 @@ public:
 	void Scale(const glm::vec3& i_scale);
 	// Local transformation
 	void gRotate(const glm::vec3& i_axis, const float& i_angle);
+	void gScale(const float x, const float y, const float z);
 	void gScale(const glm::vec3& i_scale);
-	
+
+	void MirrorAlongPlane(const cTransform& i_other);
+
 	/** Setters */
 	void SetTransform(const glm::vec3& i_initialTranslation, const glm::quat& i_intialRotation, const glm::vec3& i_initialScale);
 	void SetRotation(const glm::quat& i_rotation) { m_rotation = i_rotation; };

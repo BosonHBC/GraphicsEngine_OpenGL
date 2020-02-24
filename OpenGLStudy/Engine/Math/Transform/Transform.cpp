@@ -1,9 +1,13 @@
 #include "Transform.h"
+#include "Transform.h"
 
 cTransform& cTransform::operator=(const cTransform& i_other)
 {
 	m = i_other.m;
 	mInv = i_other.mInv;
+	m_position = i_other.m_position;
+	m_scale = i_other.m_scale;
+	m_rotation = i_other.m_rotation;
 	return *this;
 }
 
@@ -17,6 +21,13 @@ cTransform& cTransform::operator=(const glm::mat4& i_m)
 cTransform::cTransform(const glm::vec3& i_initialTranslation, const glm::quat& i_intialRotation, const glm::vec3& i_initialScale)
 {
 	SetTransform(i_initialTranslation, i_intialRotation, i_initialScale);
+}
+
+cTransform::cTransform(const cTransform & i_other) : m(i_other.m), mInv(i_other.mInv)
+{
+	m_position = i_other.m_position;
+	m_scale = i_other.m_scale;
+	m_rotation = i_other.m_rotation;
 }
 
 cTransform::~cTransform()
@@ -65,22 +76,30 @@ void cTransform::gRotate(const glm::vec3& i_axis, const float& i_angle)
 
 void cTransform::gScale(const glm::vec3& i_scale)
 {
-	glm::vec3 _worldScale = glm::inverse(m_rotation) * i_scale;
+	glm::vec3 _worldScale = i_scale;
 	m_scale *= _worldScale;
+}
+
+void cTransform::gScale(const float x, const float y, const float z)
+{
+	gScale(glm::vec3(x, y, z));
+}
+
+void cTransform::MirrorAlongPlane(const cTransform& i_other)
+{
+	float deltaY = (m_position - i_other.Position()).y;
+	Translate(glm::vec3(0, -2*deltaY, 0));
+	gScale(1, 1, -1);
+	Update();
 }
 
 void cTransform::SetTransform(const glm::vec3 & i_initialTranslation, const glm::quat & i_intialRotation, const glm::vec3 & i_initialScale)
 {
-	/*
-		m = glm::toMat4(i_intialRotation);
-		m[3] = glm::vec4(i_initialTranslation, 1);
-		m = glm::scale(m, i_initialScale);
-
-		mInv = glm::inverse(m);*/
-
 	m_position = i_initialTranslation;
 	m_rotation = i_intialRotation;
 	m_scale = i_initialScale;
+
+	Update();
 }
 
 

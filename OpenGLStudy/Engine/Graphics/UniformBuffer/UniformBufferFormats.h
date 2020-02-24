@@ -24,13 +24,13 @@ namespace Graphics {
 			glm::f32 PVMatrix[16];
 			glm::vec3 ViewPosition;
 
-			sFrame(){}
+			sFrame() {}
 
 			sFrame(const glm::mat4& i_projectionMatrix, const glm::mat4& i_viewMatrix)
 			{
 				memcpy(PVMatrix, glm::value_ptr(i_projectionMatrix * i_viewMatrix), sizeof(PVMatrix));
 			}
-			sFrame(const glm::mat4& i_PVMatrix) 
+			sFrame(const glm::mat4& i_PVMatrix)
 			{
 				memcpy(PVMatrix, glm::value_ptr(i_PVMatrix), sizeof(PVMatrix));
 			}
@@ -111,5 +111,21 @@ namespace Graphics {
 			SupportingData::PointLight48 pointLights[MAX_COUNT_PER_LIGHT]; // 48 * MAX_COUNT_PER_LIGHT = 240 bytes
 			SupportingData::SpotLight64 spotLights[MAX_COUNT_PER_LIGHT]; // 64 * MAX_COUNT_PER_LIGHT = 320 bytes
 		}; // 624 bytes per lighting data
+
+		// Clipping plane data
+		// --------------------------------------------------------------------------------------------------------------------------------------------
+		// Allow maximum 4 clip planes in the uniform buffer
+		struct sClipPlane
+		{
+			glm::vec4 Planes[4];
+
+			sClipPlane(const glm::vec4& i_first, const glm::vec4& i_second = glm::vec4(0, 0, 0, 0), const glm::vec4& i_third = glm::vec4(0, 0, 0, 0), const glm::vec4& i_fourth = glm::vec4(0, 0, 0, 0))
+			{
+				Planes[0] = i_first;
+				Planes[1] = i_second;
+				Planes[2] = i_third;
+				Planes[3] = i_fourth;
+			}
+		};
 	}
 }

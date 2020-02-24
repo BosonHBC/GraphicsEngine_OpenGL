@@ -27,6 +27,7 @@ namespace Graphics {
 	cUniformBuffer s_uniformBuffer_frame(eUniformBufferType::UBT_Frame);
 	cUniformBuffer s_uniformBuffer_drawcall(eUniformBufferType::UBT_Drawcall);
 	cUniformBuffer s_uniformBuffer_Lighting(eUniformBufferType::UBT_Lighting);
+	cUniformBuffer s_uniformBuffer_ClipPlane(eUniformBufferType::UBT_ClipPlane);
 
 	UniformBufferFormats::sLighting s_globalLightingData;
 
@@ -48,6 +49,7 @@ namespace Graphics {
 	cAmbientLight* s_ambientLight;
 	cDirectionalLight* s_directionalLight;
 	std::vector<cPointLight*> s_pointLight_list;
+
 
 	//functions
 	void RenderScene();
@@ -109,6 +111,14 @@ namespace Graphics {
 				printf("Fail to initialize uniformBuffer_Lighting\n");
 				return result;
 			}
+			if (result = s_uniformBuffer_ClipPlane.Initialize(nullptr)) 
+			{
+				s_uniformBuffer_ClipPlane.Bind();
+			}
+			else {
+				printf("Fail to initialize uniformBuffer_ClipPlane\n");
+				return result;
+			}
 		}
 
 
@@ -160,6 +170,10 @@ namespace Graphics {
 
 	void Render_Pass_CaptureCameraView()
 	{
+		// Enable clip plane0
+		{
+			glEnable(GL_CLIP_PLANE0);
+		}
 		// Bind effect
 		{
 			s_currentEffect = GetEffectByKey(Constants::CONST_DEFAULT_EFFECT_KEY);
@@ -223,11 +237,20 @@ namespace Graphics {
 		{
 			s_currentEffect->UnUseEffect();
 		}
+		// Enable clip plane0
+		{
+			glDisable(GL_CLIP_PLANE0);
+		}
 	}
 
 	Graphics::cFrameBuffer* GetCameraCaptureFrameBuffer()
 	{
 		return &s_cameraCapture;
+	}
+
+	Graphics::cUniformBuffer* GetClipPlaneBuffer()
+	{
+		return &s_uniformBuffer_ClipPlane;
 	}
 
 	void Render_Pass()
@@ -363,9 +386,11 @@ namespace Graphics {
 			printf("Fail to cleanup uniformBuffer_MatBlinnPhong\n");
 		}
 		if (!(result = s_uniformBuffer_Lighting.CleanUp())) {
-			printf("Fail to cleanup uniformBuffer_MatBlinnPhong\n");
+			printf("Fail to cleanup uniformBuffer_Lighting\n");
 		}
-
+		if (!(result = s_uniformBuffer_ClipPlane.CleanUp())) {
+			printf("Fail to cleanup uniformBuffer_ClipPlane\n");
+		}
 		// Clean up effect
 		for (auto it = s_KeyToEffect_map.begin(); it != s_KeyToEffect_map.end(); ++it)
 		{

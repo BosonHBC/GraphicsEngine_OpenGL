@@ -12,6 +12,7 @@ namespace Graphics {
 		UBT_Drawcall = 1,
 		UBT_BlinnPhongMaterial = 2,
 		UBT_Lighting = 3,
+		UBT_ClipPlane = 4,
 		UBT_Invalid = 0xff,
 	};
 

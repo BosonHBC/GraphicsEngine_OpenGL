@@ -38,6 +38,7 @@ namespace Graphics {
 		m_diffuseTexID = glGetUniformLocation(i_programID, "diffuseTex");
 		m_specularTexID = glGetUniformLocation(i_programID, "specularTex");
 		m_cubemapTexID = glGetUniformLocation(i_programID, "cubemapTex");
+		m_reflectionTexID = glGetUniformLocation(i_programID, "reflectionTex");
 
 		return result;
 	}
@@ -47,6 +48,7 @@ namespace Graphics {
 		glUniform1i(m_diffuseTexID, 0);
 		glUniform1i(m_specularTexID, 1);
 		glUniform1i(m_cubemapTexID, 3);
+		glUniform1i(m_reflectionTexID, 4);
 
 		cTexture* _diffuseTex = cTexture::s_manager.Get(m_diffuseTextureHandle);
 		if (_diffuseTex) {
@@ -61,6 +63,12 @@ namespace Graphics {
 		{
 			_cubemapTex->UseTexture(GL_TEXTURE3);
 		}
+		cTexture* _reflectionTex = cTexture::s_manager.Get(m_reflectionTextureHandle);
+		if (_reflectionTex)
+		{
+			_reflectionTex->UseTexture(GL_TEXTURE4);
+		}
+
 		s_BlinnPhongUniformBlock.Update(&UniformBufferFormats::sBlinnPhongMaterial(m_diffuseIntensity, m_specularIntensity, m_environmentIntensity,m_shininess));
 	}
 
@@ -78,6 +86,11 @@ namespace Graphics {
 		if (_cubemapTex)
 		{
 			_cubemapTex->CleanUpTextureBind(GL_TEXTURE3);
+		}
+		cTexture* _reflectionTex = cTexture::s_manager.Get(m_reflectionTextureHandle);
+		if (_reflectionTex)
+		{
+			_reflectionTex->CleanUpTextureBind(GL_TEXTURE4);
 		}
 	}
 
@@ -153,6 +166,14 @@ namespace Graphics {
 		cTexture::s_manager.Release(m_cubemapTextureHandle);
 		// Copy from incoming texture handle
 		cTexture::s_manager.Copy(i_other, m_cubemapTextureHandle);
+	}
+
+	void cMatBlinn::UpdateReflectionTexture(const Assets::cHandle<cTexture>& i_other)
+	{
+		// release current handle
+		cTexture::s_manager.Release(m_reflectionTextureHandle);
+		// Copy from incoming texture handle
+		cTexture::s_manager.Copy(i_other, m_reflectionTextureHandle);
 	}
 
 	bool cMatBlinn::LoadFileFromLua(const std::string& i_path, eMaterialType& o_matType, std::string& o_diffusePath, std::string& o_specularPath, Color& o_diffuseColor, Color& o_specularColor, Color& o_environmentIntensity, float& o_shineness)

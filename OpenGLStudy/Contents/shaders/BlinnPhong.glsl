@@ -2,9 +2,10 @@
 
 // this sampler is connected to the texture unit, and binding with our texture
 // this uniform is default 0, if we need more texture unit, we need to bind manually
-uniform sampler2D diffuseTex;
-uniform sampler2D specularTex;
-uniform samplerCube cubemapTex;
+uniform sampler2D diffuseTex; // 0
+uniform sampler2D specularTex; // 1
+uniform samplerCube cubemapTex; // 3
+uniform sampler2D reflectionTex; // 4
 
 // shadow maps
 uniform sampler2D directionalShadowMap;
@@ -12,6 +13,7 @@ uniform sampler2D directionalShadowMap;
 in vec2 texCood0;
 in vec3 Normal;
 in vec3 fragPos;
+in vec4 clipSpaceCoord;
 
 in vec4 DirectionalLightSpacePos;
 layout(std140, binding = 0) uniform uniformBuffer_frame
@@ -84,11 +86,10 @@ layout(std140, binding = 3) uniform g_uniformBuffer_Lighting
 //-------------------------------------------------------------------------
 float CalcDirectionalLightShadowMap(vec3 vN)
 {
-	vec3 projcoords = DirectionalLightSpacePos.xyz / DirectionalLightSpacePos.w;
-	projcoords = (projcoords * 0.5) + 0.5;
-	// now projcoords is in normalized coordinate, locates in (0,1)
+	vec3 normalizedDeviceCoordinate = DirectionalLightSpacePos.xyz / DirectionalLightSpacePos.w;
+	normalizedDeviceCoordinate = (normalizedDeviceCoordinate * 0.5) + 0.5;
 
-	float current = projcoords.z;
+	float current = normalizedDeviceCoordinate.z;
 
 	// Calculate bias
 	vec3 lightDir = normalize(g_directionalLight.direction);
@@ -103,7 +104,7 @@ float CalcDirectionalLightShadowMap(vec3 vN)
 		for(int y = -1; y <= 1; ++y)
 		{
 			// get the depth value of this position in this light's perpective of view
-			float pcfDepth = texture(directionalShadowMap, projcoords.xy + vec2(x,y) * texelSize).r;
+			float pcfDepth = texture(directionalShadowMap, normalizedDeviceCoordinate.xy + vec2(x,y) * texelSize).r;
 			// if the current depth that is rendering is larger than the cloest depth,
 			// it is in shadow
 			shadow += (current - bias > pcfDepth) ? 1.0 : 0.0;
@@ -153,6 +154,14 @@ vec4 IlluminateByCubemap(vec4 diffuseColor, vec4 specularColor,vec3 vN, vec3 vV)
 	return outColor;
 }
 
+vec4 IlluminateByReflectionTexture()
+{
+	vec4 outColor = vec4(0,0,0,0);
+	vec2 normalizedDeviceCoordinate = (clipSpaceCoord.xy/clipSpaceCoord.w)*0.5 + 0.5;
+	vec2 reflectionCoords = vec2(normalizedDeviceCoordinate.x, -normalizedDeviceCoordinate.y);
+	outColor = texture(reflectionTex, normalizedDeviceCoordinate);
+	return outColor;
+}
 //-------------------------------------------------------------------------
 // Light calculation
 //-------------------------------------------------------------------------
@@ -215,9 +224,10 @@ void main(){
 	// point light
 	vec4 pointLightColor = CalcPointLights(diffuseTexColor, specularTexColor, normalized_normal, normalized_view);
 
+	vec4 reflectionTextureColor = IlluminateByReflectionTexture();
 	// directional light
 	float directionalLightShadowFactor = g_directionalLight.base.enableShadow ? (1.0 - CalcDirectionalLightShadowMap(normalized_normal)): 1.0;
 	vec4 directionLightColor = directionalLightShadowFactor * CalcDirectionalLight(diffuseTexColor, specularTexColor, normalized_normal, normalized_view);
 
-	color =  ( ambientLightColor + cubemapColor + pointLightColor + directionLightColor);
+	color =  ( ambientLightColor + cubemapColor + pointLightColor + directionLightColor + reflectionTextureColor);
 }

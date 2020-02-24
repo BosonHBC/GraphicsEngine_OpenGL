@@ -36,14 +36,16 @@ bool Assignment::Initialize(GLuint i_width, GLuint i_height, const char* i_windo
 	CreateCamera();
 	CreateLight();
 
+	Graphics::cMatCubemap* _cubemapMat = dynamic_cast<Graphics::cMatCubemap*>(Graphics::cModel::s_manager.Get(m_cubemap->GetModelHandle())->GetMaterialAt());
 
-	Graphics::cMatBlinn* _wallMat = dynamic_cast<Graphics::cMatBlinn*>(Graphics::cModel::s_manager.Get(m_wall->GetModelHandle())->GetMaterialAt());
+	Graphics::cMatBlinn* _wallMat = dynamic_cast<Graphics::cMatBlinn*>(Graphics::cModel::s_manager.Get(m_mirror->GetModelHandle())->GetMaterialAt());
 	auto cameraViewTextureHandle = Graphics::GetCameraCaptureFrameBuffer()->GetTextureHandle();
-	_wallMat->UpdateDiffuseTexture(cameraViewTextureHandle);
-	_wallMat->UpdateSpecularTexture(cameraViewTextureHandle);
+	//_wallMat->UpdateDiffuseTexture(cameraViewTextureHandle);
+	//_wallMat->UpdateSpecularTexture(cameraViewTextureHandle);
+	_wallMat->UpdateReflectionTexture(cameraViewTextureHandle);
+	_wallMat->UpdateCubemapTexture(_cubemapMat->GetCubemapHandle());
 
 	Graphics::cMatBlinn* _planeMat = dynamic_cast<Graphics::cMatBlinn*>(Graphics::cModel::s_manager.Get(m_plane->GetModelHandle())->GetMaterialAt());
-	Graphics::cMatCubemap* _cubemapMat = dynamic_cast<Graphics::cMatCubemap*>(Graphics::cModel::s_manager.Get(m_cubemap->GetModelHandle())->GetMaterialAt());
 	_planeMat->UpdateCubemapTexture(_cubemapMat->GetCubemapHandle());
 
 	Graphics::cMatBlinn* _teapot2Mat = dynamic_cast<Graphics::cMatBlinn*>(Graphics::cModel::s_manager.Get(m_teapot2->GetModelHandle())->GetMaterialAt());
@@ -51,7 +53,6 @@ bool Assignment::Initialize(GLuint i_width, GLuint i_height, const char* i_windo
 
 	return result;
 }
-
 void Assignment::CreateActor()
 {
 	m_teapot = new cActor();
@@ -69,19 +70,19 @@ void Assignment::CreateActor()
 
 	m_plane = new cActor();
 	m_plane->Initialize();
-	m_plane->Transform()->SetTransform(glm::vec3(0, -0.2f, -2.f), glm::quat(1, 0, 0, 0), glm::vec3(20, 1, 20));
+	m_plane->Transform()->SetTransform(glm::vec3(0, -0.5f, -2.f), glm::quat(1, 0, 0, 0), glm::vec3(20, 1, 20));
 	m_plane->SetModel("Contents/models/plane.model");
 	m_plane->UpdateUniformVariables(Graphics::GetCurrentEffect());
 
-	m_wall = new cActor();
-	m_wall->Initialize();
-	m_wall->Transform()->SetTransform(glm::vec3(0, 0.1, -5.f), glm::quat(1, 0, 0, 0), glm::vec3(5, 1, 3.75));
-	m_wall->SetModel("Contents/models/wall.model");
-	m_wall->UpdateUniformVariables(Graphics::GetCurrentEffect());
+	m_mirror = new cActor();
+	m_mirror->Initialize();
+	m_mirror->Transform()->SetTransform(glm::vec3(0, 0.01, -2.f), glm::quat(1, 0, 0, 0), glm::vec3(8, 1, 8));
+	m_mirror->SetModel("Contents/models/wall.model");
+	m_mirror->UpdateUniformVariables(Graphics::GetCurrentEffect());
 
 	m_sphere = new cActor();
 	m_sphere->Initialize();
-	m_sphere->Transform()->SetTransform(glm::vec3(-1, 0.3, -1.f), glm::quat(1, 0, 0, 0), glm::vec3(0.5f, 0.5f, 0.5f));
+	m_sphere->Transform()->SetTransform(glm::vec3(-1, 0.5, -1.f), glm::quat(1, 0, 0, 0), glm::vec3(0.5f, 0.5f, 0.5f));
 	m_sphere->SetModel("Contents/models/sphere.model");
 	m_sphere->UpdateUniformVariables(Graphics::GetCurrentEffect());
 
@@ -123,7 +124,7 @@ void Assignment::Run()
 		_renderingMap.push_back({ m_plane->GetModelHandle(), m_plane->Transform() });
 		_renderingMap.push_back({ m_teapot->GetModelHandle(), m_teapot->Transform() });
 		_renderingMap.push_back({ m_teapot2->GetModelHandle(), m_teapot2->Transform() });
-		_renderingMap.push_back({ m_wall->GetModelHandle(), m_wall->Transform() });
+		_renderingMap.push_back({ m_mirror->GetModelHandle(), m_mirror->Transform() });
 		_renderingMap.push_back({ m_sphere->GetModelHandle(), m_sphere->Transform() });
 		Graphics::SubmitDataToBeRendered(_frameData_Shadow, _renderingMap);
 		Graphics::ShadowMap_Pass();
@@ -134,19 +135,34 @@ void Assignment::Run()
 		Graphics::UniformBufferFormats::sFrame _frameData_Camera(m_editorCamera->GetProjectionMatrix(), m_editorCamera->GetViewMatrix());
 		_frameData_Camera.ViewPosition = m_editorCamera->CamLocation();
 		_renderingMap.clear();
-
-		_renderingMap.push_back({ m_plane->GetModelHandle(), m_plane->Transform() });
-		_renderingMap.push_back({ m_teapot->GetModelHandle(), m_teapot->Transform() });
-		_renderingMap.push_back({ m_teapot2->GetModelHandle(), m_teapot2->Transform() });
-		_renderingMap.push_back({ m_sphere->GetModelHandle(), m_sphere->Transform() });
+		
+		{
+			cTransform _mirrordTr = *m_teapot->Transform();
+			_mirrordTr.MirrorAlongPlane(*m_mirror->Transform());
+			_renderingMap.push_back({ m_teapot->GetModelHandle(), &_mirrordTr });
+		}
+		{
+			cTransform _mirrordTr = *m_teapot2->Transform();
+			_mirrordTr.MirrorAlongPlane(*m_mirror->Transform());
+			_renderingMap.push_back({ m_teapot2->GetModelHandle(), &_mirrordTr });
+		} 
+		{
+			cTransform _mirrordTr = *m_sphere->Transform();
+			_mirrordTr.MirrorAlongPlane(*m_mirror->Transform());
+			_renderingMap.push_back({ m_sphere->GetModelHandle(), &_mirrordTr });
+		}
+		Graphics::cUniformBuffer* clipBuffer = Graphics::GetClipPlaneBuffer();
+		glm::vec4 _plane = glm::vec4(-m_mirror->Transform()->Up(), m_mirror->Transform()->Position().y);
+		clipBuffer->Update(&Graphics::UniformBufferFormats::sClipPlane(_plane));
 		Graphics::SubmitDataToBeRendered(_frameData_Camera, _renderingMap);
 		Graphics::Render_Pass_CaptureCameraView();
 
 		_renderingMap.clear();
+		
 		_renderingMap.push_back({ m_teapot->GetModelHandle(), m_teapot->Transform() });
 		_renderingMap.push_back({ m_teapot2->GetModelHandle(), m_teapot2->Transform() });
 		_renderingMap.push_back({ m_plane->GetModelHandle(), m_plane->Transform() });
-		_renderingMap.push_back({ m_wall->GetModelHandle(), m_wall->Transform() });
+		_renderingMap.push_back({ m_mirror->GetModelHandle(), m_mirror->Transform() });
 		_renderingMap.push_back({ m_sphere->GetModelHandle(), m_sphere->Transform() });
 		Graphics::SubmitDataToBeRendered(_frameData_Camera, _renderingMap);
 		Graphics::Render_Pass();
@@ -171,7 +187,7 @@ void Assignment::CleanUp()
 	safe_delete(m_teapot);
 	safe_delete(m_teapot2);
 	safe_delete(m_plane);
-	safe_delete(m_wall);
+	safe_delete(m_mirror);
 	safe_delete(m_sphere);
 	safe_delete(m_cubemap);
 }
@@ -181,7 +197,7 @@ void Assignment::Tick(float second_since_lastFrame)
 	// Update transforms
 	m_teapot->Transform()->Update();
 	m_teapot2->Transform()->Update();
-	m_wall->Transform()->Update();
+	m_mirror->Transform()->Update();
 	m_sphere->Transform()->Update();
 	m_plane->Transform()->Update();
 
