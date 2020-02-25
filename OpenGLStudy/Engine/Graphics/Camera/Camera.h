@@ -17,7 +17,7 @@ public:
 		m_transform = new cTransform();
 	}
 	cCamera(glm::vec3 i_initialPos, GLfloat i_initialPitch = 0.0, GLfloat i_initialYaw = 0.0, GLfloat i_moveSpeed = 1.0, GLfloat i_turnSpeed = 1.0f):
-		m_yaw(i_initialYaw), m_pitch(i_initialPitch),
+		m_yaw(i_initialYaw), m_pitch(i_initialPitch), m_worldUp(glm::vec3(0,1.f,0)),
 		m_translationSpeed(i_moveSpeed), m_turnSpeed(i_turnSpeed)
 	{
 		m_transform = new cTransform();
@@ -25,6 +25,7 @@ public:
 		glm::quat _yaw(glm::vec3(0, i_initialYaw, 0));
 		m_transform->SetTransform(i_initialPos, _pitch * _yaw, glm::vec3(1, 1, 1));
 	}
+	cCamera(const cCamera& i_other);
 	virtual ~cCamera();
 
 	/** Usage functions*/
@@ -32,6 +33,8 @@ public:
 	virtual void MouseControl(sWindowInput* const i_windowInput, float i_dt);
 	// Projection matrix
 	void CreateProjectionMatrix(GLfloat i_fov, GLfloat i_aspect, GLfloat i_nearPlane = 0.1f, GLfloat i_farPlane = 100.f);
+
+	void MirrorAlongPlane(const cTransform& i_plane);
 
 	// Update uniform locations
 	void UpdateUniformLocation(GLuint i_programID);
@@ -52,6 +55,8 @@ protected:
 
 	GLfloat m_pitch;
 	GLfloat m_yaw;
+
+	glm::vec3 m_worldUp;
 
 	/** private helper functions*/
 	virtual void Update();

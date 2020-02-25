@@ -156,7 +156,7 @@ vec4 IlluminateByCubemap(vec4 diffuseColor, vec4 specularColor,vec3 vN, vec3 vV)
 vec4 IlluminateByReflectionTexture()
 {
 	vec4 outColor = vec4(0,0,0,0);
-	vec2 normalizedDeviceCoordinate = (clipSpaceCoord.xy/clipSpaceCoord.w)*0.5 + 0.5;
+	vec2 normalizedDeviceCoordinate = vec2((-clipSpaceCoord.x/clipSpaceCoord.w)*0.5 + 0.5,(clipSpaceCoord.y/clipSpaceCoord.w)*0.5 + 0.5 );
 	vec2 reflectionCoords = vec2(normalizedDeviceCoordinate.x, -normalizedDeviceCoordinate.y);
 	outColor = texture(reflectionTex, normalizedDeviceCoordinate);
 	return outColor;

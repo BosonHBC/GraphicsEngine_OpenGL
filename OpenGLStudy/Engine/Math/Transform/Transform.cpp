@@ -23,11 +23,10 @@ cTransform::cTransform(const glm::vec3& i_initialTranslation, const glm::quat& i
 	SetTransform(i_initialTranslation, i_intialRotation, i_initialScale);
 }
 
-cTransform::cTransform(const cTransform & i_other) : m(i_other.m), mInv(i_other.mInv)
+cTransform::cTransform(const cTransform & i_other) 
+	: m(i_other.m), mInv(i_other.mInv),
+	m_position(i_other.m_position), m_rotation(i_other.m_rotation), m_scale(i_other.m_scale)
 {
-	m_position = i_other.m_position;
-	m_scale = i_other.m_scale;
-	m_rotation = i_other.m_rotation;
 }
 
 cTransform::~cTransform()
@@ -88,7 +87,7 @@ void cTransform::gScale(const float x, const float y, const float z)
 void cTransform::MirrorAlongPlane(const cTransform& i_other)
 {
 	float deltaY = (m_position - i_other.Position()).y;
-	Translate(glm::vec3(0, -2*deltaY, 0));
+	Translate(glm::vec3(0, -2.f*deltaY, 0));
 	gScale(1, 1, -1);
 	Update();
 }

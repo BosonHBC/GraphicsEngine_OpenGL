@@ -2,6 +2,13 @@
 #include "Engine/Application/Window/WindowInput.h"
 #include "glfw/glfw3.h"
 #include "stdio.h"
+
+cEditorCamera::cEditorCamera(const cEditorCamera& i_other) 
+	: cCamera(i_other)
+{
+
+}
+
 void cEditorCamera::CameraControl(sWindowInput* const i_windowInput, float i_dt)
 {
 	cCamera::CameraControl(i_windowInput, i_dt);

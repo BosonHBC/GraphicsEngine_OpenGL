@@ -132,33 +132,26 @@ void Assignment::Run()
 		// ----------------------
 		// Rendering
 		// Frame data from camera
-		Graphics::UniformBufferFormats::sFrame _frameData_Camera(m_editorCamera->GetProjectionMatrix(), m_editorCamera->GetViewMatrix());
-		_frameData_Camera.ViewPosition = m_editorCamera->CamLocation();
-		_renderingMap.clear();
-		
 		{
-			cTransform _mirrordTr = *m_teapot->Transform();
-			_mirrordTr.MirrorAlongPlane(*m_mirror->Transform());
-			_renderingMap.push_back({ m_teapot->GetModelHandle(), &_mirrordTr });
+			cEditorCamera _mirroredCamera = *m_editorCamera;
+			_mirroredCamera.MirrorAlongPlane(*m_mirror->Transform());
+			Graphics::UniformBufferFormats::sFrame _frameData_Mirrored(_mirroredCamera.GetProjectionMatrix(), _mirroredCamera.GetViewMatrix());
+			_frameData_Mirrored.ViewPosition = _mirroredCamera.CamLocation();
+			_renderingMap.clear();
+
+			_renderingMap.push_back({ m_teapot->GetModelHandle(), m_teapot->Transform() });
+			_renderingMap.push_back({ m_teapot2->GetModelHandle(), m_teapot2->Transform() });
+			_renderingMap.push_back({ m_sphere->GetModelHandle(), m_sphere->Transform() });
+			Graphics::cUniformBuffer* clipBuffer = Graphics::GetClipPlaneBuffer();
+			glm::vec4 _plane = glm::vec4(m_mirror->Transform()->Up(), m_mirror->Transform()->Position().y);
+			clipBuffer->Update(&Graphics::UniformBufferFormats::sClipPlane(_plane));
+			Graphics::SubmitDataToBeRendered(_frameData_Mirrored, _renderingMap);
+			Graphics::Render_Pass_CaptureCameraView();
 		}
-		{
-			cTransform _mirrordTr = *m_teapot2->Transform();
-			_mirrordTr.MirrorAlongPlane(*m_mirror->Transform());
-			_renderingMap.push_back({ m_teapot2->GetModelHandle(), &_mirrordTr });
-		} 
-		{
-			cTransform _mirrordTr = *m_sphere->Transform();
-			_mirrordTr.MirrorAlongPlane(*m_mirror->Transform());
-			_renderingMap.push_back({ m_sphere->GetModelHandle(), &_mirrordTr });
-		}
-		Graphics::cUniformBuffer* clipBuffer = Graphics::GetClipPlaneBuffer();
-		glm::vec4 _plane = glm::vec4(-m_mirror->Transform()->Up(), m_mirror->Transform()->Position().y);
-		clipBuffer->Update(&Graphics::UniformBufferFormats::sClipPlane(_plane));
-		Graphics::SubmitDataToBeRendered(_frameData_Camera, _renderingMap);
-		Graphics::Render_Pass_CaptureCameraView();
 
 		_renderingMap.clear();
-		
+		Graphics::UniformBufferFormats::sFrame _frameData_Camera(m_editorCamera->GetProjectionMatrix(), m_editorCamera->GetViewMatrix());
+		_frameData_Camera.ViewPosition = m_editorCamera->CamLocation();
 		_renderingMap.push_back({ m_teapot->GetModelHandle(), m_teapot->Transform() });
 		_renderingMap.push_back({ m_teapot2->GetModelHandle(), m_teapot2->Transform() });
 		_renderingMap.push_back({ m_plane->GetModelHandle(), m_plane->Transform() });

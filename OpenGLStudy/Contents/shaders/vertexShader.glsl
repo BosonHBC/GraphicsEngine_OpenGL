@@ -33,8 +33,6 @@ void main()
 	clipSpaceCoord = PVMatrix * modelMatrix * vec4(pos, 1.0);
 	gl_Position = clipSpaceCoord;
 
-
-
 	texCood0 = texcood;
 
 	// Handle scaling in only one axis situation
