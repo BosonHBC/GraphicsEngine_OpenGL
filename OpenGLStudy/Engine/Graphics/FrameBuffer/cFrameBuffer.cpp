@@ -1,6 +1,7 @@
 #include "cFrameBuffer.h"
 #include "stdio.h"
 #include <string>
+#include "assert.h"
 namespace Graphics {
 
 	bool cFrameBuffer::Initialize(GLuint i_width, GLuint i_height, ETextureType i_textureType)
@@ -34,13 +35,13 @@ namespace Graphics {
 				glFramebufferTexture2D(GL_FRAMEBUFFER, GL_DEPTH_ATTACHMENT, GL_TEXTURE_2D, _texture->GetTextureID(), mipMapLevel);
 				glDrawBuffer(GL_NONE);
 				glReadBuffer(GL_NONE);
-
+				assert(GL_NO_ERROR == glGetError());
 				break;
 			case Graphics::ETT_FRAMEBUFFER_COLOR:
 
 				glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, _texture->GetTextureID(), mipMapLevel);
 				glDrawBuffer(GL_COLOR_ATTACHMENT0);
-
+				assert(GL_NO_ERROR == glGetError());
 				// We need depth too!
 				// Use render buffer with frame buffer such that we can have a depth and color at the same time
 				{
@@ -51,7 +52,9 @@ namespace Graphics {
 					glFramebufferRenderbuffer(
 						GL_FRAMEBUFFER, GL_DEPTH_STENCIL_ATTACHMENT, GL_RENDERBUFFER, rboDepthStencil
 					);
+					assert(GL_NO_ERROR == glGetError());
 				}
+
 				break;
 			default:
 				result = false;

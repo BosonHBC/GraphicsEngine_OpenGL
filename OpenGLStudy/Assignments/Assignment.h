@@ -40,7 +40,6 @@ private:
 
 	cActor* m_teapot;
 	cActor* m_teapot2;
-	cActor* m_plane;
 	cActor* m_mirror;
 	cActor* m_sphere;
 	cActor* m_cubemap;

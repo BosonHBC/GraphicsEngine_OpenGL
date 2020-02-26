@@ -86,13 +86,13 @@ layout(std140, binding = 3) uniform g_uniformBuffer_Lighting
 float CalcDirectionalLightShadowMap(vec3 vN)
 {
 	vec3 normalizedDeviceCoordinate = DirectionalLightSpacePos.xyz / DirectionalLightSpacePos.w;
-	normalizedDeviceCoordinate = (normalizedDeviceCoordinate * 0.5) + 0.5;
+	normalizedDeviceCoordinate = normalizedDeviceCoordinate * 0.5 + 0.5;
 
 	float current = normalizedDeviceCoordinate.z;
 
 	// Calculate bias
 	vec3 lightDir = normalize(g_directionalLight.direction);
-	const float bias = max(0.005 * (1- dot(vN, lightDir)), 0.0005);
+	const float bias = max(0.001 * (1- dot(vN, lightDir)), 0.001);
 
 	float shadow = 0.0;
 
