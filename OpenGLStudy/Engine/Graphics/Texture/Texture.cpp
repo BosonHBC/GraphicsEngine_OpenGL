@@ -108,7 +108,7 @@ namespace Graphics {
 		auto errorCode = glGetError();
 		if (errorCode != GL_NO_ERROR)
 		{
-			printf("OpenGL failed to load texture %s, with error ID: %d.\n", i_path, errorCode);
+			printf("OpenGL failed to load texture %s, with error ID: %d.\n", i_path.c_str(), errorCode);
 		}
 		return true;
 	}
@@ -233,7 +233,7 @@ namespace Graphics {
 		for (int i = 0; i < 6; ++i)
 		{
 
-			std::string _path = Assets::Path::ProcessPath<cTexture>(i_paths[i]);
+			std::string _path = Assets::ProcessPathTex(i_paths[i]);
 			_data = stbi_load(_path.c_str(), &m_width, &m_height, &m_bitDepth, 0);
 			if (_data) {
 				glTexImage2D(

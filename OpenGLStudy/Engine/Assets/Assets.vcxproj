@@ -30,6 +30,7 @@
   <ItemGroup>
     <ClCompile Include="empty.cpp" />
     <ClCompile Include="LoadTableFromLuaFile.cpp" />
+    <ClCompile Include="PathProcessor.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\..\Externals\Lua\LuaCompiler.vcxproj">

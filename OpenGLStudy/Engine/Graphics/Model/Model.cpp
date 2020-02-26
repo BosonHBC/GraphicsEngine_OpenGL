@@ -253,7 +253,7 @@ namespace Graphics {
 		//const size_t _numOfMaterials = i_scene->mNumMaterials;
 		m_materialList.resize(2);
 
-		std::string _path = Assets::Path::ProcessPath<cMaterial>(i_matName);
+		std::string _path = Assets::ProcessPathMat(i_matName);
 		if (!cMaterial::s_manager.Load(_path, m_materialList[1])) {
 			printf("Fail to load material file[%s]\n", _path.c_str());
 		}

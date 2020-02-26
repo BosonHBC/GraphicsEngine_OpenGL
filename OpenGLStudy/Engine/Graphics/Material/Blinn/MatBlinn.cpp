@@ -3,6 +3,7 @@
 #include "Assets/LoadTableFromLuaFile.h"
 #include "Graphics/UniformBuffer/UniformBufferFormats.h"
 #include "Assets/PathProcessor.h"
+#include "Constants/Constants.h"
 
 namespace Graphics {
 	// Definition of static blinnPhongUniformBlock
@@ -104,7 +105,7 @@ namespace Graphics {
 	void cMatBlinn::SetDiffuse(const std::string& i_diffusePath)
 	{
 		auto result = true;
-		std::string _path = Assets::Path::ProcessPath<cTexture>(i_diffusePath);
+		std::string _path = Assets::ProcessPathTex(i_diffusePath);
 		if (!(result = cTexture::s_manager.Load(_path, m_diffuseTextureHandle, ETextureType::ETT_FILE))) {
 			printf("Texture[%s] is invalid, use default texture instead.\n", _path.c_str());
 			//Use default texture, which is the white board
@@ -118,7 +119,7 @@ namespace Graphics {
 	void cMatBlinn::SetSpecular(const std::string& i_specularPath)
 	{
 		auto result = true;
-		std::string _path = Assets::Path::ProcessPath<cTexture>(i_specularPath);
+		std::string _path = Assets::ProcessPathTex(i_specularPath);
 		if (!(result = cTexture::s_manager.Load(_path, m_specularTextureHandle, ETextureType::ETT_FILE))) {
 			printf("Texture[%s] is invalid, use default texture instead.\n", _path.c_str());
 			//Use default texture, which is the white board

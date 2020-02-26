@@ -46,5 +46,8 @@
     <ClCompile Include="LoadTableFromLuaFile.cpp">
       <Filter>Source Files\Lua</Filter>
     </ClCompile>
+    <ClCompile Include="PathProcessor.cpp">
+      <Filter>Source Files\Path</Filter>
+    </ClCompile>
   </ItemGroup>
 </Project>
