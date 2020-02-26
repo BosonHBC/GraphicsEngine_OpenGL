@@ -1,8 +1,8 @@
 #include "MatBlinn.h"
-#include "Engine/Constants/Constants.h"
 #include "Externals/ASSIMP_N/include/assimp/scene.h"
 #include "Assets/LoadTableFromLuaFile.h"
 #include "Graphics/UniformBuffer/UniformBufferFormats.h"
+#include "Assets/PathProcessor.h"
 
 namespace Graphics {
 	// Definition of static blinnPhongUniformBlock
@@ -104,8 +104,8 @@ namespace Graphics {
 	void cMatBlinn::SetDiffuse(const std::string& i_diffusePath)
 	{
 		auto result = true;
-		std::string _path = i_diffusePath;
-		if (!(result = cTexture::s_manager.Load(_path.insert(0, Constants::CONST_PATH_TEXTURE_ROOT), m_diffuseTextureHandle, ETextureType::ETT_FILE))) {
+		std::string _path = Assets::Path::ProcessPath<cTexture>(i_diffusePath);
+		if (!(result = cTexture::s_manager.Load(_path, m_diffuseTextureHandle, ETextureType::ETT_FILE))) {
 			printf("Texture[%s] is invalid, use default texture instead.\n", _path.c_str());
 			//Use default texture, which is the white board
 			if (!(result = cTexture::s_manager.Load(Constants::CONST_PATH_DEFAULT_TEXTURE, m_diffuseTextureHandle, ETextureType::ETT_FILE)))
@@ -118,8 +118,8 @@ namespace Graphics {
 	void cMatBlinn::SetSpecular(const std::string& i_specularPath)
 	{
 		auto result = true;
-		std::string _path = i_specularPath;
-		if (!(result = cTexture::s_manager.Load(_path.insert(0, Constants::CONST_PATH_TEXTURE_ROOT), m_specularTextureHandle, ETextureType::ETT_FILE))) {
+		std::string _path = Assets::Path::ProcessPath<cTexture>(i_specularPath);
+		if (!(result = cTexture::s_manager.Load(_path, m_specularTextureHandle, ETextureType::ETT_FILE))) {
 			printf("Texture[%s] is invalid, use default texture instead.\n", _path.c_str());
 			//Use default texture, which is the white board
 			if (!(result = cTexture::s_manager.Load(Constants::CONST_PATH_DEFAULT_TEXTURE, m_specularTextureHandle, ETextureType::ETT_FILE)))

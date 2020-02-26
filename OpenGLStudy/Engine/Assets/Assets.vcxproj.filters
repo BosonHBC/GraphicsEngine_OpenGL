@@ -16,6 +16,9 @@
     <Filter Include="Source Files\Lua">
       <UniqueIdentifier>{ae0a06aa-5813-469c-b313-46847528e9c8}</UniqueIdentifier>
     </Filter>
+    <Filter Include="Source Files\Path">
+      <UniqueIdentifier>{9acdb923-ce97-43e4-9133-847f49762d57}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="AssetManager.h">
@@ -26,6 +29,9 @@
     </ClInclude>
     <ClInclude Include="LoadTableFromLuaFile.h">
       <Filter>Source Files\Lua</Filter>
+    </ClInclude>
+    <ClInclude Include="PathProcessor.h">
+      <Filter>Source Files\Path</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>

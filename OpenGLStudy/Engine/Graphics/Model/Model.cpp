@@ -9,6 +9,7 @@
 
 
 #include "Assets/LoadTableFromLuaFile.h"
+#include "Assets/PathProcessor.h"
 // Static variable definition
 Assets::cAssetManager<Graphics::cModel> Graphics::cModel::s_manager;
 
@@ -252,16 +253,11 @@ namespace Graphics {
 		//const size_t _numOfMaterials = i_scene->mNumMaterials;
 		m_materialList.resize(2);
 
-		//	for (size_t i = 1; i < _numOfMaterials; ++i)
-		//	{
-				// TODO: right now, the material path is meaningless
-		std::string _path = Constants::CONST_PATH_MATERIAL_ROOT;
-		_path.append(i_matName);
+		std::string _path = Assets::Path::ProcessPath<cMaterial>(i_matName);
 		if (!cMaterial::s_manager.Load(_path, m_materialList[1])) {
 			printf("Fail to load material file[%s]\n", _path.c_str());
-			//	continue;
 		}
-		//	}
+
 
 	}
 

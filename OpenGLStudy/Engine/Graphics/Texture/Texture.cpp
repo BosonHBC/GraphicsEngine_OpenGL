@@ -3,7 +3,7 @@
 #include "stdio.h"
 #include "Texture.h"
 #include "Tool/stb_image.h"
-#include "Constants/Constants.h"
+#include "Assets/PathProcessor.h"
 Assets::cAssetManager < Graphics::cTexture > Graphics::cTexture::s_manager;
 
 namespace Graphics {
@@ -232,8 +232,8 @@ namespace Graphics {
 			
 		for (int i = 0; i < 6; ++i)
 		{
-			std::string _path = i_paths[i];
-			_path.insert(0, Constants::CONST_PATH_TEXTURE_ROOT);
+
+			std::string _path = Assets::Path::ProcessPath<cTexture>(i_paths[i]);
 			_data = stbi_load(_path.c_str(), &m_width, &m_height, &m_bitDepth, 0);
 			if (_data) {
 				glTexImage2D(
