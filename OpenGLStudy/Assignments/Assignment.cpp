@@ -121,11 +121,11 @@ void Assignment::Run()
 		std::vector<std::pair<Graphics::cModel::HANDLE, cTransform*>> _renderingMap;
 		// Frame data from directional light
 		Graphics::UniformBufferFormats::sFrame _frameData_Shadow(dLight->CalculateLightTransform());
+		_renderingMap.push_back({ m_sphere->GetModelHandle(), m_sphere->Transform() });
 		_renderingMap.push_back({ m_plane->GetModelHandle(), m_plane->Transform() });
 		_renderingMap.push_back({ m_teapot->GetModelHandle(), m_teapot->Transform() });
 		_renderingMap.push_back({ m_teapot2->GetModelHandle(), m_teapot2->Transform() });
 		_renderingMap.push_back({ m_mirror->GetModelHandle(), m_mirror->Transform() });
-		_renderingMap.push_back({ m_sphere->GetModelHandle(), m_sphere->Transform() });
 		Graphics::SubmitDataToBeRendered(_frameData_Shadow, _renderingMap);
 		Graphics::ShadowMap_Pass();
 
@@ -140,8 +140,13 @@ void Assignment::Run()
 			_renderingMap.clear();
 
 			_renderingMap.push_back({ m_teapot->GetModelHandle(), m_teapot->Transform() });
-			_renderingMap.push_back({ m_teapot2->GetModelHandle(), m_teapot2->Transform() });
 			_renderingMap.push_back({ m_sphere->GetModelHandle(), m_sphere->Transform() });
+			_renderingMap.push_back({ m_teapot2->GetModelHandle(), m_teapot2->Transform() });
+			cTransform _shiftSphere = *m_sphere->Transform();
+			_shiftSphere.Translate(glm::vec3(0, 0, -1.f));
+			_shiftSphere.Update();
+			_renderingMap.push_back({ m_sphere->GetModelHandle(), &_shiftSphere });
+
 			Graphics::cUniformBuffer* clipBuffer = Graphics::GetClipPlaneBuffer();
 			glm::vec4 _plane = glm::vec4(m_mirror->Transform()->Up(), m_mirror->Transform()->Position().y);
 			clipBuffer->Update(&Graphics::UniformBufferFormats::sClipPlane(_plane));
@@ -157,6 +162,11 @@ void Assignment::Run()
 		_renderingMap.push_back({ m_plane->GetModelHandle(), m_plane->Transform() });
 		_renderingMap.push_back({ m_mirror->GetModelHandle(), m_mirror->Transform() });
 		_renderingMap.push_back({ m_sphere->GetModelHandle(), m_sphere->Transform() });
+		cTransform _shiftSphere = *m_sphere->Transform();
+		_shiftSphere.Translate(glm::vec3(0, 0, -1.f));
+		_shiftSphere.Update();
+		_renderingMap.push_back({ m_sphere->GetModelHandle(), &_shiftSphere });
+
 		Graphics::SubmitDataToBeRendered(_frameData_Camera, _renderingMap);
 		Graphics::Render_Pass();
 
