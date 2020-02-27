@@ -493,8 +493,8 @@ namespace Graphics {
 			printf("Can not create point light without a valid program id.\n");
 			return result;
 		}
-		cPointLight* newPointLight = new cPointLight(i_color, i_const, i_linear, i_quadratic);
-		newPointLight->Transform()->SetTransform(i_initialLocation, glm::quat(1, 0, 0, 0), glm::vec3(1, 1, 1));
+		// TODO: lighting, range should be passed in
+		cPointLight* newPointLight = new cPointLight(i_color, i_initialLocation, 300.f,i_const, i_linear, i_quadratic);
 		newPointLight->SetupLight(s_currentEffect->GetProgramID(), s_pointLight_list.size());
 		newPointLight->SetEnableShadow(i_enableShadow);
 		o_pointLight = newPointLight;

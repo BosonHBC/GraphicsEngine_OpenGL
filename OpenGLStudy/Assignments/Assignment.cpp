@@ -93,8 +93,8 @@ void Assignment::CreateCamera()
 void Assignment::CreateLight()
 {
 	Graphics::CreateAmbientLight(Color(0.1f, 0.1f, 0.1f), aLight);
-	//Graphics::CreatePointLight(glm::vec3(0, 1.5f, 0), Color(1.f, 1.f, 1.f), 0.3f, 0.1f, 0.1f, false,pLight1);
-	Graphics::CreatePointLight(glm::vec3(-300, 0, -300), Color(0.8, 0.2, 0.2), 0.5f, 0.2f, 0.1f, false, pLight2);
+	Graphics::CreatePointLight(glm::vec3(0, 150.f, 100.f), Color(0.1, 0.2, 0.8), 0.1f, 0.003f, 0.00003f, false,pLight1);
+	Graphics::CreatePointLight(glm::vec3(-200, 100, -200), Color(0.8, 0.2, 0.2), 0.1f, 0.002f, 0.00002f, false, pLight2);
 	Graphics::CreateDirectionalLight(Color(1, 1, 1), glm::vec3(-1,-1, 0), true, dLight);
 }
 
@@ -204,9 +204,9 @@ void Assignment::Tick(float second_since_lastFrame)
 	}
 
 	if (pLight1) {
-		glm::vec3 _toLight = (pLight1->Transform()->GetWorldLocation() - m_teapot->Transform()->GetWorldLocation());
-		glm::vec3 _toForward = glm::normalize(glm::cross(glm::vec3(0, 1, 0), _toLight)) * (5 * second_since_lastFrame);
-		pLight1->Transform()->Translate(_toForward);
+		//glm::vec3 _toLight = (pLight1->Transform()->Position() - m_teapot->Transform()->Position());
+	//	glm::vec3 _toForward = glm::normalize(glm::cross(glm::vec3(0, 1, 0), _toLight)) * (5 * second_since_lastFrame);
+	//	pLight1->Transform()->Translate(_toForward);
 	}
 	if (m_teapot) {
 		m_teapot->Transform()->gRotate(glm::vec3(0, 1.f, 0), second_since_lastFrame);

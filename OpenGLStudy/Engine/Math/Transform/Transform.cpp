@@ -102,11 +102,6 @@ void cTransform::SetTransform(const glm::vec3 & i_initialTranslation, const glm:
 }
 
 
-glm::vec3 cTransform::GetWorldLocation() const
-{
-	return glm::vec3(m[3][0], m[3][1], m[3][2]);
-}
-
 glm::vec3 cTransform::GetEulerAngle() const
 {
 	glm::vec3 _euler = glm::eulerAngles(m_rotation);

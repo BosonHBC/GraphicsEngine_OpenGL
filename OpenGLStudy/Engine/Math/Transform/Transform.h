@@ -41,7 +41,6 @@ public:
 	void SetTransform(const glm::vec3& i_initialTranslation, const glm::quat& i_intialRotation, const glm::vec3& i_initialScale);
 	void SetRotation(const glm::quat& i_rotation) { m_rotation = i_rotation; };
 	/** Getters */
-	glm::vec3 GetWorldLocation() const;
 	glm::vec3 GetEulerAngle() const;
 	glm::mat4 GetTranslationMatrix() const;
 	glm::mat4 GetRotationMatrix() const;
