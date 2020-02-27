@@ -42,7 +42,7 @@ public:
 	/** Getters*/
 	glm::mat4 GetViewMatrix();
 	glm::vec3 CamLocation() const { return m_transform->Position(); }
-
+	cTransform* Transform() const { return m_transform; }
 	const glm::mat4& GetProjectionMatrix() const { return m_projectionMatrix; }
 protected:
 	/** private member variables*/

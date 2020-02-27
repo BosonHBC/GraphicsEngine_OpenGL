@@ -54,25 +54,25 @@ void Assignment::CreateActor()
 {
 	m_teapot = new cActor();
 	m_teapot->Initialize();
-	m_teapot->Transform()->SetTransform(glm::vec3(0, 0, -2.f), glm::quat(glm::vec3(-glm::radians(90.f), 0, 0)), glm::vec3(0.05f, 0.05f, 0.05f));
+	m_teapot->Transform()->SetTransform(glm::vec3(0, 0, 0), glm::quat(glm::vec3(-glm::radians(90.f), 0, 0)), glm::vec3(5,5,5));
 	m_teapot->SetModel("Contents/models/teapot.model");
 	m_teapot->UpdateUniformVariables(Graphics::GetCurrentEffect());
 
 	m_teapot2 = new cActor();
 	m_teapot2->Initialize();
-	m_teapot2->Transform()->SetTransform(glm::vec3(1.5, 0, -2.f), glm::quat(glm::vec3(-glm::radians(90.f), 0,0)), glm::vec3(0.03f, 0.03f, 0.03f));
+	m_teapot2->Transform()->SetTransform(glm::vec3(150, 0, 0), glm::quat(glm::vec3(-glm::radians(90.f), 0,0)), glm::vec3(3,3,3));
 	m_teapot2->SetModel("Contents/models/teapot.model");
 	m_teapot2->UpdateUniformVariables(Graphics::GetCurrentEffect());
 
 	m_mirror = new cActor();
 	m_mirror->Initialize();
-	m_mirror->Transform()->SetTransform(glm::vec3(0, 0.01, -2.f), glm::quat(1, 0, 0, 0), glm::vec3(8, 1, 8));
+	m_mirror->Transform()->SetTransform(glm::vec3(0, 0, 0), glm::quat(1, 0, 0, 0), glm::vec3(800, 1, 800));
 	m_mirror->SetModel("Contents/models/wall.model");
 	m_mirror->UpdateUniformVariables(Graphics::GetCurrentEffect());
 
 	m_sphere = new cActor();
 	m_sphere->Initialize();
-	m_sphere->Transform()->SetTransform(glm::vec3(-1.f, 0.25f, -2.f), glm::quat(1, 0, 0, 0), glm::vec3(0.025f, 0.025f, 0.025f));
+	m_sphere->Transform()->SetTransform(glm::vec3(-100.f, 25.f,0), glm::quat(1, 0, 0, 0), glm::vec3(2.5f, 2.5f, 2.5f));
 	m_sphere->SetModel("Contents/models/sphere.model");
 	m_sphere->UpdateUniformVariables(Graphics::GetCurrentEffect());
 
@@ -85,17 +85,17 @@ void Assignment::CreateActor()
 
 void Assignment::CreateCamera()
 {
-	m_editorCamera = new  cEditorCamera(glm::vec3(0, 1.f, 0), 30.f, 180, 3, 10.f);
+	m_editorCamera = new  cEditorCamera(glm::vec3(0, 150, 200), 30.f, 0, 300, 10.f);
 	float _aspect = (float)(GetCurrentWindow()->GetBufferWidth()) / (float)(GetCurrentWindow()->GetBufferHeight());
-	m_editorCamera->CreateProjectionMatrix(45.0f, _aspect, 0.1f, 150.0f);
+	m_editorCamera->CreateProjectionMatrix(45.0f, _aspect, 0.1f, 1500.0f);
 }
 
 void Assignment::CreateLight()
 {
 	Graphics::CreateAmbientLight(Color(0.1f, 0.1f, 0.1f), aLight);
 	//Graphics::CreatePointLight(glm::vec3(0, 1.5f, 0), Color(1.f, 1.f, 1.f), 0.3f, 0.1f, 0.1f, false,pLight1);
-	Graphics::CreatePointLight(glm::vec3(-3, 0, -3), Color(0.8, 0.2, 0.2), 0.5f, 0.2f, 0.1f, false, pLight2);
-	Graphics::CreateDirectionalLight(Color(1, 1, 1), glm::vec3(-0.3f, 0.3, 0), true, dLight);
+	Graphics::CreatePointLight(glm::vec3(-300, 0, -300), Color(0.8, 0.2, 0.2), 0.5f, 0.2f, 0.1f, false, pLight2);
+	Graphics::CreateDirectionalLight(Color(1, 1, 1), glm::vec3(-1,-1, 0), true, dLight);
 }
 
 void Assignment::Run()
@@ -157,6 +157,8 @@ void Assignment::Run()
 		Graphics::SubmitDataToBeRendered(_frameData_Camera, _renderingMap);
 		Graphics::CubeMap_Pass();
 
+		Graphics::DrawWorldCoord();
+
 		// ----------------------
 		// Swap buffers
 		m_window->SwapBuffers();
@@ -213,22 +215,22 @@ void Assignment::Tick(float second_since_lastFrame)
 		controledActor = m_sphere->Transform();
 		if (controledActor) {
 			if (_windowInput->IsKeyDown(GLFW_KEY_LEFT)) {
-				controledActor->Translate(glm::vec3(-1, 0, 0) * second_since_lastFrame);
+				controledActor->Translate(-cTransform::WorldRight * 100.f * second_since_lastFrame);
 			}
 			if (_windowInput->IsKeyDown(GLFW_KEY_RIGHT)) {
-				controledActor->Translate(glm::vec3(1, 0, 0) * second_since_lastFrame);
+				controledActor->Translate(cTransform::WorldRight* 100.f  * second_since_lastFrame);
 			}
 			if (_windowInput->IsKeyDown(GLFW_KEY_UP)) {
-				controledActor->Translate(glm::vec3(0, 0, -1) * second_since_lastFrame);
+				controledActor->Translate(-cTransform::WorldForward* 100.f  * second_since_lastFrame);
 			}
 			if (_windowInput->IsKeyDown(GLFW_KEY_DOWN)) {
-				controledActor->Translate(glm::vec3(0, 0, 1) * second_since_lastFrame);
+				controledActor->Translate(cTransform::WorldForward* 100.f  * second_since_lastFrame);
 			}
 			if (_windowInput->IsKeyDown(GLFW_KEY_SPACE)) {
-				controledActor->Translate(glm::vec3(0, 1, 0) * second_since_lastFrame);
+				controledActor->Translate(cTransform::WorldUp* 100.f* second_since_lastFrame);
 			}
 			if (_windowInput->IsKeyDown(GLFW_KEY_LEFT_CONTROL)) {
-				controledActor->Translate(glm::vec3(0, -1, 0) * second_since_lastFrame);
+				controledActor->Translate(-cTransform::WorldUp* 100.f * second_since_lastFrame);
 			}
 
 		}

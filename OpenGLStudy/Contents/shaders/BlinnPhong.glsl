@@ -92,7 +92,7 @@ float CalcDirectionalLightShadowMap(vec3 vN)
 
 	// Calculate bias
 	vec3 lightDir = normalize(g_directionalLight.direction);
-	const float bias = max(0.001 * (1- dot(vN, lightDir)), 0.001);
+	const float bias = max(0.05 * (1- dot(vN, lightDir)), 0.005);
 
 	float shadow = 0.0;
 
