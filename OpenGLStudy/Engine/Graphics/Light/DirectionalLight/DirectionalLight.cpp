@@ -46,6 +46,7 @@ namespace Graphics {
 
 	glm::mat4 cDirectionalLight::CalculateLightTransform() const
 	{
+		// PV matrix
 		return m_lightPrjectionMatrix * glm::lookAt(m_transform->Forward() * 500.f, glm::vec3(0, 0, 0), glm::vec3(0, 1, 0));
 	}
 
@@ -54,8 +55,6 @@ namespace Graphics {
 		glm::mat4 lightTransform = CalculateLightTransform();
 		// light transform
 		glUniformMatrix4fv(m_directionalLightTransformID, 1, GL_FALSE, glm::value_ptr(lightTransform));
-
-
 	}
 
 	void cDirectionalLight::UseShadowMap(GLuint i_textureUnit)

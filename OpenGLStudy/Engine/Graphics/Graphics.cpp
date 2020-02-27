@@ -49,6 +49,7 @@ namespace Graphics {
 	cAmbientLight* s_ambientLight;
 	cDirectionalLight* s_directionalLight;
 	std::vector<cPointLight*> s_pointLight_list;
+	std::vector<cSpotLight*> s_spotLight_list;
 
 
 	//functions
@@ -113,7 +114,7 @@ namespace Graphics {
 				printf("Fail to initialize uniformBuffer_Lighting\n");
 				return result;
 			}
-			if (result = s_uniformBuffer_ClipPlane.Initialize(nullptr)) 
+			if (result = s_uniformBuffer_ClipPlane.Initialize(nullptr))
 			{
 				s_uniformBuffer_ClipPlane.Bind();
 			}
@@ -140,12 +141,10 @@ namespace Graphics {
 		return result;
 	}
 
-	void ShadowMap_Pass()
+	void DirectionalShadowMap_Pass()
 	{
 		s_currentEffect = GetEffectByKey("ShadowMap");
 		s_currentEffect->UseEffect();
-
-		s_directionalLight->SetupLight(s_currentEffect->GetProgramID(), 0);
 
 		cFrameBuffer* _directionalLightFBO = s_directionalLight->GetShadowMap();
 		if (_directionalLightFBO) {
@@ -174,7 +173,48 @@ namespace Graphics {
 
 			// switch back to original buffer
 			_directionalLightFBO->UnWrite();
+			assert(glGetError() == GL_NO_ERROR);
 		}
+		s_currentEffect->UnUseEffect();
+	}
+
+	void SpotLightShadowMap_Pass()
+	{
+		s_currentEffect = GetEffectByKey("ShadowMap");
+		s_currentEffect->UseEffect();
+
+		for (int i = 0; i < s_spotLight_list.size(); ++i)
+		{
+			cFrameBuffer* _spotLightFB = s_spotLight_list[i]->GetShadowMap();
+			if (_spotLightFB) {
+
+				{
+					Application::cApplication* _app = Application::GetCurrentApplication();
+					if (_app) {
+						_app->GetCurrentWindow()->SetViewportSize(_spotLightFB->GetWidth(), _spotLightFB->GetHeight());
+					}
+				}
+				// write buffer to the texture
+				_spotLightFB->Write();
+
+				glClearColor(0, 0, 0, 1.f);
+				glClear(/*GL_COLOR_BUFFER_BIT | */GL_DEPTH_BUFFER_BIT);
+
+				// Update frame data
+				{
+					// 1. Update frame data
+					s_uniformBuffer_frame.Update(&s_dataRequiredToRenderAFrame.FrameData);
+
+				}
+
+				// Draw scenes
+				RenderScene_shadowMap();
+
+				// switch back to original buffer
+				_spotLightFB->UnWrite();
+			}
+		}
+
 		s_currentEffect->UnUseEffect();
 	}
 
@@ -188,7 +228,8 @@ namespace Graphics {
 		{
 			s_currentEffect = GetEffectByKey(Constants::CONST_DEFAULT_EFFECT_KEY);
 			s_currentEffect->UseEffect();
-			s_directionalLight->SetupLight(s_currentEffect->GetProgramID(), 0);
+			if (s_directionalLight)
+				s_directionalLight->SetupLight(s_currentEffect->GetProgramID(), 0);
 
 		}
 		// Reset window size
@@ -203,7 +244,7 @@ namespace Graphics {
 		// Clear color and buffers
 		{
 			// clear window
-			glClearColor(0,0,0, 1.f);
+			glClearColor(0, 0, 0, 1.f);
 			// A lot of things can be cleaned like color buffer, depth buffer, so we need to specify what to clear
 			glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
@@ -236,7 +277,12 @@ namespace Graphics {
 			{
 				it->Illuminate();
 			}
+			for (auto it : s_spotLight_list)
+			{
+				it->Illuminate();
+			}
 			s_globalLightingData.pointLightCount = s_pointLight_list.size();
+			s_globalLightingData.spotLightCount = s_spotLight_list.size();
 			s_uniformBuffer_Lighting.Update(&s_globalLightingData);
 		}
 		// Start a draw call loop
@@ -270,6 +316,7 @@ namespace Graphics {
 		{
 			s_currentEffect = GetEffectByKey(Constants::CONST_DEFAULT_EFFECT_KEY);
 			s_currentEffect->UseEffect();
+			if(s_directionalLight)
 			s_directionalLight->SetupLight(s_currentEffect->GetProgramID(), 0);
 		}
 		// Reset window size
@@ -312,10 +359,14 @@ namespace Graphics {
 			{
 				it->Illuminate();
 			}
-		
+			for (auto it : s_spotLight_list)
+			{
+				it->Illuminate();
+			}
 			s_globalLightingData.pointLightCount = s_pointLight_list.size();
+			s_globalLightingData.spotLightCount = s_spotLight_list.size();
 			s_uniformBuffer_Lighting.Update(&s_globalLightingData);
-		
+
 		}
 		// Start a draw call loop
 		RenderScene();
@@ -329,7 +380,7 @@ namespace Graphics {
 	void CubeMap_Pass()
 	{
 		// change depth function so depth test passes when values are equal to depth buffer's content
-		glDepthFunc(GL_LEQUAL); 
+		glDepthFunc(GL_LEQUAL);
 
 		s_currentEffect = GetEffectByKey("CubemapEffect");
 		s_currentEffect->UseEffect();
@@ -341,7 +392,7 @@ namespace Graphics {
 			// 1. Do not need to update drawcall data because in cubemap.vert, there is no model matrix and normal matrix
 			// 2. Draw
 			cModel* _model = cModel::s_manager.Get(it->first);
-			if (_model) 
+			if (_model)
 			{
 				_model->Render();
 			}
@@ -349,7 +400,7 @@ namespace Graphics {
 
 		s_currentEffect->UnUseEffect();
 		// set depth function back to default
-		glDepthFunc(GL_LESS); 
+		glDepthFunc(GL_LESS);
 	}
 
 	void DrawWorldCoord()
@@ -419,12 +470,19 @@ namespace Graphics {
 			safe_delete(*it);
 		}
 		s_pointLight_list.clear();
+		for (auto it = s_spotLight_list.begin(); it != s_spotLight_list.end(); ++it)
+		{
+			safe_delete(*it);
+		}
+		s_spotLight_list.clear();
+
 
 		// Clean up ambient light
 		safe_delete(s_ambientLight);
 		safe_delete(s_directionalLight);
 
 		s_cameraCapture.~cFrameBuffer();
+
 		return result;
 	}
 
@@ -494,12 +552,29 @@ namespace Graphics {
 			return result;
 		}
 		// TODO: lighting, range should be passed in
-		cPointLight* newPointLight = new cPointLight(i_color, i_initialLocation, 300.f,i_const, i_linear, i_quadratic);
+		cPointLight* newPointLight = new cPointLight(i_color, i_initialLocation, 300.f, i_const, i_linear, i_quadratic);
 		newPointLight->SetupLight(s_currentEffect->GetProgramID(), s_pointLight_list.size());
 		newPointLight->SetEnableShadow(i_enableShadow);
 		o_pointLight = newPointLight;
 		s_pointLight_list.push_back(newPointLight);
 
+
+		return result;
+	}
+
+	bool CreateSpotLight(const glm::vec3& i_initialLocation, const glm::vec3& i_direction, const Color& i_color, const GLfloat& i_edge, const GLfloat& i_const, const GLfloat& i_linear, const GLfloat& i_quadratic, bool i_enableShadow, cSpotLight*& o_spotLight)
+	{
+		auto result = true;
+		if (result = (s_currentEffect->GetProgramID() == 0)) {
+			printf("Can not create spot light without a valid program id.\n");
+			return result;
+		}
+		cSpotLight* newSpotLight = new cSpotLight(i_color, i_initialLocation, glm::normalize(i_direction), i_edge, 300.f, i_const, i_linear, i_quadratic);
+		newSpotLight->SetupLight(s_currentEffect->GetProgramID(), s_pointLight_list.size());
+		newSpotLight->SetEnableShadow(i_enableShadow);
+		newSpotLight->CreateShadowMap(2048, 2048);
+		o_spotLight = newSpotLight;
+		s_spotLight_list.push_back(newSpotLight);
 
 		return result;
 	}
@@ -514,10 +589,8 @@ namespace Graphics {
 		cDirectionalLight* newDirectionalLight = new cDirectionalLight(i_color, glm::normalize(i_direction));
 		newDirectionalLight->SetupLight(s_currentEffect->GetProgramID(), 0);
 		newDirectionalLight->SetEnableShadow(i_enableShadow);
-		Application::cApplication* _app = Application::GetCurrentApplication();
-		if (_app) {
-			newDirectionalLight->CreateShadowMap(2048, 2048);
-		}
+		newDirectionalLight->CreateShadowMap(2048, 2048);
+
 
 		o_directionalLight = newDirectionalLight;
 		s_directionalLight = newDirectionalLight;

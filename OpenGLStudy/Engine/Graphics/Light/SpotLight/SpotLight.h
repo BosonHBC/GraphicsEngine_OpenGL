@@ -18,10 +18,13 @@ namespace Graphics {
 		/** overriding virtual functions*/
 		void Illuminate();
 		void SetupLight(const GLuint& i_programID, GLuint i_lightIndex = 0) override;
-
+		void CreateShadowMap(GLuint i_width, GLuint i_height) override;
+		glm::mat4 CalculateLightTransform() const;
+		void SetLightUniformTransform() override;
 	private:
 		glm::vec3 m_dir;
 		GLfloat m_edge, m_procEdge;
+		GLuint m_spotLightTransformID, m_spotLightShadowMapID;
 	};
 
 }

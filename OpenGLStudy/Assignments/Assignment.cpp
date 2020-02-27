@@ -54,13 +54,13 @@ void Assignment::CreateActor()
 {
 	m_teapot = new cActor();
 	m_teapot->Initialize();
-	m_teapot->Transform()->SetTransform(glm::vec3(0, 0, 0), glm::quat(glm::vec3(-glm::radians(90.f), 0, 0)), glm::vec3(5,5,5));
+	m_teapot->Transform()->SetTransform(glm::vec3(0, 0, 0), glm::quat(glm::vec3(-glm::radians(90.f), 0, 0)), glm::vec3(5, 5, 5));
 	m_teapot->SetModel("Contents/models/teapot.model");
 	m_teapot->UpdateUniformVariables(Graphics::GetCurrentEffect());
 
 	m_teapot2 = new cActor();
 	m_teapot2->Initialize();
-	m_teapot2->Transform()->SetTransform(glm::vec3(150, 0, 0), glm::quat(glm::vec3(-glm::radians(90.f), 0,0)), glm::vec3(3,3,3));
+	m_teapot2->Transform()->SetTransform(glm::vec3(150, 0, 0), glm::quat(glm::vec3(-glm::radians(90.f), 0, 0)), glm::vec3(3, 3, 3));
 	m_teapot2->SetModel("Contents/models/teapot.model");
 	m_teapot2->UpdateUniformVariables(Graphics::GetCurrentEffect());
 
@@ -72,7 +72,7 @@ void Assignment::CreateActor()
 
 	m_sphere = new cActor();
 	m_sphere->Initialize();
-	m_sphere->Transform()->SetTransform(glm::vec3(-100.f, 25.f,0), glm::quat(1, 0, 0, 0), glm::vec3(2.5f, 2.5f, 2.5f));
+	m_sphere->Transform()->SetTransform(glm::vec3(-100.f, 25.f, 0), glm::quat(1, 0, 0, 0), glm::vec3(2.5f, 2.5f, 2.5f));
 	m_sphere->SetModel("Contents/models/sphere.model");
 	m_sphere->UpdateUniformVariables(Graphics::GetCurrentEffect());
 
@@ -93,9 +93,10 @@ void Assignment::CreateCamera()
 void Assignment::CreateLight()
 {
 	Graphics::CreateAmbientLight(Color(0.1f, 0.1f, 0.1f), aLight);
-	Graphics::CreatePointLight(glm::vec3(0, 150.f, 100.f), Color(0.1, 0.2, 0.8), 0.1f, 0.003f, 0.00003f, false,pLight1);
-	Graphics::CreatePointLight(glm::vec3(-200, 100, -200), Color(0.8, 0.2, 0.2), 0.1f, 0.002f, 0.00002f, false, pLight2);
-	Graphics::CreateDirectionalLight(Color(1, 1, 1), glm::vec3(-1,-1, 0), true, dLight);
+	//Graphics::CreatePointLight(glm::vec3(0, 150.f, 100.f), Color(0.1, 0.2, 0.8), 0.1f, 0.003f, 0.00003f, false, pLight1);
+	//Graphics::CreatePointLight(glm::vec3(-200, 100, -200), Color(0.8, 0.2, 0.2), 0.1f, 0.002f, 0.00002f, false, pLight2);
+	Graphics::CreateDirectionalLight(Color(1, 1, 1), glm::vec3(-1, -1, 0), true, dLight);
+	Graphics::CreateSpotLight(glm::vec3(0, 100, 200), -glm::vec3(0, 100, 200), Color(0.8, 0.8, 0.8), 90, 0.1f, 0.003f, 0.00003f, true, spLight);
 }
 
 void Assignment::Run()
@@ -109,15 +110,22 @@ void Assignment::Run()
 
 		// Submit data to be render
 		std::vector<std::pair<Graphics::cModel::HANDLE, cTransform*>> _renderingMap;
-		// Frame data from directional light
-		Graphics::UniformBufferFormats::sFrame _frameData_Shadow(dLight->CalculateLightTransform());
 		_renderingMap.push_back({ m_sphere->GetModelHandle(), m_sphere->Transform() });
 		_renderingMap.push_back({ m_teapot->GetModelHandle(), m_teapot->Transform() });
 		_renderingMap.push_back({ m_teapot2->GetModelHandle(), m_teapot2->Transform() });
 		_renderingMap.push_back({ m_mirror->GetModelHandle(), m_mirror->Transform() });
-		Graphics::SubmitDataToBeRendered(_frameData_Shadow, _renderingMap);
-		Graphics::ShadowMap_Pass();
-
+		// Frame data from directional light
+		if (dLight) {
+			Graphics::UniformBufferFormats::sFrame _frameData_Shadow(dLight->CalculateLightTransform());
+			Graphics::SubmitDataToBeRendered(_frameData_Shadow, _renderingMap);
+			Graphics::DirectionalShadowMap_Pass();
+		}
+		if (spLight) {
+			Graphics::UniformBufferFormats::sFrame _frameData_Shadow(spLight->CalculateLightTransform());
+			_frameData_Shadow.ViewPosition = spLight->Transform()->Position();
+			Graphics::SubmitDataToBeRendered(_frameData_Shadow, _renderingMap);
+			Graphics::SpotLightShadowMap_Pass();
+		}
 		// ----------------------
 		// Rendering
 		// Frame data from camera
@@ -186,8 +194,12 @@ void Assignment::Tick(float second_since_lastFrame)
 
 	if (pLight1)
 		pLight1->Transform()->Update();
-	pLight2->Transform()->Update();
-	dLight->Transform()->Update();
+	if (pLight2)
+		pLight2->Transform()->Update();
+	if (dLight)
+		dLight->Transform()->Update();
+	if (spLight)
+		spLight->Transform()->Update();
 
 	sWindowInput* _windowInput = m_window->GetWindowInput();
 
@@ -211,30 +223,30 @@ void Assignment::Tick(float second_since_lastFrame)
 	if (m_teapot) {
 		m_teapot->Transform()->gRotate(glm::vec3(0, 1.f, 0), second_since_lastFrame);
 	}
-		cTransform* controledActor = nullptr;
-		controledActor = m_sphere->Transform();
-		if (controledActor) {
-			if (_windowInput->IsKeyDown(GLFW_KEY_LEFT)) {
-				controledActor->Translate(-cTransform::WorldRight * 100.f * second_since_lastFrame);
-			}
-			if (_windowInput->IsKeyDown(GLFW_KEY_RIGHT)) {
-				controledActor->Translate(cTransform::WorldRight* 100.f  * second_since_lastFrame);
-			}
-			if (_windowInput->IsKeyDown(GLFW_KEY_UP)) {
-				controledActor->Translate(-cTransform::WorldForward* 100.f  * second_since_lastFrame);
-			}
-			if (_windowInput->IsKeyDown(GLFW_KEY_DOWN)) {
-				controledActor->Translate(cTransform::WorldForward* 100.f  * second_since_lastFrame);
-			}
-			if (_windowInput->IsKeyDown(GLFW_KEY_SPACE)) {
-				controledActor->Translate(cTransform::WorldUp* 100.f* second_since_lastFrame);
-			}
-			if (_windowInput->IsKeyDown(GLFW_KEY_LEFT_CONTROL)) {
-				controledActor->Translate(-cTransform::WorldUp* 100.f * second_since_lastFrame);
-			}
-
+	cTransform* controledActor = nullptr;
+	controledActor = m_sphere->Transform();
+	if (controledActor) {
+		if (_windowInput->IsKeyDown(GLFW_KEY_LEFT)) {
+			controledActor->Translate(-cTransform::WorldRight * 100.f * second_since_lastFrame);
 		}
-		
+		if (_windowInput->IsKeyDown(GLFW_KEY_RIGHT)) {
+			controledActor->Translate(cTransform::WorldRight* 100.f  * second_since_lastFrame);
+		}
+		if (_windowInput->IsKeyDown(GLFW_KEY_UP)) {
+			controledActor->Translate(-cTransform::WorldForward* 100.f  * second_since_lastFrame);
+		}
+		if (_windowInput->IsKeyDown(GLFW_KEY_DOWN)) {
+			controledActor->Translate(cTransform::WorldForward* 100.f  * second_since_lastFrame);
+		}
+		if (_windowInput->IsKeyDown(GLFW_KEY_SPACE)) {
+			controledActor->Translate(cTransform::WorldUp* 100.f* second_since_lastFrame);
+		}
+		if (_windowInput->IsKeyDown(GLFW_KEY_LEFT_CONTROL)) {
+			controledActor->Translate(-cTransform::WorldUp* 100.f * second_since_lastFrame);
+		}
+
+	}
+
 	/*
 		m_teapot->Transform()->PrintEulerAngle();
 

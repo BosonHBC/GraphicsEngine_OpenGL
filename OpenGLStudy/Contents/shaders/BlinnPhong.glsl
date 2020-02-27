@@ -203,6 +203,42 @@ vec4 CalcPointLights(vec4 diffusTexCol, vec4 specTexCol,vec3 vN, vec3 vV){
 }
 
 //-------------------------------------------------------------------------
+// SpotLight
+//-------------------------------------------------------------------------
+
+vec4 CalcSpotLight(SpotLight spLight,vec4 diffusTexCol, vec4 specTexCol,vec3 vN, vec3 vV){
+		vec3 dir = spLight.base.position - fragPos;
+		float dir_dot_LDir = dot(spLight.direction, dir);
+		if(dir_dot_LDir > spLight.edge)
+		{
+			float dist = length(dir);
+			dir = normalize(dir);
+
+			vec4 color_kd = diffusTexCol * IlluminateByDirection_Kd(spLight.base.base, vN, dir);
+			vec4 color_ks = specTexCol * IlluminateByDirection_Ks(spLight.base.base, vN, dir, vV);
+			float attenuationFactor = spLight.base.quadratic * dist * dist + 
+													spLight.base.linear * dist + 
+													spLight.base.constant;
+
+			return ((color_kd + color_ks) / attenuationFactor);
+		}
+		else
+		{
+			return vec4(0,0,0,0);
+		}
+
+}
+
+vec4 CalcSpotLights(vec4 diffusTexCol, vec4 specTexCol,vec3 vN, vec3 vV){
+	vec4 outColor = vec4(0,0,0,0);
+
+	for(int i = 0; i < g_spotLightCount; ++i){
+		outColor += CalcSpotLight(g_spotLights[i],diffusTexCol, specTexCol,vN,vV);
+	}
+	return outColor;
+}
+
+//-------------------------------------------------------------------------
 // Main
 //-------------------------------------------------------------------------
 
@@ -223,10 +259,13 @@ void main(){
 	// point light
 	vec4 pointLightColor = CalcPointLights(diffuseTexColor, specularTexColor, normalized_normal, normalized_view);
 
+	// spot light
+	vec4 spotLightColor = CalcSpotLights(diffuseTexColor, specularTexColor, normalized_normal, normalized_view);
+
 	vec4 reflectionTextureColor = IlluminateByReflectionTexture();
 	// directional light
 	float directionalLightShadowFactor = g_directionalLight.base.enableShadow ? (1.0 - CalcDirectionalLightShadowMap(normalized_normal)): 1.0;
 	vec4 directionLightColor = directionalLightShadowFactor * CalcDirectionalLight(diffuseTexColor, specularTexColor, normalized_normal, normalized_view);
 
-	color =  ( ambientLightColor + cubemapColor + pointLightColor + directionLightColor + reflectionTextureColor);
+	color =  ( ambientLightColor + cubemapColor + pointLightColor + spotLightColor + directionLightColor + reflectionTextureColor);
 }
