@@ -6,11 +6,10 @@ namespace Graphics {
 	{
 	public:
 		cDirectionalLight() 
-			: m_direction(glm::vec3(0, -1, 0)), cGenLight()
+			: cGenLight()
 		{}
-		cDirectionalLight(Color i_color, glm::vec3 i_direction)
-			: m_direction(i_direction), cGenLight(i_color)
-		{}
+		cDirectionalLight(Color i_color, glm::vec3 i_direction);
+
 		virtual ~cDirectionalLight();
 
 		/** Setup uniform id*/
@@ -19,15 +18,12 @@ namespace Graphics {
 		/** overriding virtual functions*/
 		void Illuminate();
 
-		glm::vec3 Direction(glm::vec3 i_position);
-
 		/** Shadow map related*/
 		void CreateShadowMap(GLuint i_width, GLuint i_height) override;
 		glm::mat4 CalculateLightTransform() const override;
 		void SetLightUniformTransform() override;
 		void UseShadowMap(GLuint i_textureUnit) override;
 	private:
-		glm::vec3 m_direction;
 		GLuint m_directionalLightTransformID, m_directionalShadowMapID;
 	};
 

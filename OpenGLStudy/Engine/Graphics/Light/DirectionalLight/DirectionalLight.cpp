@@ -4,6 +4,15 @@
 #include "Graphics/UniformBuffer/UniformBufferFormats.h"
 namespace Graphics {
 
+	cDirectionalLight::cDirectionalLight(Color i_color, glm::vec3 i_direction)
+		:cGenLight(i_color)
+	{
+		glm::vec3 _right = glm::normalize(glm::cross(i_direction, cTransform::WorldUp));
+		glm::vec3 _up = glm::normalize(glm::cross(_right, i_direction));
+		glm::quat rot(glm::quatLookAt(i_direction, _up));
+		m_transform->SetTransform(glm::vec3(0, 0, 0), rot, glm::vec3(1, 1, 1));
+	}
+
 	cDirectionalLight::~cDirectionalLight()
 	{
 	}
@@ -22,26 +31,22 @@ namespace Graphics {
 		auto& gLighting = Graphics::GetGlobalLightingData();
 		gLighting.directionalLight.base.color = m_color;
 		gLighting.directionalLight.base.enableShadow = m_enableShadow;
-		gLighting.directionalLight.direction = m_direction;
+		gLighting.directionalLight.direction = m_transform->Forward();
 	}
 
-	glm::vec3 cDirectionalLight::Direction(glm::vec3 i_position)
-	{
-		return m_direction;
-	}
 
 	void cDirectionalLight::CreateShadowMap(GLuint i_width, GLuint i_height)
 	{
 		cGenLight::CreateShadowMap(i_width, i_height);
 
 		// create light projection matrix for directional light
-		m_lightPrjectionMatrix = glm::ortho(-20.0f, 20.0f, -20.0f, 20.0f, 0.1f, 100.f);
+		m_lightPrjectionMatrix = glm::ortho(-200.0f, 200.0f, -200.0f, 200.0f, 0.1f, 1500.f);
 	
 	}
 
 	glm::mat4 cDirectionalLight::CalculateLightTransform() const
 	{
-		return m_lightPrjectionMatrix * glm::lookAt(m_direction , glm::vec3(0, 0, 0), glm::vec3(0, 1, 0));
+		return m_lightPrjectionMatrix * glm::lookAt(m_transform->Forward() * 500.f, glm::vec3(0, 0, 0), glm::vec3(0, 1, 0));
 	}
 
 	void cDirectionalLight::SetLightUniformTransform()

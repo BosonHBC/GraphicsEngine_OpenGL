@@ -13,7 +13,10 @@ public:
 		cCamera(i_initialPos, i_initialPitch, i_initialYaw, i_moveSpeed, i_turnSpeed) {
 		Update();
 	}
-	~cEditorCamera() {};
+	cEditorCamera(const cEditorCamera& i_other);
+	~cEditorCamera() 
+	{
+	};
 
 
 	/** Virtual functions */

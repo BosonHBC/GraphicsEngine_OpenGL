@@ -26,6 +26,7 @@ namespace Graphics {
 	cUniformBuffer* GetClipPlaneBuffer();
 	void Render_Pass();
 	void CubeMap_Pass();
+	void DrawWorldCoord();
 
 	bool CleanUp();
 

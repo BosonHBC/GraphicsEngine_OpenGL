@@ -65,7 +65,9 @@ namespace Graphics {
 				printf("Fail to create default effect.\n");
 				return result;
 			}
+
 			s_currentEffect = GetEffectByKey(Constants::CONST_DEFAULT_EFFECT_KEY);
+			s_currentEffect->FixSamplerError();
 		}
 		// Create shadow map effect
 		{
@@ -125,6 +127,14 @@ namespace Graphics {
 		if (!(result = s_cameraCapture.Initialize(800, 600, ETT_FRAMEBUFFER_COLOR))) {
 			printf("Fail to create camera capture frame buffer.\n");
 			return result;
+		}
+
+		for (auto it : s_KeyToEffect_map)
+		{
+			if (!(result = it.second->ValidateProgram()))
+			{
+				return result;
+			}
 		}
 
 		return result;
@@ -193,7 +203,7 @@ namespace Graphics {
 		// Clear color and buffers
 		{
 			// clear window
-			glClearColor(0.2f, 0.2f, 0.2f, 1.f);
+			glClearColor(0,0,0, 1.f);
 			// A lot of things can be cleaned like color buffer, depth buffer, so we need to specify what to clear
 			glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
@@ -340,6 +350,11 @@ namespace Graphics {
 		s_currentEffect->UnUseEffect();
 		// set depth function back to default
 		glDepthFunc(GL_LESS); 
+	}
+
+	void DrawWorldCoord()
+	{
+
 	}
 
 	void RenderScene_shadowMap()
@@ -496,7 +511,7 @@ namespace Graphics {
 			printf("Can not create directional light without a valid program id.\n");
 			return result;
 		}
-		cDirectionalLight* newDirectionalLight = new cDirectionalLight(i_color, i_direction);
+		cDirectionalLight* newDirectionalLight = new cDirectionalLight(i_color, glm::normalize(i_direction));
 		newDirectionalLight->SetupLight(s_currentEffect->GetProgramID(), 0);
 		newDirectionalLight->SetEnableShadow(i_enableShadow);
 		Application::cApplication* _app = Application::GetCurrentApplication();

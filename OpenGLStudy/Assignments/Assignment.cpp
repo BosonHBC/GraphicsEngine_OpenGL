@@ -45,9 +45,6 @@ bool Assignment::Initialize(GLuint i_width, GLuint i_height, const char* i_windo
 	_wallMat->UpdateReflectionTexture(cameraViewTextureHandle);
 	_wallMat->UpdateCubemapTexture(_cubemapMat->GetCubemapHandle());
 
-	Graphics::cMatBlinn* _planeMat = dynamic_cast<Graphics::cMatBlinn*>(Graphics::cModel::s_manager.Get(m_plane->GetModelHandle())->GetMaterialAt());
-	_planeMat->UpdateCubemapTexture(_cubemapMat->GetCubemapHandle());
-
 	Graphics::cMatBlinn* _teapot2Mat = dynamic_cast<Graphics::cMatBlinn*>(Graphics::cModel::s_manager.Get(m_teapot2->GetModelHandle())->GetMaterialAt());
 	_teapot2Mat->UpdateCubemapTexture(_cubemapMat->GetCubemapHandle());
 
@@ -57,32 +54,25 @@ void Assignment::CreateActor()
 {
 	m_teapot = new cActor();
 	m_teapot->Initialize();
-	m_teapot->Transform()->SetTransform(glm::vec3(0, 0, -2.f), glm::quat(glm::vec3(-glm::radians(90.f), 0, 0)), glm::vec3(0.05f, 0.05f, 0.05f));
-
+	m_teapot->Transform()->SetTransform(glm::vec3(0, 0, 0), glm::quat(glm::vec3(-glm::radians(90.f), 0, 0)), glm::vec3(5,5,5));
 	m_teapot->SetModel("Contents/models/teapot.model");
 	m_teapot->UpdateUniformVariables(Graphics::GetCurrentEffect());
 
 	m_teapot2 = new cActor();
 	m_teapot2->Initialize();
-	m_teapot2->Transform()->SetTransform(glm::vec3(1.5, 0, -2.f), glm::quat(glm::vec3(-glm::radians(90.f), 0,0)), glm::vec3(0.03f, 0.03f, 0.03f));
+	m_teapot2->Transform()->SetTransform(glm::vec3(150, 0, 0), glm::quat(glm::vec3(-glm::radians(90.f), 0,0)), glm::vec3(3,3,3));
 	m_teapot2->SetModel("Contents/models/teapot.model");
 	m_teapot2->UpdateUniformVariables(Graphics::GetCurrentEffect());
 
-	m_plane = new cActor();
-	m_plane->Initialize();
-	m_plane->Transform()->SetTransform(glm::vec3(0, -0.5f, -2.f), glm::quat(1, 0, 0, 0), glm::vec3(20, 1, 20));
-	m_plane->SetModel("Contents/models/plane.model");
-	m_plane->UpdateUniformVariables(Graphics::GetCurrentEffect());
-
 	m_mirror = new cActor();
 	m_mirror->Initialize();
-	m_mirror->Transform()->SetTransform(glm::vec3(0, 0.01, -2.f), glm::quat(1, 0, 0, 0), glm::vec3(8, 1, 8));
+	m_mirror->Transform()->SetTransform(glm::vec3(0, 0, 0), glm::quat(1, 0, 0, 0), glm::vec3(800, 1, 800));
 	m_mirror->SetModel("Contents/models/wall.model");
 	m_mirror->UpdateUniformVariables(Graphics::GetCurrentEffect());
 
 	m_sphere = new cActor();
 	m_sphere->Initialize();
-	m_sphere->Transform()->SetTransform(glm::vec3(-1, 0.5, -1.f), glm::quat(1, 0, 0, 0), glm::vec3(0.5f, 0.5f, 0.5f));
+	m_sphere->Transform()->SetTransform(glm::vec3(-100.f, 25.f,0), glm::quat(1, 0, 0, 0), glm::vec3(2.5f, 2.5f, 2.5f));
 	m_sphere->SetModel("Contents/models/sphere.model");
 	m_sphere->UpdateUniformVariables(Graphics::GetCurrentEffect());
 
@@ -95,17 +85,17 @@ void Assignment::CreateActor()
 
 void Assignment::CreateCamera()
 {
-	m_editorCamera = new  cEditorCamera(glm::vec3(0, 1.f, 0), 30.f, 180, 3, 10.f);
+	m_editorCamera = new  cEditorCamera(glm::vec3(0, 150, 200), 30.f, 0, 300, 10.f);
 	float _aspect = (float)(GetCurrentWindow()->GetBufferWidth()) / (float)(GetCurrentWindow()->GetBufferHeight());
-	m_editorCamera->CreateProjectionMatrix(45.0f, _aspect, 0.1f, 150.0f);
+	m_editorCamera->CreateProjectionMatrix(45.0f, _aspect, 0.1f, 1500.0f);
 }
 
 void Assignment::CreateLight()
 {
 	Graphics::CreateAmbientLight(Color(0.1f, 0.1f, 0.1f), aLight);
 	//Graphics::CreatePointLight(glm::vec3(0, 1.5f, 0), Color(1.f, 1.f, 1.f), 0.3f, 0.1f, 0.1f, false,pLight1);
-	Graphics::CreatePointLight(glm::vec3(-3, 0, -3), Color(0.8, 0.2, 0.2), 0.5f, 0.2f, 0.1f, false, pLight2);
-	Graphics::CreateDirectionalLight(Color(1, 1, 1), glm::vec3(-0.3f, 0.3, 0), true, dLight);
+	Graphics::CreatePointLight(glm::vec3(-300, 0, -300), Color(0.8, 0.2, 0.2), 0.5f, 0.2f, 0.1f, false, pLight2);
+	Graphics::CreateDirectionalLight(Color(1, 1, 1), glm::vec3(-1,-1, 0), true, dLight);
 }
 
 void Assignment::Run()
@@ -121,49 +111,42 @@ void Assignment::Run()
 		std::vector<std::pair<Graphics::cModel::HANDLE, cTransform*>> _renderingMap;
 		// Frame data from directional light
 		Graphics::UniformBufferFormats::sFrame _frameData_Shadow(dLight->CalculateLightTransform());
-		_renderingMap.push_back({ m_plane->GetModelHandle(), m_plane->Transform() });
+		_renderingMap.push_back({ m_sphere->GetModelHandle(), m_sphere->Transform() });
 		_renderingMap.push_back({ m_teapot->GetModelHandle(), m_teapot->Transform() });
 		_renderingMap.push_back({ m_teapot2->GetModelHandle(), m_teapot2->Transform() });
 		_renderingMap.push_back({ m_mirror->GetModelHandle(), m_mirror->Transform() });
-		_renderingMap.push_back({ m_sphere->GetModelHandle(), m_sphere->Transform() });
 		Graphics::SubmitDataToBeRendered(_frameData_Shadow, _renderingMap);
 		Graphics::ShadowMap_Pass();
 
 		// ----------------------
 		// Rendering
 		// Frame data from camera
-		Graphics::UniformBufferFormats::sFrame _frameData_Camera(m_editorCamera->GetProjectionMatrix(), m_editorCamera->GetViewMatrix());
-		_frameData_Camera.ViewPosition = m_editorCamera->CamLocation();
-		_renderingMap.clear();
-		
 		{
-			cTransform _mirrordTr = *m_teapot->Transform();
-			_mirrordTr.MirrorAlongPlane(*m_mirror->Transform());
-			_renderingMap.push_back({ m_teapot->GetModelHandle(), &_mirrordTr });
+			cEditorCamera _mirroredCamera = *m_editorCamera;
+			_mirroredCamera.MirrorAlongPlane(*m_mirror->Transform());
+			Graphics::UniformBufferFormats::sFrame _frameData_Mirrored(_mirroredCamera.GetProjectionMatrix(), _mirroredCamera.GetViewMatrix());
+			_frameData_Mirrored.ViewPosition = _mirroredCamera.CamLocation();
+			_renderingMap.clear();
+
+			_renderingMap.push_back({ m_teapot->GetModelHandle(), m_teapot->Transform() });
+			_renderingMap.push_back({ m_sphere->GetModelHandle(), m_sphere->Transform() });
+			_renderingMap.push_back({ m_teapot2->GetModelHandle(), m_teapot2->Transform() });
+
+			Graphics::cUniformBuffer* clipBuffer = Graphics::GetClipPlaneBuffer();
+			glm::vec4 _plane = glm::vec4(m_mirror->Transform()->Up(), m_mirror->Transform()->Position().y);
+			clipBuffer->Update(&Graphics::UniformBufferFormats::sClipPlane(_plane));
+			Graphics::SubmitDataToBeRendered(_frameData_Mirrored, _renderingMap);
+			Graphics::Render_Pass_CaptureCameraView();
 		}
-		{
-			cTransform _mirrordTr = *m_teapot2->Transform();
-			_mirrordTr.MirrorAlongPlane(*m_mirror->Transform());
-			_renderingMap.push_back({ m_teapot2->GetModelHandle(), &_mirrordTr });
-		} 
-		{
-			cTransform _mirrordTr = *m_sphere->Transform();
-			_mirrordTr.MirrorAlongPlane(*m_mirror->Transform());
-			_renderingMap.push_back({ m_sphere->GetModelHandle(), &_mirrordTr });
-		}
-		Graphics::cUniformBuffer* clipBuffer = Graphics::GetClipPlaneBuffer();
-		glm::vec4 _plane = glm::vec4(-m_mirror->Transform()->Up(), m_mirror->Transform()->Position().y);
-		clipBuffer->Update(&Graphics::UniformBufferFormats::sClipPlane(_plane));
-		Graphics::SubmitDataToBeRendered(_frameData_Camera, _renderingMap);
-		Graphics::Render_Pass_CaptureCameraView();
 
 		_renderingMap.clear();
-		
+		Graphics::UniformBufferFormats::sFrame _frameData_Camera(m_editorCamera->GetProjectionMatrix(), m_editorCamera->GetViewMatrix());
+		_frameData_Camera.ViewPosition = m_editorCamera->CamLocation();
 		_renderingMap.push_back({ m_teapot->GetModelHandle(), m_teapot->Transform() });
 		_renderingMap.push_back({ m_teapot2->GetModelHandle(), m_teapot2->Transform() });
-		_renderingMap.push_back({ m_plane->GetModelHandle(), m_plane->Transform() });
 		_renderingMap.push_back({ m_mirror->GetModelHandle(), m_mirror->Transform() });
 		_renderingMap.push_back({ m_sphere->GetModelHandle(), m_sphere->Transform() });
+
 		Graphics::SubmitDataToBeRendered(_frameData_Camera, _renderingMap);
 		Graphics::Render_Pass();
 
@@ -173,6 +156,8 @@ void Assignment::Run()
 		Graphics::UniformBufferFormats::sFrame _frameData_Cubemap(m_editorCamera->GetProjectionMatrix(), glm::mat4(glm::mat3(m_editorCamera->GetViewMatrix())));
 		Graphics::SubmitDataToBeRendered(_frameData_Camera, _renderingMap);
 		Graphics::CubeMap_Pass();
+
+		Graphics::DrawWorldCoord();
 
 		// ----------------------
 		// Swap buffers
@@ -186,7 +171,6 @@ void Assignment::CleanUp()
 	safe_delete(m_editorCamera);
 	safe_delete(m_teapot);
 	safe_delete(m_teapot2);
-	safe_delete(m_plane);
 	safe_delete(m_mirror);
 	safe_delete(m_sphere);
 	safe_delete(m_cubemap);
@@ -199,7 +183,6 @@ void Assignment::Tick(float second_since_lastFrame)
 	m_teapot2->Transform()->Update();
 	m_mirror->Transform()->Update();
 	m_sphere->Transform()->Update();
-	m_plane->Transform()->Update();
 
 	if (pLight1)
 		pLight1->Transform()->Update();
@@ -226,27 +209,32 @@ void Assignment::Tick(float second_since_lastFrame)
 		pLight1->Transform()->Translate(_toForward);
 	}
 	if (m_teapot) {
-		m_teapot->Transform()->gRotate(glm::vec3(0, 1, 0), second_since_lastFrame);
-
-		if (_windowInput->IsKeyDown(GLFW_KEY_LEFT)) {
-			m_teapot->Transform()->Translate(glm::vec3(-1, 0, 0) * second_since_lastFrame);
-		}
-		if (_windowInput->IsKeyDown(GLFW_KEY_RIGHT)) {
-			m_teapot->Transform()->Translate(glm::vec3(1, 0, 0 ) * second_since_lastFrame);
-		}
-		if (_windowInput->IsKeyDown(GLFW_KEY_UP)) {
-			m_teapot->Transform()->Translate(glm::vec3(0, 0, -1) * second_since_lastFrame);
-		}
-		if (_windowInput->IsKeyDown(GLFW_KEY_DOWN)) {
-			m_teapot->Transform()->Translate(glm::vec3(0, 0, 1) * second_since_lastFrame);
-		}
-		if (_windowInput->IsKeyDown(GLFW_KEY_SPACE)) {
-			m_teapot->Transform()->Translate(glm::vec3(0, 1, 0) * second_since_lastFrame);
-		}
-		if (_windowInput->IsKeyDown(GLFW_KEY_LEFT_CONTROL)) {
-			m_teapot->Transform()->Translate(glm::vec3(0, -1, 0) * second_since_lastFrame);
-		}
+		m_teapot->Transform()->gRotate(glm::vec3(0, 1.f, 0), second_since_lastFrame);
 	}
+		cTransform* controledActor = nullptr;
+		controledActor = m_sphere->Transform();
+		if (controledActor) {
+			if (_windowInput->IsKeyDown(GLFW_KEY_LEFT)) {
+				controledActor->Translate(-cTransform::WorldRight * 100.f * second_since_lastFrame);
+			}
+			if (_windowInput->IsKeyDown(GLFW_KEY_RIGHT)) {
+				controledActor->Translate(cTransform::WorldRight* 100.f  * second_since_lastFrame);
+			}
+			if (_windowInput->IsKeyDown(GLFW_KEY_UP)) {
+				controledActor->Translate(-cTransform::WorldForward* 100.f  * second_since_lastFrame);
+			}
+			if (_windowInput->IsKeyDown(GLFW_KEY_DOWN)) {
+				controledActor->Translate(cTransform::WorldForward* 100.f  * second_since_lastFrame);
+			}
+			if (_windowInput->IsKeyDown(GLFW_KEY_SPACE)) {
+				controledActor->Translate(cTransform::WorldUp* 100.f* second_since_lastFrame);
+			}
+			if (_windowInput->IsKeyDown(GLFW_KEY_LEFT_CONTROL)) {
+				controledActor->Translate(-cTransform::WorldUp* 100.f * second_since_lastFrame);
+			}
+
+		}
+		
 	/*
 		m_teapot->Transform()->PrintEulerAngle();
 

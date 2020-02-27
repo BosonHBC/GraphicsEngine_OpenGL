@@ -4,11 +4,10 @@
 // this uniform is default 0, if we need more texture unit, we need to bind manually
 uniform sampler2D diffuseTex; // 0
 uniform sampler2D specularTex; // 1
+uniform sampler2D directionalShadowMap; // 2
 uniform samplerCube cubemapTex; // 3
 uniform sampler2D reflectionTex; // 4
 
-// shadow maps
-uniform sampler2D directionalShadowMap;
 
 in vec2 texCood0;
 in vec3 Normal;
@@ -87,13 +86,13 @@ layout(std140, binding = 3) uniform g_uniformBuffer_Lighting
 float CalcDirectionalLightShadowMap(vec3 vN)
 {
 	vec3 normalizedDeviceCoordinate = DirectionalLightSpacePos.xyz / DirectionalLightSpacePos.w;
-	normalizedDeviceCoordinate = (normalizedDeviceCoordinate * 0.5) + 0.5;
+	normalizedDeviceCoordinate = normalizedDeviceCoordinate * 0.5 + 0.5;
 
 	float current = normalizedDeviceCoordinate.z;
 
 	// Calculate bias
 	vec3 lightDir = normalize(g_directionalLight.direction);
-	const float bias = max(0.005 * (1- dot(vN, lightDir)), 0.0005);
+	const float bias = max(0.05 * (1- dot(vN, lightDir)), 0.005);
 
 	float shadow = 0.0;
 
@@ -157,7 +156,7 @@ vec4 IlluminateByCubemap(vec4 diffuseColor, vec4 specularColor,vec3 vN, vec3 vV)
 vec4 IlluminateByReflectionTexture()
 {
 	vec4 outColor = vec4(0,0,0,0);
-	vec2 normalizedDeviceCoordinate = (clipSpaceCoord.xy/clipSpaceCoord.w)*0.5 + 0.5;
+	vec2 normalizedDeviceCoordinate = vec2((-clipSpaceCoord.x/clipSpaceCoord.w)*0.5 + 0.5,(clipSpaceCoord.y/clipSpaceCoord.w)*0.5 + 0.5 );
 	vec2 reflectionCoords = vec2(normalizedDeviceCoordinate.x, -normalizedDeviceCoordinate.y);
 	outColor = texture(reflectionTex, normalizedDeviceCoordinate);
 	return outColor;

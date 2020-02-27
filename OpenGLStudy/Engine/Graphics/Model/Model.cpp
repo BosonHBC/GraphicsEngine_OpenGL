@@ -9,6 +9,7 @@
 
 
 #include "Assets/LoadTableFromLuaFile.h"
+#include "Assets/PathProcessor.h"
 // Static variable definition
 Assets::cAssetManager<Graphics::cModel> Graphics::cModel::s_manager;
 
@@ -94,18 +95,15 @@ namespace Graphics {
 
 		for (size_t i = 0; i < m_meshList.size(); ++i)
 		{
-
-			auto _matIndex = m_mesh_to_material[i];
-
-			cMaterial* _material = cMaterial::s_manager.Get(m_materialList[_matIndex]);
+			cMaterial* _material = cMaterial::s_manager.Get(m_materialList[0]);
 			// if _maxIndex is in range and the texture is not a nullptr
-			if (_matIndex < m_materialList.size() && _material) {
+			if (_material) {
 				_material->UseMaterial();
 			}
 
 			m_meshList[i]->Render();
 
-			if (_matIndex < m_materialList.size() && _material) {
+			if (_material) {
 				_material->CleanUpMaterialBind();
 			}
 		}
@@ -137,15 +135,12 @@ namespace Graphics {
 		}
 		m_meshList.clear();
 		m_meshList.~vector();
-
-		m_mesh_to_material.clear();
-		m_mesh_to_material.~vector();
 	}
 
 	Graphics::cMaterial* cModel::GetMaterialAt(GLuint i_idx /*= 0*/)
 	{
 		if (i_idx < m_materialList.size()) {
-			return cMaterial::s_manager.Get(m_materialList[i_idx + 1]);
+			return cMaterial::s_manager.Get(m_materialList[i_idx]);
 		}
 	}
 
@@ -243,25 +238,18 @@ namespace Graphics {
 
 		// Stored new mesh to the list and store its index to material
 		m_meshList.push_back(_newMesh);
-		m_mesh_to_material.push_back(i_mesh->mMaterialIndex);
-
 	}
 
 	void cModel::LoadMaterials(const aiScene* i_scene, const char* i_matName)
 	{
 		//const size_t _numOfMaterials = i_scene->mNumMaterials;
-		m_materialList.resize(2);
+		m_materialList.resize(1);
 
-		//	for (size_t i = 1; i < _numOfMaterials; ++i)
-		//	{
-				// TODO: right now, the material path is meaningless
-		std::string _path = Constants::CONST_PATH_MATERIAL_ROOT;
-		_path.append(i_matName);
-		if (!cMaterial::s_manager.Load(_path, m_materialList[1])) {
+		std::string _path = Assets::ProcessPathMat(i_matName);
+		if (!cMaterial::s_manager.Load(_path, m_materialList[0])) {
 			printf("Fail to load material file[%s]\n", _path.c_str());
-			//	continue;
 		}
-		//	}
+
 
 	}
 

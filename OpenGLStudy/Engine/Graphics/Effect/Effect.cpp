@@ -37,26 +37,8 @@ namespace Graphics {
 		}
 
 		// link the program
-		{
-			GLint result = 0;
-			GLchar eLog[1024] = { 0 };
-			glLinkProgram(m_programID);
-			glGetProgramiv(m_programID, GL_LINK_STATUS, &result);
-			if (!result) {
-				glGetProgramInfoLog(m_programID, sizeof(eLog), NULL, eLog);
-				printf("Error Linking program: %d \n%s", m_programID, eLog);
-				return false;
-			}
-
-			// validate the program
-			glValidateProgram(m_programID);
-			// try handle error
-			glGetProgramiv(m_programID, GL_VALIDATE_STATUS, &result);
-			if (!result) {
-				glGetProgramInfoLog(m_programID, sizeof(eLog), NULL, eLog);
-				printf("Error validating program: %d \n%s", m_programID, eLog);
-				return false;
-			}
+		if (!LinkProgram()) {
+			return false;
 		}
 
 		if (!BindUniformVariables()) {
@@ -64,6 +46,44 @@ namespace Graphics {
 			return false;
 		}
 		return true;
+	}
+
+	bool cEffect::LinkProgram()
+	{
+		GLint result = 0;
+		GLchar eLog[1024] = { 0 };
+		glLinkProgram(m_programID);
+		glGetProgramiv(m_programID, GL_LINK_STATUS, &result);
+		if (!result) {
+			glGetProgramInfoLog(m_programID, sizeof(eLog), NULL, eLog);
+			printf("Error Linking program: %d \n%s", m_programID, eLog);
+			return false;
+		}
+		return true;
+	}
+
+	bool cEffect::ValidateProgram()
+	{
+		GLint result = 0;
+		GLchar eLog[1024] = { 0 };
+		// validate the program
+		glValidateProgram(m_programID);
+		// try handle error
+		glGetProgramiv(m_programID, GL_VALIDATE_STATUS, &result);
+		if (!result) {
+			glGetProgramInfoLog(m_programID, sizeof(eLog), NULL, eLog);
+			printf("Error validating program: %d \n%s", m_programID, eLog);
+			return false;
+		}
+		return true;
+	}
+
+	void cEffect::FixSamplerError()
+	{
+		UseEffect();
+		glUniform1i(glGetUniformLocation(m_programID, "cubemapTex"), 3);
+		UnUseEffect();
+		assert(glGetError() == GL_NO_ERROR);
 	}
 
 	void cEffect::CleanUp()
@@ -106,20 +126,9 @@ namespace Graphics {
 		glUseProgram(0);
 	}
 
-	void cEffect::SetPointLightCount(int i_pointLightCount)
-	{
-		glUniform1i(m_pointLightCountID, i_pointLightCount);
-	}
-
-	void cEffect::SetSpotLightCount(int i_spotLightCount)
-	{
-		glUniform1i(m_spotLightCountID, i_spotLightCount);
-
-	}
-
 	bool cEffect::RecompileShader(const char* i_shaderName, GLenum i_shaderType)
 	{
-		CreateProgram(Constants::CONST_PATH_DEFAULT_VERTEXSHADER, Constants::CONST_PATH_BLINNPHONG_FRAGMENTSHADER);
+		//CreateProgram(Constants::CONST_PATH_DEFAULT_VERTEXSHADER, Constants::CONST_PATH_BLINNPHONG_FRAGMENTSHADER);
 		return true;
 	}
 
