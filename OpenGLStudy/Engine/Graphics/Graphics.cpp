@@ -88,6 +88,15 @@ namespace Graphics {
 				return result;
 			}
 		}
+		// Create unlit effect
+		{
+			if (!(result = CreateEffect("UnlitEffect",
+				"unlit/arrow_vert.glsl",
+				"unlit/arrow_frag.glsl"))) {
+				printf("Fail to create unlit effect.\n");
+				return result;
+			}
+		}
 		// Initialize uniform buffer
 		{
 			// Frame buffer
@@ -297,6 +306,31 @@ namespace Graphics {
 		{
 			glDisable(GL_CLIP_PLANE0);
 		}
+	}
+
+	void TransformHint_Pass()
+	{
+		glDisable(GL_DEPTH_TEST);
+		s_currentEffect = GetEffectByKey("UnlitEffect");
+		s_currentEffect->UseEffect();
+		
+
+		s_uniformBuffer_frame.Update(&s_dataRequiredToRenderAFrame.FrameData);
+
+		for (auto it = s_dataRequiredToRenderAFrame.ModelToTransform_map.begin(); it != s_dataRequiredToRenderAFrame.ModelToTransform_map.end(); ++it)
+		{
+			// 1. Update draw call data
+			s_uniformBuffer_drawcall.Update(&UniformBufferFormats::sDrawCall(it->second->M(), it->second->TranspostInverse()));
+			// 2. Draw
+			cModel* _model = cModel::s_manager.Get(it->first);
+			if (_model) {
+				_model->UpdateUniformVariables(s_currentEffect->GetProgramID());
+				_model->Render();
+			}
+		}
+
+		s_currentEffect->UnUseEffect();
+		glEnable(GL_DEPTH_TEST);
 	}
 
 	Graphics::cFrameBuffer* GetCameraCaptureFrameBuffer()

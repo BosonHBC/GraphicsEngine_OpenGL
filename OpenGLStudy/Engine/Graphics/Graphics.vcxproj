@@ -43,6 +43,7 @@
     <ClCompile Include="Material\Blinn\MatBlinn.cpp" />
     <ClCompile Include="Material\Cubemap\MatCubemap.cpp" />
     <ClCompile Include="Material\Material.cpp" />
+    <ClCompile Include="Material\Unlit\MatUnlit.cpp" />
     <ClCompile Include="Mesh\Mesh.cpp" />
     <ClCompile Include="Model\Model.cpp" />
     <ClCompile Include="Texture\Texture.cpp" />
@@ -64,6 +65,7 @@
     <ClInclude Include="Material\Blinn\MatBlinn.h" />
     <ClInclude Include="Material\Cubemap\MatCubemap.h" />
     <ClInclude Include="Material\Material.h" />
+    <ClInclude Include="Material\Unlit\MatUnlit.h" />
     <ClInclude Include="Mesh\Mesh.h" />
     <ClInclude Include="Model\Model.h" />
     <ClInclude Include="Texture\Texture.h" />

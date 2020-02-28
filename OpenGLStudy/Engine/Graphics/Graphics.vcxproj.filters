@@ -67,6 +67,9 @@
     <Filter Include="Source Files\Material\Cubemap">
       <UniqueIdentifier>{b8455dab-3f6f-44fc-9511-89022ba46774}</UniqueIdentifier>
     </Filter>
+    <Filter Include="Source Files\Material\Unlit">
+      <UniqueIdentifier>{ce3a7d35-6cb8-45f3-84e1-217bbae6e1c7}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="Graphics.cpp">
@@ -119,6 +122,9 @@
     </ClCompile>
     <ClCompile Include="Material\Cubemap\MatCubemap.cpp">
       <Filter>Source Files\Material\Cubemap</Filter>
+    </ClCompile>
+    <ClCompile Include="Material\Unlit\MatUnlit.cpp">
+      <Filter>Source Files\Material\Unlit</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
@@ -181,6 +187,9 @@
     </ClInclude>
     <ClInclude Include="Material\Cubemap\MatCubemap.h">
       <Filter>Source Files\Material\Cubemap</Filter>
+    </ClInclude>
+    <ClInclude Include="Material\Unlit\MatUnlit.h">
+      <Filter>Source Files\Material\Unlit</Filter>
     </ClInclude>
   </ItemGroup>
 </Project>

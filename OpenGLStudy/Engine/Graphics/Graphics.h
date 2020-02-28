@@ -24,6 +24,7 @@ namespace Graphics {
 	void DirectionalShadowMap_Pass();
 	void SpotLightShadowMap_Pass();
 	void Render_Pass_CaptureCameraView();
+	void TransformHint_Pass();
 	cFrameBuffer* GetCameraCaptureFrameBuffer();
 	cUniformBuffer* GetClipPlaneBuffer();
 	void Render_Pass();

@@ -62,6 +62,11 @@ void cTransform::Rotate(const glm::vec3& i_axis, const float& i_angle)
 	m_rotation *= glm::angleAxis(i_angle, i_axis);
 }
 
+void cTransform::Rotate(const glm::quat& i_quat)
+{
+	m_rotation *= i_quat;
+}
+
 void cTransform::Scale(const glm::vec3& i_scale)
 {
 	m_scale *= i_scale;

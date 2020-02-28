@@ -1,6 +1,7 @@
 #include "Blinn/MatBlinn.h"
 #include "Assets/LoadTableFromLuaFile.h"
 #include "Cubemap/MatCubemap.h"
+#include "Unlit/MatUnlit.h"
 #include "Externals/ASSIMP_N/include/assimp/scene.h"
 
 namespace Graphics {
@@ -31,6 +32,9 @@ namespace Graphics {
 			break;
 		case eMaterialType::MT_CUBEMAP:
 			_mat = new (std::nothrow) cMatCubemap();
+			break;
+		case  eMaterialType::MT_UNLIT:
+			_mat = new (std::nothrow) cMatUnlit();
 			break;
 		default:
 			break;
