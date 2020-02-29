@@ -7,9 +7,11 @@ out vec2 texCood0;
 out vec3 Normal;
 out vec3 fragPos;
 out vec4 DirectionalLightSpacePos;
+out vec4 SpotLightSpacePos;
 out vec4 clipSpaceCoord;
 
 uniform mat4 directionalLightTransform;
+uniform mat4 spotlightTransform;
 
 layout(std140, binding = 0) uniform uniformBuffer_frame
 {
@@ -45,4 +47,5 @@ void main()
 
 	// Directional light space
 	DirectionalLightSpacePos = directionalLightTransform * modelMatrix * vec4(pos, 1.0);
+	SpotLightSpacePos = spotlightTransform * modelMatrix * vec4(pos, 1.0);
 }

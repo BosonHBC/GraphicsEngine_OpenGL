@@ -7,6 +7,7 @@ uniform sampler2D specularTex; // 1
 uniform sampler2D directionalShadowMap; // 2
 uniform samplerCube cubemapTex; // 3
 uniform sampler2D reflectionTex; // 4
+uniform sampler2D spotlightShadowMap; // 2
 
 
 in vec2 texCood0;
@@ -15,6 +16,7 @@ in vec3 fragPos;
 in vec4 clipSpaceCoord;
 
 in vec4 DirectionalLightSpacePos;
+in vec4 SpotLightSpacePos;
 layout(std140, binding = 0) uniform uniformBuffer_frame
 {
 	// PVMatrix stands for projection * view matrix
@@ -113,7 +115,36 @@ float CalcDirectionalLightShadowMap(vec3 vN)
 	shadow = current > 1.0 ? 0.0 : shadow;
 	return shadow;	
 }
+float CalcSpotLightShadowMap(vec3 vN)
+{
+	vec3 normalizedDeviceCoordinate = SpotLightSpacePos.xyz / SpotLightSpacePos.w;
+	normalizedDeviceCoordinate = normalizedDeviceCoordinate * 0.5 + 0.5;
 
+	float current = normalizedDeviceCoordinate.z;
+
+	// Calculate bias
+	vec3 lightDir = normalize(g_spotLights[0].direction);
+	const float bias = max(0.05 * (1- dot(vN, lightDir)), 0.005);
+
+	float shadow = 0.0;
+
+	const vec2 texelSize = 1.0 / textureSize(spotlightShadowMap, 0);
+	// offset the pixel around center pixel, 3x3	
+	for(int x = -1; x <= 1; ++x)
+	{
+		for(int y = -1; y <= 1; ++y)
+		{
+			// get the depth value of this position in this light's perpective of view
+			float pcfDepth = texture(spotlightShadowMap, normalizedDeviceCoordinate.xy + vec2(x,y) * texelSize).r;
+			// if the current depth that is rendering is larger than the cloest depth,
+			// it is in shadow
+			shadow += (current - bias > pcfDepth) ? 1.0 : 0.0;
+		}
+	}
+	shadow /= 9.0;
+	shadow = current > 1.0 ? 0.0 : shadow;
+	return shadow;	
+}
 //-------------------------------------------------------------------------
 // Lighting Fucntions
 //-------------------------------------------------------------------------
@@ -262,6 +293,7 @@ void main(){
 	vec4 pointLightColor = CalcPointLights(diffuseTexColor, specularTexColor, normalized_normal, normalized_view);
 
 	// spot light
+	float spotLightShawdowFactor = g_spotLights[0].base.base.enableShadow ? (1.0 - CalcSpotLightShadowMap(normalized_normal)): 1.0;
 	vec4 spotLightColor = CalcSpotLights(diffuseTexColor, specularTexColor, normalized_normal, normalized_view);
 
 	vec4 reflectionTextureColor = IlluminateByReflectionTexture();

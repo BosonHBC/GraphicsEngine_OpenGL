@@ -396,6 +396,12 @@ namespace Graphics {
 			for (auto it : s_spotLight_list)
 			{
 				it->Illuminate();
+				it->SetupLight(s_currentEffect->GetProgramID(), 0);
+				it->SetLightUniformTransform();
+				if (it->IsShadowEnabled()) {
+					it->UseShadowMap(5);
+					it->GetShadowMap()->Read(GL_TEXTURE5);
+				}
 			}
 			s_globalLightingData.pointLightCount = s_pointLight_list.size();
 			s_globalLightingData.spotLightCount = s_spotLight_list.size();
