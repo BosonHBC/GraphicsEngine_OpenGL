@@ -24,7 +24,6 @@ namespace Graphics {
 	void DirectionalShadowMap_Pass();
 	void SpotLightShadowMap_Pass();
 	void Render_Pass_CaptureCameraView();
-	void TransformHint_Pass();
 	cFrameBuffer* GetCameraCaptureFrameBuffer();
 	cUniformBuffer* GetClipPlaneBuffer();
 	void Render_Pass();
@@ -34,7 +33,7 @@ namespace Graphics {
 	bool CleanUp();
 
 	void SubmitDataToBeRendered(const UniformBufferFormats::sFrame& i_frameData, const std::vector<std::pair<Graphics::cModel::HANDLE, cTransform*>>& i_modelToTransform_map);
-
+	void SubmitTransformToBeDisplayedWithTransformGizmo(const std::vector< cTransform*>& i_transforms);
 	/** Usage function*/
 	bool CreateEffect(const char* i_key, const char* i_vertexShaderPath, const char* i_fragmentShaderPath);
 	cEffect* GetEffectByKey(const char* i_key);

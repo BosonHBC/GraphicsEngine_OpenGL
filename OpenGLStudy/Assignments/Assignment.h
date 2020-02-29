@@ -26,7 +26,6 @@ public:
 	void Tick(float second_since_lastFrame);
 	void FixedTick();
 private:
-
 	void CreateActor();
 	void CreateCamera();
 	void CreateLight();

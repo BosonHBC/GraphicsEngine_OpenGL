@@ -20,13 +20,8 @@
 #include "Material/Cubemap/MatCubemap.h"
 #include "UniformBuffer/UniformBufferFormats.h"
 #include "Graphics/Texture/Texture.h"
+
 #include <map>
-
-
-Graphics::cModel::HANDLE s_arrowModel;
-cTransform s_WorldForwardTransform;
-cTransform s_WorldRightTransform;
-cTransform s_WorldUpTransform;
 
 bool Assignment::Initialize(GLuint i_width, GLuint i_height, const char* i_windowName /*= "Default Window"*/)
 {
@@ -37,26 +32,6 @@ bool Assignment::Initialize(GLuint i_width, GLuint i_height, const char* i_windo
 		printf("Failed to initialize Application!");
 		return false;
 	}
-
-	{
-		std::string _arrowPath = "Contents/models/arrow.model";
-		if (!Graphics::cModel::s_manager.Load(_arrowPath, s_arrowModel))
-		{
-			printf("Failed to initialize Application!");
-			return false;
-		}
-		s_WorldForwardTransform.SetRotation(glm::quat(glm::vec3(glm::radians(90.f), 0, 0)));
-		s_WorldForwardTransform.SetScale(glm::vec3(2, 10, 2));
-		s_WorldForwardTransform.Update();
-
-		s_WorldRightTransform.SetRotation(glm::quat(glm::vec3(0, 0, glm::radians(90.f))));
-		s_WorldRightTransform.SetScale(glm::vec3(2, 10, 2));
-		s_WorldRightTransform.Update();
-
-		s_WorldUpTransform.SetScale(glm::vec3(2, 10, 2));
-		s_WorldUpTransform.Update();
-	}
-
 
 	CreateActor();
 	CreateCamera();
@@ -76,6 +51,7 @@ bool Assignment::Initialize(GLuint i_width, GLuint i_height, const char* i_windo
 
 	return result;
 }
+
 void Assignment::CreateActor()
 {
 	m_teapot = new cActor();
@@ -122,7 +98,7 @@ void Assignment::CreateLight()
 	//Graphics::CreatePointLight(glm::vec3(0, 150.f, 100.f), Color(0.1, 0.2, 0.8), 0.1f, 0.003f, 0.00003f, false, pLight1);
 	//Graphics::CreatePointLight(glm::vec3(-200, 100, -200), Color(0.8, 0.2, 0.2), 0.1f, 0.002f, 0.00002f, false, pLight2);
 	Graphics::CreateDirectionalLight(Color(1, 1, 1), glm::vec3(-1, -1, 0), true, dLight);
-	Graphics::CreateSpotLight(m_editorCamera->Transform()->Position(), m_editorCamera->Transform()->Forward(), Color(1,1,1),30.f, 0.1f, 0.003f, 0.00003f, true, spLight);
+	Graphics::CreateSpotLight(m_editorCamera->Transform()->Position(), m_editorCamera->Transform()->Forward(), Color(1, 1, 1), 30.f, 0.1f, 0.003f, 0.00003f, true, spLight);
 }
 
 void Assignment::Run()
@@ -155,6 +131,7 @@ void Assignment::Run()
 		// ----------------------
 		// Rendering
 		// Frame data from camera
+		if (true)
 		{
 			cEditorCamera _mirroredCamera = *m_editorCamera;
 			_mirroredCamera.MirrorAlongPlane(*m_mirror->Transform());
@@ -191,36 +168,24 @@ void Assignment::Run()
 		Graphics::SubmitDataToBeRendered(_frameData_Camera, _renderingMap);
 		Graphics::CubeMap_Pass();
 
-
-
-		_renderingMap.clear();
-		// World coordinate
+		if (true)
 		{
-			_renderingMap.push_back({ s_arrowModel,  &s_WorldForwardTransform });
-			_renderingMap.push_back({ s_arrowModel,  &s_WorldRightTransform });
-			_renderingMap.push_back({ s_arrowModel,  &s_WorldUpTransform });
-		}
-		{
-			cTransform _forward = s_WorldForwardTransform;
-			_forward.SetPosition(m_teapot->Transform()->Position());
-			_forward.Rotate(glm::quatLookAt(m_teapot->Transform()->Forward(), m_teapot->Transform()->Up()));
-			_forward.Update();
-			cTransform _right = s_WorldUpTransform;
-			_right.SetPosition(m_teapot->Transform()->Position());
-			_right.Rotate(glm::quatLookAt(m_teapot->Transform()->Forward(), m_teapot->Transform()->Up()));
-			_right.Update();
-			cTransform _up = s_WorldUpTransform;
-			_up.SetPosition(m_teapot->Transform()->Position());
-			_up.Rotate(glm::quatLookAt(m_teapot->Transform()->Forward(), m_teapot->Transform()->Up()));
-			_up.Update();
+			std::vector<cTransform*> _transforms;
+			cTransform _worldTransform;
+			_transforms.push_back(&_worldTransform);
+			_transforms.push_back(m_teapot->Transform());
+			_transforms.push_back(m_teapot2->Transform());
+			_transforms.push_back(m_sphere->Transform());\
+			if(pLight1)
+			_transforms.push_back(pLight1->Transform());
+			if (pLight2)
+				_transforms.push_back(pLight2->Transform());
+			if (spLight)
+				_transforms.push_back(spLight->Transform());
 
-			_renderingMap.push_back({ s_arrowModel,  &_forward });
-			_renderingMap.push_back({ s_arrowModel,  &_right });
-			_renderingMap.push_back({ s_arrowModel,  &_up });
+			Graphics::SubmitTransformToBeDisplayedWithTransformGizmo(_transforms);
 		}
 
-		Graphics::SubmitDataToBeRendered(_frameData_Camera, _renderingMap);
-		Graphics::TransformHint_Pass();
 
 		// ----------------------
 		// Swap buffers
@@ -230,6 +195,7 @@ void Assignment::Run()
 
 void Assignment::CleanUp()
 {
+
 
 	safe_delete(m_editorCamera);
 	safe_delete(m_teapot);
@@ -242,6 +208,7 @@ void Assignment::CleanUp()
 void Assignment::Tick(float second_since_lastFrame)
 {
 	// Update transforms
+
 	m_teapot->Transform()->Update();
 	m_teapot2->Transform()->Update();
 	m_mirror->Transform()->Update();
@@ -304,19 +271,19 @@ void Assignment::Tick(float second_since_lastFrame)
 
 	cTransform* rotateControl = nullptr;
 	rotateControl = spLight->Transform();
-	if (rotateControl) 
+	if (rotateControl)
 	{
 		if (_windowInput->IsKeyDown(GLFW_KEY_LEFT)) {
-			rotateControl->Rotate(cTransform::WorldUp	, 10 * second_since_lastFrame);
+			rotateControl->Rotate(cTransform::WorldUp, 10 * second_since_lastFrame);
 		}
 		if (_windowInput->IsKeyDown(GLFW_KEY_RIGHT)) {
-			rotateControl->Rotate(-cTransform::WorldUp, 10	 * second_since_lastFrame);
+			rotateControl->Rotate(-cTransform::WorldUp, 10 * second_since_lastFrame);
 		}
 		if (_windowInput->IsKeyDown(GLFW_KEY_UP)) {
-			rotateControl->Rotate(cTransform::WorldRight, 10	 * second_since_lastFrame);
+			rotateControl->Rotate(cTransform::WorldRight, 10 * second_since_lastFrame);
 		}
 		if (_windowInput->IsKeyDown(GLFW_KEY_DOWN)) {
-			rotateControl->Rotate(-cTransform::WorldRight, 10	 * second_since_lastFrame);
+			rotateControl->Rotate(-cTransform::WorldRight, 10 * second_since_lastFrame);
 		}
 	}
 

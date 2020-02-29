@@ -9,7 +9,9 @@ class cTransform
 public:
 	/** Constructors&destructor and assignment operators*/
 	cTransform(): m(glm::identity<glm::mat4>()), mInv(glm::identity<glm::mat4>()), m_position(glm::vec3(0,0,0)), m_rotation(glm::quat(1,0,0,0)), m_scale(glm::vec3(1,1,1))
-	{}
+	{
+		Update();
+	}
 	cTransform(const glm::vec3& i_initialTranslation, const glm::quat& i_intialRotation, const glm::vec3& i_initialScale);
 	cTransform(const cTransform& i_other) ;
 	cTransform(const glm::mat4& i_m) :m(i_m), mInv(glm::inverse(m)) {}

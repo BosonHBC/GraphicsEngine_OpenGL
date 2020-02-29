@@ -51,6 +51,8 @@ namespace Graphics {
 	std::vector<cPointLight*> s_pointLight_list;
 	std::vector<cSpotLight*> s_spotLight_list;
 
+	// Transform hint
+	Graphics::cModel::HANDLE s_arrows[3];
 
 	//functions
 	void RenderScene();
@@ -146,6 +148,28 @@ namespace Graphics {
 				return result;
 			}
 		}
+		// Load arrows
+		{
+			std::string _arrowPath = "Contents/models/arrow_forward.model";
+			if (! (result = Graphics::cModel::s_manager.Load(_arrowPath, s_arrows[0])))
+			{
+				printf("Failed to Load arrow_forward!\n");
+				return result;
+			}
+			_arrowPath = "Contents/models/arrow_right.model";
+			if (!(result = Graphics::cModel::s_manager.Load(_arrowPath, s_arrows[1])))
+			{
+				printf("Failed to Load arrow_right!\n");
+				return result;
+			}
+			_arrowPath = "Contents/models/arrow_up.model";
+			if (!(result = Graphics::cModel::s_manager.Load(_arrowPath, s_arrows[2])))
+			{
+				printf("Failed to Load arrow_up!\n");
+				return result;
+			}
+		}
+
 
 		return result;
 	}
@@ -192,7 +216,7 @@ namespace Graphics {
 		s_currentEffect = GetEffectByKey("ShadowMap");
 		s_currentEffect->UseEffect();
 
-		for (int i = 0; i < s_spotLight_list.size(); ++i)
+		for (auto i = 0; i < s_spotLight_list.size(); ++i)
 		{
 			cFrameBuffer* _spotLightFB = s_spotLight_list[i]->GetShadowMap();
 			if (_spotLightFB) {
@@ -308,30 +332,6 @@ namespace Graphics {
 		}
 	}
 
-	void TransformHint_Pass()
-	{
-		glDisable(GL_DEPTH_TEST);
-		s_currentEffect = GetEffectByKey("UnlitEffect");
-		s_currentEffect->UseEffect();
-		
-
-		s_uniformBuffer_frame.Update(&s_dataRequiredToRenderAFrame.FrameData);
-
-		for (auto it = s_dataRequiredToRenderAFrame.ModelToTransform_map.begin(); it != s_dataRequiredToRenderAFrame.ModelToTransform_map.end(); ++it)
-		{
-			// 1. Update draw call data
-			s_uniformBuffer_drawcall.Update(&UniformBufferFormats::sDrawCall(it->second->M(), it->second->TranspostInverse()));
-			// 2. Draw
-			cModel* _model = cModel::s_manager.Get(it->first);
-			if (_model) {
-				_model->UpdateUniformVariables(s_currentEffect->GetProgramID());
-				_model->Render();
-			}
-		}
-
-		s_currentEffect->UnUseEffect();
-		glEnable(GL_DEPTH_TEST);
-	}
 
 	Graphics::cFrameBuffer* GetCameraCaptureFrameBuffer()
 	{
@@ -491,6 +491,9 @@ namespace Graphics {
 		if (!(result = s_uniformBuffer_ClipPlane.CleanUp())) {
 			printf("Fail to cleanup uniformBuffer_ClipPlane\n");
 		}
+		Graphics::cModel::s_manager.Release(s_arrows[0]);
+		Graphics::cModel::s_manager.Release(s_arrows[1]);
+		Graphics::cModel::s_manager.Release(s_arrows[2]);
 		// Clean up effect
 		for (auto it = s_KeyToEffect_map.begin(); it != s_KeyToEffect_map.end(); ++it)
 		{
@@ -524,6 +527,46 @@ namespace Graphics {
 	{
 		s_dataRequiredToRenderAFrame.FrameData = i_frameData;
 		s_dataRequiredToRenderAFrame.ModelToTransform_map = i_modelToTransform_map;
+	}
+
+	void SubmitTransformToBeDisplayedWithTransformGizmo(const std::vector< cTransform*>& i_transforms)
+	{
+		glDisable(GL_DEPTH_TEST);
+		s_currentEffect = GetEffectByKey("UnlitEffect");
+		s_currentEffect->UseEffect();
+
+		s_uniformBuffer_frame.Update(&s_dataRequiredToRenderAFrame.FrameData);
+
+		for (auto it = i_transforms.begin(); it != i_transforms.end(); ++it)
+		{
+			// Get forward transform
+			cTransform arrowTransform[3];
+			{
+				// Forward
+				arrowTransform[0].SetRotation((*it)->Rotation() * glm::quat(glm::vec3(glm::radians(90.f), 0, 0)));
+				// Right
+				arrowTransform[1].SetRotation((*it)->Rotation() * glm::quat(glm::vec3(0, 0, glm::radians(90.f))));
+				// Up
+				arrowTransform[2].SetRotation((*it)->Rotation() * glm::quat(glm::vec3(0, glm::radians(90.f), 0)));
+			}
+			for (int i = 0; i < 3; ++i)
+			{
+				arrowTransform[i].SetPosition((*it)->Position());
+				arrowTransform[i].SetScale(glm::vec3(2,10,2));
+				arrowTransform[i].Update();
+				s_uniformBuffer_drawcall.Update(&UniformBufferFormats::sDrawCall(arrowTransform[i].M(), arrowTransform[i].TranspostInverse()));
+
+				cModel* _model = cModel::s_manager.Get(s_arrows[i]);
+				if (_model) {
+					_model->UpdateUniformVariables(s_currentEffect->GetProgramID());
+					_model->Render();
+				}
+			}
+		}
+
+
+		s_currentEffect->UnUseEffect();
+		glEnable(GL_DEPTH_TEST);
 	}
 
 	bool CreateEffect(const char* i_key, const char* i_vertexShaderPath, const char* i_fragmentShaderPath)

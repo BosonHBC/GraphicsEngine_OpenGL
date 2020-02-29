@@ -12,7 +12,7 @@ namespace Graphics {
 		void UseMaterial() override;
 		void CleanUpMaterialBind() override;
 		void CleanUp() override;
-
+		void SetUnlitColor(const Color& i_color) { m_unlitColor = i_color; }
 	private:
 		cMatUnlit() : cMaterial(eMaterialType::MT_UNLIT)
 		{}

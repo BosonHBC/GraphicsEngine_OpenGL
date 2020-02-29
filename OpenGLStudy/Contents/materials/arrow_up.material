@@ -1,0 +1,10 @@
+--[[
+    Default BlinnPhong material
+]]
+return 
+{
+
+    MaterialType = 3,
+    unitColor = {0,0.8,0}
+
+}

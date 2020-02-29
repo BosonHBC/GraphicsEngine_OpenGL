@@ -4,6 +4,6 @@
 return 
 {
     ModelPath = "arrow.obj",
-    MaterialPath = "arrow.material",
+    MaterialPath = "arrow_forward.material",
 
 }
