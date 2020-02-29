@@ -437,11 +437,6 @@ namespace Graphics {
 		glDepthFunc(GL_LESS);
 	}
 
-	void DrawWorldCoord()
-	{
-
-	}
-
 	void RenderScene_shadowMap()
 	{
 		// loop through every single model
@@ -647,7 +642,7 @@ namespace Graphics {
 			return result;
 		}
 		cSpotLight* newSpotLight = new cSpotLight(i_color, i_initialLocation, glm::normalize(i_direction), i_edge, 300.f, i_const, i_linear, i_quadratic);
-		newSpotLight->SetupLight(s_currentEffect->GetProgramID(), s_pointLight_list.size());
+		newSpotLight->SetupLight(s_currentEffect->GetProgramID(), s_spotLight_list.size());
 		newSpotLight->SetEnableShadow(i_enableShadow);
 		newSpotLight->CreateShadowMap(2048, 2048);
 		o_spotLight = newSpotLight;

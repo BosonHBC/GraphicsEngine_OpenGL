@@ -9,11 +9,9 @@ namespace Graphics {
 		cPointLight(i_color, i_position, i_range, i_const, i_linear, i_quadratic)
 	{
 		m_procEdge = cosf(glm::radians(m_edge));
-		glm::vec3 _right = glm::normalize(glm::cross(i_direction, cTransform::WorldUp));
-		glm::vec3 _up = glm::normalize(glm::cross(_right, i_direction));
-		glm::quat rot(glm::quatLookAt(i_direction, _up));
+		glm::quat rot(glm::quatLookAt(i_direction, cTransform::WorldUp));
 		m_transform->SetTransform(i_position, rot, glm::vec3(1, 1, 1));
-
+		m_transform->Update();
 	}
 
 	void cSpotLight::Illuminate()
@@ -25,7 +23,7 @@ namespace Graphics {
 		gLighting.spotLights[m_lightIndex].base.quadratic = m_quadratic;
 		gLighting.spotLights[m_lightIndex].base.linear = m_linear;
 		gLighting.spotLights[m_lightIndex].base.constant = m_const;
-		gLighting.spotLights[m_lightIndex].direction = Transform()->Forward();
+		gLighting.spotLights[m_lightIndex].direction = m_transform->Forward();
 		gLighting.spotLights[m_lightIndex].edge = m_procEdge;
 	}
 

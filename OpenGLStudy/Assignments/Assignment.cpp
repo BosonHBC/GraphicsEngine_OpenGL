@@ -95,10 +95,10 @@ void Assignment::CreateCamera()
 void Assignment::CreateLight()
 {
 	Graphics::CreateAmbientLight(Color(0.1f, 0.1f, 0.1f), aLight);
-	//Graphics::CreatePointLight(glm::vec3(0, 150.f, 100.f), Color(0.1, 0.2, 0.8), 0.1f, 0.003f, 0.00003f, false, pLight1);
-	//Graphics::CreatePointLight(glm::vec3(-200, 100, -200), Color(0.8, 0.2, 0.2), 0.1f, 0.002f, 0.00002f, false, pLight2);
+	Graphics::CreatePointLight(glm::vec3(0, 150.f, 100.f), Color(0.1, 0.2, 0.8), 0.1f, 0.003f, 0.00003f, false, pLight1);
+	Graphics::CreatePointLight(glm::vec3(-200, 100, -200), Color(0.8, 0.2, 0.2), 0.1f, 0.002f, 0.00002f, false, pLight2);
 	Graphics::CreateDirectionalLight(Color(1, 1, 1), glm::vec3(-1, -1, 0), true, dLight);
-	Graphics::CreateSpotLight(m_editorCamera->Transform()->Position(), m_editorCamera->Transform()->Forward(), Color(1, 1, 1), 30.f, 0.1f, 0.003f, 0.00003f, true, spLight);
+	Graphics::CreateSpotLight(glm::vec3(0,100,100), glm::vec3(0, 0, 1), Color(0.6), 45.f, 0.1f, 0.03f, 0.0003f, true, spLight);
 }
 
 void Assignment::Run()
@@ -108,8 +108,6 @@ void Assignment::Run()
 	while (!m_shouldApplicationLoopExit)
 	{
 		glfwPollEvents();
-
-
 		// Submit data to be render
 		std::vector<std::pair<Graphics::cModel::HANDLE, cTransform*>> _renderingMap;
 		_renderingMap.push_back({ m_sphere->GetModelHandle(), m_sphere->Transform() });
@@ -174,8 +172,8 @@ void Assignment::Run()
 			cTransform _worldTransform;
 			_transforms.push_back(&_worldTransform);
 			_transforms.push_back(m_teapot->Transform());
-			_transforms.push_back(m_teapot2->Transform());
-			_transforms.push_back(m_sphere->Transform());\
+			//_transforms.push_back(m_teapot2->Transform());
+			//_transforms.push_back(m_sphere->Transform());
 			if(pLight1)
 			_transforms.push_back(pLight1->Transform());
 			if (pLight2)
@@ -246,6 +244,7 @@ void Assignment::Tick(float second_since_lastFrame)
 		m_teapot->Transform()->gRotate(glm::vec3(0, 1.f, 0), second_since_lastFrame);
 	}
 	cTransform* controledActor = nullptr;
+	//controledActor = spLight->Transform();
 	//controledActor = m_sphere->Transform();
 	if (controledActor) {
 		if (_windowInput->IsKeyDown(GLFW_KEY_LEFT)) {
@@ -270,6 +269,7 @@ void Assignment::Tick(float second_since_lastFrame)
 	}
 
 	cTransform* rotateControl = nullptr;
+	if(spLight)
 	rotateControl = spLight->Transform();
 	if (rotateControl)
 	{

@@ -208,11 +208,12 @@ vec4 CalcPointLights(vec4 diffusTexCol, vec4 specTexCol,vec3 vN, vec3 vV){
 
 vec4 CalcSpotLight(SpotLight spLight,vec4 diffusTexCol, vec4 specTexCol,vec3 vN, vec3 vV){
 		vec3 dir = spLight.base.position - fragPos;
-		float dir_dot_LDir = dot(spLight.direction, dir);
+		dir = normalize(dir);
+		float dir_dot_LDir = dot(-spLight.direction, dir);
 		if(dir_dot_LDir > spLight.edge)
 		{
 			float dist = length(dir);
-			dir = normalize(dir);
+			
 
 			vec4 color_kd = diffusTexCol * IlluminateByDirection_Kd(spLight.base.base, vN, dir);
 			vec4 color_ks = specTexCol * IlluminateByDirection_Ks(spLight.base.base, vN, dir, vV);
@@ -220,7 +221,8 @@ vec4 CalcSpotLight(SpotLight spLight,vec4 diffusTexCol, vec4 specTexCol,vec3 vN,
 													spLight.base.linear * dist + 
 													spLight.base.constant;
 
-			return ((color_kd + color_ks) / attenuationFactor);
+			vec4 outColor = (color_kd + color_ks) / attenuationFactor;
+			return outColor * (1.0f - (1-dir_dot_LDir) * (1.0f / (1.0f - spLight.edge)));
 		}
 		else
 		{
