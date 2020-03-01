@@ -5,10 +5,10 @@
 namespace Graphics {
 
 	cSpotLight::cSpotLight(Color i_color, const glm::vec3& i_position, const glm::vec3& i_direction, GLfloat i_edge, GLfloat i_range, GLfloat i_const, GLfloat i_linear, GLfloat i_quadratic):
-		m_edge(i_edge),
 		cPointLight(i_color, i_position, i_range, i_const, i_linear, i_quadratic)
 	{
-		m_procEdge = cosf(glm::radians(m_edge));
+		m_edge = glm::clamp(i_edge, 1.f, 150.f);
+		m_procEdge = cosf(glm::radians(m_edge/2.f));
 		glm::quat rot(glm::quatLookAt(i_direction, cTransform::WorldUp));
 		m_transform->SetTransform(i_position, rot, glm::vec3(1, 1, 1));
 		m_transform->Update();
@@ -35,11 +35,16 @@ namespace Graphics {
 		m_spotLightShadowMapID = glGetUniformLocation(i_programID, "spotlightShadowMap");
 	}
 
+	void cSpotLight::UseShadowMap(GLuint i_textureUnit)
+	{
+		glUniform1i(m_spotLightShadowMapID, i_textureUnit);
+	}
+
 	void cSpotLight::CreateShadowMap(GLuint i_width, GLuint i_height)
 	{
 		cGenLight::CreateShadowMap(i_width, i_height);
 		float _aspect = static_cast<GLfloat>(i_width) / static_cast<GLfloat>(i_height);
-		m_lightPrjectionMatrix = glm::perspective(m_edge, _aspect, 0.1f, 1500.f);
+		m_lightPrjectionMatrix = glm::perspective(m_edge/2.f, _aspect, 0.1f, 1500.f);
 	}
 
 	glm::mat4 cSpotLight::CalculateLightTransform() const
@@ -50,7 +55,8 @@ namespace Graphics {
 
 	void cSpotLight::SetLightUniformTransform()
 	{
-		glUniformMatrix4fv(m_spotLightTransformID, 1, GL_FALSE, glm::value_ptr(CalculateLightTransform()));
+		glm::mat4 lightTransform = CalculateLightTransform();
+		glUniformMatrix4fv(m_spotLightTransformID, 1, GL_FALSE, glm::value_ptr(lightTransform));
 	}
 
 }

@@ -95,10 +95,10 @@ void Assignment::CreateCamera()
 
 void Assignment::CreateLight()
 {
-	Graphics::CreateAmbientLight(Color(0.1f, 0.1f, 0.1f), aLight);
-	Graphics::CreatePointLight(glm::vec3(0, 150.f, 100.f), Color(0.1, 0.2, 0.8), 0.1f, 0.003f, 0.00003f, false, pLight1);
-	Graphics::CreatePointLight(glm::vec3(-200, 100, -200), Color(0.8, 0.2, 0.2), 0.1f, 0.002f, 0.00002f, false, pLight2);
-	Graphics::CreateDirectionalLight(Color(1, 1, 1), glm::vec3(-1, -1, 0), true, dLight);
+	//Graphics::CreateAmbientLight(Color(0.1f, 0.1f, 0.1f), aLight);
+	//Graphics::CreatePointLight(glm::vec3(0, 150.f, 100.f), Color(0.1, 0.2, 0.8), 0.1f, 0.003f, 0.00003f, false, pLight1);
+	//Graphics::CreatePointLight(glm::vec3(-200, 100, -200), Color(0.8, 0.2, 0.2), 0.1f, 0.002f, 0.00002f, false, pLight2);
+	//Graphics::CreateDirectionalLight(Color(1, 1, 1), glm::vec3(-1, -1, 0), true, dLight);
 	Graphics::CreateSpotLight(glm::vec3(0,100,100), glm::vec3(0, 1, 1), Color(0.6), 45.f, 0.1f, 0.03f, 0.0003f, true, spLight);
 }
 
@@ -246,19 +246,19 @@ void Assignment::Tick(float second_since_lastFrame)
 		m_teapot->Transform()->gRotate(glm::vec3(0, 1.f, 0), second_since_lastFrame);
 	}
 	cTransform* controledActor = nullptr;
-	//controledActor = spLight->Transform();
+	controledActor = spLight->Transform();
 	//controledActor = m_sphere->Transform();
 	if (controledActor) {
-		if (_windowInput->IsKeyDown(GLFW_KEY_LEFT)) {
+		if (_windowInput->IsKeyDown(GLFW_KEY_J)) {
 			controledActor->Translate(-cTransform::WorldRight * 100.f * second_since_lastFrame);
 		}
-		if (_windowInput->IsKeyDown(GLFW_KEY_RIGHT)) {
+		if (_windowInput->IsKeyDown(GLFW_KEY_L)) {
 			controledActor->Translate(cTransform::WorldRight* 100.f  * second_since_lastFrame);
 		}
-		if (_windowInput->IsKeyDown(GLFW_KEY_UP)) {
+		if (_windowInput->IsKeyDown(GLFW_KEY_I)) {
 			controledActor->Translate(-cTransform::WorldForward* 100.f  * second_since_lastFrame);
 		}
-		if (_windowInput->IsKeyDown(GLFW_KEY_DOWN)) {
+		if (_windowInput->IsKeyDown(GLFW_KEY_K)) {
 			controledActor->Translate(cTransform::WorldForward* 100.f  * second_since_lastFrame);
 		}
 		if (_windowInput->IsKeyDown(GLFW_KEY_SPACE)) {
@@ -276,16 +276,16 @@ void Assignment::Tick(float second_since_lastFrame)
 	if (rotateControl)
 	{
 		if (_windowInput->IsKeyDown(GLFW_KEY_LEFT)) {
-			rotateControl->Rotate(cTransform::WorldUp, 10 * second_since_lastFrame);
+			rotateControl->Rotate(cTransform::WorldUp, second_since_lastFrame);
 		}
 		if (_windowInput->IsKeyDown(GLFW_KEY_RIGHT)) {
-			rotateControl->Rotate(-cTransform::WorldUp, 10 * second_since_lastFrame);
+			rotateControl->Rotate(-cTransform::WorldUp, second_since_lastFrame);
 		}
 		if (_windowInput->IsKeyDown(GLFW_KEY_UP)) {
-			rotateControl->Rotate(cTransform::WorldRight, 10 * second_since_lastFrame);
+			rotateControl->Rotate(cTransform::WorldRight,  second_since_lastFrame);
 		}
 		if (_windowInput->IsKeyDown(GLFW_KEY_DOWN)) {
-			rotateControl->Rotate(-cTransform::WorldRight, 10 * second_since_lastFrame);
+			rotateControl->Rotate(-cTransform::WorldRight,  second_since_lastFrame);
 		}
 	}
 

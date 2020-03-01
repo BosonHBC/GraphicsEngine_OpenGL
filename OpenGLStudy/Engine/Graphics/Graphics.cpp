@@ -229,7 +229,7 @@ namespace Graphics {
 				}
 				// write buffer to the texture
 				_spotLightFB->Write();
-
+				assert(glGetError() == GL_NO_ERROR);
 				glClearColor(0, 0, 0, 1.f);
 				glClear(GL_DEPTH_BUFFER_BIT);
 
@@ -245,6 +245,7 @@ namespace Graphics {
 
 				// switch back to original buffer
 				_spotLightFB->UnWrite();
+				assert(glGetError() == GL_NO_ERROR);
 			}
 		}
 
