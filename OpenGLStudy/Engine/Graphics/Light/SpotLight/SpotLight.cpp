@@ -39,12 +39,13 @@ namespace Graphics {
 	{
 		cGenLight::CreateShadowMap(i_width, i_height);
 		float _aspect = static_cast<GLfloat>(i_width) / static_cast<GLfloat>(i_height);
-		m_lightPrjectionMatrix = glm::perspective(m_edge/2.f, _aspect, 0.1f, 1500.f);
+		m_lightPrjectionMatrix = glm::perspective(m_edge, _aspect, 0.1f, 1500.f);
 	}
 
 	glm::mat4 cSpotLight::CalculateLightTransform() const
 	{
-		return m_lightPrjectionMatrix * glm::lookAt(m_transform->Position(), m_transform->Position() + m_transform->Forward() , glm::vec3(0, 1, 0));
+		glm::mat4 view = glm::lookAt(m_transform->Position(), m_transform->Position() + m_transform->Forward(), cTransform::WorldUp);
+		return m_lightPrjectionMatrix * view;
 	}
 
 	void cSpotLight::SetLightUniformTransform()

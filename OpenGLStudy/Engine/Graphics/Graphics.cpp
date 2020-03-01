@@ -180,7 +180,7 @@ namespace Graphics {
 		s_currentEffect->UseEffect();
 
 		cFrameBuffer* _directionalLightFBO = s_directionalLight->GetShadowMap();
-		if (_directionalLightFBO) {
+		if (_directionalLightFBO && s_directionalLight->IsShadowEnabled()) {
 
 			{
 				Application::cApplication* _app = Application::GetCurrentApplication();
@@ -231,7 +231,7 @@ namespace Graphics {
 				_spotLightFB->Write();
 
 				glClearColor(0, 0, 0, 1.f);
-				glClear(/*GL_COLOR_BUFFER_BIT | */GL_DEPTH_BUFFER_BIT);
+				glClear(GL_DEPTH_BUFFER_BIT);
 
 				// Update frame data
 				{
@@ -299,11 +299,6 @@ namespace Graphics {
 
 			if (s_directionalLight) {
 				s_directionalLight->Illuminate();
-				s_directionalLight->SetLightUniformTransform();
-				if (s_directionalLight->IsShadowEnabled()) {
-					s_directionalLight->UseShadowMap(2);
-					s_directionalLight->GetShadowMap()->Read(GL_TEXTURE2);
-				}
 			}
 
 			for (auto it : s_pointLight_list)
