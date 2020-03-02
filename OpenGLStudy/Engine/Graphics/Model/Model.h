@@ -1,6 +1,7 @@
 #pragma once
 #include <vector>
 #include "Engine/Graphics/Material/Material.h"
+#include "Engine/Graphics/Mesh/Mesh.h"
 #include "Engine/Assets/AssetManager.h"
 #include "Engine/Assets/Handle.h"
 
@@ -8,9 +9,6 @@ struct aiScene;
 struct aiNode;
 struct aiMesh;
 namespace Graphics {
-
-	/** Forward declaration*/
-	class cMesh;
 	/** Model stores information of meshes group and related textures*/
 	class cModel
 	{
@@ -44,13 +42,13 @@ namespace Graphics {
 		/** Mesh list and texture list should not be stored here,
 			but for the sake of simplicity, put it here first
 		*/
-		std::vector<cMesh*> m_meshList;
+		std::vector<cMesh::HANDLE> m_meshList;
 		std::vector<cMaterial::HANDLE> m_materialList;
 
 		/** private helper functions*/
 		bool LoadFileFromLua(const char* i_path, std::string& o_modelPath, std::string& o_materialPath);
-		void LoadNode(const aiNode* i_node, const aiScene* i_scene);
-		void LoadMesh(const aiMesh* i_mesh, const aiScene* i_scene);
+		void LoadNode(const char* i_path, const aiNode* i_node, const aiScene* i_scene);
+		void LoadMesh(const char* i_path, const aiMesh* i_mesh, const aiScene* i_scene);
 		void LoadMaterials(const aiScene* i_scene, const char* i_matName);
 
 		// actual loading function

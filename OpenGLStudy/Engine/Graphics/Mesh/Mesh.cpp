@@ -1,6 +1,35 @@
 #include "Mesh.h"
 
 namespace Graphics {
+
+	Assets::cAssetManager <cMesh> cMesh::s_manager;
+
+	bool cMesh::Load(const std::string& i_path, cMesh*& o_mesh, std::vector<float>& i_vertices, std::vector<unsigned int>& i_indices)
+	{
+		auto result = true;
+
+		cMesh* _mesh = nullptr;
+
+		// make sure there is enough memory to allocate a model
+		_mesh = new (std::nothrow) cMesh();
+		if (!(result = _mesh)) {
+			// Run out of memory
+			// TODO: LogError: Out of memory
+
+			return result;
+		}
+		else {
+			_mesh->CreateMesh(&i_vertices[0], &i_indices[0], static_cast<GLuint>(i_vertices.size()), static_cast<GLuint>(i_indices.size()));
+		}
+
+		o_mesh = _mesh;
+
+		//TODO: Loading information succeed!
+		printf("Succeed! Loading mesh: %s. Vertices: %d, Indices: %d \n", i_path.c_str(), i_vertices.size(), i_indices.size());
+
+		return result;
+	}
+
 	cMesh::cMesh()
 	{
 		m_vao = 0;

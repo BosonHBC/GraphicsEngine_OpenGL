@@ -1,6 +1,6 @@
 #include "Engine/Graphics/Model/Model.h"
 #include "Engine/Graphics/Material/Material.h"
-#include "Engine/Graphics/Mesh/Mesh.h"
+
 #include "Engine/Constants/Constants.h"
 
 #include "Externals/ASSIMP_N/include/assimp/Importer.hpp"
@@ -40,7 +40,7 @@ namespace Graphics {
 		}
 
 		// Load nodes
-		LoadNode(_scene->mRootNode, _scene);
+		LoadNode(_modelPath.c_str(), _scene->mRootNode, _scene);
 		//  Load materials
 		LoadMaterials(_scene, _materialPath.c_str());
 
@@ -101,7 +101,9 @@ namespace Graphics {
 				_material->UseMaterial();
 			}
 
-			m_meshList[i]->Render();
+			auto _mesh = cMesh::s_manager.Get(m_meshList[i]);
+			if (_mesh)
+				_mesh->Render();
 
 			if (_material) {
 				_material->CleanUpMaterialBind();
@@ -113,7 +115,9 @@ namespace Graphics {
 	{
 		for (size_t i = 0; i < m_meshList.size(); ++i)
 		{
-			m_meshList[i]->Render();
+			auto _mesh = cMesh::s_manager.Get(m_meshList[i]);
+			if (_mesh)
+				_mesh->Render();
 		}
 	}
 
@@ -128,10 +132,7 @@ namespace Graphics {
 
 		for (size_t i = 0; i < m_meshList.size(); ++i)
 		{
-			if (m_meshList[i]) {
-				delete m_meshList[i];
-				m_meshList[i] = nullptr;
-			}
+			cMesh::s_manager.Release(m_meshList[i]);
 		}
 		m_meshList.clear();
 		m_meshList.~vector();
@@ -185,21 +186,21 @@ namespace Graphics {
 
 	}
 
-	void cModel::LoadNode(const aiNode* i_node, const aiScene* i_scene)
+	void cModel::LoadNode(const char* i_path, const aiNode* i_node, const aiScene* i_scene)
 	{
 		// Load parent meshes
 		for (size_t i = 0; i < i_node->mNumMeshes; ++i)
 		{
-			LoadMesh(i_scene->mMeshes[i_node->mMeshes[i]], i_scene);
+			LoadMesh(i_path, i_scene->mMeshes[i_node->mMeshes[i]], i_scene);
 		}
 		// go through child nodes
 		for (size_t i = 0; i < i_node->mNumChildren; ++i)
 		{
-			LoadNode(i_node->mChildren[i], i_scene);
+			LoadNode(i_path, i_node->mChildren[i], i_scene);
 		}
 	}
 
-	void cModel::LoadMesh(const aiMesh* i_mesh, const aiScene* i_scene)
+	void cModel::LoadMesh(const char* i_path, const aiMesh* i_mesh, const aiScene* i_scene)
 	{
 		std::vector<float> _vertices;
 		std::vector<unsigned int> _indices;
@@ -232,12 +233,17 @@ namespace Graphics {
 				_indices.push_back(_face->mIndices[j]);
 			}
 		}
-
-		cMesh* _newMesh = new cMesh();
-		_newMesh->CreateMesh(&_vertices[0], &_indices[0], static_cast<GLuint>(_vertices.size()), static_cast<GLuint>(_indices.size()));
-
-		// Stored new mesh to the list and store its index to material
-		m_meshList.push_back(_newMesh);
+		cMesh::HANDLE _newMeshHandle;
+		std::string meshKey = std::string(i_path).append("_" + std::to_string(m_meshList.size()));
+		if (cMesh::s_manager.Load(meshKey, _newMeshHandle, _vertices, _indices))
+		{
+			// Stored new mesh to the list and store its index to material
+			m_meshList.push_back(_newMeshHandle);
+		}
+		else
+		{
+			printf("Loading Model fail: Fail to create mesh%s\n", meshKey);
+		}
 	}
 
 	void cModel::LoadMaterials(const aiScene* i_scene, const char* i_matName)
