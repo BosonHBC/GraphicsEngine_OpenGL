@@ -99,7 +99,7 @@ void Assignment::CreateLight()
 	//Graphics::CreatePointLight(glm::vec3(0, 150.f, 100.f), Color(0.1, 0.2, 0.8), 0.1f, 0.003f, 0.00003f, false, pLight1);
 	//Graphics::CreatePointLight(glm::vec3(-200, 100, -200), Color(0.8, 0.2, 0.2), 0.1f, 0.002f, 0.00002f, false, pLight2);
 	Graphics::CreateDirectionalLight(Color(1, 1, 1), glm::vec3(-1, -1, 0), true, dLight);
-	Graphics::CreateSpotLight(glm::vec3(0,100,100), glm::vec3(0, 1, 1), Color(0.6), 45.f, 0.1f, 0.03f, 0.0003f, true, spLight);
+	Graphics::CreateSpotLight(glm::vec3(0,100,80), glm::vec3(0, 1, 0.5), Color(0.8), 45.f, 0.1f, 0.03f, 0.0003f, true, spLight);
 }
 
 void Assignment::Run()
@@ -131,7 +131,7 @@ void Assignment::Run()
 		// ----------------------
 		// Rendering
 		// Frame data from camera
-		if (false)
+		if (true)
 		{
 			cEditorCamera _mirroredCamera = *m_editorCamera;
 			_mirroredCamera.MirrorAlongPlane(*m_mirror->Transform());
