@@ -12,6 +12,7 @@
 #include "Application/Application.h"
 #include "Application/Window/Window.h"
 #include "Material/Blinn/MatBlinn.h"
+#include "Material/Unlit/MatUnlit.h"
 namespace Graphics {
 
 	// TODO:
@@ -52,7 +53,8 @@ namespace Graphics {
 	std::vector<cSpotLight*> s_spotLight_list;
 
 	// Transform hint
-	Graphics::cModel::HANDLE s_arrows[3];
+	Graphics::cModel::HANDLE s_arrow;
+	Color s_arrowColor[3] = { Color(0, 0, 0.8f), Color(0.8f, 0, 0),Color(0, 0.8f, 0) };
 
 	//functions
 	void RenderScene();
@@ -150,22 +152,10 @@ namespace Graphics {
 		}
 		// Load arrows
 		{
-			std::string _arrowPath = "Contents/models/arrow_forward.model";
-			if (! (result = Graphics::cModel::s_manager.Load(_arrowPath, s_arrows[0])))
+			std::string _arrowPath = "Contents/models/arrow.model";
+			if (! (result = Graphics::cModel::s_manager.Load(_arrowPath, s_arrow)))
 			{
 				printf("Failed to Load arrow_forward!\n");
-				return result;
-			}
-			_arrowPath = "Contents/models/arrow_right.model";
-			if (!(result = Graphics::cModel::s_manager.Load(_arrowPath, s_arrows[1])))
-			{
-				printf("Failed to Load arrow_right!\n");
-				return result;
-			}
-			_arrowPath = "Contents/models/arrow_up.model";
-			if (!(result = Graphics::cModel::s_manager.Load(_arrowPath, s_arrows[2])))
-			{
-				printf("Failed to Load arrow_up!\n");
 				return result;
 			}
 		}
@@ -488,9 +478,7 @@ namespace Graphics {
 		if (!(result = s_uniformBuffer_ClipPlane.CleanUp())) {
 			printf("Fail to cleanup uniformBuffer_ClipPlane\n");
 		}
-		Graphics::cModel::s_manager.Release(s_arrows[0]);
-		Graphics::cModel::s_manager.Release(s_arrows[1]);
-		Graphics::cModel::s_manager.Release(s_arrows[2]);
+		Graphics::cModel::s_manager.Release(s_arrow);
 		// Clean up effect
 		for (auto it = s_KeyToEffect_map.begin(); it != s_KeyToEffect_map.end(); ++it)
 		{
@@ -546,6 +534,10 @@ namespace Graphics {
 				// Up
 				arrowTransform[2].SetRotation((*it)->Rotation() * glm::quat(glm::vec3(0, glm::radians(90.f), 0)));
 			}
+
+			cModel* _model = cModel::s_manager.Get(s_arrow);
+			cMatUnlit* _arrowMat = dynamic_cast<cMatUnlit*>(_model->GetMaterialAt());
+
 			for (int i = 0; i < 3; ++i)
 			{
 				arrowTransform[i].SetPosition((*it)->Position());
@@ -553,8 +545,8 @@ namespace Graphics {
 				arrowTransform[i].Update();
 				s_uniformBuffer_drawcall.Update(&UniformBufferFormats::sDrawCall(arrowTransform[i].M(), arrowTransform[i].TranspostInverse()));
 
-				cModel* _model = cModel::s_manager.Get(s_arrows[i]);
 				if (_model) {
+					_arrowMat->SetUnlitColor(s_arrowColor[i]);
 					_model->UpdateUniformVariables(s_currentEffect->GetProgramID());
 					_model->Render();
 				}

@@ -5,6 +5,6 @@ return
 {
 
     MaterialType = 3,
-    unitColor = {0,0.8,0}
+    unitColor = {1,0,1}
 
 }
