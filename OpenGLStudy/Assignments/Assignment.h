@@ -13,6 +13,7 @@ namespace Graphics {
 	class cPointLight;
 	class cAmbientLight;
 	class cDirectionalLight;
+	class cSpotLight;
 }
 //----------------------------------------------
 class Assignment : public Application::cApplication
@@ -25,7 +26,6 @@ public:
 	void Tick(float second_since_lastFrame);
 	void FixedTick();
 private:
-
 	void CreateActor();
 	void CreateCamera();
 	void CreateLight();
@@ -37,6 +37,7 @@ private:
 	Graphics::cPointLight* pLight2;
 	Graphics::cAmbientLight* aLight;
 	Graphics::cDirectionalLight* dLight;
+	Graphics::cSpotLight* spLight;
 
 	cActor* m_teapot;
 	cActor* m_teapot2;

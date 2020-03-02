@@ -19,7 +19,8 @@ namespace Graphics {
 	{
 		MT_INVALID,
 		MT_BLINN_PHONG,
-		MT_CUBEMAP
+		MT_CUBEMAP,
+		MT_UNLIT,
 		//... will support more in the future
 	};
 	//--------------------------

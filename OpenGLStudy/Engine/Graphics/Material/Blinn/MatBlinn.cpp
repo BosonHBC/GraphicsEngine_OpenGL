@@ -100,6 +100,7 @@ namespace Graphics {
 		cTexture::s_manager.Release(m_diffuseTextureHandle);
 		cTexture::s_manager.Release(m_specularTextureHandle);
 		cTexture::s_manager.Release(m_cubemapTextureHandle);
+		cTexture::s_manager.Release(m_reflectionTextureHandle);
 
 	}
 	void cMatBlinn::SetDiffuse(const std::string& i_diffusePath)

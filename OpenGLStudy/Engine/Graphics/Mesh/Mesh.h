@@ -1,11 +1,19 @@
 #pragma once
 #include "GL/glew.h"
-
+#include "Engine/Assets/AssetManager.h"
+#include "Engine/Assets/Handle.h"
 namespace Graphics {
 	// cMesh represent a triangular mesh which contains mesh data, handle drawing the mesh
 	class cMesh
 	{
 	public:
+		//--------------------------
+		// Asset management
+		using HANDLE = Assets::cHandle<cMesh>;
+		static Assets::cAssetManager < cMesh > s_manager;
+		static bool Load(const std::string& i_path, cMesh*& o_mesh, std::vector<float>& i_vertices, std::vector<unsigned int>& i_indices);
+		//--------------------------
+
 		/** Constructors and destructor */
 		cMesh();
 		~cMesh();

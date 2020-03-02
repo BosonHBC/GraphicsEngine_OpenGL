@@ -6,26 +6,25 @@ namespace Graphics {
 	{
 	public:
 		cSpotLight() : cPointLight() {}
-		cSpotLight(Color i_color,
-			GLfloat i_edge,
-			GLfloat i_const, GLfloat i_linear, GLfloat i_quadratic) :
-			m_edge(i_edge),
-			cPointLight(i_color, i_const, i_linear, i_quadratic) 
-		{
-			m_procEdge = cosf(glm::radians(m_edge));
-		}
+		cSpotLight(Color i_color, const glm::vec3& i_position,
+			const glm::vec3& i_direction,
+			GLfloat i_edge, GLfloat i_range,
+			GLfloat i_const, GLfloat i_linear, GLfloat i_quadratic);
+
 
 		virtual ~cSpotLight() {};
 		
-		void SetSpotLightInitialLocation(glm::vec3 i_pos, glm::vec3 i_dir);
 
 		/** overriding virtual functions*/
 		void Illuminate();
 		void SetupLight(const GLuint& i_programID, GLuint i_lightIndex = 0) override;
-
+		void UseShadowMap(GLuint i_textureUnit) override;
+		void CreateShadowMap(GLuint i_width, GLuint i_height) override;
+		glm::mat4 CalculateLightTransform() const;
+		void SetLightUniformTransform() override;
 	private:
-		glm::vec3 m_dir;
 		GLfloat m_edge, m_procEdge;
+		GLuint m_spotLightTransformID, m_spotLightShadowMapID;
 	};
 
 }
