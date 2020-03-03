@@ -11,15 +11,19 @@ const GLint WIDTH = 800, HEIGHT = 600; // 1280:1024 || 1024:768 || 1366 : 768
 int main()
 {
 	Assignment* _myGame = nullptr;
-	bool result =	Application::CreateApplication<Assignment>(_myGame, WIDTH, HEIGHT, "Assignment");
+	auto result = true;
 
-	if (!result) {
+	if (!(result = Application::CreateApplication<Assignment>(_myGame, WIDTH, HEIGHT, "Assignment"))) {
 		printf("Failed to create application!");
 		return 1;
 	}
-	_myGame->PostInitialization();
-	_myGame->Run();
-	
+	if (!(result = _myGame->PostInitialization())) {
+		printf("Failed to post initialize the application!");
+		return 1;
+	}
+
+	_myGame->Render();
+
 	Application::DestroyApplication(_myGame);
 
 #ifdef _DEBUG

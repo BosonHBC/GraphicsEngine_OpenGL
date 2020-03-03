@@ -102,7 +102,7 @@ void Assignment::CreateLight()
 	Graphics::CreateSpotLight(glm::vec3(0,150,0), glm::vec3(0, 1, 1), Color(0.8), 65.f, 0.1f, 0.03f, 0.0003f, true, spLight);
 }
 
-void Assignment::Run()
+void Assignment::Render()
 {
 
 	// loop until window closed

@@ -20,7 +20,7 @@ namespace Application {
 		virtual bool Initialize(GLuint i_width, GLuint i_height, const char* i_windowName = "Default Window");
 		virtual bool PostInitialization();
 		virtual void CleanUp();
-		virtual void Run() {};
+		virtual void Render() {};
 
 		// Real time update, call as much as possible
 		virtual void Tick(float second_since_lastFrame) {}
