@@ -99,7 +99,7 @@ void Assignment::CreateLight()
 	//Graphics::CreatePointLight(glm::vec3(0, 150.f, 100.f), Color(0.1, 0.2, 0.8), 0.1f, 0.003f, 0.00003f, false, pLight1);
 	//Graphics::CreatePointLight(glm::vec3(-200, 100, -200), Color(0.8, 0.2, 0.2), 0.1f, 0.002f, 0.00002f, false, pLight2);
 	Graphics::CreateDirectionalLight(Color(1, 1, 1), glm::vec3(-1, -1, 0), true, dLight);
-	Graphics::CreateSpotLight(glm::vec3(0,100,80), glm::vec3(0, 1, 0.5), Color(0.8), 45.f, 0.1f, 0.03f, 0.0003f, true, spLight);
+	Graphics::CreateSpotLight(glm::vec3(0,150,0), glm::vec3(0, 1, 1), Color(0.8), 65.f, 0.1f, 0.03f, 0.0003f, true, spLight);
 }
 
 void Assignment::Run()
@@ -122,12 +122,12 @@ void Assignment::Run()
 			Graphics::DirectionalShadowMap_Pass();
 		}
 		if (spLight) {
-			glm::mat4 spLightPV = spLight->CalculateLightTransform();
-			Graphics::UniformBufferFormats::sFrame _frameData_Shadow(spLightPV);
+			Graphics::UniformBufferFormats::sFrame _frameData_Shadow(spLight->CalculateLightTransform());
 			_frameData_Shadow.ViewPosition = spLight->Transform()->Position();
 			Graphics::SubmitDataToBeRendered(_frameData_Shadow, _renderingMap);
 			Graphics::SpotLightShadowMap_Pass();
 		}
+
 		// ----------------------
 		// Rendering
 		// Frame data from camera
@@ -185,7 +185,6 @@ void Assignment::Run()
 
 			Graphics::SubmitTransformToBeDisplayedWithTransformGizmo(_transforms);
 		}
-
 
 		// ----------------------
 		// Swap buffers
@@ -271,8 +270,8 @@ void Assignment::Tick(float second_since_lastFrame)
 	}
 
 	cTransform* rotateControl = nullptr;
-	if(spLight)
-	rotateControl = spLight->Transform();
+	if (spLight)
+		rotateControl = spLight->Transform();
 	if (rotateControl)
 	{
 		if (_windowInput->IsKeyDown(GLFW_KEY_LEFT)) {
@@ -282,10 +281,10 @@ void Assignment::Tick(float second_since_lastFrame)
 			rotateControl->Rotate(-cTransform::WorldUp, second_since_lastFrame);
 		}
 		if (_windowInput->IsKeyDown(GLFW_KEY_UP)) {
-			rotateControl->Rotate(cTransform::WorldRight,  second_since_lastFrame);
+			rotateControl->Rotate(cTransform::WorldRight, second_since_lastFrame);
 		}
 		if (_windowInput->IsKeyDown(GLFW_KEY_DOWN)) {
-			rotateControl->Rotate(-cTransform::WorldRight,  second_since_lastFrame);
+			rotateControl->Rotate(-cTransform::WorldRight, second_since_lastFrame);
 		}
 	}
 

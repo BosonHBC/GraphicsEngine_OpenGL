@@ -41,14 +41,8 @@ namespace Application {
 	bool cApplication::PostInitialization()
 	{
 		auto result = true;
-
-		// Create application thread by lambda
-		m_applicationThread = new std::thread(
-			[&](cApplication* app)
-			{
-				app->UpdateUntilExit();
-			}
-		, this);
+		// function ptr, member function owner, input arguments
+		m_applicationThread = new std::thread(&cApplication::ApplicationLoopThread, this, this);
 		return result;
 	}
 

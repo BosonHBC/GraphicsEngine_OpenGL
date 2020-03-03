@@ -47,6 +47,7 @@ namespace Application {
 		/** Handle threading*/
 		//---------------------------------------------------
 		std::thread* m_applicationThread;
+		// Start an application thread
 		void ApplicationLoopThread(void* const io_application);
 
 
