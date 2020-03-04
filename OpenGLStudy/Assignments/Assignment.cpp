@@ -97,7 +97,7 @@ void Assignment::CreateLight()
 	//Graphics::CreatePointLight(glm::vec3(0, 150.f, 100.f), Color(0.1, 0.2, 0.8), 0.1f, 0.003f, 0.00003f, false, pLight1);
 	//Graphics::CreatePointLight(glm::vec3(-200, 100, -200), Color(0.8, 0.2, 0.2), 0.1f, 0.002f, 0.00002f, false, pLight2);
 	Graphics::CreateDirectionalLight(Color(1, 1, 1), glm::vec3(-1, -1, 0), true, dLight);
-	Graphics::CreateSpotLight(glm::vec3(0,150,0), glm::vec3(0, 1, 1), Color(0.8), 65.f, 0.1f, 0.03f, 0.0003f, true, spLight);
+	Graphics::CreateSpotLight(glm::vec3(0, 150, 0), glm::vec3(0, 1, 1), Color(0.8), 65.f, 0.1f, 0.03f, 0.0003f, true, spLight);
 }
 
 void Assignment::Run()
@@ -154,7 +154,6 @@ void Assignment::Tick(float second_since_lastFrame)
 
 		m_editorCamera->MouseControl(_windowInput, 0.01667f);
 	}
-	dLight->Transform()->Rotate(-cTransform::WorldUp, 0.01677f);
 	// for recompile shader
 	if (m_window->GetWindowInput()->IsKeyDown(GLFW_KEY_F6)) {
 		Graphics::GetCurrentEffect()->RecompileShader(Constants::CONST_PATH_DEFAULT_VERTEXSHADER, GL_VERTEX_SHADER);
@@ -230,59 +229,86 @@ void Assignment::Tick(float second_since_lastFrame)
 
 		/** 2. Clear the application thread data and submit new one */
 		{
-			Graphics::ClearApplicationThreadData();
-			// Submit data to be render
-			std::vector<std::pair<Graphics::cModel::HANDLE, cTransform>> _renderingMap;
-			_renderingMap.push_back({ m_sphere->GetModelHandle(), *m_sphere->Transform() });
-			_renderingMap.push_back({ m_teapot->GetModelHandle(), *m_teapot->Transform() });
-			_renderingMap.push_back({ m_teapot2->GetModelHandle(), *m_teapot2->Transform() });
-			_renderingMap.push_back({ m_mirror->GetModelHandle(), *m_mirror->Transform() });
-			// Frame data from directional light
-			if (dLight) {
-				Graphics::UniformBufferFormats::sFrame _frameData_Shadow(dLight->CalculateLightTransform());
-				Graphics::SubmitDataToBeRendered(_frameData_Shadow, _renderingMap, &Graphics::DirectionalShadowMap_Pass);
-			}
-			if (spLight) {
-				Graphics::UniformBufferFormats::sFrame _frameData_Shadow(spLight->CalculateLightTransform());
-				_frameData_Shadow.ViewPosition = spLight->Transform()->Position();
-				Graphics::SubmitDataToBeRendered(_frameData_Shadow, _renderingMap, &Graphics::SpotLightShadowMap_Pass);
-			}
-			// ----------------------
-			// Rendering
-			// Frame data from camera
-			if (true)
+			// Submit geometry data
 			{
-				cEditorCamera _mirroredCamera = *m_editorCamera;
-				_mirroredCamera.MirrorAlongPlane(*m_mirror->Transform());
-				Graphics::UniformBufferFormats::sFrame _frameData_Mirrored(_mirroredCamera.GetProjectionMatrix(), _mirroredCamera.GetViewMatrix());
-				_frameData_Mirrored.ViewPosition = _mirroredCamera.CamLocation();
-				_renderingMap.clear();
-				_renderingMap.push_back({ m_teapot->GetModelHandle(), *m_teapot->Transform() });
+				Graphics::ClearApplicationThreadData();
+				// Submit data to be render
+				std::vector<std::pair<Graphics::cModel::HANDLE, cTransform>> _renderingMap;
 				_renderingMap.push_back({ m_sphere->GetModelHandle(), *m_sphere->Transform() });
+				_renderingMap.push_back({ m_teapot->GetModelHandle(), *m_teapot->Transform() });
 				_renderingMap.push_back({ m_teapot2->GetModelHandle(), *m_teapot2->Transform() });
-				glm::vec4 _plane = glm::vec4(m_mirror->Transform()->Up(), m_mirror->Transform()->Position().y);
-				Graphics::SubmitClipPlaneData(_plane);
-				Graphics::SubmitDataToBeRendered(_frameData_Mirrored, _renderingMap, &Graphics::Render_Pass_CaptureCameraView);
+				_renderingMap.push_back({ m_mirror->GetModelHandle(), *m_mirror->Transform() });
+				// Frame data from directional light
+				if (dLight) {
+					Graphics::UniformBufferFormats::sFrame _frameData_Shadow(dLight->CalculateLightTransform());
+					Graphics::SubmitDataToBeRendered(_frameData_Shadow, _renderingMap, &Graphics::DirectionalShadowMap_Pass);
+				}
+				if (spLight) {
+					Graphics::UniformBufferFormats::sFrame _frameData_Shadow(spLight->CalculateLightTransform());
+					_frameData_Shadow.ViewPosition = spLight->Transform()->Position();
+					Graphics::SubmitDataToBeRendered(_frameData_Shadow, _renderingMap, &Graphics::SpotLightShadowMap_Pass);
+				}
+
+				// Frame data from camera
+				if (true)
+				{
+					cEditorCamera _mirroredCamera = *m_editorCamera;
+					_mirroredCamera.MirrorAlongPlane(*m_mirror->Transform());
+					Graphics::UniformBufferFormats::sFrame _frameData_Mirrored(_mirroredCamera.GetProjectionMatrix(), _mirroredCamera.GetViewMatrix());
+					_frameData_Mirrored.ViewPosition = _mirroredCamera.CamLocation();
+					_renderingMap.clear();
+					_renderingMap.push_back({ m_teapot->GetModelHandle(), *m_teapot->Transform() });
+					_renderingMap.push_back({ m_sphere->GetModelHandle(), *m_sphere->Transform() });
+					_renderingMap.push_back({ m_teapot2->GetModelHandle(), *m_teapot2->Transform() });
+					glm::vec4 _plane = glm::vec4(m_mirror->Transform()->Up(), m_mirror->Transform()->Position().y);
+					Graphics::SubmitClipPlaneData(_plane);
+					Graphics::SubmitDataToBeRendered(_frameData_Mirrored, _renderingMap, &Graphics::Render_Pass_CaptureCameraView);
+				}
+
+				_renderingMap.clear();
+				Graphics::UniformBufferFormats::sFrame _frameData_Camera(m_editorCamera->GetProjectionMatrix(), m_editorCamera->GetViewMatrix());
+				_frameData_Camera.ViewPosition = m_editorCamera->CamLocation();
+				_renderingMap.push_back({ m_teapot->GetModelHandle(), *m_teapot->Transform() });
+				_renderingMap.push_back({ m_teapot2->GetModelHandle(), *m_teapot2->Transform() });
+				_renderingMap.push_back({ m_mirror->GetModelHandle(), *m_mirror->Transform() });
+				_renderingMap.push_back({ m_sphere->GetModelHandle(), *m_sphere->Transform() });
+
+				Graphics::SubmitDataToBeRendered(_frameData_Camera, _renderingMap, &Graphics::Render_Pass);
+
+				// Cube map
+				_renderingMap.clear();
+				_renderingMap.push_back({ m_cubemap->GetModelHandle(), *m_cubemap->Transform() });
+				Graphics::UniformBufferFormats::sFrame _frameData_Cubemap(m_editorCamera->GetProjectionMatrix(), glm::mat4(glm::mat3(m_editorCamera->GetViewMatrix())));
+				Graphics::SubmitDataToBeRendered(_frameData_Camera, _renderingMap, &Graphics::CubeMap_Pass);
 			}
 
-			_renderingMap.clear();
-			Graphics::UniformBufferFormats::sFrame _frameData_Camera(m_editorCamera->GetProjectionMatrix(), m_editorCamera->GetViewMatrix());
-			_frameData_Camera.ViewPosition = m_editorCamera->CamLocation();
-			_renderingMap.push_back({ m_teapot->GetModelHandle(), *m_teapot->Transform() });
-			_renderingMap.push_back({ m_teapot2->GetModelHandle(), *m_teapot2->Transform() });
-			_renderingMap.push_back({ m_mirror->GetModelHandle(), *m_mirror->Transform() });
-			_renderingMap.push_back({ m_sphere->GetModelHandle(), *m_sphere->Transform() });
-
-			Graphics::SubmitDataToBeRendered(_frameData_Camera, _renderingMap, &Graphics::Render_Pass);
-
-			// Cube map
-			_renderingMap.clear();
-			_renderingMap.push_back({ m_cubemap->GetModelHandle(), *m_cubemap->Transform() });
-			Graphics::UniformBufferFormats::sFrame _frameData_Cubemap(m_editorCamera->GetProjectionMatrix(), glm::mat4(glm::mat3(m_editorCamera->GetViewMatrix())));
-			Graphics::SubmitDataToBeRendered(_frameData_Camera, _renderingMap, &Graphics::CubeMap_Pass);
+			// Submit lighting data
+			{
+				std::vector<Graphics::cPointLight> _pLights;
+				std::vector<Graphics::cSpotLight> _spLights;
+				if (pLight1)
+				{
+					pLight1->UpdateLightIndex(_pLights.size());
+					_pLights.push_back(*pLight1);
+				}
+					
+				if (pLight2)
+				{
+					pLight2->UpdateLightIndex(_pLights.size());
+					_pLights.push_back(*pLight2);
+				}
+					
+				if (spLight)
+				{
+					spLight->UpdateLightIndex(_spLights.size());
+					_spLights.push_back(*spLight);
+				}
+					
+				Graphics::SubmitLightingData(_pLights, _spLights, *aLight, *dLight);
+			}
 		}
 
-		
+
 
 	}
 }

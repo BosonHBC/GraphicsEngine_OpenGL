@@ -75,6 +75,9 @@ namespace Graphics {
 			struct Light16 {
 				Color color; // 12 bytes
 				bool enableShadow; // 4 bytes
+
+				Light16() : color(Color::Black()), enableShadow(false)
+				{}
 			};
 
 			// Lighting, no interpolation
@@ -85,6 +88,8 @@ namespace Graphics {
 				Light16 base; // 16 bytes
 				glm::vec3 direction; // 12 bytes
 				V1Padding; // 4 bytes
+
+				DirectionalLight32() : direction(glm::vec3(0, 1, 0)) {}
 			};
 			struct PointLight48 {
 				Light16 base; // 16 bytes
@@ -93,11 +98,16 @@ namespace Graphics {
 				float linear; // 4bytes
 				float quadratic; // 4bytes
 				V2Padding; // 8bytes
+
+				PointLight48() : position(glm::vec3(0,0,0)), constant(1), linear(0), quadratic(0)
+				{}
 			};
 			struct SpotLight64 {
 				PointLight48 base; // 48 bytes
 				glm::vec3 direction; // 12 bytes
 				float edge; // 4 bytes
+				SpotLight64() : direction(glm::vec3(0, 1, 0)), edge(1)
+				{}
 			};
 		}
 

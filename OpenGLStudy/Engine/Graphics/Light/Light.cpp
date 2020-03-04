@@ -20,9 +20,25 @@ namespace Graphics {
 		m_shadowMap = i_other.m_shadowMap;
 	}
 
+	cGenLight& cGenLight::operator=(const cGenLight& i_other)
+	{
+		m_color = i_other.m_color;
+		m_lightIndex = i_other.m_lightIndex;
+		m_enableShadow = i_other.m_enableShadow;
+		m_transform = i_other.m_transform; 
+		m_lightPrjectionMatrix = i_other.m_lightPrjectionMatrix;
+		m_shadowMap = i_other.m_shadowMap;
+		return *this;
+	}
+
 	void cGenLight::SetupLight(const GLuint& i_programID, GLuint i_lightIndex)
 	{
 		m_lightIndex = (i_lightIndex < MAX_COUNT_PER_LIGHT)? i_lightIndex : MAX_COUNT_PER_LIGHT-1;
+	}
+
+	void cGenLight::UpdateLightIndex(GLuint i_lightIndex)
+	{
+		m_lightIndex = (i_lightIndex < MAX_COUNT_PER_LIGHT) ? i_lightIndex : MAX_COUNT_PER_LIGHT - 1;
 	}
 
 	void cGenLight::CleanUp()

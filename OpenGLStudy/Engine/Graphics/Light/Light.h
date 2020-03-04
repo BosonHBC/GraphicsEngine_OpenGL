@@ -18,11 +18,12 @@ namespace Graphics {
 		cGenLight();
 		cGenLight(Color i_color);
 		cGenLight(const cGenLight& i_other);
-		cGenLight& operator = (const cGenLight& i_other) = delete;
+		cGenLight& operator = (const cGenLight& i_other);
 		virtual ~cGenLight() { CleanUp(); }
 
 		/**Usage function*/
 		virtual void SetupLight(const GLuint& i_programID, GLuint i_lightIndex = 0);
+		void UpdateLightIndex(GLuint i_lightIndex);
 		cTransform* Transform() { return &m_transform; }
 		virtual void CleanUp();
 		/** Pure virtual functions*/

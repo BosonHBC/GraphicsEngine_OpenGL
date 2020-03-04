@@ -3,16 +3,10 @@
 #include "Graphics/UniformBuffer/UniformBufferFormats.h"
 namespace Graphics {
 
-	cAmbientLight::cAmbientLight(const cAmbientLight& i_other)
-		:cGenLight(i_other)
-	{
-	}
-
 	cAmbientLight::~cAmbientLight()
 	{
 
 	}
-
 
 	void cAmbientLight::SetupLight(const GLuint& i_programID, GLuint i_lightIndex)
 	{

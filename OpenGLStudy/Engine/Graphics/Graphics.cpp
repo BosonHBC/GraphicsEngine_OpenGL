@@ -53,7 +53,7 @@ namespace Graphics {
 	cFrameBuffer s_cameraCapture;
 
 	sDataRequiredToRenderAFrame s_dataRequiredToRenderAFrame[2];
-	auto* s_dateSubmittedByApplicationThread = &s_dataRequiredToRenderAFrame[0];
+	auto* s_dataSubmittedByApplicationThread = &s_dataRequiredToRenderAFrame[0];
 	auto* s_dateRenderingByGraphicThread = &s_dataRequiredToRenderAFrame[1];
 
 	// Effect
@@ -187,14 +187,14 @@ namespace Graphics {
 
 	void RenderFrame()
 	{
-		/** 1. Wait for data being submitted here */ 
+		/** 1. Wait for data being submitted here */
 		// Acquire the lock
 		std::unique_lock<std::mutex> _mlock(s_graphicMutex);
 		// Wait until the conditional variable is signaled
 		s_whenAllDataHasBeenSubmittedFromApplicationThread.wait(_mlock);
 
 		// After data has been submitted, swap the data
-		std::swap(s_dateSubmittedByApplicationThread, s_dateRenderingByGraphicThread);
+		std::swap(s_dataSubmittedByApplicationThread, s_dateRenderingByGraphicThread);
 		s_whenDataHasBeenSwappedInGraphicThread.notify_one();
 
 		/** 2. Start to render pass one by one */
@@ -303,32 +303,10 @@ namespace Graphics {
 			glClearColor(0, 0, 0, 1.f);
 			// A lot of things can be cleaned like color buffer, depth buffer, so we need to specify what to clear
 			glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-
-
 		}
 
 		// Update lighting data
-		{
-
-			if (s_ambientLight)
-				s_ambientLight->Illuminate();
-
-			if (s_directionalLight) {
-				s_directionalLight->Illuminate();
-			}
-
-			for (auto it : s_pointLight_list)
-			{
-				it->Illuminate();
-			}
-			for (auto it : s_spotLight_list)
-			{
-				it->Illuminate();
-			}
-			s_globalLightingData.pointLightCount = s_pointLight_list.size();
-			s_globalLightingData.spotLightCount = s_spotLight_list.size();
-			s_uniformBuffer_Lighting.Update(&s_globalLightingData);
-		}
+		UpdateLightingData();
 		// Start a draw call loop
 		RenderScene();
 
@@ -350,11 +328,15 @@ namespace Graphics {
 
 	void SubmitClipPlaneData(const glm::vec4& i_plane0, const glm::vec4& i_plane1 /*= glm::vec4(0,0,0,0)*/, const glm::vec4& i_plane2 /*= glm::vec4(0, 0, 0, 0)*/, const glm::vec4& i_plane3 /*= glm::vec4(0, 0, 0, 0)*/)
 	{
-		s_dateSubmittedByApplicationThread->s_ClipPlane = UniformBufferFormats::sClipPlane(i_plane0, i_plane1, i_plane2, i_plane3);
+		s_dataSubmittedByApplicationThread->s_ClipPlane = UniformBufferFormats::sClipPlane(i_plane0, i_plane1, i_plane2, i_plane3);
 	}
 
 	void SubmitLightingData(const std::vector<cPointLight>& i_pointLights, const std::vector<cSpotLight>& i_spotLights, const cAmbientLight& i_ambientLight, const cDirectionalLight& i_directionalLight)
 	{
+		s_dataSubmittedByApplicationThread->s_pointLights = i_pointLights;
+		s_dataSubmittedByApplicationThread->s_spotLights = i_spotLights;
+		s_dataSubmittedByApplicationThread->s_directionalLight = i_directionalLight;
+		s_dataSubmittedByApplicationThread->s_ambientLight = i_ambientLight;
 
 	}
 	void SubmitDataToBeRendered(const UniformBufferFormats::sFrame& i_frameData, const std::vector<std::pair<Graphics::cModel::HANDLE, cTransform>>& i_modelToTransform_map, void(*func_ptr)())
@@ -363,7 +345,7 @@ namespace Graphics {
 		inComingPasses.FrameData = i_frameData;
 		inComingPasses.ModelToTransform_map = i_modelToTransform_map;
 		inComingPasses.RenderPassFunction = func_ptr;
-		s_dateSubmittedByApplicationThread->s_renderPasses.push_back(inComingPasses);
+		s_dataSubmittedByApplicationThread->s_renderPasses.push_back(inComingPasses);
 	}
 
 	void SubmitTransformToBeDisplayedWithTransformGizmo(const std::vector< cTransform*>& i_transforms)
@@ -413,9 +395,9 @@ namespace Graphics {
 
 	void ClearApplicationThreadData()
 	{
-		s_dateSubmittedByApplicationThread->s_renderPasses.clear();
-		s_dateSubmittedByApplicationThread->s_pointLights.clear();
-		s_dateSubmittedByApplicationThread->s_spotLights.clear();
+		s_dataSubmittedByApplicationThread->s_renderPasses.clear();
+		s_dataSubmittedByApplicationThread->s_pointLights.clear();
+		s_dataSubmittedByApplicationThread->s_spotLights.clear();
 
 	}
 	void Render_Pass()
@@ -425,8 +407,7 @@ namespace Graphics {
 		{
 			s_currentEffect = GetEffectByKey(Constants::CONST_DEFAULT_EFFECT_KEY);
 			s_currentEffect->UseEffect();
-			if (s_directionalLight)
-				s_directionalLight->SetupLight(s_currentEffect->GetProgramID(), 0);
+			
 		}
 		// Reset window size
 		{
@@ -444,39 +425,8 @@ namespace Graphics {
 
 		}
 
-		// Update lighting data
-		{
-			if (s_ambientLight)
-				s_ambientLight->Illuminate();
-
-			if (s_directionalLight) {
-				s_directionalLight->Illuminate();
-				s_directionalLight->SetLightUniformTransform();
-				if (s_directionalLight->IsShadowEnabled()) {
-					s_directionalLight->UseShadowMap(2);
-					s_directionalLight->GetShadowMap()->Read(GL_TEXTURE2);
-				}
-			}
-
-			for (auto it : s_pointLight_list)
-			{
-				it->Illuminate();
-			}
-			for (auto it : s_spotLight_list)
-			{
-				it->Illuminate();
-				it->SetupLight(s_currentEffect->GetProgramID(), 0);
-				it->SetLightUniformTransform();
-				if (it->IsShadowEnabled()) {
-					it->UseShadowMap(5);
-					it->GetShadowMap()->Read(GL_TEXTURE5);
-				}
-			}
-			s_globalLightingData.pointLightCount = s_pointLight_list.size();
-			s_globalLightingData.spotLightCount = s_spotLight_list.size();
-			s_uniformBuffer_Lighting.Update(&s_globalLightingData);
-
-		}
+		// Update Lighting Data
+		UpdateLightingData();
 		// Start a draw call loop
 		RenderScene();
 		// clear program
@@ -597,7 +547,7 @@ namespace Graphics {
 		return result;
 	}
 
-	
+
 	bool CreateEffect(const char* i_key, const char* i_vertexShaderPath, const char* i_fragmentShaderPath)
 	{
 		auto result = true;
@@ -705,6 +655,45 @@ namespace Graphics {
 		o_directionalLight = newDirectionalLight;
 		s_directionalLight = newDirectionalLight;
 		return result;
+	}
+
+	void UpdateLightingData()
+	{
+		s_dateRenderingByGraphicThread->s_ambientLight.Illuminate();
+
+		// Directional Light
+		{
+			cDirectionalLight* _directionalLight = &s_dateRenderingByGraphicThread->s_directionalLight;
+			s_dateRenderingByGraphicThread->s_directionalLight.SetupLight(s_currentEffect->GetProgramID(), 0);
+			_directionalLight->Illuminate();
+			_directionalLight->SetLightUniformTransform();
+			if (_directionalLight->IsShadowEnabled()) {
+				_directionalLight->UseShadowMap(2);
+				_directionalLight->GetShadowMap()->Read(GL_TEXTURE2);
+			}
+		}
+
+		for (auto it : s_dateRenderingByGraphicThread->s_pointLights)
+		{
+			it.Illuminate();
+		}
+		for (int i = 0; i < s_dateRenderingByGraphicThread->s_spotLights.size(); ++i)
+		{
+			auto* it = &s_dateRenderingByGraphicThread->s_spotLights[i];
+
+			it->SetupLight(s_currentEffect->GetProgramID(), i);
+			it->SetLightUniformTransform();
+			it->Illuminate();
+
+			if (it->IsShadowEnabled()) {
+				it->UseShadowMap(5);
+				it->GetShadowMap()->Read(GL_TEXTURE5);
+			}
+		}
+		s_globalLightingData.pointLightCount = s_dateRenderingByGraphicThread->s_pointLights.size();
+		s_globalLightingData.spotLightCount = s_dateRenderingByGraphicThread->s_spotLights.size();
+		s_uniformBuffer_Lighting.Update(&s_globalLightingData);
+
 	}
 
 	//----------------------------------------------------------------------------------
