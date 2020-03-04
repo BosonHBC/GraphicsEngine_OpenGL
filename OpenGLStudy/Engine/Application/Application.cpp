@@ -99,6 +99,9 @@ namespace Application {
 			}
 
 			m_shouldApplicationLoopExit = m_window->GetShouldClose();
+
+			/** Let the graphic thread know that all data has been submitted */
+			Graphics::Notify_DataHasBeenSubmited();
 		}
 
 	}

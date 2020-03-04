@@ -5,14 +5,20 @@ namespace Graphics {
 
 	cGenLight::cGenLight(): m_color(Color::White())
 	{
-		m_transform = new cTransform();
 	}
 
 	cGenLight::cGenLight(Color i_color): m_color(i_color)
 	{
-		m_transform = new cTransform();
 	}
 
+
+	cGenLight::cGenLight(const cGenLight& i_other) :
+		m_color(i_other.m_color), m_lightIndex(i_other.m_lightIndex), m_enableShadow(i_other.m_enableShadow),
+		m_transform(i_other.m_transform), m_lightPrjectionMatrix(i_other.m_lightPrjectionMatrix)
+	{
+		// Let the light point to the same shadow map
+		m_shadowMap = i_other.m_shadowMap;
+	}
 
 	void cGenLight::SetupLight(const GLuint& i_programID, GLuint i_lightIndex)
 	{
@@ -21,8 +27,7 @@ namespace Graphics {
 
 	void cGenLight::CleanUp()
 	{
-		safe_delete(m_transform);
-		safe_delete(m_shadowMap);
+		m_transform.~cTransform();
 	}
 
 	void cGenLight::CreateShadowMap(GLuint i_width, GLuint i_height)
@@ -34,6 +39,12 @@ namespace Graphics {
 	bool cGenLight::IsShadowMapValid() const
 	{
 		return m_shadowMap->IsValid();
+	}
+
+	void cGenLight::CleanUpShadowMap()
+	{
+		// Shadow map should be cleanup manually
+		safe_delete(m_shadowMap);
 	}
 
 }

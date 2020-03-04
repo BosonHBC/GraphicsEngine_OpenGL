@@ -10,15 +10,13 @@
 #include "Time/Time.h"
 
 #include "Graphics/Camera/EditorCamera/EditorCamera.h"
-#include "Light/DirectionalLight/DirectionalLight.h"
-#include "FrameBuffer/cFrameBuffer.h"
+#include "Graphics/Graphics.h"
 #include "Material/Material.h"
 #include "Actor/Actor.h"
 #include "Transform/Transform.h"
 #include "Engine/Graphics/Model/Model.h"
 #include "Material/Blinn/MatBlinn.h"
 #include "Material/Cubemap/MatCubemap.h"
-#include "UniformBuffer/UniformBufferFormats.h"
 #include "Graphics/Texture/Texture.h"
 
 #include <map>
@@ -110,7 +108,7 @@ void Assignment::Run()
 		glfwPollEvents();
 
 		Graphics::RenderFrame();
-		
+		//dLight->Transform()->Rotate(cTransform::WorldUp, 0.01677f);
 /*
 		if (true)
 		{
@@ -156,12 +154,12 @@ void Assignment::Tick(float second_since_lastFrame)
 
 		m_editorCamera->MouseControl(_windowInput, 0.01667f);
 	}
-	//dLight->Transform()->Rotate(-cTransform::WorldUp, 0.01677f);
+	dLight->Transform()->Rotate(-cTransform::WorldUp, 0.01677f);
 	// for recompile shader
 	if (m_window->GetWindowInput()->IsKeyDown(GLFW_KEY_F6)) {
 		Graphics::GetCurrentEffect()->RecompileShader(Constants::CONST_PATH_DEFAULT_VERTEXSHADER, GL_VERTEX_SHADER);
 	}
-
+	//dLight->Transform()->Rotate(-cTransform::WorldUp, 0.01677f);
 	if (m_teapot) {
 		m_teapot->Transform()->gRotate(glm::vec3(0, 1.f, 0), second_since_lastFrame);
 	}
@@ -194,8 +192,8 @@ void Assignment::Tick(float second_since_lastFrame)
 	cTransform* rotateControl = nullptr;
 	if (spLight)
 		rotateControl = spLight->Transform();
-	if (dLight)
-		rotateControl = dLight->Transform();
+	//if (dLight)
+		//rotateControl = dLight->Transform();
 	if (rotateControl)
 	{
 		if (_windowInput->IsKeyDown(GLFW_KEY_LEFT)) {
@@ -284,8 +282,8 @@ void Assignment::Tick(float second_since_lastFrame)
 			Graphics::SubmitDataToBeRendered(_frameData_Camera, _renderingMap, &Graphics::CubeMap_Pass);
 		}
 
-		/** 3. Let the graphic thread know that all data has been submitted */
-		Graphics::Notify_DataHasBeenSubmited();
+		
+
 	}
 }
 

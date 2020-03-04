@@ -11,8 +11,13 @@ namespace Graphics {
 			GLfloat i_edge, GLfloat i_range,
 			GLfloat i_const, GLfloat i_linear, GLfloat i_quadratic);
 
+		cSpotLight(const cSpotLight& i_other) : cPointLight(i_other), 
+			m_spotLightTransformID(i_other.m_spotLightTransformID), 
+			m_spotLightShadowMapID(i_other.m_spotLightShadowMapID) {}
+		virtual ~cSpotLight() { m_edge = 0; m_procEdge = 0; m_spotLightTransformID = 0; m_spotLightShadowMapID = 0; }
+		cSpotLight& operator =(const cSpotLight& i_other) = delete;
 
-		virtual ~cSpotLight() {};
+
 		
 
 		/** overriding virtual functions*/

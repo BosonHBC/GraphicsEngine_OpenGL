@@ -31,6 +31,11 @@ namespace Graphics {
 	{
 		UniformBufferFormats::sClipPlane s_ClipPlane;
 		std::vector<sPass> s_renderPasses;
+		// Lighting data
+		std::vector<cPointLight> s_pointLights;
+		std::vector<cSpotLight> s_spotLights;
+		cAmbientLight s_ambientLight;
+		cDirectionalLight s_directionalLight;
 	};
 	unsigned int s_currentRenderPass = 0;
 	// Global data
@@ -348,6 +353,71 @@ namespace Graphics {
 		s_dateSubmittedByApplicationThread->s_ClipPlane = UniformBufferFormats::sClipPlane(i_plane0, i_plane1, i_plane2, i_plane3);
 	}
 
+	void SubmitLightingData(const std::vector<cPointLight>& i_pointLights, const std::vector<cSpotLight>& i_spotLights, const cAmbientLight& i_ambientLight, const cDirectionalLight& i_directionalLight)
+	{
+
+	}
+	void SubmitDataToBeRendered(const UniformBufferFormats::sFrame& i_frameData, const std::vector<std::pair<Graphics::cModel::HANDLE, cTransform>>& i_modelToTransform_map, void(*func_ptr)())
+	{
+		sPass inComingPasses;
+		inComingPasses.FrameData = i_frameData;
+		inComingPasses.ModelToTransform_map = i_modelToTransform_map;
+		inComingPasses.RenderPassFunction = func_ptr;
+		s_dateSubmittedByApplicationThread->s_renderPasses.push_back(inComingPasses);
+	}
+
+	void SubmitTransformToBeDisplayedWithTransformGizmo(const std::vector< cTransform*>& i_transforms)
+	{
+		glDisable(GL_DEPTH_TEST);
+		s_currentEffect = GetEffectByKey("UnlitEffect");
+		s_currentEffect->UseEffect();
+
+		// TODE: Error
+		//s_uniformBuffer_frame.Update(&s_dataRequiredToRenderAFrame.FrameData);
+
+		for (auto it = i_transforms.begin(); it != i_transforms.end(); ++it)
+		{
+			// Get forward transform
+			cTransform arrowTransform[3];
+			{
+				// Forward
+				arrowTransform[0].SetRotation((*it)->Rotation() * glm::quat(glm::vec3(glm::radians(90.f), 0, 0)));
+				// Right
+				arrowTransform[1].SetRotation((*it)->Rotation() * glm::quat(glm::vec3(0, 0, glm::radians(90.f))));
+				// Up
+				arrowTransform[2].SetRotation((*it)->Rotation() * glm::quat(glm::vec3(0, glm::radians(90.f), 0)));
+			}
+
+			cModel* _model = cModel::s_manager.Get(s_arrow);
+			cMatUnlit* _arrowMat = dynamic_cast<cMatUnlit*>(_model->GetMaterialAt());
+
+			for (int i = 0; i < 3; ++i)
+			{
+				arrowTransform[i].SetPosition((*it)->Position());
+				arrowTransform[i].SetScale(glm::vec3(2, 10, 2));
+				arrowTransform[i].Update();
+				s_uniformBuffer_drawcall.Update(&UniformBufferFormats::sDrawCall(arrowTransform[i].M(), arrowTransform[i].TranspostInverse()));
+
+				if (_model) {
+					_arrowMat->SetUnlitColor(s_arrowColor[i]);
+					_model->UpdateUniformVariables(s_currentEffect->GetProgramID());
+					_model->Render();
+				}
+			}
+		}
+
+
+		s_currentEffect->UnUseEffect();
+		glEnable(GL_DEPTH_TEST);
+	}
+
+	void ClearApplicationThreadData()
+	{
+		s_dateSubmittedByApplicationThread->s_renderPasses.clear();
+		s_dateSubmittedByApplicationThread->s_pointLights.clear();
+		s_dateSubmittedByApplicationThread->s_spotLights.clear();
+
+	}
 	void Render_Pass()
 	{
 
@@ -504,18 +574,22 @@ namespace Graphics {
 		// Clean up point light
 		for (auto it = s_pointLight_list.begin(); it != s_pointLight_list.end(); ++it)
 		{
+			(*it)->CleanUpShadowMap();
 			safe_delete(*it);
 		}
 		s_pointLight_list.clear();
 		for (auto it = s_spotLight_list.begin(); it != s_spotLight_list.end(); ++it)
 		{
+			(*it)->CleanUpShadowMap();
 			safe_delete(*it);
 		}
 		s_spotLight_list.clear();
 
 
 		// Clean up ambient light
+		s_ambientLight->CleanUpShadowMap();
 		safe_delete(s_ambientLight);
+		s_directionalLight->CleanUpShadowMap();
 		safe_delete(s_directionalLight);
 
 		s_cameraCapture.~cFrameBuffer();
@@ -523,60 +597,7 @@ namespace Graphics {
 		return result;
 	}
 
-	void SubmitDataToBeRendered(const UniformBufferFormats::sFrame& i_frameData, const std::vector<std::pair<Graphics::cModel::HANDLE, cTransform>>& i_modelToTransform_map, void(*func_ptr)())
-	{
-		sPass inComingPasses;
-		inComingPasses.FrameData = i_frameData;
-		inComingPasses.ModelToTransform_map = i_modelToTransform_map;
-		inComingPasses.RenderPassFunction = func_ptr;
-		s_dateSubmittedByApplicationThread->s_renderPasses.push_back(inComingPasses);
-	}
-
-	void SubmitTransformToBeDisplayedWithTransformGizmo(const std::vector< cTransform*>& i_transforms)
-	{
-		glDisable(GL_DEPTH_TEST);
-		s_currentEffect = GetEffectByKey("UnlitEffect");
-		s_currentEffect->UseEffect();
-
-		// TODE: Error
-		//s_uniformBuffer_frame.Update(&s_dataRequiredToRenderAFrame.FrameData);
-
-		for (auto it = i_transforms.begin(); it != i_transforms.end(); ++it)
-		{
-			// Get forward transform
-			cTransform arrowTransform[3];
-			{
-				// Forward
-				arrowTransform[0].SetRotation((*it)->Rotation() * glm::quat(glm::vec3(glm::radians(90.f), 0, 0)));
-				// Right
-				arrowTransform[1].SetRotation((*it)->Rotation() * glm::quat(glm::vec3(0, 0, glm::radians(90.f))));
-				// Up
-				arrowTransform[2].SetRotation((*it)->Rotation() * glm::quat(glm::vec3(0, glm::radians(90.f), 0)));
-			}
-
-			cModel* _model = cModel::s_manager.Get(s_arrow);
-			cMatUnlit* _arrowMat = dynamic_cast<cMatUnlit*>(_model->GetMaterialAt());
-
-			for (int i = 0; i < 3; ++i)
-			{
-				arrowTransform[i].SetPosition((*it)->Position());
-				arrowTransform[i].SetScale(glm::vec3(2, 10, 2));
-				arrowTransform[i].Update();
-				s_uniformBuffer_drawcall.Update(&UniformBufferFormats::sDrawCall(arrowTransform[i].M(), arrowTransform[i].TranspostInverse()));
-
-				if (_model) {
-					_arrowMat->SetUnlitColor(s_arrowColor[i]);
-					_model->UpdateUniformVariables(s_currentEffect->GetProgramID());
-					_model->Render();
-				}
-			}
-		}
-
-
-		s_currentEffect->UnUseEffect();
-		glEnable(GL_DEPTH_TEST);
-	}
-
+	
 	bool CreateEffect(const char* i_key, const char* i_vertexShaderPath, const char* i_fragmentShaderPath)
 	{
 		auto result = true;
@@ -692,11 +713,6 @@ namespace Graphics {
 	void Notify_DataHasBeenSubmited()
 	{
 		s_whenAllDataHasBeenSubmittedFromApplicationThread.notify_one();
-	}
-
-	void ClearApplicationThreadData()
-	{
-		s_dateSubmittedByApplicationThread->s_renderPasses.clear();
 	}
 
 	void MakeApplicationThreadWaitForSwapingData(std::mutex& i_applicationMutex)

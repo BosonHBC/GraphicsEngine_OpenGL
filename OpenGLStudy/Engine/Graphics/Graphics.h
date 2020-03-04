@@ -27,14 +27,18 @@ namespace Graphics {
 	void SpotLightShadowMap_Pass();
 	void Render_Pass_CaptureCameraView();
 	cFrameBuffer* GetCameraCaptureFrameBuffer();
-	void SubmitClipPlaneData(const glm::vec4& i_plane0, const glm::vec4& i_plane1 = glm::vec4(0,0,0,0), const glm::vec4& i_plane2 = glm::vec4(0, 0, 0, 0), const glm::vec4& i_plane3 = glm::vec4(0, 0, 0, 0));
 	void Render_Pass();
 	void CubeMap_Pass();
 
 	bool CleanUp();
 
+	/** Submit function*/
+	void SubmitClipPlaneData(const glm::vec4& i_plane0, const glm::vec4& i_plane1 = glm::vec4(0, 0, 0, 0), const glm::vec4& i_plane2 = glm::vec4(0, 0, 0, 0), const glm::vec4& i_plane3 = glm::vec4(0, 0, 0, 0));
+	void SubmitLightingData(const std::vector<cPointLight>& i_pointLights, const std::vector<cSpotLight>& i_spotLights, const cAmbientLight& i_ambientLight, const cDirectionalLight& i_directionalLight);
 	void SubmitDataToBeRendered(const UniformBufferFormats::sFrame& i_frameData, const std::vector<std::pair<Graphics::cModel::HANDLE, cTransform>>& i_modelToTransform_map, void(*func_ptr)());
 	void SubmitTransformToBeDisplayedWithTransformGizmo(const std::vector< cTransform*>& i_transforms);
+	void ClearApplicationThreadData();
+	
 	/** Usage function*/
 	bool CreateEffect(const char* i_key, const char* i_vertexShaderPath, const char* i_fragmentShaderPath);
 	cEffect* GetEffectByKey(const char* i_key);
@@ -50,7 +54,6 @@ namespace Graphics {
 	/** Threading related */
 	void Notify_DataHasBeenSubmited();
 	// When the data is swapped, application data can be cleared and it is ready for next submission
-	void ClearApplicationThreadData();
 	void MakeApplicationThreadWaitForSwapingData(std::mutex& i_applicationMutex);
 
 }

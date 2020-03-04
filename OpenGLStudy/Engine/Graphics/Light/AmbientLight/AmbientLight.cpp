@@ -8,12 +8,6 @@ namespace Graphics {
 	{
 	}
 
-	cAmbientLight& cAmbientLight::operator=(const cAmbientLight& i_other)
-	{
-		cGenLight::operator=(i_other);
-		return *this;
-	}
-
 	cAmbientLight::~cAmbientLight()
 	{
 
