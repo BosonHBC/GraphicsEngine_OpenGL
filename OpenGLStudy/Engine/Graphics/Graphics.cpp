@@ -225,13 +225,6 @@ namespace Graphics {
 			glClearColor(0, 0, 0, 1.f);
 			glClear(/*GL_COLOR_BUFFER_BIT | */GL_DEPTH_BUFFER_BIT);
 
-			// Update frame data
-			{
-				// 1. Update frame data
-				//s_uniformBuffer_frame.Update(&s_dataRequiredToRenderAFrame.FrameData);
-
-			}
-
 			// Draw scenes
 			RenderScene_shadowMap();
 

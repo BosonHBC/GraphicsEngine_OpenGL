@@ -52,7 +52,6 @@ namespace Application {
 		// Start an application thread
 		void ApplicationLoopThread(void* const io_application);
 
-
 		/** protected variables */
 		//---------------------------------------------------
 		//Current window 

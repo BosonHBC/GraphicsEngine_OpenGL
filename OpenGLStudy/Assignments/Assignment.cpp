@@ -148,21 +148,6 @@ void Assignment::CleanUp()
 
 void Assignment::Tick(float second_since_lastFrame)
 {
-	// Update transforms
-	m_teapot->Transform()->Update();
-	m_teapot2->Transform()->Update();
-	m_mirror->Transform()->Update();
-	m_sphere->Transform()->Update();
-
-	if (pLight1)
-		pLight1->Transform()->Update();
-	if (pLight2)
-		pLight2->Transform()->Update();
-	if (dLight)
-		dLight->Transform()->Update();
-	if (spLight)
-		spLight->Transform()->Update();
-
 	sWindowInput* _windowInput = m_window->GetWindowInput();
 
 	// get + handle user input events
@@ -177,14 +162,10 @@ void Assignment::Tick(float second_since_lastFrame)
 		Graphics::GetCurrentEffect()->RecompileShader(Constants::CONST_PATH_DEFAULT_VERTEXSHADER, GL_VERTEX_SHADER);
 	}
 
-	if (pLight1) {
-		//glm::vec3 _toLight = (pLight1->Transform()->Position() - m_teapot->Transform()->Position());
-	//	glm::vec3 _toForward = glm::normalize(glm::cross(glm::vec3(0, 1, 0), _toLight)) * (5 * second_since_lastFrame);
-	//	pLight1->Transform()->Translate(_toForward);
-	}
 	if (m_teapot) {
 		m_teapot->Transform()->gRotate(glm::vec3(0, 1.f, 0), second_since_lastFrame);
 	}
+
 	cTransform* controledActor = nullptr;
 	controledActor = spLight->Transform();
 	//controledActor = m_sphere->Transform();
@@ -213,6 +194,8 @@ void Assignment::Tick(float second_since_lastFrame)
 	cTransform* rotateControl = nullptr;
 	if (spLight)
 		rotateControl = spLight->Transform();
+	if (dLight)
+		rotateControl = dLight->Transform();
 	if (rotateControl)
 	{
 		if (_windowInput->IsKeyDown(GLFW_KEY_LEFT)) {
@@ -228,6 +211,19 @@ void Assignment::Tick(float second_since_lastFrame)
 			rotateControl->Rotate(-cTransform::WorldRight, second_since_lastFrame);
 		}
 	}
+	m_teapot->Transform()->Update();
+	m_teapot2->Transform()->Update();
+	m_mirror->Transform()->Update();
+	m_sphere->Transform()->Update();
+
+	if (pLight1)
+		pLight1->Transform()->Update();
+	if (pLight2)
+		pLight2->Transform()->Update();
+	if (dLight)
+		dLight->Transform()->Update();
+	if (spLight)
+		spLight->Transform()->Update();
 	// Submit data
 	{
 
