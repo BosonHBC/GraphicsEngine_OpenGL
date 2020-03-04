@@ -110,7 +110,7 @@ void Assignment::Run()
 		glfwPollEvents();
 
 		Graphics::RenderFrame();
-
+		
 /*
 		if (true)
 		{
@@ -156,7 +156,7 @@ void Assignment::Tick(float second_since_lastFrame)
 
 		m_editorCamera->MouseControl(_windowInput, 0.01667f);
 	}
-
+	//dLight->Transform()->Rotate(-cTransform::WorldUp, 0.01677f);
 	// for recompile shader
 	if (m_window->GetWindowInput()->IsKeyDown(GLFW_KEY_F6)) {
 		Graphics::GetCurrentEffect()->RecompileShader(Constants::CONST_PATH_DEFAULT_VERTEXSHADER, GL_VERTEX_SHADER);
