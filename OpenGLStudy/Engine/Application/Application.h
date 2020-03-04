@@ -1,10 +1,11 @@
 #pragma once
+#include <thread>
+#include <mutex>
+#include <typeinfo>
 
 #include "Engine/Cores/Core.h"
 #include "gl/glew.h"
 #include "glfw/glfw3.h"
-#include <thread>
-#include <typeinfo>
 /** Forward deceleration*/
 //----------------------------------------------
 class cWindow;
@@ -46,6 +47,7 @@ namespace Application {
 
 		/** Handle threading*/
 		//---------------------------------------------------
+		std::mutex m_applicationMutex;
 		std::thread* m_applicationThread;
 		// Start an application thread
 		void ApplicationLoopThread(void* const io_application);

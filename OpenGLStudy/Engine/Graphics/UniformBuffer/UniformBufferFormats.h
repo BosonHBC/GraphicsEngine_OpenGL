@@ -22,7 +22,7 @@ namespace Graphics {
 		{
 			// PVMatrix stands for projection * view matrix
 			glm::f32 PVMatrix[16];
-			glm::vec3 ViewPosition;
+			glm::vec3 ViewPosition = glm::vec3(0,0,0);
 
 			sFrame() {}
 
@@ -118,7 +118,10 @@ namespace Graphics {
 		struct sClipPlane
 		{
 			glm::vec4 Planes[4];
-
+			sClipPlane() {
+				Planes[0] = glm::vec4(0, 0, 0, 0); Planes[1] = glm::vec4(0, 0, 0, 0);
+				Planes[2] = glm::vec4(0, 0, 0, 0); Planes[3] = glm::vec4(0, 0, 0, 0);
+			}
 			sClipPlane(const glm::vec4& i_first, const glm::vec4& i_second = glm::vec4(0, 0, 0, 0), const glm::vec4& i_third = glm::vec4(0, 0, 0, 0), const glm::vec4& i_fourth = glm::vec4(0, 0, 0, 0))
 			{
 				Planes[0] = i_first;

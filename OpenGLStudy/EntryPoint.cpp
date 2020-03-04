@@ -22,7 +22,7 @@ int main()
 		return 1;
 	}
 
-	_myGame->Render();
+	_myGame->Run();
 
 	Application::DestroyApplication(_myGame);
 

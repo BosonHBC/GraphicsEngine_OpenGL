@@ -1,5 +1,7 @@
 #include <map>
 #include <stdio.h>
+#include <condition_variable> // threading
+#include <mutex> // unique_lock
 #include "Graphics.h"
 
 #include "Cores/Core.h"
@@ -13,16 +15,24 @@
 #include "Application/Window/Window.h"
 #include "Material/Blinn/MatBlinn.h"
 #include "Material/Unlit/MatUnlit.h"
+#include "Time/Time.h"
 namespace Graphics {
 
 	// TODO:
+	struct sPass
+	{
+		UniformBufferFormats::sFrame FrameData;
+		std::vector<std::pair<Graphics::cModel::HANDLE, cTransform>> ModelToTransform_map;
+		void(*RenderPassFunction) ();
+		sPass() {}
+	};
 	// Data required to render a frame, right now do not support switching effect(shader)
 	struct sDataRequiredToRenderAFrame
 	{
-		UniformBufferFormats::sFrame FrameData;
-		std::vector<std::pair<Graphics::cModel::HANDLE, cTransform*>> ModelToTransform_map;
-		sDataRequiredToRenderAFrame() {}
+		UniformBufferFormats::sClipPlane s_ClipPlane;
+		std::vector<sPass> s_renderPasses;
 	};
+	unsigned int s_currentRenderPass = 0;
 	// Global data
 	// ---------------------------------
 	cUniformBuffer s_uniformBuffer_frame(eUniformBufferType::UBT_Frame);
@@ -37,7 +47,9 @@ namespace Graphics {
 	// This buffer capture the camera view
 	cFrameBuffer s_cameraCapture;
 
-	sDataRequiredToRenderAFrame s_dataRequiredToRenderAFrame;
+	sDataRequiredToRenderAFrame s_dataRequiredToRenderAFrame[2];
+	auto* s_dateSubmittedByApplicationThread = &s_dataRequiredToRenderAFrame[0];
+	auto* s_dateRenderingByGraphicThread = &s_dataRequiredToRenderAFrame[1];
 
 	// Effect
 	// ---------------------------------
@@ -56,6 +68,10 @@ namespace Graphics {
 	Graphics::cModel::HANDLE s_arrow;
 	Color s_arrowColor[3] = { Color(0, 0, 0.8f), Color(0.8f, 0, 0),Color(0, 0.8f, 0) };
 
+	// Threading
+	std::condition_variable s_whenAllDataHasBeenSubmittedFromApplicationThread;
+	std::condition_variable s_whenDataHasBeenSwappedInGraphicThread;
+	std::mutex s_graphicMutex;
 	//functions
 	void RenderScene();
 	void RenderScene_shadowMap();
@@ -153,7 +169,7 @@ namespace Graphics {
 		// Load arrows
 		{
 			std::string _arrowPath = "Contents/models/arrow.model";
-			if (! (result = Graphics::cModel::s_manager.Load(_arrowPath, s_arrow)))
+			if (!(result = Graphics::cModel::s_manager.Load(_arrowPath, s_arrow)))
 			{
 				printf("Failed to Load arrow_forward!\n");
 				return result;
@@ -162,6 +178,31 @@ namespace Graphics {
 
 
 		return result;
+	}
+
+	void RenderFrame()
+	{
+		/** 1. Wait for data being submitted here */ 
+		// Acquire the lock
+		std::unique_lock<std::mutex> _mlock(s_graphicMutex);
+		// Wait until the conditional variable is signaled
+		s_whenAllDataHasBeenSubmittedFromApplicationThread.wait(_mlock);
+
+		// After data has been submitted, swap the data
+		std::swap(s_dateSubmittedByApplicationThread, s_dateRenderingByGraphicThread);
+		s_whenDataHasBeenSwappedInGraphicThread.notify_one();
+
+		/** 2. Start to render pass one by one */
+		for (size_t i = 0; i < s_dateRenderingByGraphicThread->s_renderPasses.size(); ++i)
+		{
+			// Update frame data
+			s_uniformBuffer_ClipPlane.Update(&s_dateRenderingByGraphicThread->s_ClipPlane);
+			s_uniformBuffer_frame.Update(&s_dateRenderingByGraphicThread->s_renderPasses[i].FrameData);
+			// Update current render pass
+			s_currentRenderPass = i;
+			// Execute pass function
+			s_dateRenderingByGraphicThread->s_renderPasses[i].RenderPassFunction();
+		}
 	}
 
 	void DirectionalShadowMap_Pass()
@@ -187,7 +228,7 @@ namespace Graphics {
 			// Update frame data
 			{
 				// 1. Update frame data
-				s_uniformBuffer_frame.Update(&s_dataRequiredToRenderAFrame.FrameData);
+				//s_uniformBuffer_frame.Update(&s_dataRequiredToRenderAFrame.FrameData);
 
 			}
 
@@ -222,13 +263,6 @@ namespace Graphics {
 				assert(glGetError() == GL_NO_ERROR);
 				glClearColor(0, 0, 0, 1.f);
 				glClear(GL_DEPTH_BUFFER_BIT);
-
-				// Update frame data
-				{
-					// 1. Update frame data
-					s_uniformBuffer_frame.Update(&s_dataRequiredToRenderAFrame.FrameData);
-
-				}
 
 				// Draw scenes
 				RenderScene_shadowMap();
@@ -275,13 +309,6 @@ namespace Graphics {
 
 		}
 
-		// Update frame data
-		{
-			// 1. Update frame data
-			s_uniformBuffer_frame.Update(&s_dataRequiredToRenderAFrame.FrameData);
-
-		}
-
 		// Update lighting data
 		{
 
@@ -318,15 +345,14 @@ namespace Graphics {
 		}
 	}
 
-
 	Graphics::cFrameBuffer* GetCameraCaptureFrameBuffer()
 	{
 		return &s_cameraCapture;
 	}
 
-	Graphics::cUniformBuffer* GetClipPlaneBuffer()
+	void SubmitClipPlaneData(const glm::vec4& i_plane0, const glm::vec4& i_plane1 /*= glm::vec4(0,0,0,0)*/, const glm::vec4& i_plane2 /*= glm::vec4(0, 0, 0, 0)*/, const glm::vec4& i_plane3 /*= glm::vec4(0, 0, 0, 0)*/)
 	{
-		return &s_uniformBuffer_ClipPlane;
+		s_dateSubmittedByApplicationThread->s_ClipPlane = UniformBufferFormats::sClipPlane(i_plane0, i_plane1, i_plane2, i_plane3);
 	}
 
 	void Render_Pass()
@@ -336,8 +362,8 @@ namespace Graphics {
 		{
 			s_currentEffect = GetEffectByKey(Constants::CONST_DEFAULT_EFFECT_KEY);
 			s_currentEffect->UseEffect();
-			if(s_directionalLight)
-			s_directionalLight->SetupLight(s_currentEffect->GetProgramID(), 0);
+			if (s_directionalLight)
+				s_directionalLight->SetupLight(s_currentEffect->GetProgramID(), 0);
 		}
 		// Reset window size
 		{
@@ -353,12 +379,6 @@ namespace Graphics {
 			// A lot of things can be cleaned like color buffer, depth buffer, so we need to specify what to clear
 			glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
-		}
-
-		// Update frame data
-		{
-			// 1. Update frame data
-			s_uniformBuffer_frame.Update(&s_dataRequiredToRenderAFrame.FrameData);
 		}
 
 		// Update lighting data
@@ -411,11 +431,10 @@ namespace Graphics {
 		s_currentEffect = GetEffectByKey("CubemapEffect");
 		s_currentEffect->UseEffect();
 
-		s_uniformBuffer_frame.Update(&s_dataRequiredToRenderAFrame.FrameData);
-
-		for (auto it = s_dataRequiredToRenderAFrame.ModelToTransform_map.begin(); it != s_dataRequiredToRenderAFrame.ModelToTransform_map.end(); ++it)
+		for (auto it = s_dateRenderingByGraphicThread->s_renderPasses[s_currentRenderPass].ModelToTransform_map.begin();
+			it != s_dateRenderingByGraphicThread->s_renderPasses[s_currentRenderPass].ModelToTransform_map.end(); ++it)
 		{
-			// 1. Do not need to update drawcall data because in cubemap.vert, there is no model matrix and normal matrix
+			// 1. Do not need to update draw call data because in cubemap.vert, there is no model matrix and normal matrix
 			// 2. Draw
 			cModel* _model = cModel::s_manager.Get(it->first);
 			if (_model)
@@ -432,10 +451,11 @@ namespace Graphics {
 	void RenderScene_shadowMap()
 	{
 		// loop through every single model
-		for (auto it = s_dataRequiredToRenderAFrame.ModelToTransform_map.begin(); it != s_dataRequiredToRenderAFrame.ModelToTransform_map.end(); ++it)
+		for (auto it = s_dateRenderingByGraphicThread->s_renderPasses[s_currentRenderPass].ModelToTransform_map.begin();
+			it != s_dateRenderingByGraphicThread->s_renderPasses[s_currentRenderPass].ModelToTransform_map.end(); ++it)
 		{
 			// 1. Update draw call data
-			s_uniformBuffer_drawcall.Update(&UniformBufferFormats::sDrawCall(it->second->M(), it->second->TranspostInverse()));
+			s_uniformBuffer_drawcall.Update(&UniformBufferFormats::sDrawCall(it->second.M(), it->second.TranspostInverse()));
 			// 2. Draw
 			cModel* _model = cModel::s_manager.Get(it->first);
 			if (_model) {
@@ -447,10 +467,12 @@ namespace Graphics {
 	void RenderScene()
 	{
 		// loop through every single model
-		for (auto it = s_dataRequiredToRenderAFrame.ModelToTransform_map.begin(); it != s_dataRequiredToRenderAFrame.ModelToTransform_map.end(); ++it)
+		for (auto it = s_dateRenderingByGraphicThread->s_renderPasses[s_currentRenderPass].ModelToTransform_map.begin();
+			it != s_dateRenderingByGraphicThread->s_renderPasses[s_currentRenderPass].ModelToTransform_map.end();
+			++it)
 		{
 			// 1. Update draw call data
-			s_uniformBuffer_drawcall.Update(&UniformBufferFormats::sDrawCall(it->second->M(), it->second->TranspostInverse()));
+			s_uniformBuffer_drawcall.Update(&UniformBufferFormats::sDrawCall(it->second.M(), it->second.TranspostInverse()));
 			// 2. Draw
 			cModel* _model = cModel::s_manager.Get(it->first);
 			if (_model) {
@@ -508,10 +530,13 @@ namespace Graphics {
 		return result;
 	}
 
-	void SubmitDataToBeRendered(const UniformBufferFormats::sFrame& i_frameData, const std::vector<std::pair<Graphics::cModel::HANDLE, cTransform*>>& i_modelToTransform_map)
+	void SubmitDataToBeRendered(const UniformBufferFormats::sFrame& i_frameData, const std::vector<std::pair<Graphics::cModel::HANDLE, cTransform>>& i_modelToTransform_map, void(*func_ptr)())
 	{
-		s_dataRequiredToRenderAFrame.FrameData = i_frameData;
-		s_dataRequiredToRenderAFrame.ModelToTransform_map = i_modelToTransform_map;
+		sPass inComingPasses;
+		inComingPasses.FrameData = i_frameData;
+		inComingPasses.ModelToTransform_map = i_modelToTransform_map;
+		inComingPasses.RenderPassFunction = func_ptr;
+		s_dateSubmittedByApplicationThread->s_renderPasses.push_back(inComingPasses);
 	}
 
 	void SubmitTransformToBeDisplayedWithTransformGizmo(const std::vector< cTransform*>& i_transforms)
@@ -520,7 +545,8 @@ namespace Graphics {
 		s_currentEffect = GetEffectByKey("UnlitEffect");
 		s_currentEffect->UseEffect();
 
-		s_uniformBuffer_frame.Update(&s_dataRequiredToRenderAFrame.FrameData);
+		// TODE: Error
+		//s_uniformBuffer_frame.Update(&s_dataRequiredToRenderAFrame.FrameData);
 
 		for (auto it = i_transforms.begin(); it != i_transforms.end(); ++it)
 		{
@@ -541,7 +567,7 @@ namespace Graphics {
 			for (int i = 0; i < 3; ++i)
 			{
 				arrowTransform[i].SetPosition((*it)->Position());
-				arrowTransform[i].SetScale(glm::vec3(2,10,2));
+				arrowTransform[i].SetScale(glm::vec3(2, 10, 2));
 				arrowTransform[i].Update();
 				s_uniformBuffer_drawcall.Update(&UniformBufferFormats::sDrawCall(arrowTransform[i].M(), arrowTransform[i].TranspostInverse()));
 
@@ -586,6 +612,10 @@ namespace Graphics {
 	{
 		return s_currentEffect;
 	}
+
+	//----------------------------------------------------------------------------------
+	/** Lighting related */
+	//----------------------------------------------------------------------------------
 
 	Graphics::UniformBufferFormats::sLighting& GetGlobalLightingData()
 	{
@@ -661,6 +691,26 @@ namespace Graphics {
 		o_directionalLight = newDirectionalLight;
 		s_directionalLight = newDirectionalLight;
 		return result;
+	}
+
+	//----------------------------------------------------------------------------------
+	/** Threading related */
+	//----------------------------------------------------------------------------------
+	void Notify_DataHasBeenSubmited()
+	{
+		s_whenAllDataHasBeenSubmittedFromApplicationThread.notify_one();
+	}
+
+	void ClearApplicationThreadData()
+	{
+		s_dateSubmittedByApplicationThread->s_renderPasses.clear();
+	}
+
+	void MakeApplicationThreadWaitForSwapingData(std::mutex& i_applicationMutex)
+	{
+		std::unique_lock<std::mutex> lck(i_applicationMutex);
+		constexpr unsigned int timeToWait_inMilliseconds = 10;
+		s_whenDataHasBeenSwappedInGraphicThread.wait_for(lck, std::chrono::milliseconds(timeToWait_inMilliseconds));
 	}
 
 }
