@@ -75,8 +75,9 @@ namespace Graphics {
 
 	// Threading
 	std::condition_variable s_whenAllDataHasBeenSubmittedFromApplicationThread;
-	std::condition_variable s_whenDataHasBeenSwappedInGraphicThread;
+	std::condition_variable s_whenDataHasBeenSwappedInRenderThread;
 	std::mutex s_graphicMutex;
+
 	//functions
 	void RenderScene();
 	void RenderScene_shadowMap();
@@ -195,7 +196,8 @@ namespace Graphics {
 
 		// After data has been submitted, swap the data
 		std::swap(s_dataSubmittedByApplicationThread, s_dateRenderingByGraphicThread);
-		s_whenDataHasBeenSwappedInGraphicThread.notify_one();
+		// Notify the application thread that data is swapped and it is ready for receiving new data
+		s_whenDataHasBeenSwappedInRenderThread.notify_one();
 
 		/** 2. Start to render pass one by one */
 		for (size_t i = 0; i < s_dateRenderingByGraphicThread->s_renderPasses.size(); ++i)
@@ -708,7 +710,7 @@ namespace Graphics {
 	{
 		std::unique_lock<std::mutex> lck(i_applicationMutex);
 		constexpr unsigned int timeToWait_inMilliseconds = 10;
-		s_whenDataHasBeenSwappedInGraphicThread.wait_for(lck, std::chrono::milliseconds(timeToWait_inMilliseconds));
+		s_whenDataHasBeenSwappedInRenderThread.wait_for(lck, std::chrono::milliseconds(timeToWait_inMilliseconds));
 	}
 
 }
