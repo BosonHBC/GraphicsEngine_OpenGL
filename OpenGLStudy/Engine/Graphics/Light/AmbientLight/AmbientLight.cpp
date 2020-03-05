@@ -3,22 +3,10 @@
 #include "Graphics/UniformBuffer/UniformBufferFormats.h"
 namespace Graphics {
 
-	cAmbientLight::cAmbientLight(const cAmbientLight& i_other)
-		:cGenLight(i_other)
-	{
-	}
-
-	cAmbientLight& cAmbientLight::operator=(const cAmbientLight& i_other)
-	{
-		cGenLight::operator=(i_other);
-		return *this;
-	}
-
 	cAmbientLight::~cAmbientLight()
 	{
 
 	}
-
 
 	void cAmbientLight::SetupLight(const GLuint& i_programID, GLuint i_lightIndex)
 	{

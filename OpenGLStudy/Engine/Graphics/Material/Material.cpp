@@ -6,8 +6,6 @@
 
 namespace Graphics {
 
-	Assets::cAssetManager < cMaterial > cMaterial::s_manager;
-
 	bool cMaterial::Load(const std::string& i_path, cMaterial*& o_material)
 	{
 		auto result = true;

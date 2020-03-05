@@ -43,7 +43,7 @@ namespace Graphics {
 			but for the sake of simplicity, put it here first
 		*/
 		std::vector<cMesh::HANDLE> m_meshList;
-		std::vector<cMaterial::HANDLE> m_materialList;
+		std::vector<cMaterial*> m_materialList;
 
 		/** private helper functions*/
 		bool LoadFileFromLua(const char* i_path, std::string& o_modelPath, std::string& o_materialPath);

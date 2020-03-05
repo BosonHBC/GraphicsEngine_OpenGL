@@ -17,11 +17,14 @@ namespace Graphics {
 		/** Constructors and destructor */
 		cGenLight();
 		cGenLight(Color i_color);
+		cGenLight(const cGenLight& i_other);
+		cGenLight& operator = (const cGenLight& i_other);
 		virtual ~cGenLight() { CleanUp(); }
 
 		/**Usage function*/
 		virtual void SetupLight(const GLuint& i_programID, GLuint i_lightIndex = 0);
-		cTransform* Transform() const { return m_transform; }
+		void UpdateLightIndex(GLuint i_lightIndex);
+		cTransform* Transform() { return &m_transform; }
 		virtual void CleanUp();
 		/** Pure virtual functions*/
 		virtual void Illuminate() = 0;
@@ -37,13 +40,14 @@ namespace Graphics {
 		cFrameBuffer* GetShadowMap() const { return m_shadowMap; }
 		bool IsShadowMapValid() const;
 		bool IsShadowEnabled() const { return IsShadowMapValid()&&m_enableShadow; }
+		void CleanUpShadowMap();
 	protected:
 		Color m_color;
 		// record the index of this light
 		GLuint m_lightIndex;
 		bool m_enableShadow;
 
-		cTransform* m_transform;
+		cTransform m_transform;
 		// this determine which kind of projection the shadow map wants
 		// it should be type variant
 		glm::mat4 m_lightPrjectionMatrix;

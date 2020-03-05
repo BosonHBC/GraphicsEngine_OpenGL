@@ -1,9 +1,0 @@
---[[
-    Default Model sheet
-]]
-return 
-{
-    ModelPath = "arrow.obj",
-    MaterialPath = "arrow_up.material",
-
-}

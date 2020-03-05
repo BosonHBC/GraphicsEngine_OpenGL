@@ -22,7 +22,7 @@ namespace Graphics {
 		{
 			// PVMatrix stands for projection * view matrix
 			glm::f32 PVMatrix[16];
-			glm::vec3 ViewPosition;
+			glm::vec3 ViewPosition = glm::vec3(0,0,0);
 
 			sFrame() {}
 
@@ -75,6 +75,9 @@ namespace Graphics {
 			struct Light16 {
 				Color color; // 12 bytes
 				bool enableShadow; // 4 bytes
+
+				Light16() : color(Color::Black()), enableShadow(false)
+				{}
 			};
 
 			// Lighting, no interpolation
@@ -85,6 +88,8 @@ namespace Graphics {
 				Light16 base; // 16 bytes
 				glm::vec3 direction; // 12 bytes
 				V1Padding; // 4 bytes
+
+				DirectionalLight32() : direction(glm::vec3(0, 1, 0)) {}
 			};
 			struct PointLight48 {
 				Light16 base; // 16 bytes
@@ -93,11 +98,16 @@ namespace Graphics {
 				float linear; // 4bytes
 				float quadratic; // 4bytes
 				V2Padding; // 8bytes
+
+				PointLight48() : position(glm::vec3(0,0,0)), constant(1), linear(0), quadratic(0)
+				{}
 			};
 			struct SpotLight64 {
 				PointLight48 base; // 48 bytes
 				glm::vec3 direction; // 12 bytes
 				float edge; // 4 bytes
+				SpotLight64() : direction(glm::vec3(0, 1, 0)), edge(1)
+				{}
 			};
 		}
 
@@ -118,7 +128,10 @@ namespace Graphics {
 		struct sClipPlane
 		{
 			glm::vec4 Planes[4];
-
+			sClipPlane() {
+				Planes[0] = glm::vec4(0, 0, 0, 0); Planes[1] = glm::vec4(0, 0, 0, 0);
+				Planes[2] = glm::vec4(0, 0, 0, 0); Planes[3] = glm::vec4(0, 0, 0, 0);
+			}
 			sClipPlane(const glm::vec4& i_first, const glm::vec4& i_second = glm::vec4(0, 0, 0, 0), const glm::vec4& i_third = glm::vec4(0, 0, 0, 0), const glm::vec4& i_fourth = glm::vec4(0, 0, 0, 0))
 			{
 				Planes[0] = i_first;

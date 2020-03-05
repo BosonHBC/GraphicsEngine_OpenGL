@@ -10,13 +10,8 @@ namespace Graphics {
 		glm::vec3 _right = glm::normalize(glm::cross(i_direction, cTransform::WorldUp));
 		glm::vec3 _up = glm::normalize(glm::cross(_right, i_direction));
 		glm::quat rot(glm::quatLookAt(i_direction, _up));
-		m_transform->SetTransform(glm::vec3(0, 0, 0), rot, glm::vec3(1, 1, 1));
+		m_transform.SetTransform(glm::vec3(0, 0, 0), rot, glm::vec3(1, 1, 1));
 	}
-
-	cDirectionalLight::~cDirectionalLight()
-	{
-	}
-
 
 	void cDirectionalLight::SetupLight(const GLuint& i_programID, GLuint i_lightIndex)
 	{
@@ -31,7 +26,7 @@ namespace Graphics {
 		auto& gLighting = Graphics::GetGlobalLightingData();
 		gLighting.directionalLight.base.color = m_color;
 		gLighting.directionalLight.base.enableShadow = m_enableShadow;
-		gLighting.directionalLight.direction = m_transform->Forward();
+		gLighting.directionalLight.direction = m_transform.Forward();
 	}
 
 
@@ -47,7 +42,7 @@ namespace Graphics {
 	glm::mat4 cDirectionalLight::CalculateLightTransform() const
 	{
 		// PV matrix
-		return m_lightPrjectionMatrix * glm::lookAt(m_transform->Forward() * 500.f, glm::vec3(0, 0, 0), glm::vec3(0, 1, 0));
+		return m_lightPrjectionMatrix * glm::lookAt(m_transform.Forward() * 500.f, glm::vec3(0, 0, 0), glm::vec3(0, 1, 0));
 	}
 
 	void cDirectionalLight::SetLightUniformTransform()

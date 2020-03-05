@@ -1,10 +1,11 @@
 #pragma once
+#include <thread>
+#include <mutex>
+#include <typeinfo>
 
 #include "Engine/Cores/Core.h"
 #include "gl/glew.h"
 #include "glfw/glfw3.h"
-#include <thread>
-#include <typeinfo>
 /** Forward deceleration*/
 //----------------------------------------------
 class cWindow;
@@ -20,7 +21,7 @@ namespace Application {
 		virtual bool Initialize(GLuint i_width, GLuint i_height, const char* i_windowName = "Default Window");
 		virtual bool PostInitialization();
 		virtual void CleanUp();
-		virtual void Run() {};
+		virtual void Render() {};
 
 		// Real time update, call as much as possible
 		virtual void Tick(float second_since_lastFrame) {}
@@ -46,9 +47,10 @@ namespace Application {
 
 		/** Handle threading*/
 		//---------------------------------------------------
+		std::mutex m_applicationMutex;
 		std::thread* m_applicationThread;
+		// Start an application thread
 		void ApplicationLoopThread(void* const io_application);
-
 
 		/** protected variables */
 		//---------------------------------------------------
