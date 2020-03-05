@@ -125,7 +125,7 @@ float CalcSpotLightShadowMap(vec3 vN)
 	// Calculate bias
 	vec3 lightDir = normalize(g_spotLights[0].direction);
 	float _bias = 0.01 * (1.0 - dot(vN, lightDir)) * (1-g_spotLights[0].edge);
-	const float bias = max(_bias, 0.005);
+	const float bias = max(_bias, 0.05);
 
 	float shadow = 0.0;
 
