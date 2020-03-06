@@ -25,8 +25,8 @@ namespace Graphics {
 		}
 
 		/** overriding virtual functions*/
-		virtual void Illuminate() override;
-		virtual void SetupLight(const GLuint& i_programID, GLuint i_lightIndex = 0) override;
+		void Illuminate() override;
+		void SetupLight(const GLuint& i_programID, GLuint i_lightIndex = 0) override;
 
 	protected:
 		// for attenuation calculation: c+bx+ax^2

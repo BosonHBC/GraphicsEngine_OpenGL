@@ -45,7 +45,7 @@ namespace Graphics {
 	{
 		cGenLight::CreateShadowMap(i_width, i_height);
 		float _aspect = static_cast<GLfloat>(i_width) / static_cast<GLfloat>(i_height);
-		m_lightPrjectionMatrix = glm::perspective(m_edge, _aspect, 1.f, 1000.f);
+		m_lightPrjectionMatrix = glm::perspective(glm::radians(m_edge), _aspect, 1.f, m_range);
 	}
 
 	glm::mat4 cSpotLight::CalculateLightTransform() const

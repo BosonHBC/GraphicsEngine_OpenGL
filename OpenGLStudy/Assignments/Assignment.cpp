@@ -38,12 +38,12 @@ bool Assignment::Initialize(GLuint i_width, GLuint i_height, const char* i_windo
 
 	Graphics::cMatCubemap* _cubemapMat = dynamic_cast<Graphics::cMatCubemap*>(Graphics::cModel::s_manager.Get(m_cubemap->GetModelHandle())->GetMaterialAt());
 
-	Graphics::cMatBlinn* _wallMat = dynamic_cast<Graphics::cMatBlinn*>(Graphics::cModel::s_manager.Get(m_mirror->GetModelHandle())->GetMaterialAt());
+	Graphics::cMatBlinn* _floorMat = dynamic_cast<Graphics::cMatBlinn*>(Graphics::cModel::s_manager.Get(m_mirror->GetModelHandle())->GetMaterialAt());
 	auto cameraViewTextureHandle = Graphics::GetCameraCaptureFrameBuffer()->GetTextureHandle();
-	//_wallMat->UpdateDiffuseTexture(cameraViewTextureHandle);
-	//_wallMat->UpdateSpecularTexture(cameraViewTextureHandle);
-	_wallMat->UpdateReflectionTexture(cameraViewTextureHandle);
-	_wallMat->UpdateCubemapTexture(_cubemapMat->GetCubemapHandle());
+	//_floorMat->UpdateDiffuseTexture(cameraViewTextureHandle);
+	//_floorMat->UpdateSpecularTexture(cameraViewTextureHandle);
+	_floorMat->UpdateReflectionTexture(cameraViewTextureHandle);
+	//_floorMat->UpdateCubemapTexture(_cubemapMat->GetCubemapHandle());
 
 	Graphics::cMatBlinn* _teapot2Mat = dynamic_cast<Graphics::cMatBlinn*>(Graphics::cModel::s_manager.Get(m_teapot2->GetModelHandle())->GetMaterialAt());
 	_teapot2Mat->UpdateCubemapTexture(_cubemapMat->GetCubemapHandle());

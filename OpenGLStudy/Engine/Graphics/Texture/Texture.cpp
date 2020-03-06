@@ -22,7 +22,7 @@ namespace Graphics {
 		}
 		else
 		{
-			
+
 			switch (i_ett)
 			{
 			case ETT_FILE:
@@ -39,6 +39,9 @@ namespace Graphics {
 				break;
 			case  ETT_CUBEMAP:
 				// Cube map is loaded in the cube map material, so it will not load here
+				break;
+			case ETT_FRAMEBUFFER_CUBEMAP:
+				result = _texture->LoadOmniShadowMapTexture(i_path, i_override_width, i_override_height);
 				break;
 			case Graphics::ETT_INVALID:
 				result = false;
@@ -186,6 +189,40 @@ namespace Graphics {
 		return result;
 	}
 
+	bool cTexture::LoadOmniShadowMapTexture(const std::string& i_type_id, const GLuint& i_width, const GLuint& i_height)
+	{
+		auto result = true;
+		m_width = i_width;
+		m_height = i_height;
+
+		// This is for omniShadowMap, Generate cube map texture here
+		GLuint _textureID;
+		glGenTextures(1, &_textureID);
+		glBindTexture(GL_TEXTURE_CUBE_MAP, _textureID);
+
+		for (size_t i = 0; i < 6; ++i)
+		{
+			glTexImage2D(GL_TEXTURE_CUBE_MAP_POSITIVE_X + i, 0, GL_DEPTH_COMPONENT,
+				m_width, m_height, 0,
+				GL_DEPTH_COMPONENT, GL_FLOAT, nullptr);
+		}
+		// Set up texture wrapping in s,t,r axis
+		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
+		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
+		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_R, GL_CLAMP_TO_EDGE);
+
+		// Set up texture filtering for looking closer
+		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+		// Set up texture filtering for looking further
+		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+
+		// unbind texture
+		glBindTexture(GL_TEXTURE_2D, 0);
+
+		assert(GL_NO_ERROR == glGetError());
+		return result;
+	}
+
 	bool cTexture::LoadRGBTexture(const std::string& i_type_id, const GLuint& i_width, const GLuint& i_height)
 	{
 		auto result = true;
@@ -229,7 +266,7 @@ namespace Graphics {
 			printf("Cube map texture paths count is smaller than 6\n");
 			return result;
 		}
-			
+
 		for (int i = 0; i < 6; ++i)
 		{
 
@@ -266,10 +303,11 @@ namespace Graphics {
 	{
 		// activate the texture unit at i_textureLocation
 		glActiveTexture(i_textureLocation);
-		assert(glGetError() == GL_NO_ERROR);
 
 		GLenum _textureType = GL_TEXTURE_2D;
-		if (m_textureType == ETT_CUBEMAP)
+		// if the texture is a cube map, use GL_TEXTURE_CUBE_MAP
+		if (m_textureType == ETT_CUBEMAP
+			|| m_textureType == ETT_FRAMEBUFFER_CUBEMAP)
 			_textureType = GL_TEXTURE_CUBE_MAP;
 		// bind texture to texture unit i_textureLocation
 		// this allow multiples texture to be bound to one shader
@@ -281,8 +319,14 @@ namespace Graphics {
 	void cTexture::CleanUpTextureBind(int i_textureLocation)
 	{
 		glActiveTexture(i_textureLocation);
+
 		assert(glGetError() == GL_NO_ERROR);
-		glBindTexture(GL_TEXTURE_2D, 0);
+		GLenum _textureType = GL_TEXTURE_2D;
+		// if the texture is a cube map, use GL_TEXTURE_CUBE_MAP
+		if (m_textureType == ETT_CUBEMAP
+			|| m_textureType == ETT_FRAMEBUFFER_CUBEMAP)
+			_textureType = GL_TEXTURE_CUBE_MAP;
+		glBindTexture(_textureType, 0);
 		assert(glGetError() == GL_NO_ERROR);
 	}
 
