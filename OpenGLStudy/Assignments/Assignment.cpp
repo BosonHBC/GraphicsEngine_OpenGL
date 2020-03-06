@@ -245,40 +245,54 @@ void Assignment::Tick(float second_since_lastFrame)
 					_renderingMap.push_back({ m_teapot2->GetModelHandle(), *m_teapot2->Transform() });
 					glm::vec4 _plane = glm::vec4(m_mirror->Transform()->Up(), m_mirror->Transform()->Position().y);
 					Graphics::SubmitClipPlaneData(_plane);
-					Graphics::SubmitDataToBeRendered(_frameData_Mirrored, _renderingMap, &Graphics::Render_Pass_CaptureCameraView);
+					Graphics::SubmitDataToBeRendered(_frameData_Mirrored, _renderingMap, &Graphics::Reflection_Pass);
 				}
 
-				_renderingMap.clear();
+				// Actual scene to render
 				Graphics::UniformBufferFormats::sFrame _frameData_Camera(m_editorCamera->GetProjectionMatrix(), m_editorCamera->GetViewMatrix());
 				_frameData_Camera.ViewPosition = m_editorCamera->CamLocation();
-				_renderingMap.push_back({ m_teapot->GetModelHandle(), *m_teapot->Transform() });
-				_renderingMap.push_back({ m_teapot2->GetModelHandle(), *m_teapot2->Transform() });
-				_renderingMap.push_back({ m_mirror->GetModelHandle(), *m_mirror->Transform() });
-				_renderingMap.push_back({ m_sphere->GetModelHandle(), *m_sphere->Transform() });
+				{
+					_renderingMap.clear();
+					_renderingMap.push_back({ m_teapot->GetModelHandle(), *m_teapot->Transform() });
+					_renderingMap.push_back({ m_teapot2->GetModelHandle(), *m_teapot2->Transform() });
+					_renderingMap.push_back({ m_mirror->GetModelHandle(), *m_mirror->Transform() });
+					_renderingMap.push_back({ m_sphere->GetModelHandle(), *m_sphere->Transform() });
 
-				Graphics::SubmitDataToBeRendered(_frameData_Camera, _renderingMap, &Graphics::Render_Pass);
+					Graphics::SubmitDataToBeRendered(_frameData_Camera, _renderingMap, &Graphics::Render_Pass);
+				}
 
 				// Cube map
-				_renderingMap.clear();
-				_renderingMap.push_back({ m_cubemap->GetModelHandle(), *m_cubemap->Transform() });
-				Graphics::UniformBufferFormats::sFrame _frameData_Cubemap(m_editorCamera->GetProjectionMatrix(), glm::mat4(glm::mat3(m_editorCamera->GetViewMatrix())));
-				Graphics::SubmitDataToBeRendered(_frameData_Camera, _renderingMap, &Graphics::CubeMap_Pass);
+				{
+					_renderingMap.clear();
+					_renderingMap.push_back({ m_cubemap->GetModelHandle(), *m_cubemap->Transform() });
+					Graphics::UniformBufferFormats::sFrame _frameData_Cubemap(m_editorCamera->GetProjectionMatrix(), glm::mat4(glm::mat3(m_editorCamera->GetViewMatrix())));
+					Graphics::SubmitDataToBeRendered(_frameData_Camera, _renderingMap, &Graphics::CubeMap_Pass);
+				}
 
 				// Transform Gizmo
-				_renderingMap.clear();
-				cTransform _worldTransform;
-				Assets::cHandle<Graphics::cModel> unneccessaryHandle;
-				_renderingMap.push_back({ unneccessaryHandle, _worldTransform });
-				_renderingMap.push_back({ unneccessaryHandle, *m_teapot->Transform() });
-				
-				if (pLight1)
-					_renderingMap.push_back({ unneccessaryHandle, *pLight1->Transform() });
-				if (pLight2)
-					_renderingMap.push_back({ unneccessaryHandle, *pLight2->Transform() });
-				if (spLight)
-					_renderingMap.push_back({ unneccessaryHandle, *spLight->Transform() });
+				{
+					_renderingMap.clear();
+					cTransform _worldTransform;
+					Assets::cHandle<Graphics::cModel> unneccessaryHandle;
+					_renderingMap.push_back({ unneccessaryHandle, _worldTransform });
+					_renderingMap.push_back({ unneccessaryHandle, *m_teapot->Transform() });
 
-				Graphics::SubmitDataToBeRendered(_frameData_Camera, _renderingMap, &Graphics::RenderTransformGizmo);
+					if (pLight1)
+						_renderingMap.push_back({ unneccessaryHandle, *pLight1->Transform() });
+					if (pLight2)
+						_renderingMap.push_back({ unneccessaryHandle, *pLight2->Transform() });
+					if (spLight)
+						_renderingMap.push_back({ unneccessaryHandle, *spLight->Transform() });
+
+					Graphics::SubmitDataToBeRendered(_frameData_Camera, _renderingMap, &Graphics::Gizmo_RenderTransform);
+				}
+
+				// Normal gizmo
+				{
+					_renderingMap.clear();
+					_renderingMap.push_back({ m_teapot2->GetModelHandle(), *m_teapot2->Transform() });
+					Graphics::SubmitDataToBeRendered(_frameData_Camera, _renderingMap, &Graphics::Gizmo_RenderVertexNormal);
+				}
 			}
 
 			// Submit lighting data

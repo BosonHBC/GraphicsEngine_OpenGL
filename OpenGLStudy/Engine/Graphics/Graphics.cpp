@@ -80,7 +80,7 @@ namespace Graphics {
 
 	//functions
 	void RenderScene();
-	void RenderScene_shadowMap();
+	void RenderSceneWithoutMaterial();
 
 	bool Initialize()
 	{
@@ -120,6 +120,18 @@ namespace Graphics {
 				"unlit/arrow_vert.glsl",
 				"unlit/arrow_frag.glsl"))) {
 				printf("Fail to create unlit effect.\n");
+				return result;
+			}
+		}
+
+		// Create normal display effect
+		{
+			if (!(result = CreateEffect("NormalDisplay",
+				"normalDisplayer/normal_vert.glsl",
+				"normalDisplayer/normal_frag.glsl", 
+				"normalDisplayer/normal_geom.glsl"
+				))) {
+				printf("Fail to create normal display effect.\n");
 				return result;
 			}
 		}
@@ -233,7 +245,7 @@ namespace Graphics {
 			glClear(/*GL_COLOR_BUFFER_BIT | */GL_DEPTH_BUFFER_BIT);
 
 			// Draw scenes
-			RenderScene_shadowMap();
+			RenderSceneWithoutMaterial();
 
 			// switch back to original buffer
 			_directionalLightFBO->UnWrite();
@@ -265,7 +277,7 @@ namespace Graphics {
 				glClear(GL_DEPTH_BUFFER_BIT);
 
 				// Draw scenes
-				RenderScene_shadowMap();
+				RenderSceneWithoutMaterial();
 
 				// switch back to original buffer
 				_spotLightFB->UnWrite();
@@ -276,7 +288,7 @@ namespace Graphics {
 		s_currentEffect->UnUseEffect();
 	}
 
-	void Render_Pass_CaptureCameraView()
+	void Reflection_Pass()
 	{
 		// Enable clip plane0
 		{
@@ -418,7 +430,7 @@ namespace Graphics {
 		glDepthFunc(GL_LESS);
 	}
 
-	void RenderTransformGizmo()
+	void Gizmo_RenderTransform()
 	{
 		glDisable(GL_DEPTH_TEST);
 		s_currentEffect = GetEffectByKey("UnlitEffect");
@@ -461,7 +473,19 @@ namespace Graphics {
 		glEnable(GL_DEPTH_TEST);
 	}
 
-	void RenderScene_shadowMap()
+	void Gizmo_RenderVertexNormal()
+	{
+		s_currentEffect = GetEffectByKey("NormalDisplay");
+		s_currentEffect->UseEffect();
+
+		glClear(GL_DEPTH_BUFFER_BIT);
+
+		RenderSceneWithoutMaterial();
+
+		s_currentEffect->UnUseEffect();
+	}
+
+	void RenderSceneWithoutMaterial()
 	{
 		// loop through every single model
 		for (auto it = s_dateRenderingByGraphicThread->s_renderPasses[s_currentRenderPass].ModelToTransform_map.begin();
@@ -550,12 +574,12 @@ namespace Graphics {
 	}
 
 
-	bool CreateEffect(const char* i_key, const char* i_vertexShaderPath, const char* i_fragmentShaderPath)
+	bool CreateEffect(const char* i_key, const char* i_vertexShaderPath, const char* i_fragmentShaderPath, const char* i_geometryShaderPath/* = ""*/)
 	{
 		auto result = true;
 
 		cEffect* newEffect = new  Graphics::cEffect();
-		if (!(result = newEffect->CreateProgram(i_vertexShaderPath, i_fragmentShaderPath))) {
+		if (!(result = newEffect->CreateProgram(i_vertexShaderPath, i_fragmentShaderPath, i_geometryShaderPath))) {
 			printf("Fail to create default effect.\n");
 			safe_delete(newEffect);
 			return result;

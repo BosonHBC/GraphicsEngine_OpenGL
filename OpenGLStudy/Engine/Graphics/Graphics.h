@@ -26,11 +26,12 @@ namespace Graphics {
 
 	void DirectionalShadowMap_Pass();
 	void SpotLightShadowMap_Pass();
-	void Render_Pass_CaptureCameraView();
+	void Reflection_Pass();
 
 	void Render_Pass();
 	void CubeMap_Pass();
-	void RenderTransformGizmo();
+	void Gizmo_RenderTransform();
+	void Gizmo_RenderVertexNormal();
 
 	/** Submit function*/
 	void SubmitClipPlaneData(const glm::vec4& i_plane0, const glm::vec4& i_plane1 = glm::vec4(0, 0, 0, 0), const glm::vec4& i_plane2 = glm::vec4(0, 0, 0, 0), const glm::vec4& i_plane3 = glm::vec4(0, 0, 0, 0));
@@ -40,7 +41,7 @@ namespace Graphics {
 	void ClearApplicationThreadData();
 	
 	/** Usage function*/
-	bool CreateEffect(const char* i_key, const char* i_vertexShaderPath, const char* i_fragmentShaderPath);
+	bool CreateEffect(const char* i_key, const char* i_vertexShaderPath, const char* i_fragmentShaderPath, const char* i_geometryShaderPath = "");
 	cEffect* GetEffectByKey(const char* i_key);
 	cEffect* GetCurrentEffect();
 

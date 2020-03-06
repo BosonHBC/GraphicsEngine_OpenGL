@@ -41,6 +41,8 @@ namespace Graphics {
 		// Find the variable ids
 		virtual bool BindUniformVariables();
 
+		bool IsPathNull(const char* const i_incomingPath);
+
 	};
 
 }
