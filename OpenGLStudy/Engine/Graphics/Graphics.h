@@ -22,25 +22,26 @@ namespace Graphics {
 	/** Initialization and clean up function*/
 	bool Initialize();
 	void RenderFrame();
+	bool CleanUp();
 
 	void DirectionalShadowMap_Pass();
 	void SpotLightShadowMap_Pass();
-	void Render_Pass_CaptureCameraView();
-	cFrameBuffer* GetCameraCaptureFrameBuffer();
+	void Reflection_Pass();
+
 	void Render_Pass();
 	void CubeMap_Pass();
-
-	bool CleanUp();
+	void Gizmo_RenderTransform();
+	void Gizmo_RenderVertexNormal();
 
 	/** Submit function*/
 	void SubmitClipPlaneData(const glm::vec4& i_plane0, const glm::vec4& i_plane1 = glm::vec4(0, 0, 0, 0), const glm::vec4& i_plane2 = glm::vec4(0, 0, 0, 0), const glm::vec4& i_plane3 = glm::vec4(0, 0, 0, 0));
 	void SubmitLightingData(const std::vector<cPointLight>& i_pointLights, const std::vector<cSpotLight>& i_spotLights, const cAmbientLight& i_ambientLight, const cDirectionalLight& i_directionalLight);
 	void SubmitDataToBeRendered(const UniformBufferFormats::sFrame& i_frameData, const std::vector<std::pair<Graphics::cModel::HANDLE, cTransform>>& i_modelToTransform_map, void(*func_ptr)());
-	void SubmitTransformToBeDisplayedWithTransformGizmo(const std::vector< cTransform*>& i_transforms);
+
 	void ClearApplicationThreadData();
 	
 	/** Usage function*/
-	bool CreateEffect(const char* i_key, const char* i_vertexShaderPath, const char* i_fragmentShaderPath);
+	bool CreateEffect(const char* i_key, const char* i_vertexShaderPath, const char* i_fragmentShaderPath, const char* i_geometryShaderPath = "");
 	cEffect* GetEffectByKey(const char* i_key);
 	cEffect* GetCurrentEffect();
 
@@ -56,4 +57,6 @@ namespace Graphics {
 	// When the data is swapped, application data can be cleared and it is ready for next submission
 	void MakeApplicationThreadWaitForSwapingData(std::mutex& i_applicationMutex);
 
+	/** Others */
+	cFrameBuffer* GetCameraCaptureFrameBuffer();
 }

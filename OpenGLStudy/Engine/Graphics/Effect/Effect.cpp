@@ -18,7 +18,7 @@ namespace Graphics {
 		CleanUp();
 	}
 
-	bool cEffect::CreateProgram(const char* const i_vertexShaderPath, const char* const i_fragmentShaderPath)
+	bool cEffect::CreateProgram(const char* const i_vertexShaderPath, const char* const i_fragmentShaderPath, const char* const i_geometryShaderPath /*= ""*/)
 	{
 		m_programID = glCreateProgram();
 		if (!m_programID) {
@@ -34,6 +34,15 @@ namespace Graphics {
 		{
 			printf("Can not create program without fragment shader\n");
 			return false;
+		}
+
+		if (!IsPathNull(i_geometryShaderPath))
+		{
+			if (!LoadShader(i_geometryShaderPath, GL_GEOMETRY_SHADER))
+			{
+				printf("Can not create program because of failing compiling geometry shader. \n");
+				return false;
+			}
 		}
 
 		// link the program
@@ -102,16 +111,19 @@ namespace Graphics {
 			m_programID = 0;
 		}
 
-		m_pointLightCountID = 0;
-		m_spotLightCountID = 0;
 	}
 
 	bool cEffect::BindUniformVariables()
 	{
-		// Assign uniform ID
-		m_pointLightCountID = glGetUniformLocation(m_programID, "pointLightCount");
-		m_spotLightCountID = glGetUniformLocation(m_programID, "spotLightCount");
 		return true;
+	}
+
+	bool cEffect::IsPathNull(const char* const i_incomingPath)
+	{
+		if ((i_incomingPath != nullptr) && (i_incomingPath[0] == '\0')) {
+			return true;
+		}
+		return false;
 	}
 
 	void cEffect::UseEffect()

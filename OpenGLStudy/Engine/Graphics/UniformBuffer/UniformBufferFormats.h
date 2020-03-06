@@ -97,7 +97,8 @@ namespace Graphics {
 				float constant; // 4bytes
 				float linear; // 4bytes
 				float quadratic; // 4bytes
-				V2Padding; // 8bytes
+				float radius; // 4 bytes
+				V1Padding; // 4bytes
 
 				PointLight48() : position(glm::vec3(0,0,0)), constant(1), linear(0), quadratic(0)
 				{}
