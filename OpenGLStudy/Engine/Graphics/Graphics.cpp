@@ -350,51 +350,6 @@ namespace Graphics {
 		s_dataSubmittedByApplicationThread->s_renderPasses.push_back(inComingPasses);
 	}
 
-	void SubmitTransformToBeDisplayedWithTransformGizmo(const std::vector< cTransform*>& i_transforms)
-	{
-		glDisable(GL_DEPTH_TEST);
-		s_currentEffect = GetEffectByKey("UnlitEffect");
-		s_currentEffect->UseEffect();
-
-		// TODE: Error
-		//s_uniformBuffer_frame.Update(&s_dataRequiredToRenderAFrame.FrameData);
-
-		for (auto it = i_transforms.begin(); it != i_transforms.end(); ++it)
-		{
-			// Get forward transform
-			cTransform arrowTransform[3];
-			{
-				// Forward
-				arrowTransform[0].SetRotation((*it)->Rotation() * glm::quat(glm::vec3(glm::radians(90.f), 0, 0)));
-				// Right
-				arrowTransform[1].SetRotation((*it)->Rotation() * glm::quat(glm::vec3(0, 0, glm::radians(90.f))));
-				// Up
-				arrowTransform[2].SetRotation((*it)->Rotation() * glm::quat(glm::vec3(0, glm::radians(90.f), 0)));
-			}
-
-			cModel* _model = cModel::s_manager.Get(s_arrow);
-			cMatUnlit* _arrowMat = dynamic_cast<cMatUnlit*>(_model->GetMaterialAt());
-
-			for (int i = 0; i < 3; ++i)
-			{
-				arrowTransform[i].SetPosition((*it)->Position());
-				arrowTransform[i].SetScale(glm::vec3(2, 10, 2));
-				arrowTransform[i].Update();
-				s_uniformBuffer_drawcall.Update(&UniformBufferFormats::sDrawCall(arrowTransform[i].M(), arrowTransform[i].TranspostInverse()));
-
-				if (_model) {
-					_arrowMat->SetUnlitColor(s_arrowColor[i]);
-					_model->UpdateUniformVariables(s_currentEffect->GetProgramID());
-					_model->Render();
-				}
-			}
-		}
-
-
-		s_currentEffect->UnUseEffect();
-		glEnable(GL_DEPTH_TEST);
-	}
-
 	void ClearApplicationThreadData()
 	{
 		s_dataSubmittedByApplicationThread->s_renderPasses.clear();
@@ -409,7 +364,7 @@ namespace Graphics {
 		{
 			s_currentEffect = GetEffectByKey(Constants::CONST_DEFAULT_EFFECT_KEY);
 			s_currentEffect->UseEffect();
-			
+
 		}
 		// Reset window size
 		{
@@ -461,6 +416,49 @@ namespace Graphics {
 		s_currentEffect->UnUseEffect();
 		// set depth function back to default
 		glDepthFunc(GL_LESS);
+	}
+
+	void RenderTransformGizmo()
+	{
+		glDisable(GL_DEPTH_TEST);
+		s_currentEffect = GetEffectByKey("UnlitEffect");
+		s_currentEffect->UseEffect();
+
+		for (auto it = s_dateRenderingByGraphicThread->s_renderPasses[s_currentRenderPass].ModelToTransform_map.begin();
+			it != s_dateRenderingByGraphicThread->s_renderPasses[s_currentRenderPass].ModelToTransform_map.end(); ++it)
+		{
+			// Get forward transform
+			cTransform arrowTransform[3];
+			{
+				// Forward
+				arrowTransform[0].SetRotation(it->second.Rotation() * glm::quat(glm::vec3(glm::radians(90.f), 0, 0)));
+				// Right									  
+				arrowTransform[1].SetRotation(it->second.Rotation() * glm::quat(glm::vec3(0, 0, glm::radians(90.f))));
+				// Up											
+				arrowTransform[2].SetRotation(it->second.Rotation() * glm::quat(glm::vec3(0, glm::radians(90.f), 0)));
+			}
+
+			cModel* _model = cModel::s_manager.Get(s_arrow);
+			cMatUnlit* _arrowMat = dynamic_cast<cMatUnlit*>(_model->GetMaterialAt());
+
+			for (int i = 0; i < 3; ++i)
+			{
+				arrowTransform[i].SetPosition(it->second.Position());
+				arrowTransform[i].SetScale(glm::vec3(2, 10, 2));
+				arrowTransform[i].Update();
+				s_uniformBuffer_drawcall.Update(&UniformBufferFormats::sDrawCall(arrowTransform[i].M(), arrowTransform[i].TranspostInverse()));
+
+				if (_model) {
+					_arrowMat->SetUnlitColor(s_arrowColor[i]);
+					_model->UpdateUniformVariables(s_currentEffect->GetProgramID());
+					_model->Render();
+				}
+			}
+		}
+
+
+		s_currentEffect->UnUseEffect();
+		glEnable(GL_DEPTH_TEST);
 	}
 
 	void RenderScene_shadowMap()
@@ -539,9 +537,11 @@ namespace Graphics {
 
 
 		// Clean up ambient light
-		s_ambientLight->CleanUpShadowMap();
+		if (s_ambientLight)
+			s_ambientLight->CleanUpShadowMap();
 		safe_delete(s_ambientLight);
-		s_directionalLight->CleanUpShadowMap();
+		if (s_directionalLight)
+			s_directionalLight->CleanUpShadowMap();
 		safe_delete(s_directionalLight);
 
 		s_cameraCapture.~cFrameBuffer();

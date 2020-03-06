@@ -60,6 +60,7 @@ struct PointLight{
 	float constant;
 	float linear;
 	float quadratic;
+	float radius;
 };
 struct SpotLight{
 	PointLight base;
@@ -215,12 +216,12 @@ vec4 CalcPointLight(PointLight pLight,vec4 diffusTexCol, vec4 specTexCol,vec3 vN
 		vec3 dir = pLight.position - fragPos;
 		float dist = length(dir);
 		dir = normalize(dir);
-
+		float distRate = dist / pLight.radius;
 		vec4 color_kd = diffusTexCol * IlluminateByDirection_Kd(pLight.base, vN, dir);
 		vec4 color_ks = specTexCol * IlluminateByDirection_Ks(pLight.base, vN, dir, vV);
-		float attenuationFactor = pLight.quadratic * dist * dist + 
-													pLight.linear * dist + 
-													pLight.constant;
+		float attenuationFactor = (pLight.quadratic * distRate * distRate + 
+													pLight.linear * distRate + 
+													pLight.constant);
 
 		return ((color_kd + color_ks) / attenuationFactor);
 }
@@ -240,20 +241,19 @@ vec4 CalcPointLights(vec4 diffusTexCol, vec4 specTexCol,vec3 vN, vec3 vV){
 
 vec4 CalcSpotLight(SpotLight spLight,vec4 diffusTexCol, vec4 specTexCol,vec3 vN, vec3 vV){
 		vec3 dir = spLight.base.position - fragPos;
-		dir = normalize(dir);
-		float dir_dot_LDir = dot(-spLight.direction, dir);
+		vec3 norm_dir = normalize(dir);
+		float dist = length(dir);
+		float dir_dot_LDir = dot(-spLight.direction, norm_dir);
 		if(dir_dot_LDir > spLight.edge)
 		{
-			float dist = length(dir);
-			
+			float distRate = dist / spLight.base.radius;
+			vec4 color_kd = diffusTexCol * IlluminateByDirection_Kd(spLight.base.base, vN, norm_dir);
+			vec4 color_ks = specTexCol * IlluminateByDirection_Ks(spLight.base.base, vN, norm_dir, vV);
+			float attenuationFactor = (spLight.base.quadratic * distRate * distRate+ 
+													spLight.base.linear * distRate + 
+													spLight.base.constant) ;
 
-			vec4 color_kd = diffusTexCol * IlluminateByDirection_Kd(spLight.base.base, vN, dir);
-			vec4 color_ks = specTexCol * IlluminateByDirection_Ks(spLight.base.base, vN, dir, vV);
-			float attenuationFactor = spLight.base.quadratic * dist * dist + 
-													spLight.base.linear * dist + 
-													spLight.base.constant;
-
-			vec4 outColor = (color_kd + color_ks) / attenuationFactor;
+			vec4 outColor = (color_kd + color_ks)  / attenuationFactor;
 			float shadowFactor = g_spotLights[0].base.base.enableShadow ? (1.0 - CalcSpotLightShadowMap(vN)): 1.0;
 			outColor *= shadowFactor;
 			return outColor * (1.0f - (1-dir_dot_LDir) * (1.0f / (1.0f - spLight.edge)));

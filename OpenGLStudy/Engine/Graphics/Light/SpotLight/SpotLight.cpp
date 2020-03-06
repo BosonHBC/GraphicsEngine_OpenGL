@@ -23,6 +23,7 @@ namespace Graphics {
 		gLighting.spotLights[m_lightIndex].base.quadratic = m_quadratic;
 		gLighting.spotLights[m_lightIndex].base.linear = m_linear;
 		gLighting.spotLights[m_lightIndex].base.constant = m_const;
+		gLighting.spotLights[m_lightIndex].base.radius = m_range;
 		gLighting.spotLights[m_lightIndex].direction = m_transform.Forward();
 		gLighting.spotLights[m_lightIndex].edge = m_procEdge;
 	}

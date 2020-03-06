@@ -19,6 +19,7 @@ namespace Graphics {
 		gLighting.pointLights[m_lightIndex].quadratic = m_quadratic;
 		gLighting.pointLights[m_lightIndex].linear = m_linear;
 		gLighting.pointLights[m_lightIndex].constant = m_const;
+		gLighting.pointLights[m_lightIndex].radius = m_range;
 	}
 
 	void cPointLight::SetupLight(const GLuint& i_programID, GLuint i_lightIndex)

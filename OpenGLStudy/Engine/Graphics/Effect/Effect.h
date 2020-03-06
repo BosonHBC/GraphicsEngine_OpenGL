@@ -16,7 +16,7 @@ namespace Graphics {
 
 		/** Initializations and clean up*/
 		/** Create program with default vertex shader and fragment shader*/
-		bool CreateProgram(const char* const i_vertexShaderPath, const char* const i_fragmentShaderPath);
+		bool CreateProgram(const char* const i_vertexShaderPath, const char* const i_fragmentShaderPath, const char* const i_geometryShaderPath = "");
 		bool LinkProgram();
 		bool ValidateProgram();
 		void FixSamplerError();
@@ -32,7 +32,6 @@ namespace Graphics {
 	protected:
 		/** private variables*/
 		GLuint m_programID;
-		GLuint m_pointLightCountID, m_spotLightCountID;
 
 		std::map<GLenum, sGLShader*> m_shaders;
 

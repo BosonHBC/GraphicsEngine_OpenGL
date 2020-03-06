@@ -18,6 +18,7 @@
 #include "Material/Blinn/MatBlinn.h"
 #include "Material/Cubemap/MatCubemap.h"
 #include "Graphics/Texture/Texture.h"
+#include "Assets/Handle.h"
 
 #include <map>
 
@@ -94,10 +95,10 @@ void Assignment::CreateCamera()
 void Assignment::CreateLight()
 {
 	Graphics::CreateAmbientLight(Color(0.1f, 0.1f, 0.1f), aLight);
-	//Graphics::CreatePointLight(glm::vec3(0, 150.f, 100.f), Color(0.1, 0.2, 0.8), 0.1f, 0.003f, 0.00003f, false, pLight1);
-	//Graphics::CreatePointLight(glm::vec3(-200, 100, -200), Color(0.8, 0.2, 0.2), 0.1f, 0.002f, 0.00002f, false, pLight2);
+	Graphics::CreatePointLight(glm::vec3(0, 150.f, 100.f), Color(0.1, 0.2, 0.8), 0.3f, 0.7f, 0.3f, false, pLight1);
+	Graphics::CreatePointLight(glm::vec3(-200, 100, -200), Color(0.8, 0.2, 0.2), 0.3f, 0.7f, 0.2f, false, pLight2);
 	Graphics::CreateDirectionalLight(Color(1, 1, 1), glm::vec3(-1, -1, 0), true, dLight);
-	Graphics::CreateSpotLight(glm::vec3(0, 150, 0), glm::vec3(0, 1, 1), Color(0.8), 65.f, 0.1f, 0.03f, 0.0003f, true, spLight);
+	Graphics::CreateSpotLight(glm::vec3(0, 150, 0), glm::vec3(0, 1, 1), Color(1), 65.f, 0.3f, 0.7f, 0.2f, true, spLight);
 }
 
 void Assignment::Run()
@@ -105,30 +106,12 @@ void Assignment::Run()
 	// loop until window closed
 	while (!m_shouldApplicationLoopExit)
 	{
+		// Poll input events
 		glfwPollEvents();
 
+		// Render frame
 		Graphics::RenderFrame();
-		//dLight->Transform()->Rotate(cTransform::WorldUp, 0.01677f);
-/*
-		if (true)
-		{
-			std::vector<cTransform*> _transforms;
-			cTransform _worldTransform;
-			_transforms.push_back(&_worldTransform);
-			_transforms.push_back(m_teapot->Transform());
-			//_transforms.push_back(m_teapot2->Transform());
-			//_transforms.push_back(m_sphere->Transform());
-			if(pLight1)
-			_transforms.push_back(pLight1->Transform());
-			if (pLight2)
-				_transforms.push_back(pLight2->Transform());
-			if (spLight)
-				_transforms.push_back(spLight->Transform());
 
-			Graphics::SubmitTransformToBeDisplayedWithTransformGizmo(_transforms);
-		}*/
-
-		// ----------------------
 		// Swap buffers
 		m_window->SwapBuffers();
 	}
@@ -164,7 +147,7 @@ void Assignment::Tick(float second_since_lastFrame)
 	}
 
 	cTransform* controledActor = nullptr;
-	controledActor = spLight->Transform();
+	controledActor = pLight1->Transform();
 	//controledActor = m_sphere->Transform();
 	if (controledActor) {
 		if (_windowInput->IsKeyDown(GLFW_KEY_J)) {
@@ -280,6 +263,22 @@ void Assignment::Tick(float second_since_lastFrame)
 				_renderingMap.push_back({ m_cubemap->GetModelHandle(), *m_cubemap->Transform() });
 				Graphics::UniformBufferFormats::sFrame _frameData_Cubemap(m_editorCamera->GetProjectionMatrix(), glm::mat4(glm::mat3(m_editorCamera->GetViewMatrix())));
 				Graphics::SubmitDataToBeRendered(_frameData_Camera, _renderingMap, &Graphics::CubeMap_Pass);
+
+				// Transform Gizmo
+				_renderingMap.clear();
+				cTransform _worldTransform;
+				Assets::cHandle<Graphics::cModel> unneccessaryHandle;
+				_renderingMap.push_back({ unneccessaryHandle, _worldTransform });
+				_renderingMap.push_back({ unneccessaryHandle, *m_teapot->Transform() });
+				
+				if (pLight1)
+					_renderingMap.push_back({ unneccessaryHandle, *pLight1->Transform() });
+				if (pLight2)
+					_renderingMap.push_back({ unneccessaryHandle, *pLight2->Transform() });
+				if (spLight)
+					_renderingMap.push_back({ unneccessaryHandle, *spLight->Transform() });
+
+				Graphics::SubmitDataToBeRendered(_frameData_Camera, _renderingMap, &Graphics::RenderTransformGizmo);
 			}
 
 			// Submit lighting data

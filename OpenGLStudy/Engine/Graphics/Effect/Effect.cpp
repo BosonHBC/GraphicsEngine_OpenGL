@@ -18,7 +18,7 @@ namespace Graphics {
 		CleanUp();
 	}
 
-	bool cEffect::CreateProgram(const char* const i_vertexShaderPath, const char* const i_fragmentShaderPath)
+	bool cEffect::CreateProgram(const char* const i_vertexShaderPath, const char* const i_fragmentShaderPath, const char* const i_geometryShaderPath)
 	{
 		m_programID = glCreateProgram();
 		if (!m_programID) {
@@ -102,15 +102,10 @@ namespace Graphics {
 			m_programID = 0;
 		}
 
-		m_pointLightCountID = 0;
-		m_spotLightCountID = 0;
 	}
 
 	bool cEffect::BindUniformVariables()
 	{
-		// Assign uniform ID
-		m_pointLightCountID = glGetUniformLocation(m_programID, "pointLightCount");
-		m_spotLightCountID = glGetUniformLocation(m_programID, "spotLightCount");
 		return true;
 	}
 
