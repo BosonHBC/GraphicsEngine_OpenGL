@@ -1,19 +1,25 @@
 #version 420
-layout (location = 0) in vec3 pos;
+layout (triangles) in;
+layout (triangles_strip, max_vertices = 18) out;
 
-layout(std140, binding = 0) uniform uniformBuffer_frame
-{
-	// PVMatrix stands for projection * view matrix
-	mat4 PVMatrix;
-	vec3 ViewPosition;
-};
-layout(std140, binding = 1) uniform uniformBuffer_drawcall
-{
-	mat4 modelMatrix;
-	mat4 normalMatrix;
-};
+uniform mat4 lightMatrices[6];
+
+out vec4 FragPos;
 
 void main()
 {
-	gl_Position = PVMatrix * modelMatrix * vec4(pos, 1.0);
+	// f stands for face, this outter for loop draws 6 triangles facing to different direction
+	for(int f  = 0; f < 6; ++f)
+	{
+		gl_Layer = f;
+		for(int i = 0; i < 3; ++i)
+		{
+			// gl_in has 3 values because the in is [triangle]
+			FragPos = gl_in[i].gl_Position; // Set FragPos in world space
+			// now gl_Position is in clip space according to the lightMatrices
+			gl_Position = lightMatrices[f] * FragPos;
+			EmitVertex();
+		}
+		EndPrimitive();
+	}
 }

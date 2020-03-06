@@ -1,12 +1,6 @@
 #version 420
 layout (location = 0) in vec3 pos;
 
-layout(std140, binding = 0) uniform uniformBuffer_frame
-{
-	// PVMatrix stands for projection * view matrix
-	mat4 PVMatrix;
-	vec3 ViewPosition;
-};
 layout(std140, binding = 1) uniform uniformBuffer_drawcall
 {
 	mat4 modelMatrix;
@@ -15,5 +9,6 @@ layout(std140, binding = 1) uniform uniformBuffer_drawcall
 
 void main()
 {
-	gl_Position = PVMatrix * modelMatrix * vec4(pos, 1.0);
+	// pass this to world space
+	gl_Position = modelMatrix * vec4(pos, 1.0);
 }

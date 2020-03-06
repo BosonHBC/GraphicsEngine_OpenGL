@@ -1,6 +1,13 @@
 #version 420
-out vec4 color;
-void main(){
-    color = gl_FragCoord.z * vec4(1,1,1,1);
+in vec4 FragPos;
 
+uniform vec3 LightPos;
+uniform float farPlane;
+
+void main(){
+    // In world space
+    float distance = length(FragPos.xyz - LightPos);
+    // normalize to [0,1]
+    distance = distance / farPlane;
+    gl_FragDepth = distance;
 }
