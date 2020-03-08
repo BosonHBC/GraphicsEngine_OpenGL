@@ -174,4 +174,10 @@ void cTransform::PrintEulerAngle() const
 
 	printf("angle: %f, %f, %f\n", ToDegree(angle.x), ToDegree(angle.y), ToDegree(angle.z));
 }
+
+void cTransform::PrintPosition() const
+{
+	printf("position: %f, %f, %f\n", m_position.x, m_position.y, m_position.z);
+}
+
 #endif

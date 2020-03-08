@@ -69,6 +69,7 @@ public:
 
 #ifdef _DEBUG
 	void PrintEulerAngle() const;
+	void PrintPosition() const;
 #endif // _DEBUG
 
 public:

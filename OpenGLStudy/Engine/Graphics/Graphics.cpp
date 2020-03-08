@@ -676,7 +676,7 @@ namespace Graphics {
 		return result;
 	}
 
-	bool CreatePointLight(const glm::vec3& i_initialLocation, const Color& i_color, const GLfloat& i_range, const GLfloat& i_const, const GLfloat& i_linear, const GLfloat& i_quadratic, bool i_enableShadow, cPointLight*& o_pointLight)
+	bool CreatePointLight(const glm::vec3& i_initialLocation, const Color& i_color, const GLfloat& i_const, const GLfloat& i_linear, const GLfloat& i_quadratic, bool i_enableShadow, cPointLight*& o_pointLight)
 	{
 		auto result = true;
 		if (result = (s_currentEffect->GetProgramID() == 0)) {
@@ -684,10 +684,10 @@ namespace Graphics {
 			return result;
 		}
 		// TODO: lighting, range should be passed in
-		cPointLight* newPointLight = new cPointLight(i_color, i_initialLocation, i_range, i_const, i_linear, i_quadratic);
+		cPointLight* newPointLight = new cPointLight(i_color, i_initialLocation, i_const, i_linear, i_quadratic);
 		newPointLight->SetupLight(s_currentEffect->GetProgramID(), s_pointLight_list.size());
 		newPointLight->SetEnableShadow(i_enableShadow);
-		newPointLight->CreateShadowMap(2048, 2048);
+		newPointLight->CreateShadowMap(1024, 1024);
 		o_pointLight = newPointLight;
 		s_pointLight_list.push_back(newPointLight);
 		return result;
@@ -700,10 +700,10 @@ namespace Graphics {
 			printf("Can not create spot light without a valid program id.\n");
 			return result;
 		}
-		cSpotLight* newSpotLight = new cSpotLight(i_color, i_initialLocation, glm::normalize(i_direction), i_edge, 300.f, i_const, i_linear, i_quadratic);
+		cSpotLight* newSpotLight = new cSpotLight(i_color, i_initialLocation, glm::normalize(i_direction), i_edge, i_const, i_linear, i_quadratic);
 		newSpotLight->SetupLight(s_currentEffect->GetProgramID(), s_spotLight_list.size());
 		newSpotLight->SetEnableShadow(i_enableShadow);
-		newSpotLight->CreateShadowMap(2048, 2048);
+		newSpotLight->CreateShadowMap(1024, 1024);
 		o_spotLight = newSpotLight;
 		s_spotLight_list.push_back(newSpotLight);
 
@@ -720,7 +720,7 @@ namespace Graphics {
 		cDirectionalLight* newDirectionalLight = new cDirectionalLight(i_color, glm::normalize(i_direction));
 		newDirectionalLight->SetupLight(s_currentEffect->GetProgramID(), 0);
 		newDirectionalLight->SetEnableShadow(i_enableShadow);
-		newDirectionalLight->CreateShadowMap(2048, 2048);
+		newDirectionalLight->CreateShadowMap(1024, 1024);
 
 
 		o_directionalLight = newDirectionalLight;

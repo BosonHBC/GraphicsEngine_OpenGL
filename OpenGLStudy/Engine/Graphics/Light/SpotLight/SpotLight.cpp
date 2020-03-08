@@ -4,8 +4,8 @@
 #include "Graphics/UniformBuffer/UniformBufferFormats.h"
 namespace Graphics {
 
-	cSpotLight::cSpotLight(Color i_color, const glm::vec3& i_position, const glm::vec3& i_direction, GLfloat i_edge, GLfloat i_range, GLfloat i_const, GLfloat i_linear, GLfloat i_quadratic):
-		cPointLight(i_color, i_position, i_range, i_const, i_linear, i_quadratic)
+	cSpotLight::cSpotLight(Color i_color, const glm::vec3& i_position, const glm::vec3& i_direction, GLfloat i_edge, GLfloat i_const, GLfloat i_linear, GLfloat i_quadratic):
+		cPointLight(i_color, i_position, i_const, i_linear, i_quadratic)
 	{
 		m_edge = glm::clamp(i_edge, 1.f, 150.f);
 		m_procEdge = cosf(glm::radians(m_edge/2.f));

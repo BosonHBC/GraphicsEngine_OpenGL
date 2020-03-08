@@ -11,6 +11,15 @@ const int MAX_COUNT_PER_LIGHT = 5;
 uniform sampler2D spotlightShadowMap[MAX_COUNT_PER_LIGHT]; // 5 -> 10
 uniform samplerCube pointLightShadowMap[MAX_COUNT_PER_LIGHT]; // 11-> 15
 
+const vec3 gridSamplingDisk[20] =vec3[]
+(
+   vec3(1, 1,  1), vec3( 1, -1,  1), vec3(-1, -1,  1), vec3(-1, 1,  1), 
+   vec3(1, 1, -1), vec3( 1, -1, -1), vec3(-1, -1, -1), vec3(-1, 1, -1),
+   vec3(1, 1,  0), vec3( 1, -1,  0), vec3(-1, -1,  0), vec3(-1, 1,  0),
+   vec3(1, 0,  1), vec3(-1,  0,  1), vec3( 1,  0, -1), vec3(-1, 0, -1),
+   vec3(0, 1,  1), vec3( 0, -1,  1), vec3( 0, -1, -1), vec3( 0, 1, -1)
+);
+
 in vec2 texCood0;
 in vec3 Normal;
 in vec3 fragPos;
@@ -126,7 +135,7 @@ float CalcSpotLightShadowMap(int idx, vec3 vN)
 
 	// Calculate bias
 	vec3 lightDir = normalize(g_spotLights[idx].direction);
-	float _bias = 0.01 * (1.0 - dot(vN, lightDir)) * (1-g_spotLights[idx].edge);
+	float _bias = 0.05 * (1.0 - dot(vN, lightDir)) * (1-g_spotLights[idx].edge);
 	const float bias = max(_bias, 0.05);
 
 	float shadow = 0.0;
@@ -149,17 +158,25 @@ float CalcSpotLightShadowMap(int idx, vec3 vN)
 	return shadow;	
 }
 
-float CalcPointLightShadowMap(int idx, PointLight pLight)
+float CalcPointLightShadowMap(int idx, PointLight pLight, float dist_vV)
 {
 	vec3 fragToLight = fragPos - pLight.position;
 	// sample the cube map
-	float cloest = texture(pointLightShadowMap[idx], fragToLight).r;
-	float current = length(fragToLight) / pLight.radius;
-
+	
+	float currentDepth = length(fragToLight) / pLight.radius;
+	float shadow = 0.0;
 	float bias = 0.05;
-	// if current is larger than closest, it is in shadow
-	float shadow = current - bias > cloest ? 1.0 : 0.0;
+	float samples = 20;
+	// length it goes according to the grid sampler, and it determines the blur amount of the shadow
+	float diskRadius = (1.0 + (dist_vV / pLight.radius)) / 5.0; 
 
+	for(int i = 0; i < samples; ++i) 
+	{
+		float cloestDepth = texture(pointLightShadowMap[idx], fragToLight + gridSamplingDisk[i] * diskRadius).r;
+		shadow += (currentDepth - bias > cloestDepth) ? 1.0 : 0.0;
+	}
+
+	shadow /= float(samples);
 	return shadow;
 }
 
@@ -228,17 +245,17 @@ vec4 CalcDirectionalLight(vec4 diffusTexCol, vec4 specTexCol, vec3 vN, vec3 vV){
 // PointLight
 //-------------------------------------------------------------------------
 
-vec4 CalcPointLight(int idx, PointLight pLight,vec4 diffusTexCol, vec4 specTexCol,vec3 vN, vec3 vV){
+vec4 CalcPointLight(int idx, PointLight pLight,vec4 diffusTexCol, vec4 specTexCol,vec3 vN, vec3 norm_vV, float dist_vV){
 		vec3 dir = pLight.position - fragPos;
 		float dist = length(dir);
 		dir = normalize(dir);
 
 		// shadow
-		float shadowFactor = pLight.base.enableShadow ? (1.0 - CalcPointLightShadowMap(idx, pLight)) : 1.0;
+		float shadowFactor = pLight.base.enableShadow ? (1.0 - CalcPointLightShadowMap(idx, pLight, dist_vV)) : 1.0;
 
 		float distRate = dist / pLight.radius;
 		vec4 color_kd = diffusTexCol * IlluminateByDirection_Kd(pLight.base, vN, dir);
-		vec4 color_ks = specTexCol * IlluminateByDirection_Ks(pLight.base, vN, dir, vV);
+		vec4 color_ks = specTexCol * IlluminateByDirection_Ks(pLight.base, vN, dir, norm_vV);
 		float attenuationFactor = (pLight.quadratic * distRate * distRate + 
 													pLight.linear * distRate + 
 													pLight.constant);
@@ -246,11 +263,11 @@ vec4 CalcPointLight(int idx, PointLight pLight,vec4 diffusTexCol, vec4 specTexCo
 		return shadowFactor * ((color_kd + color_ks) / attenuationFactor);
 }
 
-vec4 CalcPointLights(vec4 diffusTexCol, vec4 specTexCol,vec3 vN, vec3 vV){
+vec4 CalcPointLights(vec4 diffusTexCol, vec4 specTexCol,vec3 vN, vec3 norm_vV, float dist_vV){
 	vec4 outColor = vec4(0,0,0,0);
 
 	for(int i = 0; i < g_pointLightCount; ++i){
-		outColor += CalcPointLight(i, g_pointLights[i],diffusTexCol, specTexCol,vN,vV);
+		outColor += CalcPointLight(i, g_pointLights[i],diffusTexCol, specTexCol,vN,norm_vV, dist_vV);
 	}
 	return outColor;
 }
@@ -302,7 +319,9 @@ void main(){
 	
 	// shared values
 	vec3 normalized_normal = normalize(Normal);
-	vec3 normalized_view = normalize(ViewPosition - fragPos);
+	vec3 view = ViewPosition - fragPos;
+	float viewDistance = length(view);
+	vec3 normalized_view = normalize(view);
 	vec4 diffuseTexColor = texture(diffuseTex, texCood0);
 	vec4 specularTexColor =texture(specularTex, texCood0);
 
@@ -313,7 +332,7 @@ void main(){
 	vec4 cubemapColor = IlluminateByCubemap(diffuseTexColor,specularTexColor, normalized_normal, normalized_view);
 
 	// point light
-	vec4 pointLightColor = CalcPointLights(diffuseTexColor, specularTexColor, normalized_normal, normalized_view);
+	vec4 pointLightColor = CalcPointLights(diffuseTexColor, specularTexColor, normalized_normal, normalized_view, viewDistance);
 
 	// spot light with shadow
 	vec4 spotLightColor = CalcSpotLights(diffuseTexColor, specularTexColor, normalized_normal, normalized_view);

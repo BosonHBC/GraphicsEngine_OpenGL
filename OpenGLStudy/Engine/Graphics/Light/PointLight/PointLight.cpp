@@ -4,11 +4,13 @@
 #include "Graphics/Graphics.h"
 #include "Graphics/UniformBuffer/UniformBufferFormats.h"
 namespace Graphics {
-	cPointLight::cPointLight(Color i_color, const glm::vec3 & i_position, const GLfloat i_range, GLfloat i_const, GLfloat i_linear, GLfloat i_quadratic):
-		m_range(i_range), m_const(i_const), m_linear(i_linear), m_quadratic(i_quadratic),
+	cPointLight::cPointLight(Color i_color, const glm::vec3 & i_position, GLfloat i_const, GLfloat i_linear, GLfloat i_quadratic) :
+		m_const(i_const), m_linear(i_linear), m_quadratic(i_quadratic),
 		cGenLight(i_color)
 	{
 		m_transform.SetTransform(i_position, glm::quat(1, 0, 0, 0), glm::vec3(1, 1, 1));
+
+		UpdateRange();
 	}
 	void cPointLight::Illuminate()
 	{
@@ -47,7 +49,7 @@ namespace Graphics {
 	void cPointLight::SetLightUniformTransform()
 	{
 		// order: px, nx, py, ny, pz, nz
-		glm::mat4 lightMatrices[6] = 
+		glm::mat4 lightMatrices[6] =
 		{
 			m_lightPrjectionMatrix * glm::lookAt(m_transform.Position(), m_transform.Position() + m_transform.Right(), -cTransform::WorldUp),
 			m_lightPrjectionMatrix * glm::lookAt(m_transform.Position(), m_transform.Position() - m_transform.Right(), -cTransform::WorldUp),
@@ -65,6 +67,12 @@ namespace Graphics {
 	void cPointLight::UseShadowMap(GLuint i_textureUnit)
 	{
 		glUniform1i(m_lightShadowMapID, i_textureUnit);
+	}
+
+	void cPointLight::UpdateRange()
+	{
+		float lightMax = fmax(m_color.r, fmax(m_color.g, m_color.b));
+		m_range = (-m_linear + sqrt(m_linear * m_linear - 4 * m_quadratic * (m_const - (256.f / 5.f) * lightMax))) / (2.f * m_quadratic) * 100.f;
 	}
 
 }

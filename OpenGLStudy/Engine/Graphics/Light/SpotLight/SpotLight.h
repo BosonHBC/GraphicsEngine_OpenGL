@@ -8,7 +8,7 @@ namespace Graphics {
 		cSpotLight() : cPointLight() {}
 		cSpotLight(Color i_color, const glm::vec3& i_position,
 			const glm::vec3& i_direction,
-			GLfloat i_edge, GLfloat i_range,
+			GLfloat i_edge,
 			GLfloat i_const, GLfloat i_linear, GLfloat i_quadratic);
 
 		cSpotLight(const cSpotLight& i_other) : cPointLight(i_other), m_edge(i_other.m_edge), m_procEdge(i_other.m_procEdge)
@@ -19,8 +19,6 @@ namespace Graphics {
 			cPointLight::operator=(i_other);
 			m_edge = i_other.m_edge;
 			m_procEdge = i_other.m_procEdge;
-			m_lightTransformID = i_other.m_lightTransformID;
-			m_lightShadowMapID = i_other.m_lightShadowMapID;
 			return *this;
 		}
 

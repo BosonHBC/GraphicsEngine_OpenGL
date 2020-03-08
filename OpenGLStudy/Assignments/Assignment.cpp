@@ -94,11 +94,11 @@ void Assignment::CreateCamera()
 
 void Assignment::CreateLight()
 {
-	//Graphics::CreateAmbientLight(Color(0.1f, 0.1f, 0.1f), aLight);
+	Graphics::CreateAmbientLight(Color(0.1f, 0.1f, 0.1f), aLight);
 	//Graphics::CreatePointLight(glm::vec3(0, 150.f, 100.f), Color(0.1, 0.2, 0.8), 0.3f, 0.7f, 0.3f, false, pLight1);
-	Graphics::CreatePointLight(glm::vec3(-100, 40, -100), Color(0.8, 0.2, 0.2), 200.f,0.3f, 0.7f, 0.2f, true, pLight2);
-	//Graphics::CreateDirectionalLight(Color(1, 1, 1), glm::vec3(-1, -1, 0), true, dLight);
-	//Graphics::CreateSpotLight(glm::vec3(0, 150, 0), glm::vec3(0, 1, 1), Color(1), 65.f, 0.3f, 0.7f, 0.2f, true, spLight);
+	Graphics::CreatePointLight(glm::vec3(-100, 40, -100), Color(0.8, 0.8, 0.8), 1.f, 0.7f, 1.8f, true, pLight2);
+	Graphics::CreateDirectionalLight(Color(.8, .8, .8), glm::vec3(-1, -1, 0), true, dLight);
+	Graphics::CreateSpotLight(glm::vec3(0, 150, 0), glm::vec3(0, 1, 1), Color(1), 65.f, 1.f, 0.7f, 1.8f, true, spLight);
 }
 
 void Assignment::Run()
@@ -199,11 +199,19 @@ void Assignment::Tick(float second_since_lastFrame)
 	if (pLight1)
 		pLight1->Transform()->Update();
 	if (pLight2)
+	{
 		pLight2->Transform()->Update();
+#ifdef _DEBUG
+		//pLight2->Transform()->PrintPosition();
+#endif // DEBUG
+	}
+
 	if (dLight)
 		dLight->Transform()->Update();
 	if (spLight)
 		spLight->Transform()->Update();
+
+
 	// Submit data
 	{
 
@@ -308,19 +316,19 @@ void Assignment::Tick(float second_since_lastFrame)
 					pLight1->UpdateLightIndex(_pLights.size());
 					_pLights.push_back(*pLight1);
 				}
-					
+
 				if (pLight2)
 				{
 					pLight2->UpdateLightIndex(_pLights.size());
 					_pLights.push_back(*pLight2);
 				}
-					
+
 				if (spLight)
 				{
 					spLight->UpdateLightIndex(_spLights.size());
 					_spLights.push_back(*spLight);
 				}
-					
+
 				Graphics::SubmitLightingData(_pLights, _spLights, *aLight, *dLight);
 			}
 		}
