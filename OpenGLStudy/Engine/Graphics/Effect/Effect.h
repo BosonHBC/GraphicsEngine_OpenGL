@@ -19,7 +19,6 @@ namespace Graphics {
 		bool CreateProgram(const char* const i_vertexShaderPath, const char* const i_fragmentShaderPath, const char* const i_geometryShaderPath = "");
 		bool LinkProgram();
 		bool ValidateProgram();
-		void FixSamplerError();
 		void CleanUp();
 
 		/** Usage functions*/

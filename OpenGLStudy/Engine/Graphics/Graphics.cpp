@@ -95,9 +95,7 @@ namespace Graphics {
 				printf("Fail to create default effect.\n");
 				return result;
 			}
-
 			s_currentEffect = GetEffectByKey(Constants::CONST_DEFAULT_EFFECT_KEY);
-			s_currentEffect->FixSamplerError();
 		}
 		// Create shadow map effect
 		{
@@ -191,13 +189,6 @@ namespace Graphics {
 			return result;
 		}
 
-		for (auto it : s_KeyToEffect_map)
-		{
-			if (!(result = it.second->ValidateProgram()))
-			{
-				return result;
-			}
-		}
 		// Load arrows
 		{
 			std::string _arrowPath = "Contents/models/arrow.model";
@@ -259,6 +250,7 @@ namespace Graphics {
 			glClearColor(0, 0, 0, 1.f);
 			glClear(/*GL_COLOR_BUFFER_BIT | */GL_DEPTH_BUFFER_BIT);
 
+			s_currentEffect->ValidateProgram();
 			// Draw scenes
 			RenderSceneWithoutMaterial();
 
@@ -293,6 +285,7 @@ namespace Graphics {
 				glClearColor(0, 0, 0, 1.f);
 				glClear(GL_DEPTH_BUFFER_BIT);
 
+				s_currentEffect->ValidateProgram();
 				// Draw scenes
 				RenderSceneWithoutMaterial();
 
@@ -326,6 +319,7 @@ namespace Graphics {
 				glClearColor(0, 0, 0, 1.f);
 				glClear(GL_DEPTH_BUFFER_BIT);
 
+				s_currentEffect->ValidateProgram();
 				// Draw scenes
 				RenderSceneWithoutMaterial();
 
@@ -368,6 +362,7 @@ namespace Graphics {
 
 		// Update lighting data
 		UpdateLightingData();
+		s_currentEffect->ValidateProgram();
 		// Start a draw call loop
 		RenderScene();
 
@@ -443,6 +438,7 @@ namespace Graphics {
 
 		// Update Lighting Data
 		UpdateLightingData();
+		s_currentEffect->ValidateProgram();
 		// Start a draw call loop
 		RenderScene();
 		// clear program
@@ -460,6 +456,7 @@ namespace Graphics {
 		s_currentEffect = GetEffectByKey("CubemapEffect");
 		s_currentEffect->UseEffect();
 
+		s_currentEffect->ValidateProgram();
 		for (auto it = s_dateRenderingByGraphicThread->s_renderPasses[s_currentRenderPass].ModelToTransform_map.begin();
 			it != s_dateRenderingByGraphicThread->s_renderPasses[s_currentRenderPass].ModelToTransform_map.end(); ++it)
 		{
@@ -497,6 +494,8 @@ namespace Graphics {
 				arrowTransform[2].SetRotation(it->second.Rotation() * glm::quat(glm::vec3(0, glm::radians(90.f), 0)));
 			}
 
+			s_currentEffect->ValidateProgram();
+			
 			cModel* _model = cModel::s_manager.Get(s_arrow);
 			cMatUnlit* _arrowMat = dynamic_cast<cMatUnlit*>(_model->GetMaterialAt());
 
@@ -526,7 +525,7 @@ namespace Graphics {
 		s_currentEffect->UseEffect();
 
 		glClear(GL_DEPTH_BUFFER_BIT);
-
+		s_currentEffect->ValidateProgram();
 		RenderSceneWithoutMaterial();
 
 		s_currentEffect->UnUseEffect();
@@ -677,7 +676,7 @@ namespace Graphics {
 		return result;
 	}
 
-	bool CreatePointLight(const glm::vec3& i_initialLocation, const Color& i_color, const GLfloat& i_const, const GLfloat& i_linear, const GLfloat& i_quadratic, bool i_enableShadow, cPointLight*& o_pointLight)
+	bool CreatePointLight(const glm::vec3& i_initialLocation, const Color& i_color, const GLfloat& i_range, const GLfloat& i_const, const GLfloat& i_linear, const GLfloat& i_quadratic, bool i_enableShadow, cPointLight*& o_pointLight)
 	{
 		auto result = true;
 		if (result = (s_currentEffect->GetProgramID() == 0)) {
@@ -685,7 +684,7 @@ namespace Graphics {
 			return result;
 		}
 		// TODO: lighting, range should be passed in
-		cPointLight* newPointLight = new cPointLight(i_color, i_initialLocation, 300.f, i_const, i_linear, i_quadratic);
+		cPointLight* newPointLight = new cPointLight(i_color, i_initialLocation, i_range, i_const, i_linear, i_quadratic);
 		newPointLight->SetupLight(s_currentEffect->GetProgramID(), s_pointLight_list.size());
 		newPointLight->SetEnableShadow(i_enableShadow);
 		newPointLight->CreateShadowMap(2048, 2048);
@@ -754,10 +753,10 @@ namespace Graphics {
 			it->SetLightUniformTransform();
 
 			if (it->IsShadowEnabled()) {
-				//it->UseShadowMap(SHADOWMAP_START_TEXTURE_UNIT + i);
-				//it->GetShadowMap()->Read(GL_TEXTURE0 + SHADOWMAP_START_TEXTURE_UNIT + i);
-				it->UseShadowMap(5);
-				it->GetShadowMap()->Read(GL_TEXTURE5);
+				it->UseShadowMap(SHADOWMAP_START_TEXTURE_UNIT + i);
+				it->GetShadowMap()->Read(GL_TEXTURE0 + SHADOWMAP_START_TEXTURE_UNIT + i);
+				//it->UseShadowMap(5);
+				//it->GetShadowMap()->Read(GL_TEXTURE5);
 			}
 		}
 
@@ -769,10 +768,8 @@ namespace Graphics {
 
 			if (it->IsShadowEnabled()) {
 				// has offset
-				//it->UseShadowMap(MAX_COUNT_PER_LIGHT + SHADOWMAP_START_TEXTURE_UNIT + i);
-				// it->GetShadowMap()->Read(GL_TEXTURE0 + MAX_COUNT_PER_LIGHT + SHADOWMAP_START_TEXTURE_UNIT + i);
-				it->UseShadowMap(6);
-				it->GetShadowMap()->Read(GL_TEXTURE6);
+				it->UseShadowMap(MAX_COUNT_PER_LIGHT + SHADOWMAP_START_TEXTURE_UNIT + i);
+				it->GetShadowMap()->Read(GL_TEXTURE0 + MAX_COUNT_PER_LIGHT + SHADOWMAP_START_TEXTURE_UNIT + i);
 			}
 		}
 

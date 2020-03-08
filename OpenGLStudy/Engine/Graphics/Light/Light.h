@@ -27,7 +27,7 @@ namespace Graphics {
 		cTransform* Transform() { return &m_transform; }
 		virtual void CleanUp();
 		/** Pure virtual functions*/
-		virtual void Illuminate() = 0;
+		virtual void Illuminate() {};
 
 		/** Getters */
 
@@ -39,7 +39,7 @@ namespace Graphics {
 		virtual void UseShadowMap(GLuint i_textureUnit) {}
 		cFrameBuffer* GetShadowMap() const { return m_shadowMap; }
 		bool IsShadowMapValid() const;
-		bool IsShadowEnabled() const { return IsShadowMapValid()&&m_enableShadow; }
+		bool IsShadowEnabled() const { return m_enableShadow && IsShadowMapValid(); }
 		void CleanUpShadowMap();
 	protected:
 		Color m_color;

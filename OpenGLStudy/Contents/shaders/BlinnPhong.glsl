@@ -8,8 +8,8 @@ uniform samplerCube cubemapTex; // 3
 uniform sampler2D reflectionTex; // 4
 
 const int MAX_COUNT_PER_LIGHT = 5;
-uniform sampler2D spotlightShadowMap[1]; // 5 -> 10
-uniform samplerCube pointLightShadowMap[1]; // 11-> 15
+uniform sampler2D spotlightShadowMap[MAX_COUNT_PER_LIGHT]; // 5 -> 10
+uniform samplerCube pointLightShadowMap[MAX_COUNT_PER_LIGHT]; // 11-> 15
 
 in vec2 texCood0;
 in vec3 Normal;
@@ -154,13 +154,11 @@ float CalcPointLightShadowMap(int idx, PointLight pLight)
 	vec3 fragToLight = fragPos - pLight.position;
 	// sample the cube map
 	float cloest = texture(pointLightShadowMap[idx], fragToLight).r;
-
-	cloest *= pLight.radius;
-	float current = length(fragToLight);
+	float current = length(fragToLight) / pLight.radius;
 
 	float bias = 0.05;
 	// if current is larger than closest, it is in shadow
-	float shadow = current - bias > cloest ? 0.0 : 1.0;
+	float shadow = current - bias > cloest ? 1.0 : 0.0;
 
 	return shadow;
 }
