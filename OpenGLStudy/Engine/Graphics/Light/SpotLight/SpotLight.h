@@ -11,17 +11,16 @@ namespace Graphics {
 			GLfloat i_edge, GLfloat i_range,
 			GLfloat i_const, GLfloat i_linear, GLfloat i_quadratic);
 
-		cSpotLight(const cSpotLight& i_other) : cPointLight(i_other), m_edge(i_other.m_edge), m_procEdge(i_other.m_procEdge),
-			m_spotLightTransformID(i_other.m_spotLightTransformID),
-			m_spotLightShadowMapID(i_other.m_spotLightShadowMapID) {}
-		virtual ~cSpotLight() { m_edge = 0; m_procEdge = 0; m_spotLightTransformID = 0; m_spotLightShadowMapID = 0; }
+		cSpotLight(const cSpotLight& i_other) : cPointLight(i_other), m_edge(i_other.m_edge), m_procEdge(i_other.m_procEdge)
+		{}
+		virtual ~cSpotLight() { m_edge = 0; m_procEdge = 0; m_lightTransformID = 0; m_lightShadowMapID = 0; }
 		cSpotLight& operator =(const cSpotLight& i_other)
 		{
 			cPointLight::operator=(i_other);
 			m_edge = i_other.m_edge;
 			m_procEdge = i_other.m_procEdge;
-			m_spotLightTransformID = i_other.m_spotLightTransformID;
-			m_spotLightShadowMapID = i_other.m_spotLightShadowMapID;
+			m_lightTransformID = i_other.m_lightTransformID;
+			m_lightShadowMapID = i_other.m_lightShadowMapID;
 			return *this;
 		}
 
@@ -33,9 +32,9 @@ namespace Graphics {
 		void CreateShadowMap(GLuint i_width, GLuint i_height) override;
 		glm::mat4 CalculateLightTransform() const;
 		void SetLightUniformTransform() override;
+
 	private:
 		GLfloat m_edge, m_procEdge;
-		GLuint m_spotLightTransformID, m_spotLightShadowMapID;
 	};
 
 }

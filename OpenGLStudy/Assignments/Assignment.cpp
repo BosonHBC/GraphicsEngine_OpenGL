@@ -88,15 +88,15 @@ void Assignment::CreateCamera()
 {
 	m_editorCamera = new  cEditorCamera(glm::vec3(0, 150, 200), 30, 0, 300, 10.f);
 	float _aspect = (float)(GetCurrentWindow()->GetBufferWidth()) / (float)(GetCurrentWindow()->GetBufferHeight());
-	m_editorCamera->CreateProjectionMatrix(45.0f, _aspect, 1.f, 1000.0f);
+	m_editorCamera->CreateProjectionMatrix(glm::radians(60.f), _aspect, 1.f, 1000.0f);
 	m_editorCamera->Transform()->Update();
 }
 
 void Assignment::CreateLight()
 {
 	Graphics::CreateAmbientLight(Color(0.1f, 0.1f, 0.1f), aLight);
-	Graphics::CreatePointLight(glm::vec3(0, 150.f, 100.f), Color(0.1, 0.2, 0.8), 0.3f, 0.7f, 0.3f, false, pLight1);
-	Graphics::CreatePointLight(glm::vec3(-200, 100, -200), Color(0.8, 0.2, 0.2), 0.3f, 0.7f, 0.2f, false, pLight2);
+	//Graphics::CreatePointLight(glm::vec3(0, 150.f, 100.f), Color(0.1, 0.2, 0.8), 0.3f, 0.7f, 0.3f, false, pLight1);
+	Graphics::CreatePointLight(glm::vec3(-100, 40, -100), Color(0.8, 0.2, 0.2), 0.3f, 0.7f, 0.2f, true, pLight2);
 	Graphics::CreateDirectionalLight(Color(1, 1, 1), glm::vec3(-1, -1, 0), true, dLight);
 	Graphics::CreateSpotLight(glm::vec3(0, 150, 0), glm::vec3(0, 1, 1), Color(1), 65.f, 0.3f, 0.7f, 0.2f, true, spLight);
 }
@@ -147,7 +147,7 @@ void Assignment::Tick(float second_since_lastFrame)
 	}
 
 	cTransform* controledActor = nullptr;
-	controledActor = pLight1->Transform();
+	controledActor = pLight2->Transform();
 	//controledActor = m_sphere->Transform();
 	if (controledActor) {
 		if (_windowInput->IsKeyDown(GLFW_KEY_J)) {
@@ -222,16 +222,20 @@ void Assignment::Tick(float second_since_lastFrame)
 				_renderingMap.push_back({ m_teapot2->GetModelHandle(), *m_teapot2->Transform() });
 				_renderingMap.push_back({ m_mirror->GetModelHandle(), *m_mirror->Transform() });
 				// Frame data from directional light
-				if (dLight) {
+				if (dLight && dLight->IsShadowEnabled()) {
 					Graphics::UniformBufferFormats::sFrame _frameData_Shadow(dLight->CalculateLightTransform());
 					Graphics::SubmitDataToBeRendered(_frameData_Shadow, _renderingMap, &Graphics::DirectionalShadowMap_Pass);
 				}
-				if (spLight) {
+				if (spLight && spLight->IsShadowEnabled()) {
 					Graphics::UniformBufferFormats::sFrame _frameData_Shadow(spLight->CalculateLightTransform());
 					_frameData_Shadow.ViewPosition = spLight->Transform()->Position();
 					Graphics::SubmitDataToBeRendered(_frameData_Shadow, _renderingMap, &Graphics::SpotLightShadowMap_Pass);
 				}
-
+				if (pLight2 && pLight2->IsShadowEnabled()) {
+					Graphics::UniformBufferFormats::sFrame _frameData_Shadow; // In point light PV matrix is useless
+					_frameData_Shadow.ViewPosition = pLight2->Transform()->Position();
+					Graphics::SubmitDataToBeRendered(_frameData_Shadow, _renderingMap, &Graphics::PointLightShadowMap_Pass);
+				}
 				// Frame data from camera
 				if (true)
 				{

@@ -91,6 +91,7 @@ namespace Graphics {
 	{
 		UseEffect();
 		glUniform1i(glGetUniformLocation(m_programID, "cubemapTex"), 3);
+		glUniform1i(glGetUniformLocation(m_programID, "pointLightShadowMap[0]"), 11);
 		UnUseEffect();
 		assert(glGetError() == GL_NO_ERROR);
 	}

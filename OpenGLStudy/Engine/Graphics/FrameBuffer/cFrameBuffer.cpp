@@ -56,7 +56,7 @@ namespace Graphics {
 				}
 				break;
 			case Graphics::ETT_FRAMEBUFFER_CUBEMAP:
-				glFramebufferTexture(GL_FRAMEBUFFER, GL_DEPTH_ATTACHMENT, _texture->GetTextureID(), 0);
+				glFramebufferTexture(GL_FRAMEBUFFER, GL_DEPTH_ATTACHMENT, _texture->GetTextureID(), mipMapLevel);
 				glDrawBuffer(GL_NONE);
 				glReadBuffer(GL_NONE);
 				assert(GL_NO_ERROR == glGetError());

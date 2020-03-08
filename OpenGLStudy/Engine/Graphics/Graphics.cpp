@@ -69,6 +69,9 @@ namespace Graphics {
 	std::vector<cPointLight*> s_pointLight_list;
 	std::vector<cSpotLight*> s_spotLight_list;
 
+	// spot light first
+#define SHADOWMAP_START_TEXTURE_UNIT 5
+
 	// Transform hint
 	Graphics::cModel::HANDLE s_arrow;
 	Color s_arrowColor[3] = { Color(0, 0, 0.8f), Color(0.8f, 0, 0),Color(0, 0.8f, 0) };
@@ -102,6 +105,17 @@ namespace Graphics {
 				"shadowmaps/directionalShadowMap/directional_shadow_map_vert.glsl",
 				"shadowmaps/directionalShadowMap/directional_shadow_map_frag.glsl"))) {
 				printf("Fail to create shadow map effect.\n");
+				return result;
+			}
+		}
+		// Create normal display effect
+		{
+			if (!(result = CreateEffect("OmniShadowMap",
+				"shadowmaps/omniShadowMap/omni_shadow_map_vert.glsl",
+				"shadowmaps/omniShadowMap/omni_shadow_map_frag.glsl",
+				"shadowmaps/omniShadowMap/omni_shadow_map_geom.glsl"
+			))) {
+				printf("Fail to create OmniShadowMap effect.\n");
 				return result;
 			}
 		}
@@ -228,7 +242,8 @@ namespace Graphics {
 	{
 		s_currentEffect = GetEffectByKey("ShadowMap");
 		s_currentEffect->UseEffect();
-
+		if (s_directionalLight)
+			s_directionalLight->SetupLight(s_currentEffect->GetProgramID(), 0);
 		cFrameBuffer* _directionalLightFBO = s_directionalLight->GetShadowMap();
 		if (_directionalLightFBO && s_directionalLight->IsShadowEnabled()) {
 
@@ -250,6 +265,41 @@ namespace Graphics {
 			// switch back to original buffer
 			_directionalLightFBO->UnWrite();
 			assert(glGetError() == GL_NO_ERROR);
+		}
+		s_currentEffect->UnUseEffect();
+	}
+
+	void PointLightShadowMap_Pass()
+	{
+		s_currentEffect = GetEffectByKey("OmniShadowMap");
+		s_currentEffect->UseEffect();
+
+		for (auto i = 0; i < s_pointLight_list.size(); ++i)
+		{
+			cFrameBuffer* _pointLightFBO = s_pointLight_list[i]->GetShadowMap();
+			if (_pointLightFBO) {
+				{
+					Application::cApplication* _app = Application::GetCurrentApplication();
+					if (_app) {
+						_app->GetCurrentWindow()->SetViewportSize(_pointLightFBO->GetWidth(), _pointLightFBO->GetHeight());
+					}
+				}
+				// point need extra uniform variables to be passed in to shader
+				s_pointLight_list[i]->SetupLight(s_currentEffect->GetProgramID(), i);
+				s_pointLight_list[i]->SetLightUniformTransform();
+				// write buffer to the texture
+				_pointLightFBO->Write();
+				assert(glGetError() == GL_NO_ERROR);
+				glClearColor(0, 0, 0, 1.f);
+				glClear(GL_DEPTH_BUFFER_BIT);
+
+				// Draw scenes
+				RenderSceneWithoutMaterial();
+
+				// switch back to original buffer
+				_pointLightFBO->UnWrite();
+				assert(glGetError() == GL_NO_ERROR);
+			}
 		}
 		s_currentEffect->UnUseEffect();
 	}
@@ -298,9 +348,6 @@ namespace Graphics {
 		{
 			s_currentEffect = GetEffectByKey(Constants::CONST_DEFAULT_EFFECT_KEY);
 			s_currentEffect->UseEffect();
-			if (s_directionalLight)
-				s_directionalLight->SetupLight(s_currentEffect->GetProgramID(), 0);
-
 		}
 		// Reset window size
 		{
@@ -641,10 +688,9 @@ namespace Graphics {
 		cPointLight* newPointLight = new cPointLight(i_color, i_initialLocation, 300.f, i_const, i_linear, i_quadratic);
 		newPointLight->SetupLight(s_currentEffect->GetProgramID(), s_pointLight_list.size());
 		newPointLight->SetEnableShadow(i_enableShadow);
+		newPointLight->CreateShadowMap(2048, 2048);
 		o_pointLight = newPointLight;
 		s_pointLight_list.push_back(newPointLight);
-
-
 		return result;
 	}
 
@@ -699,23 +745,37 @@ namespace Graphics {
 			}
 		}
 
-		for (auto it : s_dateRenderingByGraphicThread->s_pointLights)
-		{
-			it.Illuminate();
-		}
 		for (int i = 0; i < s_dateRenderingByGraphicThread->s_spotLights.size(); ++i)
 		{
 			auto* it = &s_dateRenderingByGraphicThread->s_spotLights[i];
 
 			it->SetupLight(s_currentEffect->GetProgramID(), i);
-			it->SetLightUniformTransform();
 			it->Illuminate();
+			it->SetLightUniformTransform();
 
 			if (it->IsShadowEnabled()) {
+				//it->UseShadowMap(SHADOWMAP_START_TEXTURE_UNIT + i);
+				//it->GetShadowMap()->Read(GL_TEXTURE0 + SHADOWMAP_START_TEXTURE_UNIT + i);
 				it->UseShadowMap(5);
 				it->GetShadowMap()->Read(GL_TEXTURE5);
 			}
 		}
+
+		for (int i = 0; i < s_dateRenderingByGraphicThread->s_pointLights.size(); ++i)
+		{
+			auto* it = &s_dateRenderingByGraphicThread->s_pointLights[i];
+			it->SetupLight(s_currentEffect->GetProgramID(), i);
+			it->Illuminate();
+
+			if (it->IsShadowEnabled()) {
+				// has offset
+				//it->UseShadowMap(MAX_COUNT_PER_LIGHT + SHADOWMAP_START_TEXTURE_UNIT + i);
+				// it->GetShadowMap()->Read(GL_TEXTURE0 + MAX_COUNT_PER_LIGHT + SHADOWMAP_START_TEXTURE_UNIT + i);
+				it->UseShadowMap(6);
+				it->GetShadowMap()->Read(GL_TEXTURE6);
+			}
+		}
+
 		s_globalLightingData.pointLightCount = s_dateRenderingByGraphicThread->s_pointLights.size();
 		s_globalLightingData.spotLightCount = s_dateRenderingByGraphicThread->s_spotLights.size();
 		s_uniformBuffer_Lighting.Update(&s_globalLightingData);

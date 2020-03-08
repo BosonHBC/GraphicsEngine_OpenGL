@@ -1,6 +1,6 @@
 #version 420
 layout (triangles) in;
-layout (triangles_strip, max_vertices = 18) out;
+layout (triangle_strip, max_vertices = 18) out;
 
 uniform mat4 lightMatrices[6];
 

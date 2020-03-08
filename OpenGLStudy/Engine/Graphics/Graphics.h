@@ -26,6 +26,7 @@ namespace Graphics {
 
 	void DirectionalShadowMap_Pass();
 	void SpotLightShadowMap_Pass();
+	void PointLightShadowMap_Pass();
 	void Reflection_Pass();
 
 	void Render_Pass();

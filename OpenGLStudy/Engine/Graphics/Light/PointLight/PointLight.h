@@ -13,7 +13,10 @@ namespace Graphics {
 
 		cPointLight(const cPointLight& i_other)
 			: cGenLight(i_other), m_range(i_other.m_range), m_const(i_other.m_const),
-			m_linear(i_other.m_linear), m_quadratic(i_other.m_quadratic) {}
+			m_linear(i_other.m_linear), m_quadratic(i_other.m_quadratic),
+			m_lightTransformID(i_other.m_lightTransformID),
+			m_lightShadowMapID(i_other.m_lightShadowMapID)
+		{}
 		cPointLight& operator =(const cPointLight& i_other)
 		{
 			cGenLight::operator=(i_other);
@@ -27,10 +30,15 @@ namespace Graphics {
 		/** overriding virtual functions*/
 		void Illuminate() override;
 		void SetupLight(const GLuint& i_programID, GLuint i_lightIndex = 0) override;
-
+		void CreateShadowMap(GLuint i_width, GLuint i_height) override;
+		void SetLightUniformTransform() override;
+		void UseShadowMap(GLuint i_textureUnit) override;
 	protected:
 		// for attenuation calculation: c+bx+ax^2
 		GLfloat m_range, m_const, m_linear, m_quadratic;
+		GLuint m_lightTransformID, m_lightShadowMapID;
+	private:
+		GLuint m_farPlaneID;
 	};
 
 }

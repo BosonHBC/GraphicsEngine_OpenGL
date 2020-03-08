@@ -1,4 +1,5 @@
 #include "Mesh.h"
+#include "assert.h"
 
 namespace Graphics {
 
@@ -106,12 +107,13 @@ namespace Graphics {
 	{
 		// bind VAO
 		glBindVertexArray(m_vao);
-
+		
 		//bind IBO
 		glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, m_ibo);
+
 		// Index draw
 		glDrawElements(GL_TRIANGLES, m_indexCount, GL_UNSIGNED_INT, 0);
-
+		assert(glGetError() == GL_NO_ERROR);
 		// Vertex draw
 		//glDrawArrays(GL_TRIANGLES, 0, 3);
 
@@ -119,6 +121,9 @@ namespace Graphics {
 		glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0);
 		// clear VAO
 		glBindVertexArray(0);
+
+
+
 	}
 
 	void cMesh::CleanUp()

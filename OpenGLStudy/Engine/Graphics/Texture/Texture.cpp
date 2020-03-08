@@ -196,9 +196,9 @@ namespace Graphics {
 		m_height = i_height;
 
 		// This is for omniShadowMap, Generate cube map texture here
-		GLuint _textureID;
-		glGenTextures(1, &_textureID);
-		glBindTexture(GL_TEXTURE_CUBE_MAP, _textureID);
+
+		glGenTextures(1, &m_textureID);
+		glBindTexture(GL_TEXTURE_CUBE_MAP, m_textureID);
 
 		for (size_t i = 0; i < 6; ++i)
 		{
@@ -303,7 +303,7 @@ namespace Graphics {
 	{
 		// activate the texture unit at i_textureLocation
 		glActiveTexture(i_textureLocation);
-
+		assert(glGetError() == GL_NO_ERROR);
 		GLenum _textureType = GL_TEXTURE_2D;
 		// if the texture is a cube map, use GL_TEXTURE_CUBE_MAP
 		if (m_textureType == ETT_CUBEMAP

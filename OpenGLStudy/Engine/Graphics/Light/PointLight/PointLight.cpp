@@ -26,6 +26,45 @@ namespace Graphics {
 	{
 		cGenLight::SetupLight(i_programID, i_lightIndex);
 
+		// Shadow map pass
+		m_lightTransformID = glGetUniformLocation(i_programID, "lightMatrices");
+		m_farPlaneID = glGetUniformLocation(i_programID, "farPlane");
+
+		// Shading pass
+		char _charBuffer[64] = { '\0' };
+		snprintf(_charBuffer, sizeof(_charBuffer), "pointLightShadowMap[%d]", m_lightIndex);
+		m_lightShadowMapID = glGetUniformLocation(i_programID, _charBuffer);
+	}
+
+	void cPointLight::CreateShadowMap(GLuint i_width, GLuint i_height)
+	{
+		m_shadowMap = new cFrameBuffer();
+		m_shadowMap->Initialize(i_width, i_height, ETextureType::ETT_FRAMEBUFFER_CUBEMAP);
+
+		m_lightPrjectionMatrix = glm::perspective(glm::radians(90.f), 1.f, 1.f, m_range);
+	}
+
+	void cPointLight::SetLightUniformTransform()
+	{
+		// order: px, nx, py, ny, pz, nz
+		glm::mat4 lightMatrices[6] = 
+		{
+			m_lightPrjectionMatrix * glm::lookAt(m_transform.Position(), m_transform.Position() + m_transform.Right(), -cTransform::WorldUp),
+			m_lightPrjectionMatrix * glm::lookAt(m_transform.Position(), m_transform.Position() - m_transform.Right(), -cTransform::WorldUp),
+			m_lightPrjectionMatrix * glm::lookAt(m_transform.Position(), m_transform.Position() + m_transform.Up(), cTransform::WorldForward),
+			m_lightPrjectionMatrix * glm::lookAt(m_transform.Position(), m_transform.Position() - m_transform.Up(), -cTransform::WorldForward),
+			m_lightPrjectionMatrix * glm::lookAt(m_transform.Position(), m_transform.Position() + m_transform.Forward(), -cTransform::WorldUp),
+			m_lightPrjectionMatrix * glm::lookAt(m_transform.Position(), m_transform.Position() - m_transform.Forward(), -cTransform::WorldUp),
+		};
+
+		glUniformMatrix4fv(m_lightTransformID, 6, GL_FALSE, glm::value_ptr(lightMatrices[0]));
+		glUniform1f(m_farPlaneID, m_range);
+		assert(GL_NO_ERROR == glGetError());
+	}
+
+	void cPointLight::UseShadowMap(GLuint i_textureUnit)
+	{
+		glUniform1i(m_lightShadowMapID, i_textureUnit);
 	}
 
 }

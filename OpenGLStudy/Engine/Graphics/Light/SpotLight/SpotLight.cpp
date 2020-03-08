@@ -31,21 +31,22 @@ namespace Graphics {
 	void cSpotLight::SetupLight(const GLuint& i_programID, GLuint i_lightIndex /*= 0*/)
 	{
 		cGenLight::SetupLight(i_programID, i_lightIndex);
-
-		m_spotLightTransformID = glGetUniformLocation(i_programID, "spotlightTransform");
-		m_spotLightShadowMapID = glGetUniformLocation(i_programID, "spotlightShadowMap");
+		m_lightTransformID = glGetUniformLocation(i_programID, "spotlightTransform");
+		char _charBuffer[64] = { '\0' };
+		snprintf(_charBuffer, sizeof(_charBuffer), "spotlightShadowMap[%d]", m_lightIndex);
+		m_lightShadowMapID = glGetUniformLocation(i_programID, _charBuffer);
 	}
 
 	void cSpotLight::UseShadowMap(GLuint i_textureUnit)
 	{
-		glUniform1i(m_spotLightShadowMapID, i_textureUnit);
+		glUniform1i(m_lightShadowMapID, i_textureUnit);
 	}
 
 	void cSpotLight::CreateShadowMap(GLuint i_width, GLuint i_height)
 	{
 		cGenLight::CreateShadowMap(i_width, i_height);
 		float _aspect = static_cast<GLfloat>(i_width) / static_cast<GLfloat>(i_height);
-		m_lightPrjectionMatrix = glm::perspective(glm::radians(m_edge), _aspect, 1.f, m_range);
+		m_lightPrjectionMatrix = glm::perspective(glm::radians(m_edge), _aspect, 1.f, m_range *2.f);
 	}
 
 	glm::mat4 cSpotLight::CalculateLightTransform() const
@@ -54,10 +55,12 @@ namespace Graphics {
 		return m_lightPrjectionMatrix * view;
 	}
 
+
 	void cSpotLight::SetLightUniformTransform()
 	{
 		glm::mat4 lightTransform = CalculateLightTransform();
-		glUniformMatrix4fv(m_spotLightTransformID, 1, GL_FALSE, glm::value_ptr(lightTransform));
+		glUniformMatrix4fv(m_lightTransformID, 1, GL_FALSE, glm::value_ptr(lightTransform));
+		assert(GL_NO_ERROR == glGetError());
 	}
 
 }
