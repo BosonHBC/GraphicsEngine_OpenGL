@@ -95,10 +95,12 @@ void Assignment::CreateCamera()
 void Assignment::CreateLight()
 {
 	Graphics::CreateAmbientLight(Color(0.1f, 0.1f, 0.1f), aLight);
-	//Graphics::CreatePointLight(glm::vec3(0, 150.f, 100.f), Color(0.1, 0.2, 0.8), 0.3f, 0.7f, 0.3f, false, pLight1);
+	Graphics::CreatePointLight(glm::vec3(0, 150.f, 100.f), Color(0.8, 0.8, 0.8), 0.3f, 0.7f, 1.5f, true, pLight1);
 	Graphics::CreatePointLight(glm::vec3(-100, 40, -100), Color(0.8, 0.8, 0.8), 1.f, 0.7f, 1.8f, true, pLight2);
 	Graphics::CreateDirectionalLight(Color(.8, .8, .8), glm::vec3(-1, -1, 0), true, dLight);
 	Graphics::CreateSpotLight(glm::vec3(0, 150, 0), glm::vec3(0, 1, 1), Color(1), 65.f, 1.f, 0.7f, 1.8f, true, spLight);
+	Graphics::CreateSpotLight(glm::vec3(100, 150, 0), glm::vec3(1, 1, 0), Color(1), 65.f, 1.f, 0.7f, 1.8f, true, spLight2);
+
 }
 
 void Assignment::Run()
@@ -147,7 +149,7 @@ void Assignment::Tick(float second_since_lastFrame)
 	}
 
 	cTransform* controledActor = nullptr;
-	controledActor = pLight2->Transform();
+	controledActor = spLight2->Transform();
 	//controledActor = m_sphere->Transform();
 	if (controledActor) {
 		if (_windowInput->IsKeyDown(GLFW_KEY_J)) {
@@ -172,8 +174,8 @@ void Assignment::Tick(float second_since_lastFrame)
 	}
 
 	cTransform* rotateControl = nullptr;
-	if (spLight)
-		rotateControl = spLight->Transform();
+	if (spLight2)
+		rotateControl = spLight2->Transform();
 	//if (dLight)
 		//rotateControl = dLight->Transform();
 	if (rotateControl)
@@ -210,7 +212,8 @@ void Assignment::Tick(float second_since_lastFrame)
 		dLight->Transform()->Update();
 	if (spLight)
 		spLight->Transform()->Update();
-
+	if (spLight2)
+		spLight2->Transform()->Update();
 
 	// Submit data
 	{
@@ -234,15 +237,11 @@ void Assignment::Tick(float second_since_lastFrame)
 					Graphics::UniformBufferFormats::sFrame _frameData_Shadow(dLight->CalculateLightTransform());
 					Graphics::SubmitDataToBeRendered(_frameData_Shadow, _renderingMap, &Graphics::DirectionalShadowMap_Pass);
 				}
-				if (spLight && spLight->IsShadowEnabled()) {
-					Graphics::UniformBufferFormats::sFrame _frameData_Shadow(spLight->CalculateLightTransform());
-					_frameData_Shadow.ViewPosition = spLight->Transform()->Position();
-					Graphics::SubmitDataToBeRendered(_frameData_Shadow, _renderingMap, &Graphics::SpotLightShadowMap_Pass);
+				{// Spot light shadow map pass
+					Graphics::SubmitDataToBeRendered(Graphics::UniformBufferFormats::sFrame(), _renderingMap, &Graphics::SpotLightShadowMap_Pass);
 				}
-				if (pLight2 && pLight2->IsShadowEnabled()) {
-					Graphics::UniformBufferFormats::sFrame _frameData_Shadow; // In point light PV matrix is useless
-					_frameData_Shadow.ViewPosition = pLight2->Transform()->Position();
-					Graphics::SubmitDataToBeRendered(_frameData_Shadow, _renderingMap, &Graphics::PointLightShadowMap_Pass);
+				{ // Point light shadow map pass
+					Graphics::SubmitDataToBeRendered(Graphics::UniformBufferFormats::sFrame(), _renderingMap, &Graphics::PointLightShadowMap_Pass);
 				}
 				// Frame data from camera
 				if (true)
@@ -295,7 +294,8 @@ void Assignment::Tick(float second_since_lastFrame)
 						_renderingMap.push_back({ unneccessaryHandle, *pLight2->Transform() });
 					if (spLight)
 						_renderingMap.push_back({ unneccessaryHandle, *spLight->Transform() });
-
+					if (spLight2)
+						_renderingMap.push_back({ unneccessaryHandle, *spLight2->Transform() });
 					Graphics::SubmitDataToBeRendered(_frameData_Camera, _renderingMap, &Graphics::Gizmo_RenderTransform);
 				}
 
@@ -328,7 +328,11 @@ void Assignment::Tick(float second_since_lastFrame)
 					spLight->UpdateLightIndex(_spLights.size());
 					_spLights.push_back(*spLight);
 				}
-
+				if (spLight2)
+				{
+					spLight2->UpdateLightIndex(_spLights.size());
+					_spLights.push_back(*spLight2);
+				}
 				Graphics::SubmitLightingData(_pLights, _spLights, *aLight, *dLight);
 			}
 		}

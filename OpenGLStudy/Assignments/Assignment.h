@@ -38,6 +38,7 @@ private:
 	Graphics::cAmbientLight* aLight;
 	Graphics::cDirectionalLight* dLight;
 	Graphics::cSpotLight* spLight;
+	Graphics::cSpotLight* spLight2;
 
 	cActor* m_teapot;
 	cActor* m_teapot2;

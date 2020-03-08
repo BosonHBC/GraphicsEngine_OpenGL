@@ -26,7 +26,7 @@ in vec3 fragPos;
 in vec4 clipSpaceCoord;
 
 in vec4 DirectionalLightSpacePos;
-in vec4 SpotLightSpacePos;
+in vec4 SpotLightSpacePos[MAX_COUNT_PER_LIGHT];
 layout(std140, binding = 0) uniform uniformBuffer_frame
 {
 	// PVMatrix stands for projection * view matrix
@@ -126,16 +126,16 @@ float CalcDirectionalLightShadowMap(vec3 vN)
 	shadow = current > 1.0 ? 0.0 : shadow;
 	return shadow;	
 }
-float CalcSpotLightShadowMap(int idx, vec3 vN)
+float CalcSpotLightShadowMap(int idx, SpotLight spLight, vec3 vN)
 {
-	vec3 normalizedDeviceCoordinate = SpotLightSpacePos.xyz / SpotLightSpacePos.w;
+	vec3 normalizedDeviceCoordinate = SpotLightSpacePos[idx].xyz / SpotLightSpacePos[idx].w;
 	normalizedDeviceCoordinate = normalizedDeviceCoordinate * 0.5 + 0.5;
 
 	float current = normalizedDeviceCoordinate.z;
 
 	// Calculate bias
-	vec3 lightDir = normalize(g_spotLights[idx].direction);
-	float _bias = 0.05 * (1.0 - dot(vN, lightDir)) * (1-g_spotLights[idx].edge);
+	vec3 lightDir = normalize(spLight.direction);
+	float _bias = 0.05 * (1.0 - dot(vN, lightDir)) * (1-spLight.edge);
 	const float bias = max(_bias, 0.05);
 
 	float shadow = 0.0;
@@ -150,7 +150,7 @@ float CalcSpotLightShadowMap(int idx, vec3 vN)
 			float pcfDepth = texture(spotlightShadowMap[idx], normalizedDeviceCoordinate.xy + vec2(x,y) * texelSize).r;
 			// if the current depth that is rendering is larger than the cloest depth,
 			// it is in shadow
-			shadow += (current - bias/SpotLightSpacePos.w > pcfDepth) ? 1.0 : 0.0;
+			shadow += (current - bias/SpotLightSpacePos[idx].w > pcfDepth) ? 1.0 : 0.0;
 		}
 	}
 	shadow /= 9.0;
@@ -291,7 +291,7 @@ vec4 CalcSpotLight(int idx, SpotLight spLight,vec4 diffusTexCol, vec4 specTexCol
 													spLight.base.constant) ;
 
 			vec4 outColor = (color_kd + color_ks)  / attenuationFactor;
-			float shadowFactor = spLight.base.base.enableShadow ? (1.0 - CalcSpotLightShadowMap(idx, vN)): 1.0;
+			float shadowFactor = spLight.base.base.enableShadow ? (1.0 - CalcSpotLightShadowMap(idx,spLight ,vN)): 1.0;
 			outColor *= shadowFactor;
 			return outColor * (1.0f - (1-dir_dot_LDir) * (1.0f / (1.0f - spLight.edge)));
 		}

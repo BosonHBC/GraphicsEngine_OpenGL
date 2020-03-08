@@ -31,8 +31,11 @@ namespace Graphics {
 	void cSpotLight::SetupLight(const GLuint& i_programID, GLuint i_lightIndex /*= 0*/)
 	{
 		cGenLight::SetupLight(i_programID, i_lightIndex);
-		m_lightTransformID = glGetUniformLocation(i_programID, "spotlightTransform");
 		char _charBuffer[64] = { '\0' };
+
+		snprintf(_charBuffer, sizeof(_charBuffer), "spotlightTransform[%d]", m_lightIndex);
+		m_lightTransformID = glGetUniformLocation(i_programID, _charBuffer);
+
 		snprintf(_charBuffer, sizeof(_charBuffer), "spotlightShadowMap[%d]", m_lightIndex);
 		m_lightShadowMapID = glGetUniformLocation(i_programID, _charBuffer);
 	}

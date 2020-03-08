@@ -7,11 +7,14 @@ out vec2 texCood0;
 out vec3 Normal;
 out vec3 fragPos;
 out vec4 DirectionalLightSpacePos;
-out vec4 SpotLightSpacePos;
+
 out vec4 clipSpaceCoord;
 
 uniform mat4 directionalLightTransform;
-uniform mat4 spotlightTransform;
+
+const int MAX_COUNT_PER_LIGHT = 5;
+uniform mat4 spotlightTransform[MAX_COUNT_PER_LIGHT];
+out vec4 SpotLightSpacePos[MAX_COUNT_PER_LIGHT];
 
 layout(std140, binding = 0) uniform uniformBuffer_frame
 {
@@ -47,5 +50,10 @@ void main()
 
 	// Directional light space
 	DirectionalLightSpacePos = directionalLightTransform * modelMatrix * vec4(pos, 1.0);
-	SpotLightSpacePos = spotlightTransform * modelMatrix * vec4(pos, 1.0);
+
+	for(int i =0; i < MAX_COUNT_PER_LIGHT; ++i)
+	{
+		SpotLightSpacePos[i] = spotlightTransform[i] * modelMatrix * vec4(pos, 1.0);
+	}
+	
 }
