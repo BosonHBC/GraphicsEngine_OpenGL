@@ -1,5 +1,4 @@
 #version 420
-
 // this sampler is connected to the texture unit, and binding with our texture
 // this uniform is default 0, if we need more texture unit, we need to bind manually
 uniform sampler2D diffuseTex; // 0
@@ -7,8 +6,19 @@ uniform sampler2D specularTex; // 1
 uniform sampler2D directionalShadowMap; // 2
 uniform samplerCube cubemapTex; // 3
 uniform sampler2D reflectionTex; // 4
-uniform sampler2D spotlightShadowMap; // 5
 
+const int MAX_COUNT_PER_LIGHT = 5;
+uniform sampler2D spotlightShadowMap[MAX_COUNT_PER_LIGHT]; // 5 -> 10
+uniform samplerCube pointLightShadowMap[MAX_COUNT_PER_LIGHT]; // 11-> 15
+
+const vec3 gridSamplingDisk[20] =vec3[]
+(
+   vec3(1, 1,  1), vec3( 1, -1,  1), vec3(-1, -1,  1), vec3(-1, 1,  1), 
+   vec3(1, 1, -1), vec3( 1, -1, -1), vec3(-1, -1, -1), vec3(-1, 1, -1),
+   vec3(1, 1,  0), vec3( 1, -1,  0), vec3(-1, -1,  0), vec3(-1, 1,  0),
+   vec3(1, 0,  1), vec3(-1,  0,  1), vec3( 1,  0, -1), vec3(-1, 0, -1),
+   vec3(0, 1,  1), vec3( 0, -1,  1), vec3( 0, -1, -1), vec3( 0, 1, -1)
+);
 
 in vec2 texCood0;
 in vec3 Normal;
@@ -16,7 +26,7 @@ in vec3 fragPos;
 in vec4 clipSpaceCoord;
 
 in vec4 DirectionalLightSpacePos;
-in vec4 SpotLightSpacePos;
+in vec4 SpotLightSpacePos[MAX_COUNT_PER_LIGHT];
 layout(std140, binding = 0) uniform uniformBuffer_frame
 {
 	// PVMatrix stands for projection * view matrix
@@ -26,7 +36,7 @@ layout(std140, binding = 0) uniform uniformBuffer_frame
 // the color of the pixel
 out vec4 color;
 
-const int MAX_COUNT_PER_LIGHT = 5;
+
 
 layout(std140, binding = 2) uniform g_uniformBuffer_blinnPhongMaterial
 {
@@ -116,37 +126,60 @@ float CalcDirectionalLightShadowMap(vec3 vN)
 	shadow = current > 1.0 ? 0.0 : shadow;
 	return shadow;	
 }
-float CalcSpotLightShadowMap(vec3 vN)
+float CalcSpotLightShadowMap(int idx, SpotLight spLight, vec3 vN)
 {
-	vec3 normalizedDeviceCoordinate = SpotLightSpacePos.xyz / SpotLightSpacePos.w;
+	vec3 normalizedDeviceCoordinate = SpotLightSpacePos[idx].xyz / SpotLightSpacePos[idx].w;
 	normalizedDeviceCoordinate = normalizedDeviceCoordinate * 0.5 + 0.5;
 
 	float current = normalizedDeviceCoordinate.z;
 
 	// Calculate bias
-	vec3 lightDir = normalize(g_spotLights[0].direction);
-	float _bias = 0.01 * (1.0 - dot(vN, lightDir)) * (1-g_spotLights[0].edge);
+	vec3 lightDir = normalize(spLight.direction);
+	float _bias = 0.05 * (1.0 - dot(vN, lightDir)) * (1-spLight.edge);
 	const float bias = max(_bias, 0.05);
 
 	float shadow = 0.0;
 
-	const vec2 texelSize = 1.0 / textureSize(spotlightShadowMap, 0);
+	const vec2 texelSize = 1.0 / textureSize(spotlightShadowMap[idx], 0);
 	// offset the pixel around center pixel, 3x3	
 	for(int x = -1; x <= 1; ++x)
 	{
 		for(int y = -1; y <= 1; ++y)
 		{
 			// get the depth value of this position in this light's perpective of view
-			float pcfDepth = texture(spotlightShadowMap, normalizedDeviceCoordinate.xy + vec2(x,y) * texelSize).r;
+			float pcfDepth = texture(spotlightShadowMap[idx], normalizedDeviceCoordinate.xy + vec2(x,y) * texelSize).r;
 			// if the current depth that is rendering is larger than the cloest depth,
 			// it is in shadow
-			shadow += (current - bias/SpotLightSpacePos.w > pcfDepth) ? 1.0 : 0.0;
+			shadow += (current - bias/SpotLightSpacePos[idx].w > pcfDepth) ? 1.0 : 0.0;
 		}
 	}
 	shadow /= 9.0;
 	shadow = current > 1.0 ? 0.0 : shadow;
 	return shadow;	
 }
+
+float CalcPointLightShadowMap(int idx, PointLight pLight, float dist_vV)
+{
+	vec3 fragToLight = fragPos - pLight.position;
+	// sample the cube map
+	
+	float currentDepth = length(fragToLight) / pLight.radius;
+	float shadow = 0.0;
+	float bias = 0.05;
+	float samples = 20;
+	// length it goes according to the grid sampler, and it determines the blur amount of the shadow
+	float diskRadius = (1.0 + (dist_vV / pLight.radius)) / 5.0; 
+
+	for(int i = 0; i < samples; ++i) 
+	{
+		float cloestDepth = texture(pointLightShadowMap[idx], fragToLight + gridSamplingDisk[i] * diskRadius).r;
+		shadow += (currentDepth - bias > cloestDepth) ? 1.0 : 0.0;
+	}
+
+	shadow /= float(samples);
+	return shadow;
+}
+
 //-------------------------------------------------------------------------
 // Lighting Fucntions
 //-------------------------------------------------------------------------
@@ -212,25 +245,29 @@ vec4 CalcDirectionalLight(vec4 diffusTexCol, vec4 specTexCol, vec3 vN, vec3 vV){
 // PointLight
 //-------------------------------------------------------------------------
 
-vec4 CalcPointLight(PointLight pLight,vec4 diffusTexCol, vec4 specTexCol,vec3 vN, vec3 vV){
+vec4 CalcPointLight(int idx, PointLight pLight,vec4 diffusTexCol, vec4 specTexCol,vec3 vN, vec3 norm_vV, float dist_vV){
 		vec3 dir = pLight.position - fragPos;
 		float dist = length(dir);
 		dir = normalize(dir);
+
+		// shadow
+		float shadowFactor = pLight.base.enableShadow ? (1.0 - CalcPointLightShadowMap(idx, pLight, dist_vV)) : 1.0;
+
 		float distRate = dist / pLight.radius;
 		vec4 color_kd = diffusTexCol * IlluminateByDirection_Kd(pLight.base, vN, dir);
-		vec4 color_ks = specTexCol * IlluminateByDirection_Ks(pLight.base, vN, dir, vV);
+		vec4 color_ks = specTexCol * IlluminateByDirection_Ks(pLight.base, vN, dir, norm_vV);
 		float attenuationFactor = (pLight.quadratic * distRate * distRate + 
 													pLight.linear * distRate + 
 													pLight.constant);
 
-		return ((color_kd + color_ks) / attenuationFactor);
+		return shadowFactor * ((color_kd + color_ks) / attenuationFactor);
 }
 
-vec4 CalcPointLights(vec4 diffusTexCol, vec4 specTexCol,vec3 vN, vec3 vV){
+vec4 CalcPointLights(vec4 diffusTexCol, vec4 specTexCol,vec3 vN, vec3 norm_vV, float dist_vV){
 	vec4 outColor = vec4(0,0,0,0);
 
 	for(int i = 0; i < g_pointLightCount; ++i){
-		outColor += CalcPointLight(g_pointLights[i],diffusTexCol, specTexCol,vN,vV);
+		outColor += CalcPointLight(i, g_pointLights[i],diffusTexCol, specTexCol,vN,norm_vV, dist_vV);
 	}
 	return outColor;
 }
@@ -239,7 +276,7 @@ vec4 CalcPointLights(vec4 diffusTexCol, vec4 specTexCol,vec3 vN, vec3 vV){
 // SpotLight
 //-------------------------------------------------------------------------
 
-vec4 CalcSpotLight(SpotLight spLight,vec4 diffusTexCol, vec4 specTexCol,vec3 vN, vec3 vV){
+vec4 CalcSpotLight(int idx, SpotLight spLight,vec4 diffusTexCol, vec4 specTexCol,vec3 vN, vec3 vV){
 		vec3 dir = spLight.base.position - fragPos;
 		vec3 norm_dir = normalize(dir);
 		float dist = length(dir);
@@ -254,7 +291,7 @@ vec4 CalcSpotLight(SpotLight spLight,vec4 diffusTexCol, vec4 specTexCol,vec3 vN,
 													spLight.base.constant) ;
 
 			vec4 outColor = (color_kd + color_ks)  / attenuationFactor;
-			float shadowFactor = g_spotLights[0].base.base.enableShadow ? (1.0 - CalcSpotLightShadowMap(vN)): 1.0;
+			float shadowFactor = spLight.base.base.enableShadow ? (1.0 - CalcSpotLightShadowMap(idx,spLight ,vN)): 1.0;
 			outColor *= shadowFactor;
 			return outColor * (1.0f - (1-dir_dot_LDir) * (1.0f / (1.0f - spLight.edge)));
 		}
@@ -269,7 +306,7 @@ vec4 CalcSpotLights(vec4 diffusTexCol, vec4 specTexCol,vec3 vN, vec3 vV){
 	vec4 outColor = vec4(0,0,0,0);
 
 	for(int i = 0; i < g_spotLightCount; ++i){
-		outColor += CalcSpotLight(g_spotLights[i],diffusTexCol, specTexCol,vN,vV);
+		outColor += CalcSpotLight(i, g_spotLights[i],diffusTexCol, specTexCol,vN,vV);
 	}
 	return outColor;
 }
@@ -282,7 +319,9 @@ void main(){
 	
 	// shared values
 	vec3 normalized_normal = normalize(Normal);
-	vec3 normalized_view = normalize(ViewPosition - fragPos);
+	vec3 view = ViewPosition - fragPos;
+	float viewDistance = length(view);
+	vec3 normalized_view = normalize(view);
 	vec4 diffuseTexColor = texture(diffuseTex, texCood0);
 	vec4 specularTexColor =texture(specularTex, texCood0);
 
@@ -293,7 +332,7 @@ void main(){
 	vec4 cubemapColor = IlluminateByCubemap(diffuseTexColor,specularTexColor, normalized_normal, normalized_view);
 
 	// point light
-	vec4 pointLightColor = CalcPointLights(diffuseTexColor, specularTexColor, normalized_normal, normalized_view);
+	vec4 pointLightColor = CalcPointLights(diffuseTexColor, specularTexColor, normalized_normal, normalized_view, viewDistance);
 
 	// spot light with shadow
 	vec4 spotLightColor = CalcSpotLights(diffuseTexColor, specularTexColor, normalized_normal, normalized_view);

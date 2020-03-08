@@ -6,7 +6,7 @@ namespace Graphics {
 	{
 	public:
 		cDirectionalLight() 
-			: cGenLight()
+			: cGenLight(), m_directionalLightTransformID(0), m_directionalShadowMapID(0)
 		{}
 		cDirectionalLight(Color i_color, glm::vec3 i_direction);
 		virtual ~cDirectionalLight() {
@@ -18,10 +18,18 @@ namespace Graphics {
 			m_directionalShadowMapID(i_other.m_directionalShadowMapID) {}
 		cDirectionalLight& operator =(const cDirectionalLight& i_other) 
 		{
-			cGenLight::operator= (i_other);
-			m_directionalLightTransformID = i_other.m_directionalLightTransformID;
-			m_directionalShadowMapID = i_other.m_directionalShadowMapID;
-			return *this;
+			if (&i_other != nullptr)
+			{
+				cGenLight::operator= (i_other);
+				m_directionalLightTransformID = i_other.m_directionalLightTransformID;
+				m_directionalShadowMapID = i_other.m_directionalShadowMapID;
+				return *this;
+			}
+			else
+			{
+				*this = cDirectionalLight();
+				return *this;
+			}
 		}
 
 		/** Setup uniform id*/

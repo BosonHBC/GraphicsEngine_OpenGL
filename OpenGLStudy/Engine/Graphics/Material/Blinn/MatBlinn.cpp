@@ -46,27 +46,26 @@ namespace Graphics {
 
 	void cMatBlinn::UseMaterial()
 	{
-		glUniform1i(m_diffuseTexID, 0);
-		glUniform1i(m_specularTexID, 1);
-		glUniform1i(m_cubemapTexID, 3);
-		glUniform1i(m_reflectionTexID, 4);
-
 		cTexture* _diffuseTex = cTexture::s_manager.Get(m_diffuseTextureHandle);
 		if (_diffuseTex) {
+			glUniform1i(m_diffuseTexID, 0);
 			_diffuseTex->UseTexture(GL_TEXTURE0);
 		}
 		cTexture* _specularTex = cTexture::s_manager.Get(m_specularTextureHandle);
 		if (_specularTex) {
+			glUniform1i(m_specularTexID, 1);
 			_specularTex->UseTexture(GL_TEXTURE1);
 		}
 		cTexture* _cubemapTex = cTexture::s_manager.Get(m_cubemapTextureHandle);
 		if (_cubemapTex) 
 		{
+			glUniform1i(m_cubemapTexID, 3);
 			_cubemapTex->UseTexture(GL_TEXTURE3);
 		}
 		cTexture* _reflectionTex = cTexture::s_manager.Get(m_reflectionTextureHandle);
 		if (_reflectionTex)
 		{
+			glUniform1i(m_reflectionTexID, 4);
 			_reflectionTex->UseTexture(GL_TEXTURE4);
 		}
 
@@ -77,20 +76,24 @@ namespace Graphics {
 	{
 		cTexture* _diffuseTex = cTexture::s_manager.Get(m_diffuseTextureHandle);
 		if (_diffuseTex) {
+			glUniform1i(m_diffuseTexID, 0);
 			_diffuseTex->CleanUpTextureBind(GL_TEXTURE0);
 		}
 		cTexture* _specularTex = cTexture::s_manager.Get(m_specularTextureHandle);
 		if (_specularTex) {
+			glUniform1i(m_specularTexID, 1);
 			_specularTex->CleanUpTextureBind(GL_TEXTURE1);
 		}
 		cTexture* _cubemapTex = cTexture::s_manager.Get(m_cubemapTextureHandle);
 		if (_cubemapTex)
 		{
+			glUniform1i(m_cubemapTexID, 3);
 			_cubemapTex->CleanUpTextureBind(GL_TEXTURE3);
 		}
 		cTexture* _reflectionTex = cTexture::s_manager.Get(m_reflectionTextureHandle);
 		if (_reflectionTex)
 		{
+			glUniform1i(m_reflectionTexID, 4);
 			_reflectionTex->CleanUpTextureBind(GL_TEXTURE4);
 		}
 	}

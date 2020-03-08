@@ -54,7 +54,7 @@ namespace Graphics {
 
 	sDataRequiredToRenderAFrame s_dataRequiredToRenderAFrame[2];
 	auto* s_dataSubmittedByApplicationThread = &s_dataRequiredToRenderAFrame[0];
-	auto* s_dateRenderingByGraphicThread = &s_dataRequiredToRenderAFrame[1];
+	auto* s_dataRenderingByGraphicThread = &s_dataRequiredToRenderAFrame[1];
 
 	// Effect
 	// ---------------------------------
@@ -68,6 +68,9 @@ namespace Graphics {
 	cDirectionalLight* s_directionalLight;
 	std::vector<cPointLight*> s_pointLight_list;
 	std::vector<cSpotLight*> s_spotLight_list;
+
+	// spot light first
+#define SHADOWMAP_START_TEXTURE_UNIT 5
 
 	// Transform hint
 	Graphics::cModel::HANDLE s_arrow;
@@ -92,9 +95,35 @@ namespace Graphics {
 				printf("Fail to create default effect.\n");
 				return result;
 			}
-
 			s_currentEffect = GetEffectByKey(Constants::CONST_DEFAULT_EFFECT_KEY);
-			s_currentEffect->FixSamplerError();
+			s_currentEffect->UseEffect();
+			{
+				GLuint _spLightShadowMap = glGetUniformLocation(s_currentEffect->GetProgramID(), "spotlightShadowMap[0]");
+				glUniform1i(_spLightShadowMap, 5);
+				_spLightShadowMap = glGetUniformLocation(s_currentEffect->GetProgramID(), "spotlightShadowMap[1]");
+				glUniform1i(_spLightShadowMap, 6);
+				_spLightShadowMap = glGetUniformLocation(s_currentEffect->GetProgramID(), "spotlightShadowMap[2]");
+				glUniform1i(_spLightShadowMap, 7);
+				_spLightShadowMap = glGetUniformLocation(s_currentEffect->GetProgramID(), "spotlightShadowMap[3]");
+				glUniform1i(_spLightShadowMap, 8);
+				_spLightShadowMap = glGetUniformLocation(s_currentEffect->GetProgramID(), "spotlightShadowMap[4]");
+				glUniform1i(_spLightShadowMap, 9);
+
+				GLuint _pLightShadowMap = glGetUniformLocation(s_currentEffect->GetProgramID(), "pointLightShadowMap[0]");
+				glUniform1i(_pLightShadowMap, 11);
+				_pLightShadowMap = glGetUniformLocation(s_currentEffect->GetProgramID(), "pointLightShadowMap[1]");
+				glUniform1i(_pLightShadowMap, 12);
+				_pLightShadowMap = glGetUniformLocation(s_currentEffect->GetProgramID(), "pointLightShadowMap[2]");
+				glUniform1i(_pLightShadowMap, 13);
+				_pLightShadowMap = glGetUniformLocation(s_currentEffect->GetProgramID(), "pointLightShadowMap[3]");
+				glUniform1i(_pLightShadowMap, 14);
+				_pLightShadowMap = glGetUniformLocation(s_currentEffect->GetProgramID(), "pointLightShadowMap[4]");
+				glUniform1i(_pLightShadowMap, 15);
+
+			}
+
+			s_currentEffect->UnUseEffect();
+			assert(GL_NO_ERROR == glGetError());
 		}
 		// Create shadow map effect
 		{
@@ -102,6 +131,17 @@ namespace Graphics {
 				"shadowmaps/directionalShadowMap/directional_shadow_map_vert.glsl",
 				"shadowmaps/directionalShadowMap/directional_shadow_map_frag.glsl"))) {
 				printf("Fail to create shadow map effect.\n");
+				return result;
+			}
+		}
+		// Create normal display effect
+		{
+			if (!(result = CreateEffect("OmniShadowMap",
+				"shadowmaps/omniShadowMap/omni_shadow_map_vert.glsl",
+				"shadowmaps/omniShadowMap/omni_shadow_map_frag.glsl",
+				"shadowmaps/omniShadowMap/omni_shadow_map_geom.glsl"
+			))) {
+				printf("Fail to create OmniShadowMap effect.\n");
 				return result;
 			}
 		}
@@ -177,13 +217,6 @@ namespace Graphics {
 			return result;
 		}
 
-		for (auto it : s_KeyToEffect_map)
-		{
-			if (!(result = it.second->ValidateProgram()))
-			{
-				return result;
-			}
-		}
 		// Load arrows
 		{
 			std::string _arrowPath = "Contents/models/arrow.model";
@@ -207,20 +240,20 @@ namespace Graphics {
 		s_whenAllDataHasBeenSubmittedFromApplicationThread.wait(_mlock);
 
 		// After data has been submitted, swap the data
-		std::swap(s_dataSubmittedByApplicationThread, s_dateRenderingByGraphicThread);
+		std::swap(s_dataSubmittedByApplicationThread, s_dataRenderingByGraphicThread);
 		// Notify the application thread that data is swapped and it is ready for receiving new data
 		s_whenDataHasBeenSwappedInRenderThread.notify_one();
 
 		/** 2. Start to render pass one by one */
-		for (size_t i = 0; i < s_dateRenderingByGraphicThread->s_renderPasses.size(); ++i)
+		for (size_t i = 0; i < s_dataRenderingByGraphicThread->s_renderPasses.size(); ++i)
 		{
-			// Update frame data
-			s_uniformBuffer_ClipPlane.Update(&s_dateRenderingByGraphicThread->s_ClipPlane);
-			s_uniformBuffer_frame.Update(&s_dateRenderingByGraphicThread->s_renderPasses[i].FrameData);
 			// Update current render pass
 			s_currentRenderPass = i;
+			// Update frame data
+			s_uniformBuffer_ClipPlane.Update(&s_dataRenderingByGraphicThread->s_ClipPlane);
+			s_uniformBuffer_frame.Update(&s_dataRenderingByGraphicThread->s_renderPasses[i].FrameData);
 			// Execute pass function
-			s_dateRenderingByGraphicThread->s_renderPasses[i].RenderPassFunction();
+			s_dataRenderingByGraphicThread->s_renderPasses[i].RenderPassFunction();
 		}
 	}
 
@@ -228,40 +261,95 @@ namespace Graphics {
 	{
 		s_currentEffect = GetEffectByKey("ShadowMap");
 		s_currentEffect->UseEffect();
+		cDirectionalLight* _directionalLight = &s_dataRenderingByGraphicThread->s_directionalLight;
 
-		cFrameBuffer* _directionalLightFBO = s_directionalLight->GetShadowMap();
-		if (_directionalLightFBO && s_directionalLight->IsShadowEnabled()) {
+		if (_directionalLight)
+		{
+			_directionalLight->SetupLight(s_currentEffect->GetProgramID(), 0);
+			cFrameBuffer* _directionalLightFBO = _directionalLight->GetShadowMap();
+			if (_directionalLightFBO && _directionalLight->IsShadowEnabled()) {
 
-			{
-				Application::cApplication* _app = Application::GetCurrentApplication();
-				if (_app) {
-					_app->GetCurrentWindow()->SetViewportSize(_directionalLightFBO->GetWidth(), _directionalLightFBO->GetHeight());
+				{
+					Application::cApplication* _app = Application::GetCurrentApplication();
+					if (_app) {
+						_app->GetCurrentWindow()->SetViewportSize(_directionalLightFBO->GetWidth(), _directionalLightFBO->GetHeight());
+					}
 				}
+				// write buffer to the texture
+				_directionalLightFBO->Write();
+
+				glClearColor(0, 0, 0, 1.f);
+				glClear(/*GL_COLOR_BUFFER_BIT | */GL_DEPTH_BUFFER_BIT);
+
+				s_currentEffect->ValidateProgram();
+				// Draw scenes
+				RenderSceneWithoutMaterial();
+
+				// switch back to original buffer
+				_directionalLightFBO->UnWrite();
+				assert(glGetError() == GL_NO_ERROR);
 			}
-			// write buffer to the texture
-			_directionalLightFBO->Write();
+		}
+		
+		s_currentEffect->UnUseEffect();
+	}
 
-			glClearColor(0, 0, 0, 1.f);
-			glClear(/*GL_COLOR_BUFFER_BIT | */GL_DEPTH_BUFFER_BIT);
+	void PointLightShadowMap_Pass()
+	{
+		if (s_dataRenderingByGraphicThread->s_pointLights.size() <= 0) return;
+		s_currentEffect = GetEffectByKey("OmniShadowMap");
+		s_currentEffect->UseEffect();
 
-			// Draw scenes
-			RenderSceneWithoutMaterial();
+		for (auto i = 0; i < s_dataRenderingByGraphicThread->s_pointLights.size(); ++i)
+		{
+			auto* it = &s_dataRenderingByGraphicThread->s_pointLights[i];
+			cFrameBuffer* _pointLightFBO = it->GetShadowMap();
+			if (_pointLightFBO) {
+				{
+					Application::cApplication* _app = Application::GetCurrentApplication();
+					if (_app) {
+						_app->GetCurrentWindow()->SetViewportSize(_pointLightFBO->GetWidth(), _pointLightFBO->GetHeight());
+					}
+				}
 
-			// switch back to original buffer
-			_directionalLightFBO->UnWrite();
-			assert(glGetError() == GL_NO_ERROR);
+				// for each light, needs to update the frame data
+				Graphics::UniformBufferFormats::sFrame _frameData_PointLightShadow;
+				_frameData_PointLightShadow.ViewPosition = it->Transform()->Position();
+				s_uniformBuffer_frame.Update(&_frameData_PointLightShadow);
+
+				// point need extra uniform variables to be passed in to shader
+				it->SetupLight(s_currentEffect->GetProgramID(), i);
+				it->SetLightUniformTransform();
+				// write buffer to the texture
+				_pointLightFBO->Write();
+				assert(glGetError() == GL_NO_ERROR);
+				glClearColor(0, 0, 0, 1.f);
+				glClear(GL_DEPTH_BUFFER_BIT);
+
+				s_currentEffect->ValidateProgram();
+				// Draw scenes
+				RenderSceneWithoutMaterial();
+
+				// switch back to original buffer
+				_pointLightFBO->UnWrite();
+				assert(glGetError() == GL_NO_ERROR);
+			}
 		}
 		s_currentEffect->UnUseEffect();
 	}
 
 	void SpotLightShadowMap_Pass()
 	{
+		if (s_dataRenderingByGraphicThread->s_spotLights.size() <= 0) return;
+
 		s_currentEffect = GetEffectByKey("ShadowMap");
 		s_currentEffect->UseEffect();
 
-		for (auto i = 0; i < s_spotLight_list.size(); ++i)
+		for (auto i = 0; i < s_dataRenderingByGraphicThread->s_spotLights.size(); ++i)
 		{
-			cFrameBuffer* _spotLightFB = s_spotLight_list[i]->GetShadowMap();
+			auto* it = &s_dataRenderingByGraphicThread->s_spotLights[i];
+
+			cFrameBuffer* _spotLightFB = it->GetShadowMap();
 			if (_spotLightFB) {
 
 				{
@@ -270,12 +358,18 @@ namespace Graphics {
 						_app->GetCurrentWindow()->SetViewportSize(_spotLightFB->GetWidth(), _spotLightFB->GetHeight());
 					}
 				}
+				// for each light, needs to update the frame data
+				Graphics::UniformBufferFormats::sFrame _frameData_SpotLightShadow(it->CalculateLightTransform());
+				_frameData_SpotLightShadow.ViewPosition = it->Transform()->Position();
+				s_uniformBuffer_frame.Update(&_frameData_SpotLightShadow);
+
 				// write buffer to the texture
 				_spotLightFB->Write();
 				assert(glGetError() == GL_NO_ERROR);
 				glClearColor(0, 0, 0, 1.f);
 				glClear(GL_DEPTH_BUFFER_BIT);
 
+				s_currentEffect->ValidateProgram();
 				// Draw scenes
 				RenderSceneWithoutMaterial();
 
@@ -298,9 +392,6 @@ namespace Graphics {
 		{
 			s_currentEffect = GetEffectByKey(Constants::CONST_DEFAULT_EFFECT_KEY);
 			s_currentEffect->UseEffect();
-			if (s_directionalLight)
-				s_directionalLight->SetupLight(s_currentEffect->GetProgramID(), 0);
-
 		}
 		// Reset window size
 		{
@@ -321,6 +412,7 @@ namespace Graphics {
 
 		// Update lighting data
 		UpdateLightingData();
+		s_currentEffect->ValidateProgram();
 		// Start a draw call loop
 		RenderScene();
 
@@ -396,6 +488,7 @@ namespace Graphics {
 
 		// Update Lighting Data
 		UpdateLightingData();
+		s_currentEffect->ValidateProgram();
 		// Start a draw call loop
 		RenderScene();
 		// clear program
@@ -413,8 +506,9 @@ namespace Graphics {
 		s_currentEffect = GetEffectByKey("CubemapEffect");
 		s_currentEffect->UseEffect();
 
-		for (auto it = s_dateRenderingByGraphicThread->s_renderPasses[s_currentRenderPass].ModelToTransform_map.begin();
-			it != s_dateRenderingByGraphicThread->s_renderPasses[s_currentRenderPass].ModelToTransform_map.end(); ++it)
+		s_currentEffect->ValidateProgram();
+		for (auto it = s_dataRenderingByGraphicThread->s_renderPasses[s_currentRenderPass].ModelToTransform_map.begin();
+			it != s_dataRenderingByGraphicThread->s_renderPasses[s_currentRenderPass].ModelToTransform_map.end(); ++it)
 		{
 			// 1. Do not need to update draw call data because in cubemap.vert, there is no model matrix and normal matrix
 			// 2. Draw
@@ -436,8 +530,8 @@ namespace Graphics {
 		s_currentEffect = GetEffectByKey("UnlitEffect");
 		s_currentEffect->UseEffect();
 
-		for (auto it = s_dateRenderingByGraphicThread->s_renderPasses[s_currentRenderPass].ModelToTransform_map.begin();
-			it != s_dateRenderingByGraphicThread->s_renderPasses[s_currentRenderPass].ModelToTransform_map.end(); ++it)
+		for (auto it = s_dataRenderingByGraphicThread->s_renderPasses[s_currentRenderPass].ModelToTransform_map.begin();
+			it != s_dataRenderingByGraphicThread->s_renderPasses[s_currentRenderPass].ModelToTransform_map.end(); ++it)
 		{
 			// Get forward transform
 			cTransform arrowTransform[3];
@@ -450,6 +544,8 @@ namespace Graphics {
 				arrowTransform[2].SetRotation(it->second.Rotation() * glm::quat(glm::vec3(0, glm::radians(90.f), 0)));
 			}
 
+			s_currentEffect->ValidateProgram();
+			
 			cModel* _model = cModel::s_manager.Get(s_arrow);
 			cMatUnlit* _arrowMat = dynamic_cast<cMatUnlit*>(_model->GetMaterialAt());
 
@@ -479,7 +575,7 @@ namespace Graphics {
 		s_currentEffect->UseEffect();
 
 		glClear(GL_DEPTH_BUFFER_BIT);
-
+		s_currentEffect->ValidateProgram();
 		RenderSceneWithoutMaterial();
 
 		s_currentEffect->UnUseEffect();
@@ -488,8 +584,8 @@ namespace Graphics {
 	void RenderSceneWithoutMaterial()
 	{
 		// loop through every single model
-		for (auto it = s_dateRenderingByGraphicThread->s_renderPasses[s_currentRenderPass].ModelToTransform_map.begin();
-			it != s_dateRenderingByGraphicThread->s_renderPasses[s_currentRenderPass].ModelToTransform_map.end(); ++it)
+		for (auto it = s_dataRenderingByGraphicThread->s_renderPasses[s_currentRenderPass].ModelToTransform_map.begin();
+			it != s_dataRenderingByGraphicThread->s_renderPasses[s_currentRenderPass].ModelToTransform_map.end(); ++it)
 		{
 			// 1. Update draw call data
 			s_uniformBuffer_drawcall.Update(&UniformBufferFormats::sDrawCall(it->second.M(), it->second.TranspostInverse()));
@@ -504,8 +600,8 @@ namespace Graphics {
 	void RenderScene()
 	{
 		// loop through every single model
-		for (auto it = s_dateRenderingByGraphicThread->s_renderPasses[s_currentRenderPass].ModelToTransform_map.begin();
-			it != s_dateRenderingByGraphicThread->s_renderPasses[s_currentRenderPass].ModelToTransform_map.end();
+		for (auto it = s_dataRenderingByGraphicThread->s_renderPasses[s_currentRenderPass].ModelToTransform_map.begin();
+			it != s_dataRenderingByGraphicThread->s_renderPasses[s_currentRenderPass].ModelToTransform_map.end();
 			++it)
 		{
 			// 1. Update draw call data
@@ -638,13 +734,12 @@ namespace Graphics {
 			return result;
 		}
 		// TODO: lighting, range should be passed in
-		cPointLight* newPointLight = new cPointLight(i_color, i_initialLocation, 300.f, i_const, i_linear, i_quadratic);
+		cPointLight* newPointLight = new cPointLight(i_color, i_initialLocation, i_const, i_linear, i_quadratic);
 		newPointLight->SetupLight(s_currentEffect->GetProgramID(), s_pointLight_list.size());
 		newPointLight->SetEnableShadow(i_enableShadow);
+		newPointLight->CreateShadowMap(1024, 1024);
 		o_pointLight = newPointLight;
 		s_pointLight_list.push_back(newPointLight);
-
-
 		return result;
 	}
 
@@ -655,10 +750,10 @@ namespace Graphics {
 			printf("Can not create spot light without a valid program id.\n");
 			return result;
 		}
-		cSpotLight* newSpotLight = new cSpotLight(i_color, i_initialLocation, glm::normalize(i_direction), i_edge, 300.f, i_const, i_linear, i_quadratic);
+		cSpotLight* newSpotLight = new cSpotLight(i_color, i_initialLocation, glm::normalize(i_direction), i_edge, i_const, i_linear, i_quadratic);
 		newSpotLight->SetupLight(s_currentEffect->GetProgramID(), s_spotLight_list.size());
 		newSpotLight->SetEnableShadow(i_enableShadow);
-		newSpotLight->CreateShadowMap(2048, 2048);
+		newSpotLight->CreateShadowMap(1024, 1024);
 		o_spotLight = newSpotLight;
 		s_spotLight_list.push_back(newSpotLight);
 
@@ -675,7 +770,7 @@ namespace Graphics {
 		cDirectionalLight* newDirectionalLight = new cDirectionalLight(i_color, glm::normalize(i_direction));
 		newDirectionalLight->SetupLight(s_currentEffect->GetProgramID(), 0);
 		newDirectionalLight->SetEnableShadow(i_enableShadow);
-		newDirectionalLight->CreateShadowMap(2048, 2048);
+		newDirectionalLight->CreateShadowMap(1024, 1024);
 
 
 		o_directionalLight = newDirectionalLight;
@@ -685,12 +780,12 @@ namespace Graphics {
 
 	void UpdateLightingData()
 	{
-		s_dateRenderingByGraphicThread->s_ambientLight.Illuminate();
+		s_dataRenderingByGraphicThread->s_ambientLight.Illuminate();
 
 		// Directional Light
 		{
-			cDirectionalLight* _directionalLight = &s_dateRenderingByGraphicThread->s_directionalLight;
-			s_dateRenderingByGraphicThread->s_directionalLight.SetupLight(s_currentEffect->GetProgramID(), 0);
+			cDirectionalLight* _directionalLight = &s_dataRenderingByGraphicThread->s_directionalLight;
+			s_dataRenderingByGraphicThread->s_directionalLight.SetupLight(s_currentEffect->GetProgramID(), 0);
 			_directionalLight->Illuminate();
 			_directionalLight->SetLightUniformTransform();
 			if (_directionalLight->IsShadowEnabled()) {
@@ -699,25 +794,35 @@ namespace Graphics {
 			}
 		}
 
-		for (auto it : s_dateRenderingByGraphicThread->s_pointLights)
+		for (int i = 0; i < s_dataRenderingByGraphicThread->s_spotLights.size(); ++i)
 		{
-			it.Illuminate();
-		}
-		for (int i = 0; i < s_dateRenderingByGraphicThread->s_spotLights.size(); ++i)
-		{
-			auto* it = &s_dateRenderingByGraphicThread->s_spotLights[i];
+			auto* it = &s_dataRenderingByGraphicThread->s_spotLights[i];
 
 			it->SetupLight(s_currentEffect->GetProgramID(), i);
+			it->Illuminate();
 			it->SetLightUniformTransform();
+
+			if (it->IsShadowEnabled()) {
+				it->UseShadowMap(SHADOWMAP_START_TEXTURE_UNIT + i);
+				it->GetShadowMap()->Read(GL_TEXTURE0 + SHADOWMAP_START_TEXTURE_UNIT + i);
+			}
+		}
+
+		for (int i = 0; i < s_dataRenderingByGraphicThread->s_pointLights.size(); ++i)
+		{
+			auto* it = &s_dataRenderingByGraphicThread->s_pointLights[i];
+			it->SetupLight(s_currentEffect->GetProgramID(), i);
 			it->Illuminate();
 
 			if (it->IsShadowEnabled()) {
-				it->UseShadowMap(5);
-				it->GetShadowMap()->Read(GL_TEXTURE5);
+				// has offset
+				it->UseShadowMap(MAX_COUNT_PER_LIGHT + SHADOWMAP_START_TEXTURE_UNIT + i);
+				it->GetShadowMap()->Read(GL_TEXTURE0 + MAX_COUNT_PER_LIGHT + SHADOWMAP_START_TEXTURE_UNIT + i);
 			}
 		}
-		s_globalLightingData.pointLightCount = s_dateRenderingByGraphicThread->s_pointLights.size();
-		s_globalLightingData.spotLightCount = s_dateRenderingByGraphicThread->s_spotLights.size();
+
+		s_globalLightingData.pointLightCount = s_dataRenderingByGraphicThread->s_pointLights.size();
+		s_globalLightingData.spotLightCount = s_dataRenderingByGraphicThread->s_spotLights.size();
 		s_uniformBuffer_Lighting.Update(&s_globalLightingData);
 
 	}

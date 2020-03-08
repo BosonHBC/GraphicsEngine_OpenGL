@@ -50,12 +50,14 @@ namespace Graphics {
 		glm::mat4 lightTransform = CalculateLightTransform();
 		// light transform
 		glUniformMatrix4fv(m_directionalLightTransformID, 1, GL_FALSE, glm::value_ptr(lightTransform));
+		assert(GL_NO_ERROR == glGetError());
 	}
 
 	void cDirectionalLight::UseShadowMap(GLuint i_textureUnit)
 	{
 		// set texture index for the shadow map
 		glUniform1i(m_directionalShadowMapID, i_textureUnit);
+		assert(glGetError() == GL_NO_ERROR);
 	}
 
 }

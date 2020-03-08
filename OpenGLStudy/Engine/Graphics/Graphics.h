@@ -26,6 +26,7 @@ namespace Graphics {
 
 	void DirectionalShadowMap_Pass();
 	void SpotLightShadowMap_Pass();
+	void PointLightShadowMap_Pass();
 	void Reflection_Pass();
 
 	void Render_Pass();
@@ -48,7 +49,7 @@ namespace Graphics {
 	/** Lighting related*/
 	UniformBufferFormats::sLighting& GetGlobalLightingData();
 	bool CreateAmbientLight(const Color& i_color, cAmbientLight*& o_ambientLight);
-	bool CreatePointLight(const glm::vec3& i_initialLocation,const Color& i_color, const GLfloat& i_const, const GLfloat& i_linear, const GLfloat& i_quadratic, bool i_enableShadow, cPointLight*& o_pointLight);
+	bool CreatePointLight(const glm::vec3& i_initialLocation,const Color& i_color,const GLfloat& i_const, const GLfloat& i_linear, const GLfloat& i_quadratic, bool i_enableShadow, cPointLight*& o_pointLight);
 	bool CreateSpotLight(const glm::vec3& i_initialLocation, const glm::vec3& i_direction, const Color& i_color, const GLfloat& i_edge, const GLfloat& i_const, const GLfloat& i_linear, const GLfloat& i_quadratic, bool i_enableShadow, cSpotLight*& o_spotLight);
 	bool CreateDirectionalLight(const Color& i_color, glm::vec3 i_direction, bool i_enableShadow, cDirectionalLight*& o_directionalLight);
 	void UpdateLightingData();

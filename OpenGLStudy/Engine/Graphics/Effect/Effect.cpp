@@ -87,14 +87,6 @@ namespace Graphics {
 		return true;
 	}
 
-	void cEffect::FixSamplerError()
-	{
-		UseEffect();
-		glUniform1i(glGetUniformLocation(m_programID, "cubemapTex"), 3);
-		UnUseEffect();
-		assert(glGetError() == GL_NO_ERROR);
-	}
-
 	void cEffect::CleanUp()
 	{
 		// Clean up GLShader

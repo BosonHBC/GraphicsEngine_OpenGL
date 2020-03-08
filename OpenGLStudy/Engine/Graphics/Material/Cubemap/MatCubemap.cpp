@@ -40,10 +40,10 @@ namespace Graphics {
 
 	void cMatCubemap::UseMaterial()
 	{
-		glUniform1i(m_cubemapTexID, 3);
+		glUniform1i(m_cubemapTexID, 0);
 		cTexture* _handleTex = cTexture::s_manager.Get(m_cubeMapHandle);
 		if (_handleTex) {
-			_handleTex->UseTexture(GL_TEXTURE3);
+			_handleTex->UseTexture(GL_TEXTURE0);
 		}
 	}
 
