@@ -68,6 +68,21 @@ namespace Graphics {
 		return result;
 	}
 
+	void cTexture::UnBindTexture(int i_textureLocation, const ETextureType& _textureType)
+	{
+		glActiveTexture(i_textureLocation);
+		assert(glGetError() == GL_NO_ERROR);
+
+		GLenum _glTextureType = GL_TEXTURE_2D;
+		// if the texture is a cube map, use GL_TEXTURE_CUBE_MAP
+		if (_textureType == ETT_CUBEMAP
+			|| _textureType == ETT_FRAMEBUFFER_CUBEMAP)
+			_glTextureType = GL_TEXTURE_CUBE_MAP;
+		
+		glBindTexture(_glTextureType, 0);
+		assert(glGetError() == GL_NO_ERROR);
+	}
+
 	bool cTexture::LoadTextureFromFile(const std::string& i_path)
 	{
 		unsigned char* _data = stbi_load(i_path.c_str(), &m_width, &m_height, &m_bitDepth, 0);
@@ -318,16 +333,7 @@ namespace Graphics {
 
 	void cTexture::CleanUpTextureBind(int i_textureLocation)
 	{
-		glActiveTexture(i_textureLocation);
-
-		assert(glGetError() == GL_NO_ERROR);
-		GLenum _textureType = GL_TEXTURE_2D;
-		// if the texture is a cube map, use GL_TEXTURE_CUBE_MAP
-		if (m_textureType == ETT_CUBEMAP
-			|| m_textureType == ETT_FRAMEBUFFER_CUBEMAP)
-			_textureType = GL_TEXTURE_CUBE_MAP;
-		glBindTexture(_textureType, 0);
-		assert(glGetError() == GL_NO_ERROR);
+		cTexture::UnBindTexture(i_textureLocation, m_textureType);
 	}
 
 	void cTexture::CleanUp()

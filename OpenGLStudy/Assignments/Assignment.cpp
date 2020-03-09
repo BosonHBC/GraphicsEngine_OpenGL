@@ -42,11 +42,11 @@ bool Assignment::Initialize(GLuint i_width, GLuint i_height, const char* i_windo
 	auto cameraViewTextureHandle = Graphics::GetCameraCaptureFrameBuffer()->GetTextureHandle();
 	//_floorMat->UpdateDiffuseTexture(cameraViewTextureHandle);
 	//_floorMat->UpdateSpecularTexture(cameraViewTextureHandle);
-	_floorMat->UpdateReflectionTexture(cameraViewTextureHandle);
+	//_floorMat->UpdateReflectionTexture(cameraViewTextureHandle);
 	//_floorMat->UpdateCubemapTexture(_cubemapMat->GetCubemapHandle());
 
 	Graphics::cMatBlinn* _teapot2Mat = dynamic_cast<Graphics::cMatBlinn*>(Graphics::cModel::s_manager.Get(m_teapot2->GetModelHandle())->GetMaterialAt());
-	_teapot2Mat->UpdateCubemapTexture(_cubemapMat->GetCubemapHandle());
+	//_teapot2Mat->UpdateCubemapTexture(_cubemapMat->GetCubemapHandle());
 
 	return result;
 }
@@ -82,6 +82,12 @@ void Assignment::CreateActor()
 	m_cubemap->SetModel("Contents/models/cubemap.model");
 	m_cubemap->UpdateUniformVariables(Graphics::GetEffectByKey("CubemapEffect"));
 
+	m_spaceHolder = new cActor();
+	m_spaceHolder->Initialize();
+	m_spaceHolder->Transform()->SetTransform(glm::vec3(0, 5.f, 0), glm::quat(1, 0, 0, 0), glm::vec3(5, 5, 5));
+	m_spaceHolder->SetModel("Contents/models/spaceHolder.model");
+	m_spaceHolder->UpdateUniformVariables(Graphics::GetCurrentEffect());
+	m_spaceHolder->Transform()->Update();
 }
 
 void Assignment::CreateCamera()
@@ -95,11 +101,11 @@ void Assignment::CreateCamera()
 void Assignment::CreateLight()
 {
 	Graphics::CreateAmbientLight(Color(0.1f, 0.1f, 0.1f), aLight);
-	Graphics::CreatePointLight(glm::vec3(0, 150.f, 100.f), Color(0.8, 0.8, 0.8), 0.3f, 0.7f, 1.5f, true, pLight1);
-	Graphics::CreatePointLight(glm::vec3(-100, 40, -100), Color(0.8, 0.8, 0.8), 1.f, 0.7f, 1.8f, true, pLight2);
-	Graphics::CreateDirectionalLight(Color(.8, .8, .8), glm::vec3(-1, -1, 0), true, dLight);
-	Graphics::CreateSpotLight(glm::vec3(0, 150, 0), glm::vec3(0, 1, 1), Color(1), 65.f, 1.f, 0.7f, 1.8f, true, spLight);
-	Graphics::CreateSpotLight(glm::vec3(100, 150, 0), glm::vec3(1, 1, 0), Color(1), 65.f, 1.f, 0.7f, 1.8f, true, spLight2);
+	Graphics::CreatePointLight(glm::vec3(0, 150.f, 100.f), Color(0.8, 0.8, 0.8), 1.5f, 0.3f, 5.f, true, pLight1);
+	//Graphics::CreatePointLight(glm::vec3(-100, 40, -100), Color(0.8, 0.8, 0.8), 1.f, 0.7f, 1.8f, true, pLight2);
+	Graphics::CreateDirectionalLight(Color(.6, .6, .58f), glm::vec3(-1, -1, 0), true, dLight);
+	Graphics::CreateSpotLight(glm::vec3(0, 150, 0), glm::vec3(0, 1, 1), Color(1), 65.f, 1.5f, 0.3f, 5.f, true, spLight);
+	//Graphics::CreateSpotLight(glm::vec3(100, 150, 0), glm::vec3(1, 1, 0), Color(1), 65.f, 1.f, 0.7f, 1.8f, true, spLight2);
 
 }
 
@@ -127,6 +133,7 @@ void Assignment::CleanUp()
 	safe_delete(m_mirror);
 	safe_delete(m_sphere);
 	safe_delete(m_cubemap);
+	safe_delete(m_spaceHolder);
 }
 
 void Assignment::Tick(float second_since_lastFrame)
@@ -149,7 +156,7 @@ void Assignment::Tick(float second_since_lastFrame)
 	}
 
 	cTransform* controledActor = nullptr;
-	controledActor = spLight2->Transform();
+	controledActor = pLight1->Transform();
 	//controledActor = m_sphere->Transform();
 	if (controledActor) {
 		if (_windowInput->IsKeyDown(GLFW_KEY_J)) {
@@ -174,8 +181,8 @@ void Assignment::Tick(float second_since_lastFrame)
 	}
 
 	cTransform* rotateControl = nullptr;
-	if (spLight2)
-		rotateControl = spLight2->Transform();
+	if (spLight)
+		rotateControl = spLight->Transform();
 	//if (dLight)
 		//rotateControl = dLight->Transform();
 	if (rotateControl)
@@ -226,25 +233,29 @@ void Assignment::Tick(float second_since_lastFrame)
 			// Submit geometry data
 			{
 				Graphics::ClearApplicationThreadData();
-				// Submit data to be render
 				std::vector<std::pair<Graphics::cModel::HANDLE, cTransform>> _renderingMap;
-				_renderingMap.push_back({ m_sphere->GetModelHandle(), *m_sphere->Transform() });
-				_renderingMap.push_back({ m_teapot->GetModelHandle(), *m_teapot->Transform() });
-				_renderingMap.push_back({ m_teapot2->GetModelHandle(), *m_teapot2->Transform() });
-				_renderingMap.push_back({ m_mirror->GetModelHandle(), *m_mirror->Transform() });
-				// Frame data from directional light
-				if (dLight && dLight->IsShadowEnabled()) {
-					Graphics::UniformBufferFormats::sFrame _frameData_Shadow(dLight->CalculateLightTransform());
-					Graphics::SubmitDataToBeRendered(_frameData_Shadow, _renderingMap, &Graphics::DirectionalShadowMap_Pass);
-				}
-				{// Spot light shadow map pass
-					Graphics::SubmitDataToBeRendered(Graphics::UniformBufferFormats::sFrame(), _renderingMap, &Graphics::SpotLightShadowMap_Pass);
-				}
-				{ // Point light shadow map pass
-					Graphics::SubmitDataToBeRendered(Graphics::UniformBufferFormats::sFrame(), _renderingMap, &Graphics::PointLightShadowMap_Pass);
+				// Submit data to be render
+				{
+					_renderingMap.push_back({ m_sphere->GetModelHandle(), *m_sphere->Transform() });
+					_renderingMap.push_back({ m_teapot->GetModelHandle(), *m_teapot->Transform() });
+					_renderingMap.push_back({ m_teapot2->GetModelHandle(), *m_teapot2->Transform() });
+					//_renderingMap.push_back({ m_mirror->GetModelHandle(), *m_mirror->Transform() });
+					_renderingMap.push_back({ m_spaceHolder->GetModelHandle(), *m_spaceHolder->Transform() });
+					{// Spot light shadow map pass
+						Graphics::SubmitDataToBeRendered(Graphics::UniformBufferFormats::sFrame(), _renderingMap, &Graphics::SpotLightShadowMap_Pass);
+					}
+					{ // Point light shadow map pass
+						Graphics::SubmitDataToBeRendered(Graphics::UniformBufferFormats::sFrame(), _renderingMap, &Graphics::PointLightShadowMap_Pass);
+					}
+					
+					// Frame data from directional light
+					if (dLight && dLight->IsShadowEnabled()) {
+						Graphics::UniformBufferFormats::sFrame _frameData_Shadow(dLight->CalculateLightTransform());
+						Graphics::SubmitDataToBeRendered(_frameData_Shadow, _renderingMap, &Graphics::DirectionalShadowMap_Pass);
+					}
 				}
 				// Frame data from camera
-				if (true)
+				if (false)
 				{
 					cEditorCamera _mirroredCamera = *m_editorCamera;
 					_mirroredCamera.MirrorAlongPlane(*m_mirror->Transform());
@@ -266,9 +277,9 @@ void Assignment::Tick(float second_since_lastFrame)
 					_renderingMap.clear();
 					_renderingMap.push_back({ m_teapot->GetModelHandle(), *m_teapot->Transform() });
 					_renderingMap.push_back({ m_teapot2->GetModelHandle(), *m_teapot2->Transform() });
-					_renderingMap.push_back({ m_mirror->GetModelHandle(), *m_mirror->Transform() });
+					//_renderingMap.push_back({ m_mirror->GetModelHandle(), *m_mirror->Transform() });
 					_renderingMap.push_back({ m_sphere->GetModelHandle(), *m_sphere->Transform() });
-
+					_renderingMap.push_back({ m_spaceHolder->GetModelHandle(), *m_spaceHolder->Transform() });
 					Graphics::SubmitDataToBeRendered(_frameData_Camera, _renderingMap, &Graphics::Render_Pass);
 				}
 
@@ -300,6 +311,7 @@ void Assignment::Tick(float second_since_lastFrame)
 				}
 
 				// Normal gizmo
+				if(false)
 				{
 					_renderingMap.clear();
 					_renderingMap.push_back({ m_teapot2->GetModelHandle(), *m_teapot2->Transform() });
@@ -336,8 +348,6 @@ void Assignment::Tick(float second_since_lastFrame)
 				Graphics::SubmitLightingData(_pLights, _spLights, *aLight, *dLight);
 			}
 		}
-
-
 
 	}
 }

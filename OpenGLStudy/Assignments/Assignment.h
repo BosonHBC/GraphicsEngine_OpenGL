@@ -45,5 +45,6 @@ private:
 	cActor* m_mirror;
 	cActor* m_sphere;
 	cActor* m_cubemap;
+	cActor* m_spaceHolder;
 };
 

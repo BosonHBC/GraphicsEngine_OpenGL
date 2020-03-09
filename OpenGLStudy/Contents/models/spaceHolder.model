@@ -1,0 +1,9 @@
+--[[
+    Default Model sheet
+]]
+return 
+{
+    ModelPath = "spaceHolder.obj",
+    MaterialPath = "DefaultBlinnPhong.material",
+
+}

@@ -227,7 +227,9 @@ namespace Graphics {
 			}
 		}
 
-
+		glEnable(GL_CULL_FACE);
+		glCullFace(GL_BACK);
+		assert(GL_NO_ERROR == glGetError());
 		return result;
 	}
 
@@ -502,6 +504,7 @@ namespace Graphics {
 	{
 		// change depth function so depth test passes when values are equal to depth buffer's content
 		glDepthFunc(GL_LEQUAL);
+		glFrontFace(GL_CW);
 
 		s_currentEffect = GetEffectByKey("CubemapEffect");
 		s_currentEffect->UseEffect();
@@ -521,6 +524,7 @@ namespace Graphics {
 
 		s_currentEffect->UnUseEffect();
 		// set depth function back to default
+		glFrontFace(GL_CCW);
 		glDepthFunc(GL_LESS);
 	}
 
@@ -770,7 +774,7 @@ namespace Graphics {
 		cDirectionalLight* newDirectionalLight = new cDirectionalLight(i_color, glm::normalize(i_direction));
 		newDirectionalLight->SetupLight(s_currentEffect->GetProgramID(), 0);
 		newDirectionalLight->SetEnableShadow(i_enableShadow);
-		newDirectionalLight->CreateShadowMap(1024, 1024);
+		newDirectionalLight->CreateShadowMap(2048, 2048);
 
 
 		o_directionalLight = newDirectionalLight;

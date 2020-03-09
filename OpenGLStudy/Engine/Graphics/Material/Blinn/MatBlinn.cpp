@@ -14,7 +14,7 @@ namespace Graphics {
 		bool result = true;
 		std::string _diffusePath, _specularPath;
 		// load material data from LUA files
-		if (!(result = LoadFileFromLua(i_path, m_matType, _diffusePath, _specularPath, m_diffuseIntensity, m_specularIntensity, m_environmentIntensity,m_shininess))) {
+		if (!(result = LoadFileFromLua(i_path, m_matType, _diffusePath, _specularPath, m_diffuseIntensity, m_specularIntensity, m_environmentIntensity, m_shininess))) {
 			printf("Fail to load material[%s] from LUA.\n", i_path.c_str());
 			return result;
 		}
@@ -46,30 +46,35 @@ namespace Graphics {
 
 	void cMatBlinn::UseMaterial()
 	{
+		glUniform1i(m_diffuseTexID, 0);
 		cTexture* _diffuseTex = cTexture::s_manager.Get(m_diffuseTextureHandle);
-		if (_diffuseTex) {
-			glUniform1i(m_diffuseTexID, 0);
+		if (_diffuseTex)
 			_diffuseTex->UseTexture(GL_TEXTURE0);
-		}
+		else 
+			cTexture::UnBindTexture(GL_TEXTURE0, ETT_FILE);
+
+		glUniform1i(m_specularTexID, 1);
 		cTexture* _specularTex = cTexture::s_manager.Get(m_specularTextureHandle);
-		if (_specularTex) {
-			glUniform1i(m_specularTexID, 1);
+		if (_specularTex) 
 			_specularTex->UseTexture(GL_TEXTURE1);
-		}
+		else
+			cTexture::UnBindTexture(GL_TEXTURE1, ETT_FILE);
+		
+		glUniform1i(m_cubemapTexID, 3);
 		cTexture* _cubemapTex = cTexture::s_manager.Get(m_cubemapTextureHandle);
-		if (_cubemapTex) 
-		{
-			glUniform1i(m_cubemapTexID, 3);
+		if (_cubemapTex)
 			_cubemapTex->UseTexture(GL_TEXTURE3);
-		}
+		else
+			cTexture::UnBindTexture(GL_TEXTURE3, ETT_CUBEMAP);
+		
+		glUniform1i(m_reflectionTexID, 4);
 		cTexture* _reflectionTex = cTexture::s_manager.Get(m_reflectionTextureHandle);
 		if (_reflectionTex)
-		{
-			glUniform1i(m_reflectionTexID, 4);
 			_reflectionTex->UseTexture(GL_TEXTURE4);
-		}
+		else
+			cTexture::UnBindTexture(GL_TEXTURE4, ETT_FRAMEBUFFER_COLOR);
 
-		s_BlinnPhongUniformBlock.Update(&UniformBufferFormats::sBlinnPhongMaterial(m_diffuseIntensity, m_specularIntensity, m_environmentIntensity,m_shininess));
+		s_BlinnPhongUniformBlock.Update(&UniformBufferFormats::sBlinnPhongMaterial(m_diffuseIntensity, m_specularIntensity, m_environmentIntensity, m_shininess));
 	}
 
 	void cMatBlinn::CleanUpMaterialBind()

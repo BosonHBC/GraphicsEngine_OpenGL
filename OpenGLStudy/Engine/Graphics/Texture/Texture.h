@@ -28,6 +28,8 @@ namespace Graphics {
 		static bool Load(const std::string& i_path, cTexture*& o_texture, ETextureType i_ett = ETT_FILE, const GLuint& i_override_width =0, const GLuint& i_override_height = 0);
 		//--------------------------
 
+		static void UnBindTexture(int i_textureLocation, const ETextureType& _textureType);
+
 		/** Constructors and destructor */
 		~cTexture() { CleanUp(); }
 
