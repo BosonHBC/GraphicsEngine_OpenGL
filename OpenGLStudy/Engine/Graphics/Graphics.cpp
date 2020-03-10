@@ -261,6 +261,7 @@ namespace Graphics {
 
 	void DirectionalShadowMap_Pass()
 	{
+		glDisable(GL_CULL_FACE);
 		s_currentEffect = GetEffectByKey("ShadowMap");
 		s_currentEffect->UseEffect();
 		cDirectionalLight* _directionalLight = &s_dataRenderingByGraphicThread->s_directionalLight;
@@ -294,11 +295,13 @@ namespace Graphics {
 		}
 		
 		s_currentEffect->UnUseEffect();
+		glEnable(GL_CULL_FACE);
 	}
 
 	void PointLightShadowMap_Pass()
 	{
 		if (s_dataRenderingByGraphicThread->s_pointLights.size() <= 0) return;
+		glDisable(GL_CULL_FACE);
 		s_currentEffect = GetEffectByKey("OmniShadowMap");
 		s_currentEffect->UseEffect();
 
@@ -338,12 +341,13 @@ namespace Graphics {
 			}
 		}
 		s_currentEffect->UnUseEffect();
+		glEnable(GL_CULL_FACE);
 	}
 
 	void SpotLightShadowMap_Pass()
 	{
 		if (s_dataRenderingByGraphicThread->s_spotLights.size() <= 0) return;
-
+		glDisable(GL_CULL_FACE);
 		s_currentEffect = GetEffectByKey("ShadowMap");
 		s_currentEffect->UseEffect();
 
@@ -382,6 +386,7 @@ namespace Graphics {
 		}
 
 		s_currentEffect->UnUseEffect();
+		glEnable(GL_CULL_FACE);
 	}
 
 	void Reflection_Pass()
@@ -530,7 +535,7 @@ namespace Graphics {
 
 	void Gizmo_RenderTransform()
 	{
-		glDisable(GL_DEPTH_TEST);
+		//glDisable(GL_DEPTH_TEST);
 		s_currentEffect = GetEffectByKey("UnlitEffect");
 		s_currentEffect->UseEffect();
 

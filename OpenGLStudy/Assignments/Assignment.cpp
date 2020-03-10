@@ -148,7 +148,7 @@ void Assignment::Tick(float second_since_lastFrame)
 	}
 	// for recompile shader
 	if (m_window->GetWindowInput()->IsKeyDown(GLFW_KEY_F6)) {
-		Graphics::GetCurrentEffect()->RecompileShader(Constants::CONST_PATH_DEFAULT_VERTEXSHADER, GL_VERTEX_SHADER);
+		Graphics::GetEffectByKey(Constants::CONST_DEFAULT_EFFECT_KEY)->RecompileShader(Constants::CONST_PATH_BLINNPHONG_FRAGMENTSHADER, GL_FRAGMENT_SHADER);
 	}
 	//dLight->Transform()->Rotate(-cTransform::WorldUp, 0.01677f);
 	if (m_teapot) {

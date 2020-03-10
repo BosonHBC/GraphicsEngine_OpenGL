@@ -3,7 +3,7 @@
 ]]
 return 
 {
-    ModelPath = "spaceHolder.obj",
+    ModelPath = "spaceHolder_high.obj",
     MaterialPath = "DefaultBlinnPhong.material",
 
 }

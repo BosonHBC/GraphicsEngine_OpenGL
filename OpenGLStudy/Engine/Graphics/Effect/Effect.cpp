@@ -132,7 +132,7 @@ namespace Graphics {
 
 	bool cEffect::RecompileShader(const char* i_shaderName, GLenum i_shaderType)
 	{
-		//CreateProgram(Constants::CONST_PATH_DEFAULT_VERTEXSHADER, Constants::CONST_PATH_BLINNPHONG_FRAGMENTSHADER);
+
 		return true;
 	}
 

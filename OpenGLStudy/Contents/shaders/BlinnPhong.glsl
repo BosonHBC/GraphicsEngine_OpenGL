@@ -236,6 +236,11 @@ vec4 IlluminateByReflectionTexture()
 //-------------------------------------------------------------------------
 vec4 CalcDirectionalLight(vec4 diffusTexCol, vec4 specTexCol, vec3 vN, vec3 vV){
 		vec3 dir = normalize(g_directionalLight.direction);
+
+		float dir_dot_normal = dot(dir, vN);
+		// if the light is illuminating the back face
+		if(dir_dot_normal <= 0.0f ) return vec4(0,0,0,0);
+
 		vec4 color_kd = diffusTexCol * IlluminateByDirection_Kd(g_directionalLight.base, vN, dir);
 		vec4 color_ks = specTexCol * IlluminateByDirection_Ks(g_directionalLight.base, vN, vV, dir);
 		return color_kd + color_ks;
@@ -249,11 +254,14 @@ vec4 CalcPointLight(int idx, PointLight pLight,vec4 diffusTexCol, vec4 specTexCo
 		vec3 dir = pLight.position - fragPos;
 		float dist = length(dir);
 		dir = normalize(dir);
-
+		float dir_dot_normal = dot(dir, vN);
+		// if the light is illuminating the back face
+		if(dir_dot_normal <= 0.0f )  return vec4(0,0,0,0);
+		float distRate = dist / pLight.radius;
 		// shadow
 		float shadowFactor = pLight.base.enableShadow ? (1.0 - CalcPointLightShadowMap(idx, pLight, dist_vV)) : 1.0;
+		shadowFactor = max(shadowFactor * (.99f -  distRate), 0.0);
 
-		float distRate = dist / pLight.radius;
 		vec4 color_kd = diffusTexCol * IlluminateByDirection_Kd(pLight.base, vN, dir);
 		vec4 color_ks = specTexCol * IlluminateByDirection_Ks(pLight.base, vN, dir, norm_vV);
 		float attenuationFactor = (pLight.quadratic * distRate * distRate + 
@@ -281,6 +289,10 @@ vec4 CalcSpotLight(int idx, SpotLight spLight,vec4 diffusTexCol, vec4 specTexCol
 		vec3 norm_dir = normalize(dir);
 		float dist = length(dir);
 		float dir_dot_LDir = dot(-spLight.direction, norm_dir);
+		float dir_dot_normal = dot(norm_dir, vN);
+		// if the light is illuminating the back face
+		if(dir_dot_normal <= 0.0f ) return vec4(0,0,0,0);
+
 		if(dir_dot_LDir > spLight.edge)
 		{
 			float distRate = dist / spLight.base.radius;
