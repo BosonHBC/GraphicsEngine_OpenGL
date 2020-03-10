@@ -284,7 +284,6 @@ namespace Graphics {
 
 		for (int i = 0; i < 6; ++i)
 		{
-
 			std::string _path = Assets::ProcessPathTex(i_paths[i]);
 			_data = stbi_load(_path.c_str(), &m_width, &m_height, &m_bitDepth, 0);
 			if (_data) {

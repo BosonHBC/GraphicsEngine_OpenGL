@@ -1,0 +1,15 @@
+--[[
+    Default BlinnPhong material
+]]
+return 
+{
+
+    MaterialType = 1,
+    DiffuseTexture = "",
+    SpecularTexture = "",
+    DiffuseIntensity = {1.0,1.0,1.0},
+    SpecularIntensity = {1.0,1.0,1.0},
+    EnvironmentIntensity = {0.05,0.05,0.05},
+    Shininess = 32,
+
+}

@@ -4,6 +4,6 @@
 return 
 {
     ModelPath = "spaceHolder_high.obj",
-    MaterialPath = "DefaultBlinnPhong.material",
+    MaterialPath = "spaceHolder.material",
 
 }

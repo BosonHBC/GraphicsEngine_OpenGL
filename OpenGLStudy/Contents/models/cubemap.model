@@ -4,6 +4,6 @@
 return 
 {
     ModelPath = "cube.obj",
-    MaterialPath = "cubemap.material",
+    MaterialPath = "snowCubemap.material",
 
 }

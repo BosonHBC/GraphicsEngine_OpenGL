@@ -1,0 +1,13 @@
+--[[
+    Snow Cube map material
+]]
+return 
+{
+    MaterialType = 2,
+    tex_PosX = "Cubemaps/Tantolunden5/posx.jpg",
+    tex_NegX = "Cubemaps/Tantolunden5/negx.jpg",
+    tex_PosY = "Cubemaps/Tantolunden5/posy.jpg",
+    tex_NegY = "Cubemaps/Tantolunden5/negy.jpg",
+    tex_PosZ = "Cubemaps/Tantolunden5/posz.jpg",
+    tex_NegZ = "Cubemaps/Tantolunden5/negz.jpg",
+}

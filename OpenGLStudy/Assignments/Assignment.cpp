@@ -48,6 +48,9 @@ bool Assignment::Initialize(GLuint i_width, GLuint i_height, const char* i_windo
 	Graphics::cMatBlinn* _teapot2Mat = dynamic_cast<Graphics::cMatBlinn*>(Graphics::cModel::s_manager.Get(m_teapot2->GetModelHandle())->GetMaterialAt());
 	//_teapot2Mat->UpdateCubemapTexture(_cubemapMat->GetCubemapHandle());
 
+	Graphics::cMatBlinn* _spaceHolderMat = dynamic_cast<Graphics::cMatBlinn*>(Graphics::cModel::s_manager.Get(m_spaceHolder->GetModelHandle())->GetMaterialAt());
+	_spaceHolderMat->UpdateCubemapTexture(_cubemapMat->GetCubemapHandle());
+
 	return result;
 }
 
@@ -101,7 +104,7 @@ void Assignment::CreateCamera()
 void Assignment::CreateLight()
 {
 	Graphics::CreateAmbientLight(Color(0.1f, 0.1f, 0.1f), aLight);
-	Graphics::CreatePointLight(glm::vec3(0, 150.f, 100.f), Color(0.8, 0.8, 0.8), 1.5f, 0.3f, 5.f, true, pLight1);
+	Graphics::CreatePointLight(glm::vec3(0, 50.f, 100.f), Color(0.8, 0.8, 0.8), 1.5f, 0.3f, 5.f, true, pLight1);
 	//Graphics::CreatePointLight(glm::vec3(-100, 40, -100), Color(0.8, 0.8, 0.8), 1.f, 0.7f, 1.8f, true, pLight2);
 	Graphics::CreateDirectionalLight(Color(.6, .6, .58f), glm::vec3(-1, -1, 0), true, dLight);
 	Graphics::CreateSpotLight(glm::vec3(0, 150, 0), glm::vec3(0, 1, 1), Color(1), 65.f, 1.5f, 0.3f, 5.f, true, spLight);
