@@ -6,11 +6,12 @@ layout (location = 3) in vec3 tangent;
 layout (location = 4) in vec3 biTangent;
 
 out vec2 texCood0;
-out vec3 Normal;
 out vec3 fragPos;
 out vec4 DirectionalLightSpacePos;
 
 out vec4 clipSpaceCoord;
+out vec3 Normal;
+out mat3 TBN;
 
 uniform mat4 directionalLightTransform;
 
@@ -44,6 +45,16 @@ void main()
 
 	// Handle scaling in only one axis situation
 	Normal = mat3(normalMatrix) * normal;
+	vec3 T = normalize(vec3(modelMatrix * vec4(tangent,   0.0)));
+   	vec3 B = normalize(vec3(modelMatrix * vec4(biTangent, 0.0)));
+   	vec3 N = normalize(Normal);
+	TBN = mat3(T, B, N);
+
+	/* // alternative way to calculate tbn with extra cost and little bit improvement
+		T = normalize(T - dot(T, N) * N);
+		// then retrieve perpendicular vector B with the cross product of T and N
+		vec3 B = cross(N, T);
+	*/
 
 	vec4 worldPos = modelMatrix * vec4(pos.x, pos.y, pos.z, 1.0);
 	fragPos = worldPos.xyz;

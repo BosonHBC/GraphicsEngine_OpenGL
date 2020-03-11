@@ -87,7 +87,7 @@ void Assignment::CreateActor()
 
 	m_spaceHolder = new cActor();
 	m_spaceHolder->Initialize();
-	m_spaceHolder->Transform()->SetTransform(glm::vec3(0, 5.f, 0), glm::quat(1, 0, 0, 0), glm::vec3(5, 5, 5));
+	m_spaceHolder->Transform()->SetTransform(glm::vec3(0, 150.f, 0), glm::quat(1, 0, 0, 0), glm::vec3(5, 5, 5));
 	m_spaceHolder->SetModel("Contents/models/spaceHolder.model");
 	m_spaceHolder->UpdateUniformVariables(Graphics::GetCurrentEffect());
 	m_spaceHolder->Transform()->Update();
@@ -104,7 +104,7 @@ void Assignment::CreateCamera()
 void Assignment::CreateLight()
 {
 	Graphics::CreateAmbientLight(Color(0.1f, 0.1f, 0.1f), aLight);
-	Graphics::CreatePointLight(glm::vec3(0, 50.f, 100.f), Color(0.8, 0.8, 0.8), 1.5f, 0.3f, 5.f, true, pLight1);
+	Graphics::CreatePointLight(glm::vec3(0, 50.f, 100.f), Color(0.8, 0.8, 0.8), 1.5f, 0.3f, 2.f, true, pLight1);
 	//Graphics::CreatePointLight(glm::vec3(-100, 40, -100), Color(0.8, 0.8, 0.8), 1.f, 0.7f, 1.8f, true, pLight2);
 	Graphics::CreateDirectionalLight(Color(.6, .6, .58f), glm::vec3(-1, -1, 0), true, dLight);
 	Graphics::CreateSpotLight(glm::vec3(0, 150, 0), glm::vec3(0, 1, 1), Color(1), 65.f, 1.5f, 0.3f, 5.f, true, spLight);

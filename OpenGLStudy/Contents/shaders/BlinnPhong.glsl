@@ -22,9 +22,10 @@ const vec3 gridSamplingDisk[20] =vec3[]
 );
 
 in vec2 texCood0;
-in vec3 Normal;
 in vec3 fragPos;
 in vec4 clipSpaceCoord;
+in mat3 TBN;
+in vec3 Normal;
 
 in vec4 DirectionalLightSpacePos;
 in vec4 SpotLightSpacePos[MAX_COUNT_PER_LIGHT];
@@ -331,7 +332,10 @@ vec4 CalcSpotLights(vec4 diffusTexCol, vec4 specTexCol,vec3 vN, vec3 vV){
 void main(){
 	
 	// shared values
-	vec3 normalized_normal = normalize(Normal);
+	vec3 normal = texture(normalTex, texCood0).rgb;
+	normal = normalize(normal * 2.0f - 1.0f);   
+	normal = TBN * normal; 
+	vec3 normalized_normal = normalize(normal);
 	vec3 view = ViewPosition - fragPos;
 	float viewDistance = length(view);
 	vec3 normalized_view = normalize(view);
