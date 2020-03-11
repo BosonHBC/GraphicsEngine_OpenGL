@@ -76,23 +76,32 @@ namespace Graphics {
 
 		// Attribute pointer
 		{
+			constexpr GLuint _stride = 14; // v3 (position) + v2 (texture coordinate) + v3 (vertex normal) + v3 (tangents) + v3 (biTangents)
 			// the location of the pointer points to, in shader layout (location = 0)
 			// size of the data that will pass in, in this case, x,y,z is 3
 			// the type of the value
 			// if normalize the data or not
 			// stride means if skip any data, like 3 * GL_FLOAT, when we add texcood in vertices, the stride should no longer be 0
 			// the offset to start the data
-			glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, sizeof(i_vertices[0]) * 8, 0);
+			glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, sizeof(i_vertices[0]) * _stride, 0);
 			// enable the attribute pointer we just created
 			glEnableVertexAttribArray(0);
 
 			// add attribute pointer for texcood
-			glVertexAttribPointer(1, 2, GL_FLOAT, GL_FALSE, sizeof(i_vertices[0]) * 8, reinterpret_cast<void*>(sizeof(i_vertices[0]) * 3));
+			glVertexAttribPointer(1, 2, GL_FLOAT, GL_FALSE, sizeof(i_vertices[0]) * _stride, reinterpret_cast<void*>(sizeof(i_vertices[0]) * 3));
 			glEnableVertexAttribArray(1);
 
 			// add attribute pointer for normal
-			glVertexAttribPointer(2, 3, GL_FLOAT, GL_FALSE, sizeof(i_vertices[0]) * 8, reinterpret_cast<void*>(sizeof(i_vertices[0]) * 5));
+			glVertexAttribPointer(2, 3, GL_FLOAT, GL_FALSE, sizeof(i_vertices[0]) * _stride, reinterpret_cast<void*>(sizeof(i_vertices[0]) * 5));
 			glEnableVertexAttribArray(2);
+
+			// add attribute pointer for tangents
+			glVertexAttribPointer(3, 3, GL_FLOAT, GL_FALSE, sizeof(i_vertices[0]) * _stride, reinterpret_cast<void*>(sizeof(i_vertices[0]) * 8));
+			glEnableVertexAttribArray(3);
+
+			// add attribute pointer for biTangents
+			glVertexAttribPointer(4, 3, GL_FLOAT, GL_FALSE, sizeof(i_vertices[0]) * _stride, reinterpret_cast<void*>(sizeof(i_vertices[0]) * 11));
+			glEnableVertexAttribArray(4);
 		}
 
 		// unbind VBO

@@ -19,7 +19,7 @@ namespace Graphics {
 		~cMesh();
 
 		/** Initializations and clean up*/
-		void CreateMesh(GLfloat* i_vertices, GLuint* i_indices, GLuint i_numOfVertices, GLuint i_numOfIndices);
+		void CreateMesh(GLfloat* i_vertices, GLuint* i_indices, GLuint i_numOfVertices, GLuint i_numOfIndicesm);
 		void CleanUp();
 		void Render();
 

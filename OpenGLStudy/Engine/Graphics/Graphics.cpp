@@ -70,7 +70,7 @@ namespace Graphics {
 	std::vector<cSpotLight*> s_spotLight_list;
 
 	// spot light first
-#define SHADOWMAP_START_TEXTURE_UNIT 5
+#define SHADOWMAP_START_TEXTURE_UNIT 6
 
 	// Transform hint
 	Graphics::cModel::HANDLE s_arrow;
@@ -97,29 +97,22 @@ namespace Graphics {
 			}
 			s_currentEffect = GetEffectByKey(Constants::CONST_DEFAULT_EFFECT_KEY);
 			s_currentEffect->UseEffect();
+			
+			// Fix sampler problem before validating the program
 			{
-				GLuint _spLightShadowMap = glGetUniformLocation(s_currentEffect->GetProgramID(), "spotlightShadowMap[0]");
-				glUniform1i(_spLightShadowMap, 5);
-				_spLightShadowMap = glGetUniformLocation(s_currentEffect->GetProgramID(), "spotlightShadowMap[1]");
-				glUniform1i(_spLightShadowMap, 6);
-				_spLightShadowMap = glGetUniformLocation(s_currentEffect->GetProgramID(), "spotlightShadowMap[2]");
-				glUniform1i(_spLightShadowMap, 7);
-				_spLightShadowMap = glGetUniformLocation(s_currentEffect->GetProgramID(), "spotlightShadowMap[3]");
-				glUniform1i(_spLightShadowMap, 8);
-				_spLightShadowMap = glGetUniformLocation(s_currentEffect->GetProgramID(), "spotlightShadowMap[4]");
-				glUniform1i(_spLightShadowMap, 9);
+				GLuint _programID = s_currentEffect->GetProgramID();
+				char _charBuffer[64] = { '\0' };
 
-				GLuint _pLightShadowMap = glGetUniformLocation(s_currentEffect->GetProgramID(), "pointLightShadowMap[0]");
-				glUniform1i(_pLightShadowMap, 11);
-				_pLightShadowMap = glGetUniformLocation(s_currentEffect->GetProgramID(), "pointLightShadowMap[1]");
-				glUniform1i(_pLightShadowMap, 12);
-				_pLightShadowMap = glGetUniformLocation(s_currentEffect->GetProgramID(), "pointLightShadowMap[2]");
-				glUniform1i(_pLightShadowMap, 13);
-				_pLightShadowMap = glGetUniformLocation(s_currentEffect->GetProgramID(), "pointLightShadowMap[3]");
-				glUniform1i(_pLightShadowMap, 14);
-				_pLightShadowMap = glGetUniformLocation(s_currentEffect->GetProgramID(), "pointLightShadowMap[4]");
-				glUniform1i(_pLightShadowMap, 15);
+				for (int i = 0; i < MAX_COUNT_PER_LIGHT; ++i)
+				{
+					snprintf(_charBuffer, sizeof(_charBuffer), "spotlightShadowMap[%d]", i);
+					GLuint _spLightShadowMap = glGetUniformLocation(_programID, _charBuffer);
+					glUniform1i(_spLightShadowMap, SHADOWMAP_START_TEXTURE_UNIT + i);
 
+					snprintf(_charBuffer, sizeof(_charBuffer), "pointLightShadowMap[%d]", i);
+					GLuint _pLightShadowMap = glGetUniformLocation(_programID, _charBuffer);
+					glUniform1i(_pLightShadowMap, SHADOWMAP_START_TEXTURE_UNIT + MAX_COUNT_PER_LIGHT + i);
+				}
 			}
 
 			s_currentEffect->UnUseEffect();
@@ -168,9 +161,9 @@ namespace Graphics {
 		{
 			if (!(result = CreateEffect("NormalDisplay",
 				"normalDisplayer/normal_vert.glsl",
-				"normalDisplayer/normal_frag.glsl", 
+				"normalDisplayer/normal_frag.glsl",
 				"normalDisplayer/normal_geom.glsl"
-				))) {
+			))) {
 				printf("Fail to create normal display effect.\n");
 				return result;
 			}
@@ -293,7 +286,7 @@ namespace Graphics {
 				assert(glGetError() == GL_NO_ERROR);
 			}
 		}
-		
+
 		s_currentEffect->UnUseEffect();
 		glEnable(GL_CULL_FACE);
 	}
@@ -554,7 +547,7 @@ namespace Graphics {
 			}
 
 			s_currentEffect->ValidateProgram();
-			
+
 			cModel* _model = cModel::s_manager.Get(s_arrow);
 			cMatUnlit* _arrowMat = dynamic_cast<cMatUnlit*>(_model->GetMaterialAt());
 

@@ -5,11 +5,12 @@ return
 {
 
     MaterialType = 1,
-    DiffuseTexture = "",
+    DiffuseTexture = "spaceHolder/holder_BaseColor.png",
     SpecularTexture = "",
+    NormalTexture = "spaceHolder/holder_Normal.png",
     DiffuseIntensity = {1.0,1.0,1.0},
     SpecularIntensity = {1.0,1.0,1.0},
-    EnvironmentIntensity = {0.05,0.05,0.05},
+    EnvironmentIntensity = {0.02,0.02,0.02},
     Shininess = 32,
 
 }

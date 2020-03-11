@@ -32,6 +32,7 @@ namespace Graphics {
 			| aiProcess_FlipUVs
 			| aiProcess_GenSmoothNormals
 			| aiProcess_JoinIdenticalVertices
+			| aiProcess_CalcTangentSpace // this operation will ask assimp calculate the tangent space for us automatically
 		);
 
 		if (!_scene) {
@@ -223,6 +224,11 @@ namespace Graphics {
 			// 3. Insert normals
 			_vertices.insert(_vertices.end(), { i_mesh->mNormals[i].x, i_mesh->mNormals[i].y, i_mesh->mNormals[i].z });
 
+			// 4. Insert Tangents
+			_vertices.insert(_vertices.end(), { i_mesh->mTangents[i].x, i_mesh->mTangents[i].y, i_mesh->mTangents[i].z });
+
+			// 5. Insert biTangents
+			_vertices.insert(_vertices.end(), { i_mesh->mBitangents[i].x, i_mesh->mBitangents[i].y, i_mesh->mBitangents[i].z });
 		}
 
 		for (size_t i = 0; i < i_mesh->mNumFaces; ++i)
