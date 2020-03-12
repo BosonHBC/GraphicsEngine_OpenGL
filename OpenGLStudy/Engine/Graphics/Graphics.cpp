@@ -168,6 +168,17 @@ namespace Graphics {
 				return result;
 			}
 		}
+
+		// Create PBR_MetallicRoughness effect
+		{
+			if (!(result = CreateEffect("PBR_MR",
+				"vertexShader.glsl",
+				"PBR_MetallicRoughness.glsl"
+			))) {
+				printf("Fail to create PBR_MR effect.\n");
+				return result;
+			}
+		}
 		// Initialize uniform buffer
 		{
 			// Frame buffer
