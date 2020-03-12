@@ -59,9 +59,9 @@ void Assignment::CreateActor()
 {
 	m_teapot = new cActor();
 	m_teapot->Initialize();
-	m_teapot->Transform()->SetTransform(glm::vec3(0, 0, -300), glm::quat(glm::vec3(-glm::radians(90.f), 0, 0)), glm::vec3(5, 5, 5));
-	m_teapot->SetModel("Contents/models/teapot.model");
-	m_teapot->UpdateUniformVariables(Graphics::GetCurrentEffect());
+	m_teapot->Transform()->SetTransform(glm::vec3(0, 0, 100), glm::quat(glm::vec3(-glm::radians(90.f), 0, 0)), glm::vec3(5, 5, 5));
+	m_teapot->SetModel("Contents/models/pbrTeapot.model");
+	m_teapot->UpdateUniformVariables(Graphics::GetEffectByKey("PBR_MR"));
 
 	m_teapot2 = new cActor();
 	m_teapot2->Initialize();
@@ -116,7 +116,7 @@ void Assignment::CreateCamera()
 void Assignment::CreateLight()
 {
 	Graphics::CreateAmbientLight(Color(0.001f, 0.001f, 0.001f), aLight);
-	Graphics::CreatePointLight(glm::vec3(0, 50.f, 100.f), Color(1.8, 1.8, 1.8), 1.5f, 0.3f, 2.f, true, pLight1);
+	Graphics::CreatePointLight(glm::vec3(0, 150.f, 100.f), Color(1.8, 1.8, 1.8), 1.5f, 0.3f, 2.f, true, pLight1);
 	//Graphics::CreatePointLight(glm::vec3(-100, 40, -100), Color(0.8, 0.8, 0.8), 1.f, 0.7f, 1.8f, true, pLight2);
 	//Graphics::CreateDirectionalLight(Color(.6, .6, .58f), glm::vec3(-1, -1, 0), true, dLight);
 	//Graphics::CreateSpotLight(glm::vec3(0, 150, 0), glm::vec3(0, 1, 1), Color(1), 65.f, 1.5f, 0.3f, 5.f, true, spLight);
@@ -277,6 +277,7 @@ void Assignment::Tick(float second_since_lastFrame)
 					}
 				}
 				// Frame data from camera
+/*
 				if (false)
 				{
 					cEditorCamera _mirroredCamera = *m_editorCamera;
@@ -289,14 +290,14 @@ void Assignment::Tick(float second_since_lastFrame)
 					glm::vec4 _plane = glm::vec4(m_mirror->Transform()->Up(), m_mirror->Transform()->Position().y);
 					Graphics::SubmitClipPlaneData(_plane);
 					Graphics::SubmitDataToBeRendered(_frameData_Mirrored, _renderingMap, &Graphics::Reflection_Pass);
-				}
+				}*/
 
 				// Actual scene to render
 				Graphics::UniformBufferFormats::sFrame _frameData_Camera(m_editorCamera->GetProjectionMatrix(), m_editorCamera->GetViewMatrix());
 				_frameData_Camera.ViewPosition = m_editorCamera->CamLocation();
 				{
 					_renderingMap.clear();
-					_renderingMap.push_back({ m_teapot->GetModelHandle(), *m_teapot->Transform() });
+
 					_renderingMap.push_back({ m_teapot2->GetModelHandle(), *m_teapot2->Transform() });
 					//_renderingMap.push_back({ m_mirror->GetModelHandle(), *m_mirror->Transform() });
 					
@@ -305,8 +306,9 @@ void Assignment::Tick(float second_since_lastFrame)
 				// PBR pass
 				{
 					_renderingMap.clear();
-					_renderingMap.reserve(m_sphereList.size() + 1);
+					_renderingMap.reserve(m_sphereList.size() + 2);
 					_renderingMap.push_back({ m_spaceHolder->GetModelHandle(), *m_spaceHolder->Transform() });
+					_renderingMap.push_back({ m_teapot->GetModelHandle(), *m_teapot->Transform() });
 					for (int i = 0; i < m_sphereList.size(); ++i )
 					{
 						_renderingMap.push_back({ m_sphereList[i]->GetModelHandle(), *m_sphereList[i]->Transform() });
@@ -328,7 +330,7 @@ void Assignment::Tick(float second_since_lastFrame)
 					cTransform _worldTransform;
 					Assets::cHandle<Graphics::cModel> unneccessaryHandle;
 					_renderingMap.push_back({ unneccessaryHandle, _worldTransform });
-					_renderingMap.push_back({ unneccessaryHandle, *m_teapot->Transform() });
+					//_renderingMap.push_back({ unneccessaryHandle, *m_teapot->Transform() });
 
 					if (pLight1)
 						_renderingMap.push_back({ unneccessaryHandle, *pLight1->Transform() });

@@ -527,12 +527,14 @@ namespace Graphics {
 		s_currentEffect->ValidateProgram();
 		
 		auto& renderList = s_dataRenderingByGraphicThread->s_renderPasses[s_currentRenderPass].ModelToTransform_map;
+		constexpr auto sphereOffset = 2;
 		// draw the space first
+		for(int i = 0; i < sphereOffset; ++i)
 		{
 			// 1. Update draw call data
-			s_uniformBuffer_drawcall.Update(&UniformBufferFormats::sDrawCall(renderList[0].second.M(), renderList[0].second.TranspostInverse()));
+			s_uniformBuffer_drawcall.Update(&UniformBufferFormats::sDrawCall(renderList[i].second.M(), renderList[i].second.TranspostInverse()));
 			// 2. Draw
-			cModel* _model = cModel::s_manager.Get(renderList[0].first);
+			cModel* _model = cModel::s_manager.Get(renderList[i].first);
 			if (_model) {
 				_model->UpdateUniformVariables(s_currentEffect->GetProgramID());
 				_model->Render();
@@ -544,9 +546,9 @@ namespace Graphics {
 			for (int j = 0; j < 5; ++j)
 			{
 				// 1. Update draw call data
-				s_uniformBuffer_drawcall.Update(&UniformBufferFormats::sDrawCall(renderList[i * 5 + j + 1].second.M(), renderList[i * 5 + j + 1].second.TranspostInverse()));
+				s_uniformBuffer_drawcall.Update(&UniformBufferFormats::sDrawCall(renderList[i * 5 + j + sphereOffset].second.M(), renderList[i * 5 + j + sphereOffset].second.TranspostInverse()));
 				// 2. Draw
-				cModel* _model = cModel::s_manager.Get(renderList[i * 5 + j + 1].first);
+				cModel* _model = cModel::s_manager.Get(renderList[i * 5 + j + sphereOffset].first);
 				if (_model) {
 					Graphics::cMatPBRMR* _sphereMat = dynamic_cast<Graphics::cMatPBRMR*>(_model->GetMaterialAt());
 					_sphereMat->UpdateMetalnessIntensity(1.f/ 4.f * j);
