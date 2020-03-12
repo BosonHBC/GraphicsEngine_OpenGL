@@ -61,12 +61,12 @@ namespace Graphics {
 		else
 			cTexture::UnBindTexture(GL_TEXTURE1, ETT_FILE);
 
-		glUniform1i(m_normalTexID, 5);
+		glUniform1i(m_normalTexID, 2);
 		cTexture* _normalTex = cTexture::s_manager.Get(m_normalTextureHandle);
 		if (_normalTex)
-			_normalTex->UseTexture(GL_TEXTURE5);
+			_normalTex->UseTexture(GL_TEXTURE2);
 		else
-			cTexture::UnBindTexture(GL_TEXTURE5, ETT_FILE);
+			cTexture::UnBindTexture(GL_TEXTURE2, ETT_FILE);
 
 		glUniform1i(m_cubemapTexID, 3);
 		cTexture* _cubemapTex = cTexture::s_manager.Get(m_cubemapTextureHandle);
@@ -97,7 +97,7 @@ namespace Graphics {
 		}
 		cTexture* _normalTex = cTexture::s_manager.Get(m_normalTextureHandle);
 		if (_normalTex) {
-			_normalTex->CleanUpTextureBind(GL_TEXTURE5);
+			_normalTex->CleanUpTextureBind(GL_TEXTURE2);
 		}
 		cTexture* _cubemapTex = cTexture::s_manager.Get(m_cubemapTextureHandle);
 		if (_cubemapTex) {

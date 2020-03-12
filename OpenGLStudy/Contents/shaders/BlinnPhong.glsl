@@ -3,14 +3,15 @@
 // this uniform is default 0, if we need more texture unit, we need to bind manually
 uniform sampler2D diffuseTex; // 0
 uniform sampler2D specularTex; // 1
-uniform sampler2D directionalShadowMap; // 2
+uniform sampler2D normalTex; // 2
 uniform samplerCube cubemapTex; // 3
 uniform sampler2D reflectionTex; // 4
-uniform sampler2D normalTex; // 5
+
 
 const int MAX_COUNT_PER_LIGHT = 5;
 uniform sampler2D spotlightShadowMap[MAX_COUNT_PER_LIGHT]; // 6 -> 10
 uniform samplerCube pointLightShadowMap[MAX_COUNT_PER_LIGHT]; // 11-> 15
+uniform sampler2D directionalShadowMap; // 16
 
 const vec3 gridSamplingDisk[20] =vec3[]
 (

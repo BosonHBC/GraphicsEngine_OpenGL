@@ -10,9 +10,10 @@ uniform sampler2D MetallicMap; // 1
 uniform sampler2D RoughnessMap; // 2
 uniform sampler2D NormalMap; // 3
 
-uniform sampler2D directionalShadowMap; // 4
+
 uniform sampler2D spotlightShadowMap[MAX_COUNT_PER_LIGHT]; // 6 -> 10
 uniform samplerCube pointLightShadowMap[MAX_COUNT_PER_LIGHT]; // 11-> 15
+uniform sampler2D directionalShadowMap; // 16
 
 const vec3 gridSamplingDisk[20] =vec3[]
 (
@@ -219,7 +220,30 @@ float CalcPointLightShadowMap(int idx, PointLight pLight, float dist_vV)
 //-------------------------------------------------------------------------
 // Lighting Fucntions
 //-------------------------------------------------------------------------
+// This function is not only cook-torrance brdf, it multiplies the radiance of the light and the geometry term to gether so it gets the 
+// irrandance of this light
+ vec3 CookTorranceBrdf(vec3 radiance, vec3 albedoColor, float metalness, float roughness, vec3 f0 ,vec3 vN, vec3 vH, vec3 vL, vec3 vV)
+ {
+	// 
+	float NDF = DistributionGGX(vN, vH, roughness);
+	float G = GeometrySmith(vN, vV, vL, roughness);
+	vec3 F = fresnelSchlick(max(dot(vH, vV), 0.0), f0);
 
+	vec3 kS = F;
+	vec3 kD = vec3(1.0) - kS;
+	kD *= (1.0 - metalness);
+
+	vec3 numerator = NDF * G * F;
+	float denominator = 4.0 * max(dot(vN, vV), 0.0) * max(dot(vN, vL), 0.0);
+	// specular component
+	vec3 specular = numerator / max(denominator, 0.001);
+	// diffuse component
+	vec3 diffuse = kD * albedoColor / PI;
+	// geometry component
+	float vLDotvN = max(dot(vL, vN), 0.0);
+
+	return (diffuse + specular) * radiance * vLDotvN;
+ }
 
 //-------------------------------------------------------------------------
 // Light calculation
@@ -228,7 +252,18 @@ float CalcPointLightShadowMap(int idx, PointLight pLight, float dist_vV)
 //-------------------------------------------------------------------------
 // DirectionalLight
 //-------------------------------------------------------------------------
+vec3 CalcDirectionalLight(DirectionalLight dLight, 
+vec3 albedoColor, float metalness, float roughness, vec3 f0, vec3 vN, vec3 vV)
+{
+	vec3 vL = normalize(dLight.direction);
+	vec3 vH = normalize(vV+ vL);
+	vec3 radiance = dLight.base.color;
 
+	vec3 cookedIrrandance = CookTorranceBrdf(radiance, albedoColor, metalness, roughness, f0,vN, vH, vL ,vV);
+	float shadowFactor = dLight.base.enableShadow ? (1.0 - CalcDirectionalLightShadowMap(vN)): 1.0;
+
+	return shadowFactor * cookedIrrandance;
+}
 //-------------------------------------------------------------------------
 // PointLight
 //-------------------------------------------------------------------------
@@ -245,29 +280,13 @@ vec3 albedoColor, float metalness, float roughness, vec3 f0, vec3 vN, vec3 vV, f
 													pLight.constant);
 		vec3 radiance = pLight.base.color * attenuationFactor;
 
-		// cook-torrance brdf
-		float NDF = DistributionGGX(vN, vH, roughness);
-		float G = GeometrySmith(vN, vV, vL, roughness);
-		vec3 F = fresnelSchlick(max(dot(vH, vV), 0.0), f0);
-
-		vec3 kS = F;
-		vec3 kD = vec3(1.0) - kS;
-		kD *= (1.0 - metalness);
-
-		vec3 numerator = NDF * G * F;
-		float denominator = 4.0 * max(dot(vN, vV), 0.0) * max(dot(vN, vL), 0.0);
-		// specular component
-		vec3 specular = numerator / max(denominator, 0.001);
-		// diffuse component
-		vec3 diffuse = kD * albedoColor / PI;
-		// geometry component
-		float vLDotvN = max(dot(vL, vN), 0.0);
+		vec3 cookedIrrandance = CookTorranceBrdf(radiance, albedoColor, metalness, roughness, f0,vN, vH, vL ,vV);
 
 		// shadow
 		float shadowFactor = pLight.base.enableShadow ? (1.0 - CalcPointLightShadowMap(idx, pLight, viewDistance)) : 1.0;
 		shadowFactor = max(shadowFactor * (.99f -  distRate), 0.0);
 
-		return shadowFactor * (diffuse + specular) * radiance * vLDotvN;
+		return shadowFactor * cookedIrrandance;
 	
 }
 
@@ -324,10 +343,9 @@ void main(){
 	//vec4 spotLightColor = CalcSpotLights(diffuseTexColor, specularTexColor, normalized_normal, normalized_view);
 
 	// directional light
-	//float directionalLightShadowFactor = g_directionalLight.base.enableShadow ? (1.0 - CalcDirectionalLightShadowMap(normalized_normal)): 1.0;
-	//vec4 directionLightColor = directionalLightShadowFactor * CalcDirectionalLight(diffuseTexColor, specularTexColor, normalized_normal, normalized_view);
+	vec3 directionLightColor = CalcDirectionalLight(g_directionalLight,albedoColor, metalness,roughness,F0, normalized_normal, normalized_view);
 
-	vec3 allColor = ambientLightColor + pointLightColor;
+	vec3 allColor = ambientLightColor + pointLightColor + directionLightColor;
 	// Reinhard operator tone mapping
 	//allColor = allColor / (allColor + vec3(1.0));
 	// gama correction

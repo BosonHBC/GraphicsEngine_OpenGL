@@ -65,7 +65,7 @@ void Assignment::CreateActor()
 
 	m_teapot2 = new cActor();
 	m_teapot2->Initialize();
-	m_teapot2->Transform()->SetTransform(glm::vec3(150, 0, -200), glm::quat(glm::vec3(-glm::radians(90.f), 0, 0)), glm::vec3(3, 3, 3));
+	m_teapot2->Transform()->SetTransform(glm::vec3(150, 0, 100), glm::quat(glm::vec3(-glm::radians(90.f), 0, 0)), glm::vec3(3, 3, 3));
 	m_teapot2->SetModel("Contents/models/teapot.model");
 	m_teapot2->UpdateUniformVariables(Graphics::GetCurrentEffect());
 
@@ -107,7 +107,7 @@ void Assignment::CreateActor()
 
 void Assignment::CreateCamera()
 {
-	m_editorCamera = new  cEditorCamera(glm::vec3(0, 150, 300), 5, 0, 300, 10.f);
+	m_editorCamera = new  cEditorCamera(glm::vec3(0, 150, 350), 5, 0, 300, 10.f);
 	float _aspect = (float)(GetCurrentWindow()->GetBufferWidth()) / (float)(GetCurrentWindow()->GetBufferHeight());
 	m_editorCamera->CreateProjectionMatrix(glm::radians(60.f), _aspect, 1.f, 1000.0f);
 	m_editorCamera->Transform()->Update();
@@ -118,7 +118,7 @@ void Assignment::CreateLight()
 	Graphics::CreateAmbientLight(Color(0.001f, 0.001f, 0.001f), aLight);
 	Graphics::CreatePointLight(glm::vec3(0, 150.f, 100.f), Color(1.8, 1.8, 1.8), 1.5f, 0.3f, 2.f, true, pLight1);
 	//Graphics::CreatePointLight(glm::vec3(-100, 40, -100), Color(0.8, 0.8, 0.8), 1.f, 0.7f, 1.8f, true, pLight2);
-	//Graphics::CreateDirectionalLight(Color(.6, .6, .58f), glm::vec3(-1, -1, 0), true, dLight);
+	Graphics::CreateDirectionalLight(Color(.6, .6, .58f), glm::vec3(-1, -0.5f, -0.3f), true, dLight);
 	//Graphics::CreateSpotLight(glm::vec3(0, 150, 0), glm::vec3(0, 1, 1), Color(1), 65.f, 1.5f, 0.3f, 5.f, true, spLight);
 	//Graphics::CreateSpotLight(glm::vec3(100, 150, 0), glm::vec3(1, 1, 0), Color(1), 65.f, 1.f, 0.7f, 1.8f, true, spLight2);
 

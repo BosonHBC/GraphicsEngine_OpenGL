@@ -85,7 +85,28 @@ namespace Graphics {
 	//functions
 	void RenderScene();
 	void RenderSceneWithoutMaterial();
+	void FixSamplerProblem(const char* i_effectKey)
+	{
+		// Fix sampler problem before validating the program
 
+		cEffect* _effect = GetEffectByKey(i_effectKey);
+		_effect->UseEffect();
+		GLuint _programID = _effect->GetProgramID();
+		char _charBuffer[64] = { '\0' };
+
+		for (int i = 0; i < MAX_COUNT_PER_LIGHT; ++i)
+		{
+			snprintf(_charBuffer, sizeof(_charBuffer), "spotlightShadowMap[%d]", i);
+			GLuint _spLightShadowMap = glGetUniformLocation(_programID, _charBuffer);
+			glUniform1i(_spLightShadowMap, SHADOWMAP_START_TEXTURE_UNIT + i);
+
+			snprintf(_charBuffer, sizeof(_charBuffer), "pointLightShadowMap[%d]", i);
+			GLuint _pLightShadowMap = glGetUniformLocation(_programID, _charBuffer);
+			glUniform1i(_pLightShadowMap, SHADOWMAP_START_TEXTURE_UNIT + MAX_COUNT_PER_LIGHT + i);
+		}
+		assert(GL_NO_ERROR == glGetError());
+		_effect->UnUseEffect();
+	}
 	bool Initialize()
 	{
 		auto result = true;
@@ -97,27 +118,7 @@ namespace Graphics {
 				return result;
 			}
 			s_currentEffect = GetEffectByKey(Constants::CONST_DEFAULT_EFFECT_KEY);
-			s_currentEffect->UseEffect();
-
-			// Fix sampler problem before validating the program
-			{
-				GLuint _programID = s_currentEffect->GetProgramID();
-				char _charBuffer[64] = { '\0' };
-
-				for (int i = 0; i < MAX_COUNT_PER_LIGHT; ++i)
-				{
-					snprintf(_charBuffer, sizeof(_charBuffer), "spotlightShadowMap[%d]", i);
-					GLuint _spLightShadowMap = glGetUniformLocation(_programID, _charBuffer);
-					glUniform1i(_spLightShadowMap, SHADOWMAP_START_TEXTURE_UNIT + i);
-
-					snprintf(_charBuffer, sizeof(_charBuffer), "pointLightShadowMap[%d]", i);
-					GLuint _pLightShadowMap = glGetUniformLocation(_programID, _charBuffer);
-					glUniform1i(_pLightShadowMap, SHADOWMAP_START_TEXTURE_UNIT + MAX_COUNT_PER_LIGHT + i);
-				}
-			}
-
-			s_currentEffect->UnUseEffect();
-			assert(GL_NO_ERROR == glGetError());
+			FixSamplerProblem(Constants::CONST_DEFAULT_EFFECT_KEY);
 		}
 		// Create shadow map effect
 		{
@@ -178,6 +179,10 @@ namespace Graphics {
 			))) {
 				printf("Fail to create PBR_MR effect.\n");
 				return result;
+			}
+			else
+			{
+				FixSamplerProblem("PBR_MR");
 			}
 		}
 		// Initialize uniform buffer
@@ -301,6 +306,7 @@ namespace Graphics {
 
 		s_currentEffect->UnUseEffect();
 		glEnable(GL_CULL_FACE);
+		glCullFace(GL_BACK);
 	}
 
 	void PointLightShadowMap_Pass()
@@ -347,6 +353,7 @@ namespace Graphics {
 		}
 		s_currentEffect->UnUseEffect();
 		glEnable(GL_CULL_FACE);
+		glCullFace(GL_BACK);
 	}
 
 	void SpotLightShadowMap_Pass()
@@ -392,6 +399,7 @@ namespace Graphics {
 
 		s_currentEffect->UnUseEffect();
 		glEnable(GL_CULL_FACE);
+		glCullFace(GL_BACK);
 	}
 
 	void Reflection_Pass()
@@ -525,11 +533,11 @@ namespace Graphics {
 		UpdateLightingData();
 
 		s_currentEffect->ValidateProgram();
-		
+
 		auto& renderList = s_dataRenderingByGraphicThread->s_renderPasses[s_currentRenderPass].ModelToTransform_map;
 		constexpr auto sphereOffset = 2;
 		// draw the space first
-		for(int i = 0; i < sphereOffset; ++i)
+		for (int i = 0; i < sphereOffset; ++i)
 		{
 			// 1. Update draw call data
 			s_uniformBuffer_drawcall.Update(&UniformBufferFormats::sDrawCall(renderList[i].second.M(), renderList[i].second.TranspostInverse()));
@@ -551,8 +559,8 @@ namespace Graphics {
 				cModel* _model = cModel::s_manager.Get(renderList[i * 5 + j + sphereOffset].first);
 				if (_model) {
 					Graphics::cMatPBRMR* _sphereMat = dynamic_cast<Graphics::cMatPBRMR*>(_model->GetMaterialAt());
-					_sphereMat->UpdateMetalnessIntensity(1.f/ 4.f * j);
-					_sphereMat->UpdateRoughnessIntensity(1.f / 4.f *i );
+					_sphereMat->UpdateMetalnessIntensity(1.f / 4.f * j);
+					_sphereMat->UpdateRoughnessIntensity(1-1.f / 4.f *i);
 					_model->UpdateUniformVariables(s_currentEffect->GetProgramID());
 					_model->Render();
 				}
@@ -859,8 +867,8 @@ namespace Graphics {
 			_directionalLight->Illuminate();
 			_directionalLight->SetLightUniformTransform();
 			if (_directionalLight->IsShadowEnabled()) {
-				_directionalLight->UseShadowMap(2);
-				_directionalLight->GetShadowMap()->Read(GL_TEXTURE2);
+				_directionalLight->UseShadowMap(16);
+				_directionalLight->GetShadowMap()->Read(GL_TEXTURE16);
 			}
 		}
 
