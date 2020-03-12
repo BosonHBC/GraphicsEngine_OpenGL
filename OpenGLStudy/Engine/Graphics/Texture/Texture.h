@@ -15,6 +15,7 @@ namespace Graphics {
 		ETT_FRAMEBUFFER_COLOR = 3,
 		ETT_CUBEMAP = 4,
 		ETT_FRAMEBUFFER_CUBEMAP = 5,
+		ETT_FILE_GRAY = 6,
 		ETT_INVALID = 0xff
 	};
 
@@ -49,8 +50,9 @@ namespace Graphics {
 		cTexture(const char* i_filePath) : m_textureID(0), m_width(0), m_height(0), m_bitDepth(0){}
 		
 		/** Usage function*/
-		bool LoadTextureFromFile(const std::string& i_path);
-		bool LoadTextureAFromFile(const std::string& i_path);
+		bool LoadTextureFromFile(const std::string& i_path); // 24 bits channel
+		bool LoadTextureAFromFile(const std::string& i_path); // 32 bits channel
+		bool LoadTextureGreyFromFile(const std::string& i_path); // 8 bits channel
 		// Load render_to_texture from frame buffer
 		bool LoadShadowMapTexture(const std::string& i_type_id, const GLuint& i_width, const GLuint& i_height);
 		bool LoadOmniShadowMapTexture(const std::string& i_type_id, const GLuint& i_width, const GLuint& i_height);

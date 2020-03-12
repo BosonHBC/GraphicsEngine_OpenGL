@@ -1,5 +1,5 @@
 --[[
-    Default BlinnPhong material
+    BlinnPhong material for space holder
 ]]
 return 
 {

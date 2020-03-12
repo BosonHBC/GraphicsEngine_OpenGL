@@ -31,6 +31,9 @@ namespace Graphics {
 			case ETT_FILE_ALPHA:
 				result = _texture->LoadTextureAFromFile(i_path);
 				break;
+			case ETT_FILE_GRAY:
+				result = _texture->LoadTextureGreyFromFile(i_path);
+				break;
 			case ETT_FRAMEBUFFER_SHADOWMAP:
 				result = _texture->LoadShadowMapTexture(i_path, i_override_width, i_override_height);
 				break;
@@ -85,7 +88,7 @@ namespace Graphics {
 
 	bool cTexture::LoadTextureFromFile(const std::string& i_path)
 	{
-		unsigned char* _data = stbi_load(i_path.c_str(), &m_width, &m_height, &m_bitDepth, 0);
+		unsigned char* _data = stbi_load(i_path.c_str(), &m_width, &m_height, &m_bitDepth, STBI_rgb);
 		if (!_data) {
 			printf("Fail to load texture data!\n");
 			return false;
@@ -133,7 +136,7 @@ namespace Graphics {
 
 	bool cTexture::LoadTextureAFromFile(const std::string& i_path)
 	{
-		unsigned char* _data = stbi_load(i_path.c_str(), &m_width, &m_height, &m_bitDepth, 0);
+		unsigned char* _data = stbi_load(i_path.c_str(), &m_width, &m_height, &m_bitDepth, STBI_rgb_alpha);
 		if (!_data) {
 			// TODO: Print load texture fail
 			printf("Fail to load texture data!\n");
@@ -172,6 +175,58 @@ namespace Graphics {
 		// clear data of stb_image
 		stbi_image_free(_data);
 		return true;
+	}
+
+	bool cTexture::LoadTextureGreyFromFile(const std::string& i_path)
+	{
+		unsigned char* _data = stbi_load(i_path.c_str(), &m_width, &m_height, &m_bitDepth, STBI_grey);
+		if (!_data) {
+			// TODO: Print load texture fail
+			printf("Fail to load texture data!\n");
+			return false;
+		}
+
+
+		// generate texture and assign with an id
+		glGenTextures(1, &m_textureID);
+		// Bind it with a texture 2d
+		glBindTexture(GL_TEXTURE_2D, m_textureID);
+
+		// Set up texture wrapping in s,t axis
+		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
+		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
+
+		// Set up texture filtering for looking closer
+		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+		// Set up texture filtering for looking further
+		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+
+		// texture type
+		// mipmap level
+		// texture format to load
+		// width / height
+		// legacy for border
+		// texture format to become
+		// load in data type 
+		// data it-self
+		glTexImage2D(GL_TEXTURE_2D, 0, GL_RED, m_width, m_height, 0, GL_RED, GL_UNSIGNED_BYTE, _data);
+		// Generate mip map
+		glGenerateMipmap(GL_TEXTURE_2D);
+
+		// unbind texture
+		glBindTexture(GL_TEXTURE_2D, 0);
+
+		// clear data of stb_image
+		stbi_image_free(_data);
+
+		auto errorCode = glGetError();
+		if (errorCode != GL_NO_ERROR)
+		{
+			printf("OpenGL failed to load texture %s, with error ID: %d.\n", i_path.c_str(), errorCode);
+			assert(false);
+		}
+		return true;
+
 	}
 
 	bool cTexture::LoadShadowMapTexture(const std::string& i_type_id, const GLuint& i_width, const GLuint& i_height)

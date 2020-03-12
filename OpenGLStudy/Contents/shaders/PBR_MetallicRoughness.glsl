@@ -11,7 +11,6 @@ uniform sampler2D RoughnessMap; // 2
 uniform sampler2D NormalMap; // 3
 
 uniform sampler2D directionalShadowMap; // 4
-uniform samplerCube cubemap; // 5
 uniform sampler2D spotlightShadowMap[MAX_COUNT_PER_LIGHT]; // 6 -> 10
 uniform samplerCube pointLightShadowMap[MAX_COUNT_PER_LIGHT]; // 11-> 15
 
@@ -36,6 +35,13 @@ layout(std140, binding = 0) uniform uniformBuffer_frame
 	// PVMatrix stands for projection * view matrix
 	mat4 PVMatrix;
 	vec3 ViewPosition;
+};
+layout(std140, binding = 5) uniform g_uniformBuffer_pbrMRModel
+{
+	vec3 diffuseIntensity;
+	float roughnessIntensity;
+	vec3 ior;
+	float metalnessIntensity;
 };
 // the color of the pixel
 out vec4 color;
@@ -113,8 +119,8 @@ float GeometrySmith(vec3 N, vec3 V, vec3 L, float k)
 {
     float NdotV = max(dot(N, V), 0.0);
     float NdotL = max(dot(N, L), 0.0);
-    float ggx1 = GeometrySchlickGGX(NdotV, k);
-    float ggx2 = GeometrySchlickGGX(NdotL, k);
+    float ggx1 	= GeometrySchlickGGX(NdotV, k);
+    float ggx2 	= GeometrySchlickGGX(NdotL, k);
 	
     return ggx1 * ggx2;
 }
@@ -222,22 +228,13 @@ float CalcPointLightShadowMap(int idx, PointLight pLight, float dist_vV)
 //-------------------------------------------------------------------------
 // DirectionalLight
 //-------------------------------------------------------------------------
-vec4 CalcDirectionalLight(vec4 diffusTexCol, vec4 specTexCol, vec3 vN, vec3 vV){
-		vec3 dir = normalize(g_directionalLight.direction);
-
-		float dir_dot_normal = dot(dir, vN);
-		// if the light is illuminating the back face
-		if(dir_dot_normal <= 0.0f ) return vec4(0,0,0,0);
-
-		return color_kd + color_ks;
-}
 
 //-------------------------------------------------------------------------
 // PointLight
 //-------------------------------------------------------------------------
 
-vec4 CalcPointLight(int idx, PointLight pLight,
-vec3 albedoColor, float metalness, float roughtness, vec3 f0, vec3 vN, vec3 vV){
+vec3 CalcPointLight(int idx, PointLight pLight,
+vec3 albedoColor, float metalness, float roughness, vec3 f0, vec3 vN, vec3 vV, float viewDistance){
 		vec3 vL = pLight.position - fragPos;
 		float dist = length(vL);
 		vL = normalize(vL); // normalzied light direction
@@ -255,7 +252,7 @@ vec3 albedoColor, float metalness, float roughtness, vec3 f0, vec3 vN, vec3 vV){
 
 		vec3 kS = F;
 		vec3 kD = vec3(1.0) - kS;
-		kD *= 1.0 - metalness;
+		kD *= (1.0 - metalness);
 
 		vec3 numerator = NDF * G * F;
 		float denominator = 4.0 * max(dot(vN, vV), 0.0) * max(dot(vN, vL), 0.0);
@@ -266,18 +263,20 @@ vec3 albedoColor, float metalness, float roughtness, vec3 f0, vec3 vN, vec3 vV){
 		// geometry component
 		float vLDotvN = max(dot(vL, vN), 0.0);
 
-		return (diffuse + specular) * radiance * vLDotvN;
 		// shadow
-		//float shadowFactor = pLight.base.enableShadow ? (1.0 - CalcPointLightShadowMap(idx, pLight, dist_vV)) : 1.0;
-		//shadowFactor = max(shadowFactor * (.99f -  distRate), 0.0);
+		float shadowFactor = pLight.base.enableShadow ? (1.0 - CalcPointLightShadowMap(idx, pLight, viewDistance)) : 1.0;
+		shadowFactor = max(shadowFactor * (.99f -  distRate), 0.0);
+
+		return shadowFactor * (diffuse + specular) * radiance * vLDotvN;
+	
 }
 
-vec4 CalcPointLights(vec3 albedoColor, float metalness, float roughtness, vec3 f0, vec3 vN, vec3 norm_vV){
+vec3 CalcPointLights(vec3 albedoColor, float metalness, float roughtness, vec3 f0, vec3 vN, vec3 norm_vV, float viewDistance){
 	// reflectance equation
 	vec3 Lo = vec3(0,0,0);
 
 	for(int i = 0; i < g_pointLightCount; ++i){
-		Lo += CalcPointLight(i, g_pointLights[i], albedoColor, specTexCol,vN,norm_vV);
+		Lo += CalcPointLight(i, g_pointLights[i], albedoColor, metalness,roughtness, f0, vN, norm_vV, viewDistance);
 	}
 
 	return Lo;
@@ -305,16 +304,15 @@ void main(){
 	vec3 normalized_view = normalize(view);
 
 	// material property
-	vec3 albedoColor = texture(AlbedoMap, texCood0).rgb;
-	float metalness = texture(MetallicMap, texCood0).r;
-	float roughness = texture(RoughnessMap, texCood0).r;
-	vec3 ior = 2.5; // use steel's ior for now, plastic is 1.46
+	vec3 albedoColor = texture(AlbedoMap, texCood0).rgb * diffuseIntensity;
+	float metalness = texture(MetallicMap, texCood0).r * metalnessIntensity;
+	float roughness = texture(RoughnessMap, texCood0).r * min((roughnessIntensity + 0.01f)/2.0f,1);
 	vec3 F0 = abs ((1.0 - ior) / (1.0 + ior)); //vec3(0.04);
-	F0 = F0 * F0;
+	//F0 = F0 * F0;
 	F0 = mix(F0, albedoColor, vec3(metalness));
 
 	// ambient light
-	vec3 ambientLightColor = vec4(albedoColor * g_ambientLight.base.color, 1.0f);
+	vec3 ambientLightColor = albedoColor * g_ambientLight.base.color;
 	
 	// cubemap light
 	//vec4 cubemapColor = IlluminateByCubemap(diffuseTexColor,specularTexColor, normalized_normal, normalized_view);
@@ -329,5 +327,11 @@ void main(){
 	//float directionalLightShadowFactor = g_directionalLight.base.enableShadow ? (1.0 - CalcDirectionalLightShadowMap(normalized_normal)): 1.0;
 	//vec4 directionLightColor = directionalLightShadowFactor * CalcDirectionalLight(diffuseTexColor, specularTexColor, normalized_normal, normalized_view);
 
-	color =  ( ambientLightColor + pointLightColor);
+	vec3 allColor = ambientLightColor + pointLightColor;
+	// Reinhard operator tone mapping
+	//allColor = allColor / (allColor + vec3(1.0));
+	// gama correction
+	allColor = pow(allColor, vec3(1.0/2.2)); 
+
+	color =  vec4(allColor, 1.0);
 }

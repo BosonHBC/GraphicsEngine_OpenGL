@@ -1,0 +1,15 @@
+--[[
+    Physcis based rendering metallic roughness workflow for space holder
+]]
+return 
+{
+    MaterialType = 4,
+    AlbedoTexture = "spaceHolder/holder_BaseColor.png",
+    MetallicTexture = "spaceHolder/holder_Metallic.png",
+    RoughnessTexture = "spaceHolder/holder_Roughness.png",
+    NormalTexture = "spaceHolder/holder_Normal.png",
+    DiffuseIntensity = {1.0,1.0,1.0},
+    MetallicIntensity = 1.0,
+    RoughnessIntensity = 1.0,
+    IOR = {2.5,2.5,2.5},
+}

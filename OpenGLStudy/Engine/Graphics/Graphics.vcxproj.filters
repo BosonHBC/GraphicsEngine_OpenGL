@@ -70,6 +70,9 @@
     <Filter Include="Source Files\Material\Unlit">
       <UniqueIdentifier>{ce3a7d35-6cb8-45f3-84e1-217bbae6e1c7}</UniqueIdentifier>
     </Filter>
+    <Filter Include="Source Files\Material\PBR_MR">
+      <UniqueIdentifier>{8154a05e-d2df-4f41-a8b5-b42f6abf5fe9}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="Graphics.cpp">
@@ -125,6 +128,9 @@
     </ClCompile>
     <ClCompile Include="Material\Unlit\MatUnlit.cpp">
       <Filter>Source Files\Material\Unlit</Filter>
+    </ClCompile>
+    <ClCompile Include="Material\PBR_MR\MatPBRMR.cpp">
+      <Filter>Source Files\Material\PBR_MR</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
@@ -190,6 +196,9 @@
     </ClInclude>
     <ClInclude Include="Material\Unlit\MatUnlit.h">
       <Filter>Source Files\Material\Unlit</Filter>
+    </ClInclude>
+    <ClInclude Include="Material\PBR_MR\MatPBRMR.h">
+      <Filter>Source Files\Material\PBR_MR</Filter>
     </ClInclude>
   </ItemGroup>
 </Project>

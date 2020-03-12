@@ -16,6 +16,7 @@
 #include "Transform/Transform.h"
 #include "Engine/Graphics/Model/Model.h"
 #include "Material/Blinn/MatBlinn.h"
+#include "Material/PBR_MR/MatPBRMR.h"
 #include "Material/Cubemap/MatCubemap.h"
 #include "Graphics/Texture/Texture.h"
 #include "Assets/Handle.h"
@@ -48,8 +49,8 @@ bool Assignment::Initialize(GLuint i_width, GLuint i_height, const char* i_windo
 	Graphics::cMatBlinn* _teapot2Mat = dynamic_cast<Graphics::cMatBlinn*>(Graphics::cModel::s_manager.Get(m_teapot2->GetModelHandle())->GetMaterialAt());
 	//_teapot2Mat->UpdateCubemapTexture(_cubemapMat->GetCubemapHandle());
 
-	Graphics::cMatBlinn* _spaceHolderMat = dynamic_cast<Graphics::cMatBlinn*>(Graphics::cModel::s_manager.Get(m_spaceHolder->GetModelHandle())->GetMaterialAt());
-	_spaceHolderMat->UpdateCubemapTexture(_cubemapMat->GetCubemapHandle());
+	Graphics::cMatPBRMR* _spaceHolderMat = dynamic_cast<Graphics::cMatPBRMR*>(Graphics::cModel::s_manager.Get(m_spaceHolder->GetModelHandle())->GetMaterialAt());
+
 
 	return result;
 }
@@ -58,13 +59,13 @@ void Assignment::CreateActor()
 {
 	m_teapot = new cActor();
 	m_teapot->Initialize();
-	m_teapot->Transform()->SetTransform(glm::vec3(0, 0, -100), glm::quat(glm::vec3(-glm::radians(90.f), 0, 0)), glm::vec3(5, 5, 5));
+	m_teapot->Transform()->SetTransform(glm::vec3(0, 0, -300), glm::quat(glm::vec3(-glm::radians(90.f), 0, 0)), glm::vec3(5, 5, 5));
 	m_teapot->SetModel("Contents/models/teapot.model");
 	m_teapot->UpdateUniformVariables(Graphics::GetCurrentEffect());
 
 	m_teapot2 = new cActor();
 	m_teapot2->Initialize();
-	m_teapot2->Transform()->SetTransform(glm::vec3(150, 0, 0), glm::quat(glm::vec3(-glm::radians(90.f), 0, 0)), glm::vec3(3, 3, 3));
+	m_teapot2->Transform()->SetTransform(glm::vec3(150, 0, -200), glm::quat(glm::vec3(-glm::radians(90.f), 0, 0)), glm::vec3(3, 3, 3));
 	m_teapot2->SetModel("Contents/models/teapot.model");
 	m_teapot2->UpdateUniformVariables(Graphics::GetCurrentEffect());
 
@@ -74,11 +75,7 @@ void Assignment::CreateActor()
 	m_mirror->SetModel("Contents/models/wall.model");
 	m_mirror->UpdateUniformVariables(Graphics::GetCurrentEffect());
 
-	m_sphere = new cActor();
-	m_sphere->Initialize();
-	m_sphere->Transform()->SetTransform(glm::vec3(-100.f, 25.f, 0), glm::quat(1, 0, 0, 0), glm::vec3(2.5f, 2.5f, 2.5f));
-	m_sphere->SetModel("Contents/models/sphere.model");
-	m_sphere->UpdateUniformVariables(Graphics::GetCurrentEffect());
+
 
 	m_cubemap = new cActor();
 	m_cubemap->Initialize();
@@ -89,13 +86,28 @@ void Assignment::CreateActor()
 	m_spaceHolder->Initialize();
 	m_spaceHolder->Transform()->SetTransform(glm::vec3(0, 150.f, 0), glm::quat(1, 0, 0, 0), glm::vec3(5, 5, 5));
 	m_spaceHolder->SetModel("Contents/models/spaceHolder.model");
-	m_spaceHolder->UpdateUniformVariables(Graphics::GetCurrentEffect());
+	m_spaceHolder->UpdateUniformVariables(Graphics::GetEffectByKey("PBR_MR"));
 	m_spaceHolder->Transform()->Update();
+
+	m_sphereList.reserve(25);
+	for (int i = 0 ; i < 5 ; ++i)
+	{
+		for (int j = 0; j < 5; ++j)
+		{
+			cActor * _sphere = new cActor();
+			_sphere->Initialize();
+			_sphere->Transform()->SetTransform(glm::vec3(-200.f + i * 100, 25.f + j * 50, 0), glm::quat(1, 0, 0, 0), glm::vec3(2.5f, 2.5f, 2.5f));
+			_sphere->SetModel("Contents/models/pbrSphere.model");
+			_sphere->UpdateUniformVariables(Graphics::GetEffectByKey("PBR_MR"));
+			_sphere->Transform()->Update();
+			m_sphereList.push_back( _sphere);
+		}
+	}
 }
 
 void Assignment::CreateCamera()
 {
-	m_editorCamera = new  cEditorCamera(glm::vec3(0, 150, 200), 30, 0, 300, 10.f);
+	m_editorCamera = new  cEditorCamera(glm::vec3(0, 150, 300), 5, 0, 300, 10.f);
 	float _aspect = (float)(GetCurrentWindow()->GetBufferWidth()) / (float)(GetCurrentWindow()->GetBufferHeight());
 	m_editorCamera->CreateProjectionMatrix(glm::radians(60.f), _aspect, 1.f, 1000.0f);
 	m_editorCamera->Transform()->Update();
@@ -103,11 +115,11 @@ void Assignment::CreateCamera()
 
 void Assignment::CreateLight()
 {
-	Graphics::CreateAmbientLight(Color(0.1f, 0.1f, 0.1f), aLight);
-	Graphics::CreatePointLight(glm::vec3(0, 50.f, 100.f), Color(0.8, 0.8, 0.8), 1.5f, 0.3f, 2.f, true, pLight1);
+	Graphics::CreateAmbientLight(Color(0.001f, 0.001f, 0.001f), aLight);
+	Graphics::CreatePointLight(glm::vec3(0, 50.f, 100.f), Color(1.8, 1.8, 1.8), 1.5f, 0.3f, 2.f, true, pLight1);
 	//Graphics::CreatePointLight(glm::vec3(-100, 40, -100), Color(0.8, 0.8, 0.8), 1.f, 0.7f, 1.8f, true, pLight2);
-	Graphics::CreateDirectionalLight(Color(.6, .6, .58f), glm::vec3(-1, -1, 0), true, dLight);
-	Graphics::CreateSpotLight(glm::vec3(0, 150, 0), glm::vec3(0, 1, 1), Color(1), 65.f, 1.5f, 0.3f, 5.f, true, spLight);
+	//Graphics::CreateDirectionalLight(Color(.6, .6, .58f), glm::vec3(-1, -1, 0), true, dLight);
+	//Graphics::CreateSpotLight(glm::vec3(0, 150, 0), glm::vec3(0, 1, 1), Color(1), 65.f, 1.5f, 0.3f, 5.f, true, spLight);
 	//Graphics::CreateSpotLight(glm::vec3(100, 150, 0), glm::vec3(1, 1, 0), Color(1), 65.f, 1.f, 0.7f, 1.8f, true, spLight2);
 
 }
@@ -134,9 +146,13 @@ void Assignment::CleanUp()
 	safe_delete(m_teapot);
 	safe_delete(m_teapot2);
 	safe_delete(m_mirror);
-	safe_delete(m_sphere);
 	safe_delete(m_cubemap);
 	safe_delete(m_spaceHolder);
+	for (int i =0; i < m_sphereList.size(); ++i)
+	{
+		safe_delete(m_sphereList[i]);
+	}
+	m_sphereList.clear();
 }
 
 void Assignment::Tick(float second_since_lastFrame)
@@ -206,7 +222,6 @@ void Assignment::Tick(float second_since_lastFrame)
 	m_teapot->Transform()->Update();
 	m_teapot2->Transform()->Update();
 	m_mirror->Transform()->Update();
-	m_sphere->Transform()->Update();
 
 	if (pLight1)
 		pLight1->Transform()->Update();
@@ -239,11 +254,15 @@ void Assignment::Tick(float second_since_lastFrame)
 				std::vector<std::pair<Graphics::cModel::HANDLE, cTransform>> _renderingMap;
 				// Submit data to be render
 				{
-					_renderingMap.push_back({ m_sphere->GetModelHandle(), *m_sphere->Transform() });
+					_renderingMap.reserve(32);
 					_renderingMap.push_back({ m_teapot->GetModelHandle(), *m_teapot->Transform() });
 					_renderingMap.push_back({ m_teapot2->GetModelHandle(), *m_teapot2->Transform() });
 					//_renderingMap.push_back({ m_mirror->GetModelHandle(), *m_mirror->Transform() });
 					_renderingMap.push_back({ m_spaceHolder->GetModelHandle(), *m_spaceHolder->Transform() });
+					for (int i = 0; i < m_sphereList.size(); ++i)
+					{
+						_renderingMap.push_back({ m_sphereList[i]->GetModelHandle(), *m_sphereList[i]->Transform() });
+					}
 					{// Spot light shadow map pass
 						Graphics::SubmitDataToBeRendered(Graphics::UniformBufferFormats::sFrame(), _renderingMap, &Graphics::SpotLightShadowMap_Pass);
 					}
@@ -266,7 +285,6 @@ void Assignment::Tick(float second_since_lastFrame)
 					_frameData_Mirrored.ViewPosition = _mirroredCamera.CamLocation();
 					_renderingMap.clear();
 					_renderingMap.push_back({ m_teapot->GetModelHandle(), *m_teapot->Transform() });
-					_renderingMap.push_back({ m_sphere->GetModelHandle(), *m_sphere->Transform() });
 					_renderingMap.push_back({ m_teapot2->GetModelHandle(), *m_teapot2->Transform() });
 					glm::vec4 _plane = glm::vec4(m_mirror->Transform()->Up(), m_mirror->Transform()->Position().y);
 					Graphics::SubmitClipPlaneData(_plane);
@@ -281,9 +299,19 @@ void Assignment::Tick(float second_since_lastFrame)
 					_renderingMap.push_back({ m_teapot->GetModelHandle(), *m_teapot->Transform() });
 					_renderingMap.push_back({ m_teapot2->GetModelHandle(), *m_teapot2->Transform() });
 					//_renderingMap.push_back({ m_mirror->GetModelHandle(), *m_mirror->Transform() });
-					_renderingMap.push_back({ m_sphere->GetModelHandle(), *m_sphere->Transform() });
-					_renderingMap.push_back({ m_spaceHolder->GetModelHandle(), *m_spaceHolder->Transform() });
+					
 					Graphics::SubmitDataToBeRendered(_frameData_Camera, _renderingMap, &Graphics::Render_Pass);
+				}
+				// PBR pass
+				{
+					_renderingMap.clear();
+					_renderingMap.reserve(m_sphereList.size() + 1);
+					_renderingMap.push_back({ m_spaceHolder->GetModelHandle(), *m_spaceHolder->Transform() });
+					for (int i = 0; i < m_sphereList.size(); ++i )
+					{
+						_renderingMap.push_back({ m_sphereList[i]->GetModelHandle(), *m_sphereList[i]->Transform() });
+					}
+					Graphics::SubmitDataToBeRendered(_frameData_Camera, _renderingMap, &Graphics::PBR_Pass);
 				}
 
 				// Cube map

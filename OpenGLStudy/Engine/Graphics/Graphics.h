@@ -30,6 +30,7 @@ namespace Graphics {
 	void Reflection_Pass();
 
 	void Render_Pass();
+	void PBR_Pass();
 	void CubeMap_Pass();
 	void Gizmo_RenderTransform();
 	void Gizmo_RenderVertexNormal();

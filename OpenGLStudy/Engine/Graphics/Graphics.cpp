@@ -15,6 +15,7 @@
 #include "Application/Window/Window.h"
 #include "Material/Blinn/MatBlinn.h"
 #include "Material/Unlit/MatUnlit.h"
+#include "Material/PBR_MR/MatPBRMR.h"
 #include "Time/Time.h"
 namespace Graphics {
 
@@ -97,7 +98,7 @@ namespace Graphics {
 			}
 			s_currentEffect = GetEffectByKey(Constants::CONST_DEFAULT_EFFECT_KEY);
 			s_currentEffect->UseEffect();
-			
+
 			// Fix sampler problem before validating the program
 			{
 				GLuint _programID = s_currentEffect->GetProgramID();
@@ -509,6 +510,56 @@ namespace Graphics {
 		// Swap buffers happens in main rendering loop, not in this render function.
 	}
 
+	void PBR_Pass()
+	{
+		s_currentEffect = GetEffectByKey("PBR_MR");
+		s_currentEffect->UseEffect();
+
+		// Reset window size
+		Application::cApplication* _app = Application::GetCurrentApplication();
+		if (_app) {
+			_app->GetCurrentWindow()->SetViewportSize(_app->GetCurrentWindow()->GetBufferWidth(), _app->GetCurrentWindow()->GetBufferHeight());
+		}
+
+		// Update Lighting Data
+		UpdateLightingData();
+
+		s_currentEffect->ValidateProgram();
+		
+		auto& renderList = s_dataRenderingByGraphicThread->s_renderPasses[s_currentRenderPass].ModelToTransform_map;
+		// draw the space first
+		{
+			// 1. Update draw call data
+			s_uniformBuffer_drawcall.Update(&UniformBufferFormats::sDrawCall(renderList[0].second.M(), renderList[0].second.TranspostInverse()));
+			// 2. Draw
+			cModel* _model = cModel::s_manager.Get(renderList[0].first);
+			if (_model) {
+				_model->UpdateUniformVariables(s_currentEffect->GetProgramID());
+				_model->Render();
+			}
+		}
+		// assign different material for the sphere
+		for (int i = 0; i < 5; ++i)
+		{
+			for (int j = 0; j < 5; ++j)
+			{
+				// 1. Update draw call data
+				s_uniformBuffer_drawcall.Update(&UniformBufferFormats::sDrawCall(renderList[i * 5 + j + 1].second.M(), renderList[i * 5 + j + 1].second.TranspostInverse()));
+				// 2. Draw
+				cModel* _model = cModel::s_manager.Get(renderList[i * 5 + j + 1].first);
+				if (_model) {
+					Graphics::cMatPBRMR* _sphereMat = dynamic_cast<Graphics::cMatPBRMR*>(_model->GetMaterialAt());
+					_sphereMat->UpdateMetalnessIntensity(1.f/ 4.f * j);
+					_sphereMat->UpdateRoughnessIntensity(1.f / 4.f *i );
+					_model->UpdateUniformVariables(s_currentEffect->GetProgramID());
+					_model->Render();
+				}
+			}
+		}
+
+		s_currentEffect->UnUseEffect();
+	}
+
 	void CubeMap_Pass()
 	{
 		// change depth function so depth test passes when values are equal to depth buffer's content
@@ -622,6 +673,7 @@ namespace Graphics {
 			// 2. Draw
 			cModel* _model = cModel::s_manager.Get(it->first);
 			if (_model) {
+				_model->UpdateUniformVariables(s_currentEffect->GetProgramID());
 				_model->Render();
 			}
 		}
@@ -639,6 +691,9 @@ namespace Graphics {
 		}
 		if (!(result = cMatBlinn::GetUniformBuffer().CleanUp())) {
 			printf("Fail to cleanup uniformBuffer_MatBlinnPhong\n");
+		}
+		if (!(result = cMatPBRMR::GetUniformBuffer().CleanUp())) {
+			printf("Fail to cleanup uniformBuffer_PBRMR\n");
 		}
 		if (!(result = s_uniformBuffer_Lighting.CleanUp())) {
 			printf("Fail to cleanup uniformBuffer_Lighting\n");

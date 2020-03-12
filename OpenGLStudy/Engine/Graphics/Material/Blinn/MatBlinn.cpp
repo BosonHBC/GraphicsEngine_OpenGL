@@ -1,5 +1,4 @@
 #include "MatBlinn.h"
-#include "Externals/ASSIMP_N/include/assimp/scene.h"
 #include "Assets/LoadTableFromLuaFile.h"
 #include "Graphics/UniformBuffer/UniformBufferFormats.h"
 #include "Assets/PathProcessor.h"
