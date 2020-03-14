@@ -12,11 +12,13 @@ namespace Graphics {
 		ETT_FILE = 0,
 		ETT_FILE_ALPHA = 1,
 		ETT_FRAMEBUFFER_SHADOWMAP = 2,
-		ETT_FRAMEBUFFER_COLOR = 3,
+		ETT_FRAMEBUFFER_PLANNER_REFLECTION = 3,
 		ETT_CUBEMAP = 4,
 		ETT_FRAMEBUFFER_CUBEMAP = 5,
 		ETT_FILE_GRAY = 6,
 		ETT_FRAMEBUFFER_HDR_CUBEMAP = 7,
+		ETT_FRAMEBUFFER_HDR_MIPMAP_CUBEMAP = 8,
+		ETT_FRAMEBUFFER_HDR_RG = 9,
 		ETT_INVALID = 0xff
 	};
 
@@ -58,8 +60,10 @@ namespace Graphics {
 		bool LoadShadowMapTexture(const std::string& i_type_id, const GLuint& i_width, const GLuint& i_height);
 		bool LoadOmniShadowMapTexture(const std::string& i_type_id, const GLuint& i_width, const GLuint& i_height);
 		bool LoadHDRCubemapTexture(const std::string& i_type_id, const GLuint& i_width, const GLuint& i_height); // assume the bit width is 16 bits per channel
+		bool LoadHDRMipMapCubemapTexture(const std::string& i_type_id, const GLuint& i_baseWidth, const GLuint& i_baseHeight);
+		bool LoadHDRRG16Texture(const std::string& i_type_id, const GLuint& i_width, const GLuint& i_height);
 		// Load color format texture from frame buffer
-		bool LoadRGBTexture(const std::string& i_type_id, const GLuint& i_width, const GLuint& i_height);
+		bool LoadPlannerReflectionTexture(const std::string& i_type_id, const GLuint& i_width, const GLuint& i_height);
 
 		/** private variables*/
 		GLuint m_textureID;

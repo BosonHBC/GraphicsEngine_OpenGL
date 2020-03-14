@@ -2,17 +2,16 @@
 #include "EnvProbe.h"
 #include "Graphics/UniformBuffer/UniformBufferFormats.h"
 #include "Graphics/Texture/Texture.h"
-#include "Application/Application.h"
-#include "Application/Window/Window.h"
+
 namespace Graphics
 {    // pbr: set up projection and view matrices for capturing data onto the 6 cubemap face directions
 
-	bool cEnvProbe::Initialize(GLfloat i_range, GLuint i_width, GLuint i_height, const glm::vec3& i_initialLocation /*= glm::vec3(0)*/)
+	bool cEnvProbe::Initialize(GLfloat i_range, GLuint i_width, GLuint i_height, const ETextureType& i_textureType,const glm::vec3& i_initialLocation /*= glm::vec3(0)*/)
 	{
 		auto result = true;
 		m_range = i_range; m_width = i_width; m_height = i_height;
 		m_transform.SetTransform(i_initialLocation, glm::quat(1, 0, 0, 0), glm::vec3(1, 1, 1));
-		result = m_frameBuffer.Initialize(m_width, m_height, ETT_FRAMEBUFFER_HDR_CUBEMAP);
+		result = m_frameBuffer.Initialize(m_width, m_height, i_textureType);
 		return result;
 	}
 
@@ -26,16 +25,14 @@ namespace Graphics
 
 	void cEnvProbe::StartCapture()
 	{
-		Application::cApplication* _app = Application::GetCurrentApplication();
-		if (_app) { _app->GetCurrentWindow()->SetViewportSize(m_width, m_height); }
+
 		m_frameBuffer.Write();
 	}
 
 	void cEnvProbe::StopCapture()
 	{
 		m_frameBuffer.UnWrite();
-		Application::cApplication* _app = Application::GetCurrentApplication();
-		if (_app) { _app->ResetWindowSize(); }
+
 	}
 
 	GLuint cEnvProbe::GetCubemapTextureID() const

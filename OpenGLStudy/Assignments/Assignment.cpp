@@ -262,20 +262,7 @@ void Assignment::Tick(float second_since_lastFrame)
 			// Submit geometry data for shadow map
 			SubmitShadowData();
 			// Frame data from camera
-/*
-				if (false)
-				{
-					cEditorCamera _mirroredCamera = *m_editorCamera;
-					_mirroredCamera.MirrorAlongPlane(*m_mirror->Transform());
-					Graphics::UniformBufferFormats::sFrame _frameData_Mirrored(_mirroredCamera.GetProjectionMatrix(), _mirroredCamera.GetViewMatrix());
-					_frameData_Mirrored.ViewPosition = _mirroredCamera.CamLocation();
-					_renderingMap.clear();
-					_renderingMap.push_back({ m_teapot->GetModelHandle(), *m_teapot->Transform() });
-					_renderingMap.push_back({ m_teapot2->GetModelHandle(), *m_teapot2->Transform() });
-					glm::vec4 _plane = glm::vec4(m_mirror->Transform()->Up(), m_mirror->Transform()->Position().y);
-					Graphics::SubmitClipPlaneData(_plane);
-					Graphics::SubmitDataToBeRendered(_frameData_Mirrored, _renderingMap, &Graphics::Reflection_Pass);
-				}*/
+
 			Graphics::UniformBufferFormats::sFrame _frameData_Camera(m_editorCamera->GetProjectionMatrix(), m_editorCamera->GetViewMatrix());
 			_frameData_Camera.ViewPosition = m_editorCamera->CamLocation();
 			// Submit geometry data

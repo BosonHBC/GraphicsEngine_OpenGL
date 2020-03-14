@@ -27,7 +27,8 @@ namespace Graphics {
 		GLuint GetWidth() const { return m_width; }
 		GLuint GetHeight() const { return m_height; }
 		cTexture::HANDLE GetTextureHandle() const { return m_renderToTexture; }
-
+		GLuint fbo() const { return m_fbo; }
+		GLuint rbo() const { return m_rbo; }
 	protected:
 		cFrameBuffer(const cFrameBuffer& i_other) = delete;
 		cFrameBuffer& operator = (const cFrameBuffer& i_other) = delete;

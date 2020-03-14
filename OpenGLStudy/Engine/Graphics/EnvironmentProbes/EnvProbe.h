@@ -26,7 +26,7 @@ namespace Graphics
 
 		~cEnvProbe() { CleanUp(); };
 
-		bool Initialize(GLfloat i_range, GLuint i_width, GLuint i_height, const glm::vec3& i_initialLocation = glm::vec3(0));
+		bool Initialize(GLfloat i_range, GLuint i_width, GLuint i_height, const ETextureType& i_textureType, const glm::vec3& i_initialLocation = glm::vec3(0));
 		bool CleanUp();
 
 		bool IsValid() const { return m_frameBuffer.IsValid() && m_range > 0 && m_width > 0 && m_height > 0 && m_width == m_height; }
@@ -43,6 +43,9 @@ namespace Graphics
 		glm::mat4 GetViewMat4(GLuint i_face) const;
 		GLuint GetWidth() const { return m_width; }
 		GLuint GetHeight() const { return m_height; }
+
+		GLuint fbo() const { return m_frameBuffer.rbo(); }
+		GLuint rbo() const { return m_frameBuffer.rbo(); }
 	private:
 
 		cTransform m_transform;

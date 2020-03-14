@@ -1,0 +1,9 @@
+--[[
+    Default Model sheet
+]]
+return 
+{
+    ModelPath = "quad.obj",
+    MaterialPath = "DefaultUnlit.material",
+
+}
