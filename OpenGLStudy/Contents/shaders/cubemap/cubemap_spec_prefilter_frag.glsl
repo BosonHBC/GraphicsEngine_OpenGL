@@ -6,6 +6,7 @@ in vec3 TexCoords;
 
 uniform samplerCube cubemapTex;
 uniform float roughness;
+uniform int resolution;
 
 float RadicalInverse_VdC(uint bits) 
 {
@@ -42,29 +43,56 @@ vec3 ImportanceSampleGGX(vec2 Xi, vec3 N, float roughness)
     vec3 sampleVec = tangent * H.x + bitangent * H.y + N * H.z;
     return normalize(sampleVec);
 }
+float DistributionGGX(vec3 N, vec3 H, float a)
+{
+    float a2     = a*a;
+    float NdotH  = max(dot(N, H), 0.0);
+    float NdotH2 = NdotH*NdotH;
+	
+    float nom    = a2;
+    float denom  = (NdotH2 * (a2 - 1.0) + 1.0);
+    denom        = PI * denom * denom;
+	
+    return nom / denom;
+}
 void main()
 {    
-    vec3 N = normalize(TexCoords);    
+    vec3 N = normalize(TexCoords);
+    
+    // make the simplyfying assumption that V equals R equals the normal 
     vec3 R = N;
     vec3 V = R;
 
     const uint SAMPLE_COUNT = 1024u;
-    float totalWeight = 0.0;   
-    vec3 prefilteredColor = vec3(0.0);     
+    vec3 prefilteredColor = vec3(0.0);
+    float totalWeight = 0.0;
+    
     for(uint i = 0u; i < SAMPLE_COUNT; ++i)
     {
+        // generates a sample vector that's biased towards the preferred alignment direction (importance sampling).
         vec2 Xi = Hammersley(i, SAMPLE_COUNT);
-        vec3 H  = ImportanceSampleGGX(Xi, N, roughness);
+        vec3 H = ImportanceSampleGGX(Xi, N, roughness);
         vec3 L  = normalize(2.0 * dot(V, H) * H - V);
 
         float NdotL = max(dot(N, L), 0.0);
         if(NdotL > 0.0)
         {
-            prefilteredColor += texture(cubemapTex, L).rgb * NdotL;
+            // sample from the environment's mip level based on roughness/pdf
+            float D   = DistributionGGX(N, H, roughness);
+            float NdotH = max(dot(N, H), 0.0);
+            float HdotV = max(dot(H, V), 0.0);
+            float pdf = D * NdotH / (4.0 * HdotV) + 0.0001; 
+
+            float saTexel  = 4.0 * PI / (6.0 * resolution * resolution);
+            float saSample = 1.0 / (float(SAMPLE_COUNT) * pdf + 0.0001);
+
+            float mipLevel = roughness == 0.0 ? 0.0 : 0.5 * log2(saSample / saTexel); 
+            
+            prefilteredColor += textureLod(cubemapTex, L, mipLevel).rgb * NdotL;
             totalWeight      += NdotL;
         }
     }
-    prefilteredColor = prefilteredColor / totalWeight;
 
+    prefilteredColor = prefilteredColor / totalWeight;
     outColor = vec4(prefilteredColor, 1.0);
 }

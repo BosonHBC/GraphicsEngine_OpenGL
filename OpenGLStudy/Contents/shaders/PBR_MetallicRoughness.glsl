@@ -10,10 +10,12 @@ uniform sampler2D MetallicMap; // 1
 uniform sampler2D RoughnessMap; // 2
 uniform sampler2D NormalMap; // 3
 uniform samplerCube IrradianceMap; // 4
+uniform samplerCube PrefilterMap; // 5
 
 uniform sampler2D spotlightShadowMap[MAX_COUNT_PER_LIGHT]; // 6 -> 10
 uniform samplerCube pointLightShadowMap[MAX_COUNT_PER_LIGHT]; // 11-> 15
 uniform sampler2D directionalShadowMap; // 16
+uniform sampler2D BrdfLUTMap; // 17
 
 const vec3 gridSamplingDisk[20] =vec3[]
 (
@@ -252,14 +254,22 @@ float CalcPointLightShadowMap(int idx, PointLight pLight, float dist_vV)
 //-------------------------------------------------------------------------
 // Light calculation
 //-------------------------------------------------------------------------
-vec3 CalcAmbientLight(AmbientLight aLight, vec3 albedoColor,float roughness, vec3 f0 ,vec3 vN,vec3 vV )
+vec3 CalcAmbientLight(AmbientLight aLight, vec3 albedoColor,float metalness, float roughness, vec3 f0 ,vec3 vN,vec3 vV,vec3 vR )
 {
 	vec3 kS = fresnelSchlickRoughness(max(dot(vN, vV), 0.0), f0, roughness); 
 	//vec3 kS = fresnelSchlick(max(dot(vN, vV), 0.0), f0);
 	vec3 kD = 1.0 - kS;
 	vec3 irradiance = texture(IrradianceMap, vN).rgb;
-	vec3 diffuse    = irradiance * albedoColor * aLight.base.color;
-	vec3 ambient    = (kD * diffuse) /** ao // no ao for now*/; 
+	vec3 diffuse    = irradiance * albedoColor;
+	
+	// sample both the pre-filter map and the BRDF lut and combine them together as per the Split-Sum approximation to get the IBL specular part.
+    const float MAX_REFLECTION_LOD = 4.0;
+    vec3 prefilteredColor = textureLod(PrefilterMap, vR,  roughness * MAX_REFLECTION_LOD).rgb; 
+	vec2 brdfuv = vec2(max(dot(vN, vV), 0.0), roughness);
+    vec2 brdf  = texture(BrdfLUTMap, brdfuv).rg;
+    vec3 specular = prefilteredColor * (kS * brdf.x + brdf.y);
+	
+	vec3 ambient    = (kD * diffuse + specular) * aLight.base.color /** ao // no ao for now*/; 
 
 	return ambient;
 }
@@ -335,6 +345,7 @@ void main(){
 	vec3 view = ViewPosition - fragPos;
 	float viewDistance = length(view);
 	vec3 normalized_view = normalize(view);
+	vec3 vR = reflect(-normalized_view, normalized_normal); 
 
 	// material property
 	vec3 albedoColor = texture(AlbedoMap, texCood0).rgb * diffuseIntensity;
@@ -345,7 +356,7 @@ void main(){
 	F0 = mix(F0, albedoColor, vec3(metalness));
 
 	// ambient light
-	vec3 ambientLightColor = CalcAmbientLight(g_ambientLight,albedoColor,roughness, F0,normalized_normal,normalized_view);
+	vec3 ambientLightColor = CalcAmbientLight(g_ambientLight,albedoColor, metalness, roughness, F0,normalized_normal,normalized_view, vR);
 	
 	// cubemap light
 	//vec4 cubemapColor = IlluminateByCubemap(diffuseTexColor,specularTexColor, normalized_normal, normalized_view);

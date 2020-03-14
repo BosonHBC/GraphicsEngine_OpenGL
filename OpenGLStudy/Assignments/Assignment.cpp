@@ -138,6 +138,16 @@ void Assignment::BeforeUpdate()
 		Graphics::cEnvProbe* _envProb = Graphics::GetEnvironmentProbe();
 		Graphics::UniformBufferFormats::sFrame _envProbeFrameData(_envProb->GetProjectionMat4(), _envProb->GetViewMat4(i));
 		_envProbeFrameData.ViewPosition = _envProb->GetPosition();
+
+		// Cube map
+/*
+		{
+			std::vector<std::pair<Graphics::cModel::HANDLE, cTransform>> _renderingMap;
+			_renderingMap.push_back({ m_cubemap->GetModelHandle(), *m_cubemap->Transform() });
+			Graphics::UniformBufferFormats::sFrame _frameData_Cubemap(_envProb->GetProjectionMat4(), glm::mat4(glm::mat3(_envProb->GetViewMat4(i))));
+			Graphics::SubmitDataToBeRendered(_frameData_Cubemap, _renderingMap, &Graphics::CubeMap_Pass);
+		}*/
+
 		SubmitSceneData(&_envProbeFrameData);
 	}
 	// Let the graphic thread know that the pre-render pass is ready to go

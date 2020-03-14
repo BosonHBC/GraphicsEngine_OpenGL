@@ -75,14 +75,39 @@ namespace Graphics
 		else
 			cTexture::UnBindTexture(GL_TEXTURE3, ETT_FILE);
 
-		cEnvProbe* _irradProbe = Graphics::GetIrrdianceMapProbe();
-		cTexture* _irrdianceMap = nullptr;
-		if (_irradProbe && (_irrdianceMap = cTexture::s_manager.Get(Graphics::GetIrrdianceMapProbe()->GetCubemapTextureHandle())))
+		// Irradiance cube map
 		{
-			_irrdianceMap->UseTexture(GL_TEXTURE4);
+			cEnvProbe* _irradProbe = Graphics::GetIrrdianceMapProbe();
+			cTexture* _irrdianceMap = nullptr;
+			if (_irradProbe && (_irrdianceMap = cTexture::s_manager.Get(_irradProbe->GetCubemapTextureHandle())))
+			{
+				_irrdianceMap->UseTexture(GL_TEXTURE4);
+			}
+			else
+				cTexture::UnBindTexture(GL_TEXTURE4, ETT_FRAMEBUFFER_HDR_CUBEMAP);
 		}
-		else
-			cTexture::UnBindTexture(GL_TEXTURE4, ETT_FRAMEBUFFER_HDR_CUBEMAP);
+
+		// pre-filter cube map
+		{
+			cEnvProbe* _preFilteProbe = Graphics::GetPreFilterMapProbe();
+			cTexture* _preFilterCubemap = nullptr;
+			if (_preFilteProbe && _preFilteProbe->IsValid() && (_preFilterCubemap = cTexture::s_manager.Get(_preFilteProbe->GetCubemapTextureHandle())))
+			{
+				_preFilterCubemap->UseTexture(GL_TEXTURE5);
+			}
+			else
+				cTexture::UnBindTexture(GL_TEXTURE5, ETT_FRAMEBUFFER_HDR_MIPMAP_CUBEMAP);
+		}
+
+		// BRDF LUT texture
+		{
+			cFrameBuffer* _lutTextureFrameBuffer = Graphics::GetBRDFLutFrameBuffer();
+			cTexture* _lutTexture = nullptr;
+			if (_lutTextureFrameBuffer && _lutTextureFrameBuffer->IsValid() && (_lutTexture = cTexture::s_manager.Get(_lutTextureFrameBuffer->GetTextureHandle())))
+			{
+				_lutTexture->UseTexture(GL_TEXTURE17);
+			}
+		}
 
 		s_PBRMRUniformBlock.Update(&UniformBufferFormats::sPBRMRMaterial(m_diffuseIntensity, m_roughnessIntensity, m_ior, m_metallicIntensity));
 	}
@@ -107,6 +132,8 @@ namespace Graphics
 			_normalTex->CleanUpTextureBind(GL_TEXTURE3);
 
 		cTexture::UnBindTexture(GL_TEXTURE4, ETT_FRAMEBUFFER_HDR_CUBEMAP);
+		cTexture::UnBindTexture(GL_TEXTURE5, ETT_FRAMEBUFFER_HDR_MIPMAP_CUBEMAP);
+		cTexture::UnBindTexture(GL_TEXTURE17, ETT_FRAMEBUFFER_HDR_RG);
 
 	}
 

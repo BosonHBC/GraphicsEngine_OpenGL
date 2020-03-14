@@ -117,6 +117,10 @@ namespace Graphics {
 		if (_irradMapID > 0 && _irradMapID < static_cast<GLuint>(-1))
 			glUniform1i(_irradMapID, 4);
 
+		GLuint _preFilterMapID = glGetUniformLocation(_effect->GetProgramID(), "PrefilterMap");
+		if (_preFilterMapID > 0 && _preFilterMapID < static_cast<GLuint>(-1))
+			glUniform1i(_preFilterMapID, 5);
+
 		for (int i = 0; i < MAX_COUNT_PER_LIGHT; ++i)
 		{
 			snprintf(_charBuffer, sizeof(_charBuffer), "spotlightShadowMap[%d]", i);
@@ -282,9 +286,10 @@ namespace Graphics {
 		// Initialize environment probes
 		{
 
-			glm::vec3 _probePosition = glm::vec3(0, 100, 0);
+			glm::vec3 _probePosition = glm::vec3(-400, 100, 0);
 			GLfloat _probeRange = 500;
-			if (!(result = s_envProbe.Initialize(_probeRange, 512, 512, ETT_FRAMEBUFFER_HDR_CUBEMAP, _probePosition))) {
+			GLuint envMapResolution = 1024;
+			if (!(result = s_envProbe.Initialize(_probeRange, envMapResolution, envMapResolution, ETT_FRAMEBUFFER_HDR_CUBEMAP, _probePosition))) {
 				printf("Fail to create environment probe.\n");
 				return result;
 			}
@@ -298,7 +303,7 @@ namespace Graphics {
 				printf("Fail to create irradiance Map.\n");
 				return result;
 			}
-			if (!(result = s_brdfLUTTexture.Initialize(512, 512, ETT_FRAMEBUFFER_PLANNER_REFLECTION))) {
+			if (!(result = s_brdfLUTTexture.Initialize(envMapResolution, envMapResolution, ETT_FRAMEBUFFER_PLANNER_REFLECTION))) {
 				printf("Fail to create brdfLUTTexture.\n");
 				return result;
 			}
@@ -330,6 +335,7 @@ namespace Graphics {
 
 		// Load cube
 		glEnable(GL_DEPTH_TEST);
+		glEnable(GL_TEXTURE_CUBE_MAP_SEAMLESS);
 		glDepthFunc(GL_LEQUAL);
 		glEnable(GL_CULL_FACE);
 		glCullFace(GL_BACK);
@@ -372,7 +378,7 @@ namespace Graphics {
 			for (size_t i = 0; i < 6; ++i)
 			{
 				glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_CUBE_MAP_POSITIVE_X + i, s_envProbe.GetCubemapTextureID(), 0);
-
+				glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 				for (size_t j = 0; j < passesPerFace; ++j)
 				{
 					// Update current render pass
@@ -384,7 +390,13 @@ namespace Graphics {
 				}
 
 			}
+
 			s_envProbe.StopCapture();
+			
+			// After capturing the scene, generate the mip map by opengl itself
+			glBindTexture(GL_TEXTURE_CUBE_MAP, s_envProbe.GetCubemapTextureID());
+			glGenerateMipmap(GL_TEXTURE_CUBE_MAP);
+			glBindTexture(GL_TEXTURE_CUBE_MAP, 0);
 		}
 
 		// iii. start to capture the irradiance map
@@ -410,13 +422,12 @@ namespace Graphics {
 
 				// Render cube
 				cModel* _cube = cModel::s_manager.Get(s_cubeHandle);
-				if (_cube) {
-					_cube->RenderWithoutMaterial();
-				}
+				if (_cube) { _cube->RenderWithoutMaterial(); }
 			}
 			s_irradianceMap.StopCapture();
 
 			s_currentEffect->UnUseEffect();
+			
 		}
 
 		// iv. start to capture the pre-filter cube map
@@ -427,6 +438,8 @@ namespace Graphics {
 			GLuint _cubemapTexID = glGetUniformLocation(s_currentEffect->GetProgramID(), "cubemapTex");
 			glUniform1i(_cubemapTexID, 0);
 			GLuint _roughnessID = glGetUniformLocation(s_currentEffect->GetProgramID(), "roughness");
+			GLuint _resolutionID = glGetUniformLocation(s_currentEffect->GetProgramID(), "resolution");
+			glUniform1i(_resolutionID, s_envProbe.GetWidth());
 
 			s_currentEffect->ValidateProgram();
 			cTexture* _envProbeTexture = cTexture::s_manager.Get(s_envProbe.GetCubemapTextureHandle());
@@ -459,9 +472,7 @@ namespace Graphics {
 
 					// Render cube
 					cModel* _cube = cModel::s_manager.Get(s_cubeHandle);
-					if (_cube) {
-						_cube->RenderWithoutMaterial();
-					}
+					if (_cube) { _cube->RenderWithoutMaterial(); }
 				}
 			}
 
@@ -471,7 +482,22 @@ namespace Graphics {
 		}
 
 		// v. start generate BRDF LUTTexture
+		{
+			s_currentEffect = Graphics::GetEffectByKey("BrdfIntegration");
+			s_currentEffect->UseEffect();
+			s_brdfLUTTexture.Write();
 
+			glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+			// Render quad
+			cModel* _quad = cModel::s_manager.Get(s_quadHandle);
+			if (_quad) {
+				_quad->RenderWithoutMaterial(); 
+			}
+
+			s_brdfLUTTexture.UnWrite();
+			s_currentEffect->UnUseEffect();
+			
+		}
 		printf("---------------------------------Pre-Rendering stage done.---------------------------------\n");
 	}
 
@@ -957,6 +983,16 @@ namespace Graphics {
 	Graphics::cEnvProbe* GetIrrdianceMapProbe()
 	{
 		return &s_irradianceMap;
+	}
+
+	Graphics::cEnvProbe* GetPreFilterMapProbe()
+	{
+		return &s_prefilterCubemap;
+	}
+
+	Graphics::cFrameBuffer* GetBRDFLutFrameBuffer()
+	{
+		return &s_brdfLUTTexture;
 	}
 
 	//----------------------------------------------------------------------------------

@@ -130,9 +130,6 @@ namespace Graphics {
 		glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0);
 		// clear VAO
 		glBindVertexArray(0);
-
-
-
 	}
 
 	void cMesh::CleanUp()
