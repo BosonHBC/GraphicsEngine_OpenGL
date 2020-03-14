@@ -31,17 +31,29 @@ namespace Graphics {
 			case ETT_FILE_ALPHA:
 				result = _texture->LoadTextureAFromFile(i_path);
 				break;
+			case ETT_FILE_GRAY:
+				result = _texture->LoadTextureGreyFromFile(i_path);
+				break;
 			case ETT_FRAMEBUFFER_SHADOWMAP:
 				result = _texture->LoadShadowMapTexture(i_path, i_override_width, i_override_height);
 				break;
-			case ETT_FRAMEBUFFER_COLOR:
-				result = _texture->LoadRGBTexture(i_path, i_override_width, i_override_height);
+			case ETT_FRAMEBUFFER_PLANNER_REFLECTION:
+				result = _texture->LoadPlannerReflectionTexture(i_path, i_override_width, i_override_height);
 				break;
 			case  ETT_CUBEMAP:
 				// Cube map is loaded in the cube map material, so it will not load here
 				break;
 			case ETT_FRAMEBUFFER_CUBEMAP:
 				result = _texture->LoadOmniShadowMapTexture(i_path, i_override_width, i_override_height);
+				break;
+			case  ETT_FRAMEBUFFER_HDR_CUBEMAP:
+				result = _texture->LoadHDRCubemapTexture(i_path, i_override_width, i_override_height);
+				break;
+			case ETT_FRAMEBUFFER_HDR_MIPMAP_CUBEMAP:
+				result = _texture->LoadHDRMipMapCubemapTexture(i_path, i_override_width, i_override_height);
+				break;
+			case ETT_FRAMEBUFFER_HDR_RG:
+				result = _texture->LoadHDRRG16Texture(i_path, i_override_width, i_override_height);
 				break;
 			case Graphics::ETT_INVALID:
 				result = false;
@@ -68,9 +80,26 @@ namespace Graphics {
 		return result;
 	}
 
+	void cTexture::UnBindTexture(int i_textureLocation, const ETextureType& _textureType)
+	{
+		glActiveTexture(i_textureLocation);
+		assert(glGetError() == GL_NO_ERROR);
+
+		GLenum _glTextureType = GL_TEXTURE_2D;
+		// if the texture is a cube map, use GL_TEXTURE_CUBE_MAP
+		if (_textureType == ETT_CUBEMAP
+			|| _textureType == ETT_FRAMEBUFFER_CUBEMAP
+			|| _textureType == ETT_FRAMEBUFFER_HDR_CUBEMAP
+			|| _textureType == ETT_FRAMEBUFFER_HDR_MIPMAP_CUBEMAP)
+			_glTextureType = GL_TEXTURE_CUBE_MAP;
+		
+		glBindTexture(_glTextureType, 0);
+		assert(glGetError() == GL_NO_ERROR);
+	}
+
 	bool cTexture::LoadTextureFromFile(const std::string& i_path)
 	{
-		unsigned char* _data = stbi_load(i_path.c_str(), &m_width, &m_height, &m_bitDepth, 0);
+		unsigned char* _data = stbi_load(i_path.c_str(), &m_width, &m_height, &m_bitDepth, STBI_rgb);
 		if (!_data) {
 			printf("Fail to load texture data!\n");
 			return false;
@@ -118,7 +147,7 @@ namespace Graphics {
 
 	bool cTexture::LoadTextureAFromFile(const std::string& i_path)
 	{
-		unsigned char* _data = stbi_load(i_path.c_str(), &m_width, &m_height, &m_bitDepth, 0);
+		unsigned char* _data = stbi_load(i_path.c_str(), &m_width, &m_height, &m_bitDepth, STBI_rgb_alpha);
 		if (!_data) {
 			// TODO: Print load texture fail
 			printf("Fail to load texture data!\n");
@@ -157,6 +186,58 @@ namespace Graphics {
 		// clear data of stb_image
 		stbi_image_free(_data);
 		return true;
+	}
+
+	bool cTexture::LoadTextureGreyFromFile(const std::string& i_path)
+	{
+		unsigned char* _data = stbi_load(i_path.c_str(), &m_width, &m_height, &m_bitDepth, STBI_grey);
+		if (!_data) {
+			// TODO: Print load texture fail
+			printf("Fail to load texture data!\n");
+			return false;
+		}
+
+
+		// generate texture and assign with an id
+		glGenTextures(1, &m_textureID);
+		// Bind it with a texture 2d
+		glBindTexture(GL_TEXTURE_2D, m_textureID);
+
+		// Set up texture wrapping in s,t axis
+		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
+		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
+
+		// Set up texture filtering for looking closer
+		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+		// Set up texture filtering for looking further
+		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+
+		// texture type
+		// mipmap level
+		// texture format to load
+		// width / height
+		// legacy for border
+		// texture format to become
+		// load in data type 
+		// data it-self
+		glTexImage2D(GL_TEXTURE_2D, 0, GL_RED, m_width, m_height, 0, GL_RED, GL_UNSIGNED_BYTE, _data);
+		// Generate mip map
+		glGenerateMipmap(GL_TEXTURE_2D);
+
+		// unbind texture
+		glBindTexture(GL_TEXTURE_2D, 0);
+
+		// clear data of stb_image
+		stbi_image_free(_data);
+
+		auto errorCode = glGetError();
+		if (errorCode != GL_NO_ERROR)
+		{
+			printf("OpenGL failed to load texture %s, with error ID: %d.\n", i_path.c_str(), errorCode);
+			assert(false);
+		}
+		return true;
+
 	}
 
 	bool cTexture::LoadShadowMapTexture(const std::string& i_type_id, const GLuint& i_width, const GLuint& i_height)
@@ -223,7 +304,102 @@ namespace Graphics {
 		return result;
 	}
 
-	bool cTexture::LoadRGBTexture(const std::string& i_type_id, const GLuint& i_width, const GLuint& i_height)
+	bool cTexture::LoadHDRCubemapTexture(const std::string& i_type_id, const GLuint& i_width, const GLuint& i_height)
+	{
+		auto result = true;
+		m_width = i_width;
+		m_height = i_height;
+
+		// This is for omniShadowMap, Generate cube map texture here
+
+		glGenTextures(1, &m_textureID);
+		glBindTexture(GL_TEXTURE_CUBE_MAP, m_textureID);
+
+		for (size_t i = 0; i < 6; ++i)
+		{
+			glTexImage2D(GL_TEXTURE_CUBE_MAP_POSITIVE_X + i, 0, GL_RGB16F,
+				m_width, m_height, 0,
+				GL_RGB, GL_FLOAT, nullptr);
+		}
+		// Set up texture wrapping in s,t,r axis
+		glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
+		glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
+		glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_WRAP_R, GL_CLAMP_TO_EDGE);
+
+		// Set up texture filtering for looking closer
+		glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_LINEAR); // enable pre-filter mipmap sampling (combating visible dots artifact)
+		// Set up texture filtering for looking further
+		glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+
+		// unbind texture
+		glBindTexture(GL_TEXTURE_CUBE_MAP, 0);
+
+		assert(GL_NO_ERROR == glGetError());
+		return result;
+	}
+
+	bool cTexture::LoadHDRMipMapCubemapTexture(const std::string& i_type_id, const GLuint& i_baseWidth, const GLuint& i_baseHeight)
+	{
+		auto result = true;
+		m_width = i_baseWidth;
+		m_height = i_baseHeight;
+
+		// This is for omniShadowMap, Generate cube map texture here
+
+		glGenTextures(1, &m_textureID);
+		glBindTexture(GL_TEXTURE_CUBE_MAP, m_textureID);
+
+		for (size_t i = 0; i < 6; ++i)
+		{
+			glTexImage2D(GL_TEXTURE_CUBE_MAP_POSITIVE_X + i, 0, GL_RGB16F,
+				m_width, m_height, 0,
+				GL_RGB, GL_FLOAT, nullptr);
+		}
+		// Set up texture wrapping in s,t,r axis
+		glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
+		glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
+		glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_WRAP_R, GL_CLAMP_TO_EDGE);
+
+		// Set up texture filtering for looking closer
+		glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_LINEAR);  // set minification filter to mip_linear 
+		// Set up texture filtering for looking further
+		glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+		// generate mip-maps for the cube map so OpenGL automatically allocates the required memory.
+		glGenerateMipmap(GL_TEXTURE_CUBE_MAP);
+
+		// unbind texture
+		glBindTexture(GL_TEXTURE_CUBE_MAP, 0);
+
+		assert(GL_NO_ERROR == glGetError());
+		return result;
+	}
+
+	bool cTexture::LoadHDRRG16Texture(const std::string& i_type_id, const GLuint& i_width, const GLuint& i_height)
+	{
+		auto result = true;
+		m_width = i_width;
+		m_height = i_height;
+
+		glGenTextures(1, &m_textureID);
+
+		// pre-allocate enough memory for the LUT texture.
+		glBindTexture(GL_TEXTURE_2D, m_textureID);
+		glTexImage2D(GL_TEXTURE_2D, 0, GL_RG16F, m_width, m_width, 0, GL_RG, GL_FLOAT, 0);
+
+		// use GL_CLAMP_TO_EDGE to prevent from edge sampling artifacts
+		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
+		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
+		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+		
+		// unbind texture
+		glBindTexture(GL_TEXTURE_2D, 0);
+
+		assert(GL_NO_ERROR == glGetError());
+		return result;
+	}
+
+	bool cTexture::LoadPlannerReflectionTexture(const std::string& i_type_id, const GLuint& i_width, const GLuint& i_height)
 	{
 		auto result = true;
 		m_width = i_width;
@@ -269,7 +445,6 @@ namespace Graphics {
 
 		for (int i = 0; i < 6; ++i)
 		{
-
 			std::string _path = Assets::ProcessPathTex(i_paths[i]);
 			_data = stbi_load(_path.c_str(), &m_width, &m_height, &m_bitDepth, 0);
 			if (_data) {
@@ -307,7 +482,9 @@ namespace Graphics {
 		GLenum _textureType = GL_TEXTURE_2D;
 		// if the texture is a cube map, use GL_TEXTURE_CUBE_MAP
 		if (m_textureType == ETT_CUBEMAP
-			|| m_textureType == ETT_FRAMEBUFFER_CUBEMAP)
+			|| m_textureType == ETT_FRAMEBUFFER_CUBEMAP 
+			|| m_textureType == ETT_FRAMEBUFFER_HDR_CUBEMAP
+			|| m_textureType == ETT_FRAMEBUFFER_HDR_MIPMAP_CUBEMAP)
 			_textureType = GL_TEXTURE_CUBE_MAP;
 		// bind texture to texture unit i_textureLocation
 		// this allow multiples texture to be bound to one shader
@@ -318,22 +495,17 @@ namespace Graphics {
 
 	void cTexture::CleanUpTextureBind(int i_textureLocation)
 	{
-		glActiveTexture(i_textureLocation);
-
-		assert(glGetError() == GL_NO_ERROR);
-		GLenum _textureType = GL_TEXTURE_2D;
-		// if the texture is a cube map, use GL_TEXTURE_CUBE_MAP
-		if (m_textureType == ETT_CUBEMAP
-			|| m_textureType == ETT_FRAMEBUFFER_CUBEMAP)
-			_textureType = GL_TEXTURE_CUBE_MAP;
-		glBindTexture(_textureType, 0);
-		assert(glGetError() == GL_NO_ERROR);
+		cTexture::UnBindTexture(i_textureLocation, m_textureType);
 	}
 
 	void cTexture::CleanUp()
 	{
-		glDeleteTextures(1, &m_textureID);
-		m_textureID = 0;
+		if (m_textureID)
+		{
+			glDeleteTextures(1, &m_textureID);
+			m_textureID = 0;
+			assert(GL_NO_ERROR == glGetError());
+		}
 		m_width = 0;
 		m_height = 0;
 		m_bitDepth = 0;

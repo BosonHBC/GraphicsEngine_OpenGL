@@ -2,6 +2,7 @@
 #include "Assets/LoadTableFromLuaFile.h"
 #include "Cubemap/MatCubemap.h"
 #include "Unlit/MatUnlit.h"
+#include "PBR_MR/MatPBRMR.h"
 #include "Externals/ASSIMP_N/include/assimp/scene.h"
 
 namespace Graphics {
@@ -33,6 +34,9 @@ namespace Graphics {
 			break;
 		case  eMaterialType::MT_UNLIT:
 			_mat = new (std::nothrow) cMatUnlit();
+			break;
+		case  eMaterialType::MT_PBRMR:
+			_mat = new (std::nothrow) cMatPBRMR();
 			break;
 		default:
 			break;

@@ -29,6 +29,9 @@ namespace Graphics {
 		case UBT_ClipPlane:
 			m_size = sizeof(UniformBufferFormats::sClipPlane);
 			break;
+		case UBT_PBRMR:
+			m_size = sizeof(UniformBufferFormats::sPBRMRMaterial);
+			break;
 		case UBT_Invalid:
 			result = false;
 			return result;

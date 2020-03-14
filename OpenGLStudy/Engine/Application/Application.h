@@ -28,10 +28,12 @@ namespace Application {
 		// Simulation time update, call in fixed rate, set by m_simulationUpdateRate_InSeconds
 		virtual void FixedTick(){}
 		
+		// Invoke once right before the application thread enters application loop
+		virtual void BeforeUpdate() {}; 
 		void UpdateUntilExit();
 
 		cWindow* GetCurrentWindow() const { return m_window; }
-
+		void ResetWindowSize();
 	protected:
 		cApplication(const cApplication& i_other) = delete;
 		cApplication& operator = (const cApplication& i_other) = delete;

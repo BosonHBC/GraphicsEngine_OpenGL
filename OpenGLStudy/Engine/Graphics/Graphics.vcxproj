@@ -33,6 +33,7 @@
     <ClCompile Include="Camera\Camera.cpp" />
     <ClCompile Include="Camera\EditorCamera\EditorCamera.cpp" />
     <ClCompile Include="Effect\Effect.cpp" />
+    <ClCompile Include="EnvironmentProbes\EnvProbe.cpp" />
     <ClCompile Include="FrameBuffer\cFrameBuffer.cpp" />
     <ClCompile Include="Graphics.cpp" />
     <ClCompile Include="Light\AmbientLight\AmbientLight.cpp" />
@@ -43,6 +44,7 @@
     <ClCompile Include="Material\Blinn\MatBlinn.cpp" />
     <ClCompile Include="Material\Cubemap\MatCubemap.cpp" />
     <ClCompile Include="Material\Material.cpp" />
+    <ClCompile Include="Material\PBR_MR\MatPBRMR.cpp" />
     <ClCompile Include="Material\Unlit\MatUnlit.cpp" />
     <ClCompile Include="Mesh\Mesh.cpp" />
     <ClCompile Include="Model\Model.cpp" />
@@ -55,6 +57,7 @@
     <ClInclude Include="Color\Color.h" />
     <ClInclude Include="Effect\Effect.h" />
     <ClInclude Include="Effect\Shader\GLShader.h" />
+    <ClInclude Include="EnvironmentProbes\EnvProbe.h" />
     <ClInclude Include="FrameBuffer\cFrameBuffer.h" />
     <ClInclude Include="Graphics.h" />
     <ClInclude Include="Light\AmbientLight\AmbientLight.h" />
@@ -65,6 +68,7 @@
     <ClInclude Include="Material\Blinn\MatBlinn.h" />
     <ClInclude Include="Material\Cubemap\MatCubemap.h" />
     <ClInclude Include="Material\Material.h" />
+    <ClInclude Include="Material\PBR_MR\MatPBRMR.h" />
     <ClInclude Include="Material\Unlit\MatUnlit.h" />
     <ClInclude Include="Mesh\Mesh.h" />
     <ClInclude Include="Model\Model.h" />

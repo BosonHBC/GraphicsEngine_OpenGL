@@ -16,6 +16,8 @@ namespace Graphics {
 		/** Getters */
 		Assets::cHandle<cTexture> GetCubemapHandle() const { return m_cubeMapHandle; }
 
+		void UpdateCubemap(const Assets::cHandle<cTexture>& i_newTexture);
+
 	private:
 		cMatCubemap(): cMaterial(eMaterialType::MT_CUBEMAP) 
 		{}

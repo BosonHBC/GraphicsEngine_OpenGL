@@ -1,0 +1,15 @@
+--[[
+    Default Physcis based rendering metallic roughness workflow
+]]
+return 
+{
+    MaterialType = 4,
+    AlbedoTexture = "red.png",
+    MetallicTexture = "",
+    RoughnessTexture = "",
+    NormalTexture = "",
+    DiffuseIntensity = {1.0,1.0,1.0},
+    MetallicIntensity = 1.0,
+    RoughnessIntensity = 0.1,
+    IOR = {1.08, 1.08, 1.08},
+}

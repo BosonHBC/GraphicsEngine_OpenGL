@@ -15,7 +15,9 @@
 #include "Application/Window/Window.h"
 #include "Material/Blinn/MatBlinn.h"
 #include "Material/Unlit/MatUnlit.h"
+#include "Material/PBR_MR/MatPBRMR.h"
 #include "Time/Time.h"
+
 namespace Graphics {
 
 	// TODO:
@@ -38,6 +40,8 @@ namespace Graphics {
 		cDirectionalLight s_directionalLight;
 	};
 	unsigned int s_currentRenderPass = 0;
+
+
 	// Global data
 	// ---------------------------------
 	cUniformBuffer s_uniformBuffer_frame(eUniformBufferType::UBT_Frame);
@@ -45,12 +49,30 @@ namespace Graphics {
 	cUniformBuffer s_uniformBuffer_Lighting(eUniformBufferType::UBT_Lighting);
 	cUniformBuffer s_uniformBuffer_ClipPlane(eUniformBufferType::UBT_ClipPlane);
 
+	// Pre-defined mesh
+	cModel::HANDLE s_cubeHandle;
+	cModel::HANDLE s_arrowHandle;
+	cModel::HANDLE s_quadHandle;
+
+	// Lighting data
 	UniformBufferFormats::sLighting s_globalLightingData;
 
+	// clear color
 	Color s_clearColor;
+	// arrow colors
+	Color s_arrowColor[3] = { Color(0, 0, 0.8f), Color(0.8f, 0, 0),Color(0, 0.8f, 0) };
 
 	// This buffer capture the camera view
 	cFrameBuffer s_cameraCapture;
+
+	// Environment probe, it capture the very detail version of the environment, by rendering the whole scene(actual geometries) 6 times. 
+	cEnvProbe s_envProbe;
+	// irradiance map for ambient lighting, by rendering a cube map to a cube and convolute it with special fragment shader
+	cEnvProbe s_irradianceMap;
+	// pre-filtering cube map for environment reflection
+	cEnvProbe s_prefilterCubemap;
+	// the brdfLUTTexture for integrating the brdf
+	cFrameBuffer s_brdfLUTTexture;
 
 	sDataRequiredToRenderAFrame s_dataRequiredToRenderAFrame[2];
 	auto* s_dataSubmittedByApplicationThread = &s_dataRequiredToRenderAFrame[0];
@@ -70,11 +92,7 @@ namespace Graphics {
 	std::vector<cSpotLight*> s_spotLight_list;
 
 	// spot light first
-#define SHADOWMAP_START_TEXTURE_UNIT 5
-
-	// Transform hint
-	Graphics::cModel::HANDLE s_arrow;
-	Color s_arrowColor[3] = { Color(0, 0, 0.8f), Color(0.8f, 0, 0),Color(0, 0.8f, 0) };
+#define SHADOWMAP_START_TEXTURE_UNIT 6
 
 	// Threading
 	std::condition_variable s_whenAllDataHasBeenSubmittedFromApplicationThread;
@@ -83,98 +101,154 @@ namespace Graphics {
 
 	//functions
 	void RenderScene();
+
 	void RenderSceneWithoutMaterial();
+
+	void FixSamplerProblem(const char* i_effectKey)
+	{
+		// Fix sampler problem before validating the program
+
+		cEffect* _effect = GetEffectByKey(i_effectKey);
+		_effect->UseEffect();
+		GLuint _programID = _effect->GetProgramID();
+		char _charBuffer[64] = { '\0' };
+
+		{
+			GLuint _irradMapID = glGetUniformLocation(_effect->GetProgramID(), "IrradianceMap");
+			if (_irradMapID > 0 && _irradMapID < static_cast<GLuint>(-1))
+				glUniform1i(_irradMapID, 4);
+		}
+		{
+			GLuint _preFilterMapID = glGetUniformLocation(_effect->GetProgramID(), "PrefilterMap");
+			if (_preFilterMapID > 0 && _preFilterMapID < static_cast<GLuint>(-1))
+				glUniform1i(_preFilterMapID, 5);
+		}
+		{
+			GLuint _LutTextureID = glGetUniformLocation(_effect->GetProgramID(), "BrdfLUTMap");
+			if (_LutTextureID > 0 && _LutTextureID < static_cast<GLuint>(-1))
+				glUniform1i(_LutTextureID, 17);
+		}
+
+		for (int i = 0; i < MAX_COUNT_PER_LIGHT; ++i)
+		{
+			snprintf(_charBuffer, sizeof(_charBuffer), "spotlightShadowMap[%d]", i);
+			GLuint _spLightShadowMap = glGetUniformLocation(_programID, _charBuffer);
+			glUniform1i(_spLightShadowMap, SHADOWMAP_START_TEXTURE_UNIT + i);
+
+			snprintf(_charBuffer, sizeof(_charBuffer), "pointLightShadowMap[%d]", i);
+			GLuint _pLightShadowMap = glGetUniformLocation(_programID, _charBuffer);
+			glUniform1i(_pLightShadowMap, SHADOWMAP_START_TEXTURE_UNIT + MAX_COUNT_PER_LIGHT + i);
+		}
+		assert(GL_NO_ERROR == glGetError());
+		_effect->UnUseEffect();
+	}
 
 	bool Initialize()
 	{
 		auto result = true;
-
-		// Create default effect
+		// Create effects
 		{
-			if (!(result = CreateEffect(Constants::CONST_DEFAULT_EFFECT_KEY, Constants::CONST_PATH_DEFAULT_VERTEXSHADER, Constants::CONST_PATH_BLINNPHONG_FRAGMENTSHADER))) {
-				printf("Fail to create default effect.\n");
-				return result;
-			}
-			s_currentEffect = GetEffectByKey(Constants::CONST_DEFAULT_EFFECT_KEY);
-			s_currentEffect->UseEffect();
+			// Create default effect
 			{
-				GLuint _spLightShadowMap = glGetUniformLocation(s_currentEffect->GetProgramID(), "spotlightShadowMap[0]");
-				glUniform1i(_spLightShadowMap, 5);
-				_spLightShadowMap = glGetUniformLocation(s_currentEffect->GetProgramID(), "spotlightShadowMap[1]");
-				glUniform1i(_spLightShadowMap, 6);
-				_spLightShadowMap = glGetUniformLocation(s_currentEffect->GetProgramID(), "spotlightShadowMap[2]");
-				glUniform1i(_spLightShadowMap, 7);
-				_spLightShadowMap = glGetUniformLocation(s_currentEffect->GetProgramID(), "spotlightShadowMap[3]");
-				glUniform1i(_spLightShadowMap, 8);
-				_spLightShadowMap = glGetUniformLocation(s_currentEffect->GetProgramID(), "spotlightShadowMap[4]");
-				glUniform1i(_spLightShadowMap, 9);
-
-				GLuint _pLightShadowMap = glGetUniformLocation(s_currentEffect->GetProgramID(), "pointLightShadowMap[0]");
-				glUniform1i(_pLightShadowMap, 11);
-				_pLightShadowMap = glGetUniformLocation(s_currentEffect->GetProgramID(), "pointLightShadowMap[1]");
-				glUniform1i(_pLightShadowMap, 12);
-				_pLightShadowMap = glGetUniformLocation(s_currentEffect->GetProgramID(), "pointLightShadowMap[2]");
-				glUniform1i(_pLightShadowMap, 13);
-				_pLightShadowMap = glGetUniformLocation(s_currentEffect->GetProgramID(), "pointLightShadowMap[3]");
-				glUniform1i(_pLightShadowMap, 14);
-				_pLightShadowMap = glGetUniformLocation(s_currentEffect->GetProgramID(), "pointLightShadowMap[4]");
-				glUniform1i(_pLightShadowMap, 15);
-
+				if (!(result = CreateEffect(Constants::CONST_DEFAULT_EFFECT_KEY, Constants::CONST_PATH_DEFAULT_VERTEXSHADER, Constants::CONST_PATH_BLINNPHONG_FRAGMENTSHADER))) {
+					printf("Fail to create default effect.\n");
+					return result;
+				}
+				s_currentEffect = GetEffectByKey(Constants::CONST_DEFAULT_EFFECT_KEY);
+				FixSamplerProblem(Constants::CONST_DEFAULT_EFFECT_KEY);
 			}
-
-			s_currentEffect->UnUseEffect();
-			assert(GL_NO_ERROR == glGetError());
-		}
-		// Create shadow map effect
-		{
-			if (!(result = CreateEffect("ShadowMap",
-				"shadowmaps/directionalShadowMap/directional_shadow_map_vert.glsl",
-				"shadowmaps/directionalShadowMap/directional_shadow_map_frag.glsl"))) {
-				printf("Fail to create shadow map effect.\n");
-				return result;
+			// Create shadow map effect
+			{
+				if (!(result = CreateEffect("ShadowMap",
+					"shadowmaps/directionalShadowMap/directional_shadow_map_vert.glsl",
+					"shadowmaps/directionalShadowMap/directional_shadow_map_frag.glsl"))) {
+					printf("Fail to create shadow map effect.\n");
+					return result;
+				}
 			}
-		}
-		// Create normal display effect
-		{
-			if (!(result = CreateEffect("OmniShadowMap",
-				"shadowmaps/omniShadowMap/omni_shadow_map_vert.glsl",
-				"shadowmaps/omniShadowMap/omni_shadow_map_frag.glsl",
-				"shadowmaps/omniShadowMap/omni_shadow_map_geom.glsl"
-			))) {
-				printf("Fail to create OmniShadowMap effect.\n");
-				return result;
-			}
-		}
-		// Create cube map effect
-		{
-			if (!(result = CreateEffect("CubemapEffect",
-				"cubemap/cubemap_vert.glsl",
-				"cubemap/cubemap_frag.glsl"))) {
-				printf("Fail to create cube map effect.\n");
-				return result;
-			}
-		}
-		// Create unlit effect
-		{
-			if (!(result = CreateEffect("UnlitEffect",
-				"unlit/arrow_vert.glsl",
-				"unlit/arrow_frag.glsl"))) {
-				printf("Fail to create unlit effect.\n");
-				return result;
-			}
-		}
-
-		// Create normal display effect
-		{
-			if (!(result = CreateEffect("NormalDisplay",
-				"normalDisplayer/normal_vert.glsl",
-				"normalDisplayer/normal_frag.glsl", 
-				"normalDisplayer/normal_geom.glsl"
+			// Create normal display effect
+			{
+				if (!(result = CreateEffect("OmniShadowMap",
+					"shadowmaps/omniShadowMap/omni_shadow_map_vert.glsl",
+					"shadowmaps/omniShadowMap/omni_shadow_map_frag.glsl",
+					"shadowmaps/omniShadowMap/omni_shadow_map_geom.glsl"
 				))) {
-				printf("Fail to create normal display effect.\n");
-				return result;
+					printf("Fail to create OmniShadowMap effect.\n");
+					return result;
+				}
+			}
+			// Create cube map effect
+			{
+				if (!(result = CreateEffect("CubemapEffect",
+					"cubemap/cubemap_vert.glsl",
+					"cubemap/cubemap_frag.glsl"))) {
+					printf("Fail to create cube map effect.\n");
+					return result;
+				}
+			}
+			// Create unlit effect
+			{
+				if (!(result = CreateEffect("UnlitEffect",
+					"unlit/arrow_vert.glsl",
+					"unlit/arrow_frag.glsl"))) {
+					printf("Fail to create unlit effect.\n");
+					return result;
+				}
+			}
+			// Create normal display effect
+			{
+				if (!(result = CreateEffect("NormalDisplay",
+					"normalDisplayer/normal_vert.glsl",
+					"normalDisplayer/normal_frag.glsl",
+					"normalDisplayer/normal_geom.glsl"
+				))) {
+					printf("Fail to create normal display effect.\n");
+					return result;
+				}
+			}
+			// Create PBR_MetallicRoughness effect
+			{
+				if (!(result = CreateEffect("PBR_MR",
+					"vertexShader.glsl",
+					"PBR_MetallicRoughness.glsl"
+				))) {
+					printf("Fail to create PBR_MR effect.\n");
+					return result;
+				}
+				else
+				{
+					FixSamplerProblem("PBR_MR");
+				}
+			}
+			// Crete diffuse irradiance convolution effect
+			{
+				if (!(result = CreateEffect("IrradConvolution",
+					"cubemap/cubemap_vert.glsl",
+					"cubemap/cubemap_diff_irrad_convolution_frag.glsl"))) {
+					printf("Fail to create IrradConvolution effect.\n");
+					return result;
+				}
+			}
+			// Crete cube map pre-filtering effect
+			{
+				if (!(result = CreateEffect("CubemapPrefilter",
+					"cubemap/cubemap_vert.glsl",
+					"cubemap/cubemap_spec_prefilter_frag.glsl"))) {
+					printf("Fail to create CubemapPrefilter effect.\n");
+					return result;
+				}
+			}
+			// Crete BRDF integration effect
+			{
+				if (!(result = CreateEffect("BrdfIntegration",
+					"IntegrateBRDF/intergrate_brdf_vert.glsl",
+					"IntegrateBRDF/intergrate_brdf_frag.glsl"))) {
+					printf("Fail to create BRDF Integration effect.\n");
+					return result;
+				}
 			}
 		}
+
 		// Initialize uniform buffer
 		{
 			// Frame buffer
@@ -212,23 +286,227 @@ namespace Graphics {
 		}
 
 
-		if (!(result = s_cameraCapture.Initialize(800, 600, ETT_FRAMEBUFFER_COLOR))) {
+		if (!(result = s_cameraCapture.Initialize(800, 600, ETT_FRAMEBUFFER_PLANNER_REFLECTION))) {
 			printf("Fail to create camera capture frame buffer.\n");
 			return result;
 		}
 
-		// Load arrows
+		// Initialize environment probes
 		{
-			std::string _arrowPath = "Contents/models/arrow.model";
-			if (!(result = Graphics::cModel::s_manager.Load(_arrowPath, s_arrow)))
-			{
-				printf("Failed to Load arrow_forward!\n");
+
+			glm::vec3 _probePosition = glm::vec3(-400, 100, 0);
+			GLfloat _probeRange = 500;
+			GLuint envMapResolution = 1024 * 2;
+			if (!(result = s_envProbe.Initialize(_probeRange, envMapResolution, envMapResolution, ETT_FRAMEBUFFER_HDR_CUBEMAP, _probePosition))) {
+				printf("Fail to create environment probe.\n");
+				return result;
+			}
+
+			if (!(result = s_irradianceMap.Initialize(_probeRange, 32, 32, ETT_FRAMEBUFFER_HDR_CUBEMAP, _probePosition))) {
+				printf("Fail to create irradiance Map.\n");
+				return result;
+			}
+
+			if (!(result = s_prefilterCubemap.Initialize(_probeRange, 256, 256, ETT_FRAMEBUFFER_HDR_MIPMAP_CUBEMAP, _probePosition))) {
+				printf("Fail to create irradiance Map.\n");
+				return result;
+			}
+			if (!(result = s_brdfLUTTexture.Initialize(envMapResolution, envMapResolution, ETT_FRAMEBUFFER_PLANNER_REFLECTION))) {
+				printf("Fail to create brdfLUTTexture.\n");
 				return result;
 			}
 		}
 
+		// Load models
+		{
+			std::string _modelPath = "Contents/models/arrow.model";
+			if (!(result = Graphics::cModel::s_manager.Load(_modelPath, s_arrowHandle)))
+			{
+				printf("Failed to Load arrow model!\n");
+				return result;
+			}
 
+			_modelPath = "Contents/models/cube.model";
+			if (!(result = Graphics::cModel::s_manager.Load(_modelPath, s_cubeHandle)))
+			{
+				printf("Failed to Load cube model!\n");
+				return result;
+			}
+
+			_modelPath = "Contents/models/quad.model";
+			if (!(result = Graphics::cModel::s_manager.Load(_modelPath, s_quadHandle)))
+			{
+				printf("Failed to Load quad model!\n");
+				return result;
+			}
+		}
+
+		// Load cube
+		glEnable(GL_DEPTH_TEST);
+		glEnable(GL_TEXTURE_CUBE_MAP_SEAMLESS);
+		glDepthFunc(GL_LEQUAL);
+		glEnable(GL_CULL_FACE);
+		glCullFace(GL_BACK);
+		assert(GL_NO_ERROR == glGetError());
 		return result;
+	}
+
+	void PreRenderFrame()
+	{
+		/** 1. Wait for data being submitted here */
+		// Acquire the lock
+		std::unique_lock<std::mutex> _mlock(s_graphicMutex);
+		// Wait until the conditional variable is signaled
+		s_whenAllDataHasBeenSubmittedFromApplicationThread.wait(_mlock);
+
+		// After data has been submitted, swap the data
+		std::swap(s_dataSubmittedByApplicationThread, s_dataRenderingByGraphicThread);
+		// Notify the application thread that data is swapped and it is ready for receiving new data
+		s_whenDataHasBeenSwappedInRenderThread.notify_one();
+
+		/** 2. Start to render pass one by one */
+		s_uniformBuffer_ClipPlane.Update(&s_dataRenderingByGraphicThread->s_ClipPlane);
+		constexpr GLuint shadowmapPassesCount = 3; // point, spot, directional
+		// i. First deal with existing shadow maps
+		{
+			for (size_t i = 0; i < shadowmapPassesCount; ++i)
+			{
+				s_currentRenderPass = i;
+				s_uniformBuffer_frame.Update(&s_dataRenderingByGraphicThread->s_renderPasses[i].FrameData);
+				// Execute pass function
+				s_dataRenderingByGraphicThread->s_renderPasses[i].RenderPassFunction();
+			}
+		}
+
+		// ii. start to capture the environment cube map
+		{
+			s_envProbe.StartCapture();
+
+			GLuint passesPerFace = (s_dataRenderingByGraphicThread->s_renderPasses.size() - shadowmapPassesCount) / 6.f;
+			for (size_t i = 0; i < 6; ++i)
+			{
+				glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_CUBE_MAP_POSITIVE_X + i, s_envProbe.GetCubemapTextureID(), 0);
+				glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+				for (size_t j = 0; j < passesPerFace; ++j)
+				{
+					// Update current render pass
+					s_currentRenderPass = i * passesPerFace + j + shadowmapPassesCount;
+					// Update frame data
+					s_uniformBuffer_frame.Update(&s_dataRenderingByGraphicThread->s_renderPasses[s_currentRenderPass].FrameData);
+					// Execute pass function
+					s_dataRenderingByGraphicThread->s_renderPasses[s_currentRenderPass].RenderPassFunction();
+				}
+
+			}
+
+			s_envProbe.StopCapture();
+			
+			// After capturing the scene, generate the mip map by opengl itself
+			glBindTexture(GL_TEXTURE_CUBE_MAP, s_envProbe.GetCubemapTextureID());
+			glGenerateMipmap(GL_TEXTURE_CUBE_MAP);
+			glBindTexture(GL_TEXTURE_CUBE_MAP, 0);
+		}
+
+		// iii. start to capture the irradiance map
+		{
+			glFrontFace(GL_CW);
+			s_currentEffect = Graphics::GetEffectByKey("IrradConvolution");
+			s_currentEffect->UseEffect();
+
+			GLuint _cubemapTexID = glGetUniformLocation(s_currentEffect->GetProgramID(), "cubemapTex");
+			glUniform1i(_cubemapTexID, 0);
+			s_currentEffect->ValidateProgram();
+			cTexture* _envProbeTexture = cTexture::s_manager.Get(s_envProbe.GetCubemapTextureHandle());
+			_envProbeTexture->UseTexture(GL_TEXTURE0);
+
+			s_irradianceMap.StartCapture();
+			for (size_t i = 0; i < 6; ++i)
+			{
+				glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_CUBE_MAP_POSITIVE_X + i, s_irradianceMap.GetCubemapTextureID(), 0);
+				glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+				UniformBufferFormats::sFrame _cubemapFrameData(s_irradianceMap.GetProjectionMat4(), s_irradianceMap.GetViewMat4(i));
+				_cubemapFrameData.ViewPosition = s_irradianceMap.GetPosition();
+				s_uniformBuffer_frame.Update(&_cubemapFrameData);
+
+				// Render cube
+				cModel* _cube = cModel::s_manager.Get(s_cubeHandle);
+				if (_cube) { _cube->RenderWithoutMaterial(); }
+			}
+			s_irradianceMap.StopCapture();
+
+			s_currentEffect->UnUseEffect();
+			
+		}
+
+		// iv. start to capture the pre-filter cube map
+		{
+			s_currentEffect = Graphics::GetEffectByKey("CubemapPrefilter");
+			s_currentEffect->UseEffect();
+
+			GLuint _cubemapTexID = glGetUniformLocation(s_currentEffect->GetProgramID(), "cubemapTex");
+			glUniform1i(_cubemapTexID, 0);
+			GLuint _roughnessID = glGetUniformLocation(s_currentEffect->GetProgramID(), "roughness");
+			GLuint _resolutionID = glGetUniformLocation(s_currentEffect->GetProgramID(), "resolution");
+			glUniform1i(_resolutionID, s_envProbe.GetWidth());
+
+			s_currentEffect->ValidateProgram();
+			cTexture* _envProbeTexture = cTexture::s_manager.Get(s_envProbe.GetCubemapTextureHandle());
+			_envProbeTexture->UseTexture(GL_TEXTURE0);
+
+			s_prefilterCubemap.StartCapture();
+
+			constexpr GLuint maxMipLevels = 5;
+			for (GLuint i = maxMipLevels; i > 0; --i) // capture multiple mip-map levels from low res to high res
+			{
+				GLuint mip = i - 1;
+				// resize frame buffer according to mip-level size.
+				GLuint mipWidth = s_prefilterCubemap.GetWidth() * glm::pow(0.5f, mip);
+				GLuint mipHeight = s_prefilterCubemap.GetHeight() * glm::pow(0.5f, mip);
+
+				glRenderbufferStorage(GL_RENDERBUFFER, GL_DEPTH_COMPONENT24, mipWidth, mipHeight); // resize render buffer too
+				Application::cApplication* _app = Application::GetCurrentApplication();
+				if (_app) { _app->GetCurrentWindow()->SetViewportSize(mipWidth, mipHeight); }
+
+				float roughness = static_cast<float>(mip) / static_cast<float>(maxMipLevels - 1);
+				glUniform1f(_roughnessID, roughness);
+
+				for (size_t i = 0; i < 6; ++i)
+				{
+					glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_CUBE_MAP_POSITIVE_X + i, s_prefilterCubemap.GetCubemapTextureID(), mip);
+					glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+					UniformBufferFormats::sFrame _cubemapFrameData(s_prefilterCubemap.GetProjectionMat4(), s_prefilterCubemap.GetViewMat4(i));
+					_cubemapFrameData.ViewPosition = s_prefilterCubemap.GetPosition();
+					s_uniformBuffer_frame.Update(&_cubemapFrameData);
+
+					// Render cube
+					cModel* _cube = cModel::s_manager.Get(s_cubeHandle);
+					if (_cube) { _cube->RenderWithoutMaterial(); }
+				}
+			}
+
+			s_prefilterCubemap.StopCapture();
+			s_currentEffect->UnUseEffect();
+			glFrontFace(GL_CCW);
+		}
+
+		// v. start generate BRDF LUTTexture
+		{
+			s_currentEffect = Graphics::GetEffectByKey("BrdfIntegration");
+			s_currentEffect->UseEffect();
+			s_brdfLUTTexture.Write();
+
+			glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+			// Render quad
+			cModel* _quad = cModel::s_manager.Get(s_quadHandle);
+			if (_quad) {
+				_quad->RenderWithoutMaterial(); 
+			}
+
+			s_brdfLUTTexture.UnWrite();
+			s_currentEffect->UnUseEffect();
+			
+		}
+		printf("---------------------------------Pre-Rendering stage done.---------------------------------\n");
 	}
 
 	void RenderFrame()
@@ -259,6 +537,7 @@ namespace Graphics {
 
 	void DirectionalShadowMap_Pass()
 	{
+		glDisable(GL_CULL_FACE);
 		s_currentEffect = GetEffectByKey("ShadowMap");
 		s_currentEffect->UseEffect();
 		cDirectionalLight* _directionalLight = &s_dataRenderingByGraphicThread->s_directionalLight;
@@ -269,12 +548,6 @@ namespace Graphics {
 			cFrameBuffer* _directionalLightFBO = _directionalLight->GetShadowMap();
 			if (_directionalLightFBO && _directionalLight->IsShadowEnabled()) {
 
-				{
-					Application::cApplication* _app = Application::GetCurrentApplication();
-					if (_app) {
-						_app->GetCurrentWindow()->SetViewportSize(_directionalLightFBO->GetWidth(), _directionalLightFBO->GetHeight());
-					}
-				}
 				// write buffer to the texture
 				_directionalLightFBO->Write();
 
@@ -290,13 +563,15 @@ namespace Graphics {
 				assert(glGetError() == GL_NO_ERROR);
 			}
 		}
-		
 		s_currentEffect->UnUseEffect();
+		glEnable(GL_CULL_FACE);
+		glCullFace(GL_BACK);
 	}
 
 	void PointLightShadowMap_Pass()
 	{
 		if (s_dataRenderingByGraphicThread->s_pointLights.size() <= 0) return;
+		glDisable(GL_CULL_FACE);
 		s_currentEffect = GetEffectByKey("OmniShadowMap");
 		s_currentEffect->UseEffect();
 
@@ -305,12 +580,6 @@ namespace Graphics {
 			auto* it = &s_dataRenderingByGraphicThread->s_pointLights[i];
 			cFrameBuffer* _pointLightFBO = it->GetShadowMap();
 			if (_pointLightFBO) {
-				{
-					Application::cApplication* _app = Application::GetCurrentApplication();
-					if (_app) {
-						_app->GetCurrentWindow()->SetViewportSize(_pointLightFBO->GetWidth(), _pointLightFBO->GetHeight());
-					}
-				}
 
 				// for each light, needs to update the frame data
 				Graphics::UniformBufferFormats::sFrame _frameData_PointLightShadow;
@@ -336,12 +605,14 @@ namespace Graphics {
 			}
 		}
 		s_currentEffect->UnUseEffect();
+		glEnable(GL_CULL_FACE);
+		glCullFace(GL_BACK);
 	}
 
 	void SpotLightShadowMap_Pass()
 	{
 		if (s_dataRenderingByGraphicThread->s_spotLights.size() <= 0) return;
-
+		glDisable(GL_CULL_FACE);
 		s_currentEffect = GetEffectByKey("ShadowMap");
 		s_currentEffect->UseEffect();
 
@@ -352,12 +623,6 @@ namespace Graphics {
 			cFrameBuffer* _spotLightFB = it->GetShadowMap();
 			if (_spotLightFB) {
 
-				{
-					Application::cApplication* _app = Application::GetCurrentApplication();
-					if (_app) {
-						_app->GetCurrentWindow()->SetViewportSize(_spotLightFB->GetWidth(), _spotLightFB->GetHeight());
-					}
-				}
 				// for each light, needs to update the frame data
 				Graphics::UniformBufferFormats::sFrame _frameData_SpotLightShadow(it->CalculateLightTransform());
 				_frameData_SpotLightShadow.ViewPosition = it->Transform()->Position();
@@ -378,8 +643,9 @@ namespace Graphics {
 				assert(glGetError() == GL_NO_ERROR);
 			}
 		}
-
 		s_currentEffect->UnUseEffect();
+		glEnable(GL_CULL_FACE);
+		glCullFace(GL_BACK);
 	}
 
 	void Reflection_Pass()
@@ -392,13 +658,6 @@ namespace Graphics {
 		{
 			s_currentEffect = GetEffectByKey(Constants::CONST_DEFAULT_EFFECT_KEY);
 			s_currentEffect->UseEffect();
-		}
-		// Reset window size
-		{
-			Application::cApplication* _app = Application::GetCurrentApplication();
-			if (_app) {
-				_app->GetCurrentWindow()->SetViewportSize(s_cameraCapture.GetWidth(), s_cameraCapture.GetHeight());
-			}
 		}
 		s_cameraCapture.Write();
 
@@ -427,11 +686,6 @@ namespace Graphics {
 		}
 	}
 
-	Graphics::cFrameBuffer* GetCameraCaptureFrameBuffer()
-	{
-		return &s_cameraCapture;
-	}
-
 	void SubmitClipPlaneData(const glm::vec4& i_plane0, const glm::vec4& i_plane1 /*= glm::vec4(0,0,0,0)*/, const glm::vec4& i_plane2 /*= glm::vec4(0, 0, 0, 0)*/, const glm::vec4& i_plane3 /*= glm::vec4(0, 0, 0, 0)*/)
 	{
 		s_dataSubmittedByApplicationThread->s_ClipPlane = UniformBufferFormats::sClipPlane(i_plane0, i_plane1, i_plane2, i_plane3);
@@ -445,6 +699,7 @@ namespace Graphics {
 		s_dataSubmittedByApplicationThread->s_ambientLight = i_ambientLight;
 
 	}
+
 	void SubmitDataToBeRendered(const UniformBufferFormats::sFrame& i_frameData, const std::vector<std::pair<Graphics::cModel::HANDLE, cTransform>>& i_modelToTransform_map, void(*func_ptr)())
 	{
 		sPass inComingPasses;
@@ -461,6 +716,7 @@ namespace Graphics {
 		s_dataSubmittedByApplicationThread->s_spotLights.clear();
 
 	}
+
 	void Render_Pass()
 	{
 
@@ -470,17 +726,10 @@ namespace Graphics {
 			s_currentEffect->UseEffect();
 
 		}
-		// Reset window size
-		{
-			Application::cApplication* _app = Application::GetCurrentApplication();
-			if (_app) {
-				_app->GetCurrentWindow()->SetViewportSize(_app->GetCurrentWindow()->GetBufferWidth(), _app->GetCurrentWindow()->GetBufferHeight());
-			}
-		}
 		// Clear color and buffers
 		{
 			// clear window
-			glClearColor(s_clearColor.r, s_clearColor.g, s_clearColor.b, 1.f);
+			glClearColor(s_clearColor.r, s_clearColor.g, s_clearColor.b, 0.f);
 			// A lot of things can be cleaned like color buffer, depth buffer, so we need to specify what to clear
 			glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
@@ -498,10 +747,56 @@ namespace Graphics {
 		// Swap buffers happens in main rendering loop, not in this render function.
 	}
 
+	void PBR_Pass()
+	{
+		s_currentEffect = GetEffectByKey("PBR_MR");
+		s_currentEffect->UseEffect();
+
+		// Update Lighting Data
+		UpdateLightingData();
+
+		s_currentEffect->ValidateProgram();
+
+		auto& renderList = s_dataRenderingByGraphicThread->s_renderPasses[s_currentRenderPass].ModelToTransform_map;
+		constexpr auto sphereOffset = 3;
+		// draw the space first
+		for (int i = 0; i < sphereOffset; ++i)
+		{
+			// 1. Update draw call data
+			s_uniformBuffer_drawcall.Update(&UniformBufferFormats::sDrawCall(renderList[i].second.M(), renderList[i].second.TranspostInverse()));
+			// 2. Draw
+			cModel* _model = cModel::s_manager.Get(renderList[i].first);
+			if (_model) {
+				_model->UpdateUniformVariables(s_currentEffect->GetProgramID());
+				_model->Render();
+			}
+		}
+		// assign different material for the sphere
+		for (int i = 0; i < 5; ++i)
+		{
+			for (int j = 0; j < 5; ++j)
+			{
+				// 1. Update draw call data
+				s_uniformBuffer_drawcall.Update(&UniformBufferFormats::sDrawCall(renderList[i * 5 + j + sphereOffset].second.M(), renderList[i * 5 + j + sphereOffset].second.TranspostInverse()));
+				// 2. Draw
+				cModel* _model = cModel::s_manager.Get(renderList[i * 5 + j + sphereOffset].first);
+				if (_model) {
+					Graphics::cMatPBRMR* _sphereMat = dynamic_cast<Graphics::cMatPBRMR*>(_model->GetMaterialAt());
+					_sphereMat->UpdateMetalnessIntensity(1.f / 5.f * j + 0.1f);
+					_sphereMat->UpdateRoughnessIntensity(0.9f - 1.f / 5.f *i );
+					_model->UpdateUniformVariables(s_currentEffect->GetProgramID());
+					_model->Render();
+				}
+			}
+		}
+
+		s_currentEffect->UnUseEffect();
+	}
+
 	void CubeMap_Pass()
 	{
 		// change depth function so depth test passes when values are equal to depth buffer's content
-		glDepthFunc(GL_LEQUAL);
+		glFrontFace(GL_CW);
 
 		s_currentEffect = GetEffectByKey("CubemapEffect");
 		s_currentEffect->UseEffect();
@@ -521,12 +816,12 @@ namespace Graphics {
 
 		s_currentEffect->UnUseEffect();
 		// set depth function back to default
-		glDepthFunc(GL_LESS);
+		glFrontFace(GL_CCW);
 	}
 
 	void Gizmo_RenderTransform()
 	{
-		glDisable(GL_DEPTH_TEST);
+		//glDisable(GL_DEPTH_TEST);
 		s_currentEffect = GetEffectByKey("UnlitEffect");
 		s_currentEffect->UseEffect();
 
@@ -545,8 +840,8 @@ namespace Graphics {
 			}
 
 			s_currentEffect->ValidateProgram();
-			
-			cModel* _model = cModel::s_manager.Get(s_arrow);
+
+			cModel* _model = cModel::s_manager.Get(s_arrowHandle);
 			cMatUnlit* _arrowMat = dynamic_cast<cMatUnlit*>(_model->GetMaterialAt());
 
 			for (int i = 0; i < 3; ++i)
@@ -597,6 +892,7 @@ namespace Graphics {
 		}
 
 	}
+
 	void RenderScene()
 	{
 		// loop through every single model
@@ -609,6 +905,7 @@ namespace Graphics {
 			// 2. Draw
 			cModel* _model = cModel::s_manager.Get(it->first);
 			if (_model) {
+				_model->UpdateUniformVariables(s_currentEffect->GetProgramID());
 				_model->Render();
 			}
 		}
@@ -627,13 +924,18 @@ namespace Graphics {
 		if (!(result = cMatBlinn::GetUniformBuffer().CleanUp())) {
 			printf("Fail to cleanup uniformBuffer_MatBlinnPhong\n");
 		}
+		if (!(result = cMatPBRMR::GetUniformBuffer().CleanUp())) {
+			printf("Fail to cleanup uniformBuffer_PBRMR\n");
+		}
 		if (!(result = s_uniformBuffer_Lighting.CleanUp())) {
 			printf("Fail to cleanup uniformBuffer_Lighting\n");
 		}
 		if (!(result = s_uniformBuffer_ClipPlane.CleanUp())) {
 			printf("Fail to cleanup uniformBuffer_ClipPlane\n");
 		}
-		Graphics::cModel::s_manager.Release(s_arrow);
+		Graphics::cModel::s_manager.Release(s_arrowHandle);
+		Graphics::cModel::s_manager.Release(s_cubeHandle);
+		Graphics::cModel::s_manager.Release(s_quadHandle);
 		// Clean up effect
 		for (auto it = s_KeyToEffect_map.begin(); it != s_KeyToEffect_map.end(); ++it)
 		{
@@ -665,10 +967,45 @@ namespace Graphics {
 		safe_delete(s_directionalLight);
 
 		s_cameraCapture.~cFrameBuffer();
-
+		s_envProbe.~cEnvProbe();
+		s_irradianceMap.~cEnvProbe();
+		s_prefilterCubemap.~cEnvProbe();
+		s_brdfLUTTexture.~cFrameBuffer();
 		return result;
 	}
 
+	//----------------------------------------------------------------------------------
+	/** Getters */
+	//----------------------------------------------------------------------------------
+
+	Graphics::cFrameBuffer* GetCameraCaptureFrameBuffer()
+	{
+		return &s_cameraCapture;
+	}
+
+	Graphics::cEnvProbe* GetEnvironmentProbe()
+	{
+		return &s_envProbe;
+	}
+
+	Graphics::cEnvProbe* GetIrrdianceMapProbe()
+	{
+		return &s_irradianceMap;
+	}
+
+	Graphics::cEnvProbe* GetPreFilterMapProbe()
+	{
+		return &s_prefilterCubemap;
+	}
+
+	Graphics::cFrameBuffer* GetBRDFLutFrameBuffer()
+	{
+		return &s_brdfLUTTexture;
+	}
+
+	//----------------------------------------------------------------------------------
+	/** Effect related */
+	//----------------------------------------------------------------------------------
 
 	bool CreateEffect(const char* i_key, const char* i_vertexShaderPath, const char* i_fragmentShaderPath, const char* i_geometryShaderPath/* = ""*/)
 	{
@@ -770,7 +1107,7 @@ namespace Graphics {
 		cDirectionalLight* newDirectionalLight = new cDirectionalLight(i_color, glm::normalize(i_direction));
 		newDirectionalLight->SetupLight(s_currentEffect->GetProgramID(), 0);
 		newDirectionalLight->SetEnableShadow(i_enableShadow);
-		newDirectionalLight->CreateShadowMap(1024, 1024);
+		newDirectionalLight->CreateShadowMap(2048, 2048);
 
 
 		o_directionalLight = newDirectionalLight;
@@ -789,8 +1126,8 @@ namespace Graphics {
 			_directionalLight->Illuminate();
 			_directionalLight->SetLightUniformTransform();
 			if (_directionalLight->IsShadowEnabled()) {
-				_directionalLight->UseShadowMap(2);
-				_directionalLight->GetShadowMap()->Read(GL_TEXTURE2);
+				_directionalLight->UseShadowMap(16);
+				_directionalLight->GetShadowMap()->Read(GL_TEXTURE16);
 			}
 		}
 

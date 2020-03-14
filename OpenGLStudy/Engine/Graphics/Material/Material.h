@@ -21,6 +21,7 @@ namespace Graphics {
 		MT_BLINN_PHONG,
 		MT_CUBEMAP,
 		MT_UNLIT,
+		MT_PBRMR,
 		//... will support more in the future
 	};
 	//--------------------------

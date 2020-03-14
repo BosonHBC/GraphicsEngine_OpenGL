@@ -1,0 +1,9 @@
+--[[
+    Default Model sheet
+]]
+return 
+{
+    ModelPath = "spaceHolder_high.obj",
+    MaterialPath = "spaceHolder_PBRMR.material",
+
+}

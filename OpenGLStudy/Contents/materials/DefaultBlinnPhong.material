@@ -7,9 +7,10 @@ return
     MaterialType = 1,
     DiffuseTexture = "",
     SpecularTexture = "",
+    NormalTexture = "",
     DiffuseIntensity = {1.0,1.0,1.0},
     SpecularIntensity = {1.0,1.0,1.0},
     EnvironmentIntensity = {0,0,0},
-    Shininess = 32,
+    Shininess = 2,
 
 }

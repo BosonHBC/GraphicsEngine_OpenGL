@@ -3,13 +3,15 @@
 // this uniform is default 0, if we need more texture unit, we need to bind manually
 uniform sampler2D diffuseTex; // 0
 uniform sampler2D specularTex; // 1
-uniform sampler2D directionalShadowMap; // 2
+uniform sampler2D normalTex; // 2
 uniform samplerCube cubemapTex; // 3
 uniform sampler2D reflectionTex; // 4
 
+
 const int MAX_COUNT_PER_LIGHT = 5;
-uniform sampler2D spotlightShadowMap[MAX_COUNT_PER_LIGHT]; // 5 -> 10
+uniform sampler2D spotlightShadowMap[MAX_COUNT_PER_LIGHT]; // 6 -> 10
 uniform samplerCube pointLightShadowMap[MAX_COUNT_PER_LIGHT]; // 11-> 15
+uniform sampler2D directionalShadowMap; // 16
 
 const vec3 gridSamplingDisk[20] =vec3[]
 (
@@ -21,9 +23,9 @@ const vec3 gridSamplingDisk[20] =vec3[]
 );
 
 in vec2 texCood0;
-in vec3 Normal;
 in vec3 fragPos;
 in vec4 clipSpaceCoord;
+in mat3 TBN;
 
 in vec4 DirectionalLightSpacePos;
 in vec4 SpotLightSpacePos[MAX_COUNT_PER_LIGHT];
@@ -236,6 +238,11 @@ vec4 IlluminateByReflectionTexture()
 //-------------------------------------------------------------------------
 vec4 CalcDirectionalLight(vec4 diffusTexCol, vec4 specTexCol, vec3 vN, vec3 vV){
 		vec3 dir = normalize(g_directionalLight.direction);
+
+		float dir_dot_normal = dot(dir, vN);
+		// if the light is illuminating the back face
+		if(dir_dot_normal <= 0.0f ) return vec4(0,0,0,0);
+
 		vec4 color_kd = diffusTexCol * IlluminateByDirection_Kd(g_directionalLight.base, vN, dir);
 		vec4 color_ks = specTexCol * IlluminateByDirection_Ks(g_directionalLight.base, vN, vV, dir);
 		return color_kd + color_ks;
@@ -249,11 +256,14 @@ vec4 CalcPointLight(int idx, PointLight pLight,vec4 diffusTexCol, vec4 specTexCo
 		vec3 dir = pLight.position - fragPos;
 		float dist = length(dir);
 		dir = normalize(dir);
-
+		float dir_dot_normal = dot(dir, vN);
+		// if the light is illuminating the back face
+		if(dir_dot_normal <= 0.0f )  return vec4(0,0,0,0);
+		float distRate = dist / pLight.radius;
 		// shadow
 		float shadowFactor = pLight.base.enableShadow ? (1.0 - CalcPointLightShadowMap(idx, pLight, dist_vV)) : 1.0;
+		shadowFactor = max(shadowFactor * (.99f -  distRate), 0.0);
 
-		float distRate = dist / pLight.radius;
 		vec4 color_kd = diffusTexCol * IlluminateByDirection_Kd(pLight.base, vN, dir);
 		vec4 color_ks = specTexCol * IlluminateByDirection_Ks(pLight.base, vN, dir, norm_vV);
 		float attenuationFactor = (pLight.quadratic * distRate * distRate + 
@@ -281,6 +291,10 @@ vec4 CalcSpotLight(int idx, SpotLight spLight,vec4 diffusTexCol, vec4 specTexCol
 		vec3 norm_dir = normalize(dir);
 		float dist = length(dir);
 		float dir_dot_LDir = dot(-spLight.direction, norm_dir);
+		float dir_dot_normal = dot(norm_dir, vN);
+		// if the light is illuminating the back face
+		if(dir_dot_normal <= 0.0f ) return vec4(0,0,0,0);
+
 		if(dir_dot_LDir > spLight.edge)
 		{
 			float distRate = dist / spLight.base.radius;
@@ -318,7 +332,10 @@ vec4 CalcSpotLights(vec4 diffusTexCol, vec4 specTexCol,vec3 vN, vec3 vV){
 void main(){
 	
 	// shared values
-	vec3 normalized_normal = normalize(Normal);
+	vec3 normal = texture(normalTex, texCood0).rgb;
+	normal = normalize(normal * 2.0f - 1.0f);   
+	normal = TBN * normal; 
+	vec3 normalized_normal = normalize(normal);
 	vec3 view = ViewPosition - fragPos;
 	float viewDistance = length(view);
 	vec3 normalized_view = normalize(view);

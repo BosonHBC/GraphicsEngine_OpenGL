@@ -67,6 +67,19 @@ namespace Graphics {
 			{ }
 		};
 
+		// Material data for PBR metallic roughness model
+		// --------------------------------------------------------------------------------------------------------------------------------------------
+		struct sPBRMRMaterial
+		{
+			Color diffuseIntensity;
+			float roughnessIntensity;
+			glm::vec3 ior;
+			float metalnessIntensity;
+
+			sPBRMRMaterial() : diffuseIntensity(Color::White()), roughnessIntensity(1), ior(glm::vec3(1)) {}
+			sPBRMRMaterial(const Color& i_diffuseIntensity, const float& i_roughnessIntensity, const glm::vec3& i_ior, const float& i_metalnessIntensity) : diffuseIntensity(i_diffuseIntensity), roughnessIntensity(i_roughnessIntensity), ior(i_ior), metalnessIntensity(i_metalnessIntensity) {}
+		};
+
 		// Lighting data
 		// --------------------------------------------------------------------------------------------------------------------------------------------
 		// This namespace contains helper struct to define a light uniform buffer

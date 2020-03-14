@@ -35,6 +35,7 @@ namespace Application {
 			return result;
 		}
 
+		printf("---------------------------------Engine initialization done.---------------------------------\n");
 		return result;
 	}
 
@@ -55,6 +56,8 @@ namespace Application {
 
 	void cApplication::UpdateUntilExit()
 	{
+		BeforeUpdate();
+		
 		auto tickCount_systemTime_currentLoop = Time::GetCurrentSystemTimeTickCount();
 		m_tickCount_systemTime_Current = tickCount_systemTime_currentLoop;
 		const auto tickCount_per_simulationUpdate = Time::ConvertFromSecondsToTick(m_simulationUpdateRate_InSeconds);
@@ -106,6 +109,11 @@ namespace Application {
 
 	}
 
+	void cApplication::ResetWindowSize()
+	{
+		m_window->SetViewportSize(m_window->GetBufferWidth(), m_window->GetBufferHeight());
+	}
+
 	void cApplication::CleanUp()
 	{
 		if (m_applicationThread) {
@@ -125,6 +133,7 @@ namespace Application {
 
 	cApplication* GetCurrentApplication()
 	{
+		assert(s_currentApplication != nullptr);
 		return s_currentApplication;
 	}
 
