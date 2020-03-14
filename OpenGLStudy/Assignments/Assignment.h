@@ -14,14 +14,20 @@ namespace Graphics {
 	class cAmbientLight;
 	class cDirectionalLight;
 	class cSpotLight;
+	class cEnvProbe;
+	namespace UniformBufferFormats
+	{
+		struct sFrame;
+	}
 }
 //----------------------------------------------
 class Assignment : public Application::cApplication
 {
 public:
-	virtual bool Initialize(GLuint i_width, GLuint i_height, const char* i_windowName = "Default Window");
-	virtual void Run();
-	virtual void CleanUp();
+	bool Initialize(GLuint i_width, GLuint i_height, const char* i_windowName = "Default Window");
+	void Run();
+	void CleanUp();
+	void BeforeUpdate();
 
 	void Tick(float second_since_lastFrame);
 	void FixedTick();
@@ -29,6 +35,10 @@ private:
 	void CreateActor();
 	void CreateCamera();
 	void CreateLight();
+
+	void SubmitLightingData();
+	void SubmitSceneData(Graphics::UniformBufferFormats::sFrame* const i_frameData);
+	void SubmitShadowData();
 
 	Color m_clearColor;
 	cEditorCamera* m_editorCamera;
@@ -47,5 +57,7 @@ private:
 	cActor* m_spaceHolder;
 
 	std::vector<cActor*> m_sphereList;
+
+
 };
 

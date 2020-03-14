@@ -73,6 +73,9 @@
     <Filter Include="Source Files\Material\PBR_MR">
       <UniqueIdentifier>{8154a05e-d2df-4f41-a8b5-b42f6abf5fe9}</UniqueIdentifier>
     </Filter>
+    <Filter Include="Source Files\EnvironmentProbes">
+      <UniqueIdentifier>{f410a388-1968-4a54-8a7e-55c5d4c1895c}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="Graphics.cpp">
@@ -131,6 +134,9 @@
     </ClCompile>
     <ClCompile Include="Material\PBR_MR\MatPBRMR.cpp">
       <Filter>Source Files\Material\PBR_MR</Filter>
+    </ClCompile>
+    <ClCompile Include="EnvironmentProbes\EnvProbe.cpp">
+      <Filter>Source Files\EnvironmentProbes</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
@@ -199,6 +205,9 @@
     </ClInclude>
     <ClInclude Include="Material\PBR_MR\MatPBRMR.h">
       <Filter>Source Files\Material\PBR_MR</Filter>
+    </ClInclude>
+    <ClInclude Include="EnvironmentProbes\EnvProbe.h">
+      <Filter>Source Files\EnvironmentProbes</Filter>
     </ClInclude>
   </ItemGroup>
 </Project>

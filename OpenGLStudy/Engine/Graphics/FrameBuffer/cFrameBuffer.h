@@ -8,8 +8,8 @@ namespace Graphics {
 	{
 	public:
 		cFrameBuffer()
-			: m_fbo(0), m_width(0), m_height(0){}
-		
+			: m_fbo(0), m_rbo(0), m_prevFbo(0), m_width(0), m_height(0){}
+	
 		virtual bool Initialize(GLuint i_width, GLuint i_height, ETextureType i_textureType);
 		
 		// Write current buffer data to this frame buffer
@@ -33,8 +33,9 @@ namespace Graphics {
 		cFrameBuffer& operator = (const cFrameBuffer& i_other) = delete;
 
 		// fbo: frame buffer object
-		// map: render to texture ID
-		GLuint m_fbo;
+		GLuint m_fbo; // this is necessary
+		GLuint m_rbo; // alternative render buffer object if needed.
+		GLint m_prevFbo; // stores the previous frame buffer object.
 		cTexture::HANDLE m_renderToTexture;
 		
 		// generated map should has same size as the window

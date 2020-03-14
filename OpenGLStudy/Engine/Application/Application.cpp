@@ -55,6 +55,8 @@ namespace Application {
 
 	void cApplication::UpdateUntilExit()
 	{
+		BeforeUpdate();
+		
 		auto tickCount_systemTime_currentLoop = Time::GetCurrentSystemTimeTickCount();
 		m_tickCount_systemTime_Current = tickCount_systemTime_currentLoop;
 		const auto tickCount_per_simulationUpdate = Time::ConvertFromSecondsToTick(m_simulationUpdateRate_InSeconds);

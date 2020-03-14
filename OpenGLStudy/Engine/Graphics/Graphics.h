@@ -16,11 +16,14 @@
 #include "UniformBuffer/UniformBuffer.h"
 #include "FrameBuffer/cFrameBuffer.h"
 #include "Graphics/UniformBuffer/UniformBufferFormats.h"
+#include "Graphics/EnvironmentProbes/EnvProbe.h"
+
 // Graphics stores, initializes, cleans up all data that needs to be rendered
 namespace Graphics {
 
 	/** Initialization and clean up function*/
 	bool Initialize();
+	void PreRenderFrame(); // Render frames before rendering the actual scene, like rendering the irrandance cube map, baking static light stuffs
 	void RenderFrame();
 	bool CleanUp();
 
@@ -61,4 +64,5 @@ namespace Graphics {
 
 	/** Others */
 	cFrameBuffer* GetCameraCaptureFrameBuffer();
+	cEnvProbe* GetEnvironmentProbe();
 }

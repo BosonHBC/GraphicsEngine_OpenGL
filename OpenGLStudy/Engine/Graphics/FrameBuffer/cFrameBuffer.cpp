@@ -8,8 +8,8 @@ namespace Graphics {
 	{
 		auto result = true;
 		m_width = i_height; m_height = i_height;
-		GLint _prevBuffer;
-		glGetIntegerv(GL_FRAMEBUFFER_BINDING, &_prevBuffer);
+		// record the previous frame buffer object
+		glGetIntegerv(GL_FRAMEBUFFER_BINDING, &m_prevFbo);
 
 		const GLuint mipMapLevel = 0;
 
@@ -45,12 +45,11 @@ namespace Graphics {
 				// We need depth too!
 				// Use render buffer with frame buffer such that we can have a depth and color at the same time
 				{
-					GLuint rboDepthStencil;
-					glGenRenderbuffers(1, &rboDepthStencil);
-					glBindRenderbuffer(GL_RENDERBUFFER, rboDepthStencil);
+					glGenRenderbuffers(1, &m_rbo);
+					glBindRenderbuffer(GL_RENDERBUFFER, m_rbo);
 					glRenderbufferStorage(GL_RENDERBUFFER, GL_DEPTH24_STENCIL8, m_width, m_height);
 					glFramebufferRenderbuffer(
-						GL_FRAMEBUFFER, GL_DEPTH_STENCIL_ATTACHMENT, GL_RENDERBUFFER, rboDepthStencil
+						GL_FRAMEBUFFER, GL_DEPTH_STENCIL_ATTACHMENT, GL_RENDERBUFFER, m_rbo
 					);
 					assert(GL_NO_ERROR == glGetError());
 				}
@@ -59,6 +58,17 @@ namespace Graphics {
 				glFramebufferTexture(GL_FRAMEBUFFER, GL_DEPTH_ATTACHMENT, _texture->GetTextureID(), mipMapLevel);
 				glDrawBuffer(GL_NONE);
 				glReadBuffer(GL_NONE);
+				assert(GL_NO_ERROR == glGetError());
+				break;
+			case Graphics::ETT_FRAMEBUFFER_HDR_CUBEMAP:
+				// We are not going to bind texture to the frame buffer here because we need to render 6 faces face by face
+				// ... glFramebufferTexture(GL_FRAMEBUFFER, GL_DEPTH_ATTACHMENT, _texture->GetTextureID(), mipMapLevel);
+				// Need depth too here	
+				glGenRenderbuffers(1, &m_rbo);
+				glBindRenderbuffer(GL_RENDERBUFFER, m_rbo);
+				glRenderbufferStorage(GL_RENDERBUFFER, GL_DEPTH_COMPONENT24, m_width, m_height);
+				glFramebufferRenderbuffer(GL_FRAMEBUFFER, GL_DEPTH_ATTACHMENT, GL_RENDERBUFFER, m_rbo);
+
 				assert(GL_NO_ERROR == glGetError());
 				break;
 			default:
@@ -77,7 +87,8 @@ namespace Graphics {
 			}
 
 			// cleanup frame buffer, go to previous buffer
-			glBindFramebuffer(GL_FRAMEBUFFER, _prevBuffer);
+			glBindFramebuffer(GL_FRAMEBUFFER, m_prevFbo);
+			m_prevFbo = 0;
 		}
 		else {
 			printf("Initialize frame buffer error, can not create frame buffer without a texture id\n");
@@ -89,12 +100,14 @@ namespace Graphics {
 	void cFrameBuffer::Write()
 	{
 		// right now, it will write current buffer to this frame buffer 
+		glGetIntegerv(GL_FRAMEBUFFER_BINDING, &m_prevFbo);
 		glBindFramebuffer(GL_FRAMEBUFFER, m_fbo);
 	}
 
 	void cFrameBuffer::UnWrite()
 	{
-		glBindFramebuffer(GL_FRAMEBUFFER, 0);
+		glBindFramebuffer(GL_FRAMEBUFFER, m_prevFbo);
+		m_prevFbo = 0;
 	}
 
 	void cFrameBuffer::Read(GLenum i_textureID)
@@ -110,10 +123,17 @@ namespace Graphics {
 		if (m_fbo) {
 			glDeleteFramebuffers(1, &m_fbo);
 			m_fbo = 0;
+			assert(GL_NO_ERROR == glGetError());
+		}
+		if (m_rbo)
+		{
+			glDeleteRenderbuffers(1, &m_rbo);
+			m_rbo = 0;
+			assert(GL_NO_ERROR == glGetError());
 		}
 
 		cTexture::s_manager.Release(m_renderToTexture);
-
+		
 	}
 
 	bool cFrameBuffer::IsValid() const

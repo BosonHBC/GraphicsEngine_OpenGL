@@ -60,6 +60,12 @@ namespace Graphics {
 		cTexture::s_manager.Release(m_cubeMapHandle);
 	}
 
+	void cMatCubemap::UpdateCubemap(const Assets::cHandle<cTexture>& i_newTexture)
+	{
+		cTexture::s_manager.Release(m_cubeMapHandle);
+		cTexture::s_manager.Copy(i_newTexture, m_cubeMapHandle);
+	}
+
 	bool cMatCubemap::LoadFileFromLua(const std::string& i_path, std::vector<std::string>& o_textures)
 	{
 		bool result;

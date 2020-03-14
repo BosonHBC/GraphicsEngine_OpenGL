@@ -13,6 +13,6 @@ layout(std140, binding = 0) uniform uniformBuffer_frame
 void main()
 {
     TexCoords = pos;
-	vec4 _pos = PVMatrix * vec4(pos * 10000, 1.0);
+	vec4 _pos = PVMatrix * vec4(pos * 100000, 1.0);
     gl_Position = _pos.xyww;
 }

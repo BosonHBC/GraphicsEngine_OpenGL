@@ -17,6 +17,8 @@
 #include "Material/Unlit/MatUnlit.h"
 #include "Material/PBR_MR/MatPBRMR.h"
 #include "Time/Time.h"
+
+
 namespace Graphics {
 
 	// TODO:
@@ -52,6 +54,8 @@ namespace Graphics {
 
 	// This buffer capture the camera view
 	cFrameBuffer s_cameraCapture;
+
+	cEnvProbe s_envProbe;
 
 	sDataRequiredToRenderAFrame s_dataRequiredToRenderAFrame[2];
 	auto* s_dataSubmittedByApplicationThread = &s_dataRequiredToRenderAFrame[0];
@@ -227,6 +231,10 @@ namespace Graphics {
 			return result;
 		}
 
+		if (!(result = s_envProbe.Initialize(500.f, 1024, 1024, glm::vec3(0, 100, 0)))) {
+			printf("Fail to create environment probe.\n");
+			return result;
+		}
 		// Load arrows
 		{
 			std::string _arrowPath = "Contents/models/arrow.model";
@@ -241,6 +249,60 @@ namespace Graphics {
 		glCullFace(GL_BACK);
 		assert(GL_NO_ERROR == glGetError());
 		return result;
+	}
+
+	void PreRenderFrame()
+	{
+		/** 1. Wait for data being submitted here */
+		// Acquire the lock
+		std::unique_lock<std::mutex> _mlock(s_graphicMutex);
+		// Wait until the conditional variable is signaled
+		s_whenAllDataHasBeenSubmittedFromApplicationThread.wait(_mlock);
+
+		// After data has been submitted, swap the data
+		std::swap(s_dataSubmittedByApplicationThread, s_dataRenderingByGraphicThread);
+		// Notify the application thread that data is swapped and it is ready for receiving new data
+		s_whenDataHasBeenSwappedInRenderThread.notify_one();
+
+		/** 2. Start to render pass one by one */
+		
+		// i. First deal with shadow maps
+		constexpr GLuint shadowmapPassesCount = 3; // point, spot, directional
+		for (size_t i = 0; i < shadowmapPassesCount; ++i)
+		{
+			s_currentRenderPass = i;
+			s_uniformBuffer_frame.Update(&s_dataRenderingByGraphicThread->s_renderPasses[i].FrameData);
+			// Execute pass function
+			s_dataRenderingByGraphicThread->s_renderPasses[i].RenderPassFunction();
+		}
+		
+		// ii. Update view port
+		Application::cApplication* _app = Application::GetCurrentApplication();
+		if (_app) { _app->GetCurrentWindow()->SetViewportSize(s_envProbe.GetWidth(), s_envProbe.GetHeight()); }
+		// iii. start capture the cube map
+		s_envProbe.StartCapture();
+		s_uniformBuffer_ClipPlane.Update(&s_dataRenderingByGraphicThread->s_ClipPlane);
+		GLuint passesPerFace = s_dataRenderingByGraphicThread->s_renderPasses.size() / 6.f;
+		for (size_t i = 0; i < 6; ++i)
+		{
+			glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_CUBE_MAP_POSITIVE_X + i, s_envProbe.GetCubemapTextureID(), 0);
+
+			for (size_t j = 0; j < passesPerFace; ++j)
+			{
+				// Update current render pass
+				s_currentRenderPass = i * passesPerFace + j + shadowmapPassesCount;
+				// Update frame data
+				s_uniformBuffer_frame.Update(&s_dataRenderingByGraphicThread->s_renderPasses[s_currentRenderPass].FrameData);
+
+				// Execute pass function
+				s_dataRenderingByGraphicThread->s_renderPasses[s_currentRenderPass].RenderPassFunction();
+			}
+
+		}
+		s_envProbe.StopCapture();
+
+
+		printf("Prerender once.\n");
 	}
 
 	void RenderFrame()
@@ -303,7 +365,13 @@ namespace Graphics {
 				assert(glGetError() == GL_NO_ERROR);
 			}
 		}
-
+		// Reset window size
+		{
+			Application::cApplication* _app = Application::GetCurrentApplication();
+			if (_app) {
+				_app->GetCurrentWindow()->SetViewportSize(_app->GetCurrentWindow()->GetBufferWidth(), _app->GetCurrentWindow()->GetBufferHeight());
+			}
+		}
 		s_currentEffect->UnUseEffect();
 		glEnable(GL_CULL_FACE);
 		glCullFace(GL_BACK);
@@ -351,6 +419,13 @@ namespace Graphics {
 				assert(glGetError() == GL_NO_ERROR);
 			}
 		}
+		// Reset window size
+		{
+			Application::cApplication* _app = Application::GetCurrentApplication();
+			if (_app) {
+				_app->GetCurrentWindow()->SetViewportSize(_app->GetCurrentWindow()->GetBufferWidth(), _app->GetCurrentWindow()->GetBufferHeight());
+			}
+		}
 		s_currentEffect->UnUseEffect();
 		glEnable(GL_CULL_FACE);
 		glCullFace(GL_BACK);
@@ -396,7 +471,13 @@ namespace Graphics {
 				assert(glGetError() == GL_NO_ERROR);
 			}
 		}
-
+		// Reset window size
+		{
+			Application::cApplication* _app = Application::GetCurrentApplication();
+			if (_app) {
+				_app->GetCurrentWindow()->SetViewportSize(_app->GetCurrentWindow()->GetBufferWidth(), _app->GetCurrentWindow()->GetBufferHeight());
+			}
+		}
 		s_currentEffect->UnUseEffect();
 		glEnable(GL_CULL_FACE);
 		glCullFace(GL_BACK);
@@ -452,6 +533,11 @@ namespace Graphics {
 		return &s_cameraCapture;
 	}
 
+	Graphics::cEnvProbe* GetEnvironmentProbe()
+	{
+		return &s_envProbe;
+	}
+
 	void SubmitClipPlaneData(const glm::vec4& i_plane0, const glm::vec4& i_plane1 /*= glm::vec4(0,0,0,0)*/, const glm::vec4& i_plane2 /*= glm::vec4(0, 0, 0, 0)*/, const glm::vec4& i_plane3 /*= glm::vec4(0, 0, 0, 0)*/)
 	{
 		s_dataSubmittedByApplicationThread->s_ClipPlane = UniformBufferFormats::sClipPlane(i_plane0, i_plane1, i_plane2, i_plane3);
@@ -490,17 +576,10 @@ namespace Graphics {
 			s_currentEffect->UseEffect();
 
 		}
-		// Reset window size
-		{
-			Application::cApplication* _app = Application::GetCurrentApplication();
-			if (_app) {
-				_app->GetCurrentWindow()->SetViewportSize(_app->GetCurrentWindow()->GetBufferWidth(), _app->GetCurrentWindow()->GetBufferHeight());
-			}
-		}
 		// Clear color and buffers
 		{
 			// clear window
-			glClearColor(s_clearColor.r, s_clearColor.g, s_clearColor.b, 1.f);
+			glClearColor(s_clearColor.r, s_clearColor.g, s_clearColor.b, 0.f);
 			// A lot of things can be cleaned like color buffer, depth buffer, so we need to specify what to clear
 			glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
@@ -522,12 +601,6 @@ namespace Graphics {
 	{
 		s_currentEffect = GetEffectByKey("PBR_MR");
 		s_currentEffect->UseEffect();
-
-		// Reset window size
-		Application::cApplication* _app = Application::GetCurrentApplication();
-		if (_app) {
-			_app->GetCurrentWindow()->SetViewportSize(_app->GetCurrentWindow()->GetBufferWidth(), _app->GetCurrentWindow()->GetBufferHeight());
-		}
 
 		// Update Lighting Data
 		UpdateLightingData();
@@ -560,7 +633,7 @@ namespace Graphics {
 				if (_model) {
 					Graphics::cMatPBRMR* _sphereMat = dynamic_cast<Graphics::cMatPBRMR*>(_model->GetMaterialAt());
 					_sphereMat->UpdateMetalnessIntensity(1.f / 4.f * j);
-					_sphereMat->UpdateRoughnessIntensity(1-1.f / 4.f *i);
+					_sphereMat->UpdateRoughnessIntensity(1 - 1.f / 4.f *i);
 					_model->UpdateUniformVariables(s_currentEffect->GetProgramID());
 					_model->Render();
 				}
@@ -743,7 +816,7 @@ namespace Graphics {
 		safe_delete(s_directionalLight);
 
 		s_cameraCapture.~cFrameBuffer();
-
+		s_envProbe.~cEnvProbe();
 		return result;
 	}
 

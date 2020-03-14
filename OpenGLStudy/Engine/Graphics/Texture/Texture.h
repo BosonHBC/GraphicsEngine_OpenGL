@@ -16,6 +16,7 @@ namespace Graphics {
 		ETT_CUBEMAP = 4,
 		ETT_FRAMEBUFFER_CUBEMAP = 5,
 		ETT_FILE_GRAY = 6,
+		ETT_FRAMEBUFFER_HDR_CUBEMAP = 7,
 		ETT_INVALID = 0xff
 	};
 
@@ -56,6 +57,7 @@ namespace Graphics {
 		// Load render_to_texture from frame buffer
 		bool LoadShadowMapTexture(const std::string& i_type_id, const GLuint& i_width, const GLuint& i_height);
 		bool LoadOmniShadowMapTexture(const std::string& i_type_id, const GLuint& i_width, const GLuint& i_height);
+		bool LoadHDRCubemapTexture(const std::string& i_type_id, const GLuint& i_width, const GLuint& i_height); // assume the bit width is 16 bits per channel
 		// Load color format texture from frame buffer
 		bool LoadRGBTexture(const std::string& i_type_id, const GLuint& i_width, const GLuint& i_height);
 
