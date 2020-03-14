@@ -35,6 +35,7 @@ namespace Application {
 			return result;
 		}
 
+		printf("---------------------------------Engine initialization done.---------------------------------\n");
 		return result;
 	}
 
@@ -108,6 +109,11 @@ namespace Application {
 
 	}
 
+	void cApplication::ResetWindowSize()
+	{
+		m_window->SetViewportSize(m_window->GetBufferWidth(), m_window->GetBufferHeight());
+	}
+
 	void cApplication::CleanUp()
 	{
 		if (m_applicationThread) {
@@ -127,6 +133,7 @@ namespace Application {
 
 	cApplication* GetCurrentApplication()
 	{
+		assert(s_currentApplication != nullptr);
 		return s_currentApplication;
 	}
 

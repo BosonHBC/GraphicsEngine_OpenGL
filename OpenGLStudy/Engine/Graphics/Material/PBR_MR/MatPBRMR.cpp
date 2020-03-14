@@ -1,9 +1,8 @@
 #include "Graphics/Material/PBR_MR/MatPBRMR.h"
 #include "Assets/LoadTableFromLuaFile.h"
-#include "Graphics/UniformBuffer/UniformBufferFormats.h"
 #include "Assets/PathProcessor.h"
 #include "Constants/Constants.h"
-
+#include "Graphics/Graphics.h"
 namespace Graphics
 {
 	Graphics::cUniformBuffer cMatPBRMR::s_PBRMRUniformBlock(eUniformBufferType::UBT_PBRMR);
@@ -76,6 +75,15 @@ namespace Graphics
 		else
 			cTexture::UnBindTexture(GL_TEXTURE3, ETT_FILE);
 
+		cEnvProbe* _irradProbe = Graphics::GetIrrdianceMapProbe();
+		cTexture* _irrdianceMap = nullptr;
+		if (_irradProbe && (_irrdianceMap = cTexture::s_manager.Get(Graphics::GetIrrdianceMapProbe()->GetCubemapTextureHandle())))
+		{
+			_irrdianceMap->UseTexture(GL_TEXTURE4);
+		}
+		else
+			cTexture::UnBindTexture(GL_TEXTURE4, ETT_FRAMEBUFFER_HDR_CUBEMAP);
+
 		s_PBRMRUniformBlock.Update(&UniformBufferFormats::sPBRMRMaterial(m_diffuseIntensity, m_roughnessIntensity, m_ior, m_metallicIntensity));
 	}
 
@@ -89,14 +97,17 @@ namespace Graphics
 		cTexture* _metallicMap = cTexture::s_manager.Get(m_metallicMapHandle);
 		if (_metallicMap)
 			_metallicMap->CleanUpTextureBind(GL_TEXTURE1);
-		
-		cTexture* _roughnessMap = cTexture::s_manager.Get(m_roughnessMapHandle);	
+
+		cTexture* _roughnessMap = cTexture::s_manager.Get(m_roughnessMapHandle);
 		if (_roughnessMap)
 			_roughnessMap->CleanUpTextureBind(GL_TEXTURE2);
-		
+
 		cTexture* _normalTex = cTexture::s_manager.Get(m_normalMapHandle);
 		if (_normalTex)
 			_normalTex->CleanUpTextureBind(GL_TEXTURE3);
+
+		cTexture::UnBindTexture(GL_TEXTURE4, ETT_FRAMEBUFFER_HDR_CUBEMAP);
+
 	}
 
 	void cMatPBRMR::CleanUp()
@@ -107,7 +118,7 @@ namespace Graphics
 		cTexture::s_manager.Release(m_normalMapHandle);
 	}
 
-	bool cMatPBRMR::LoadFileFromLua(const std::string& i_path, std::string& o_albedoPath, std::string& o_metallicPath, std::string& o_roughnessPath, std::string& o_normalPath, Color& o_diffuseIntensity,float& o_metallicIntensity, float& o_roughnessIntensity, glm::vec3& o_ior)
+	bool cMatPBRMR::LoadFileFromLua(const std::string& i_path, std::string& o_albedoPath, std::string& o_metallicPath, std::string& o_roughnessPath, std::string& o_normalPath, Color& o_diffuseIntensity, float& o_metallicIntensity, float& o_roughnessIntensity, glm::vec3& o_ior)
 	{
 		bool result;
 		lua_State* luaState = nullptr;

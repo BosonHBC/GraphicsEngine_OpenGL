@@ -52,6 +52,7 @@ bool Assignment::Initialize(GLuint i_width, GLuint i_height, const char* i_windo
 	Graphics::cMatPBRMR* _spaceHolderMat = dynamic_cast<Graphics::cMatPBRMR*>(Graphics::cModel::s_manager.Get(m_spaceHolder->GetModelHandle())->GetMaterialAt());
 
 
+	printf("---------------------------------Game initialization done.---------------------------------\n");
 	return result;
 }
 
@@ -74,8 +75,6 @@ void Assignment::CreateActor()
 	m_mirror->Transform()->SetTransform(glm::vec3(0, 0, 0), glm::quat(1, 0, 0, 0), glm::vec3(800, 1, 800));
 	m_mirror->SetModel("Contents/models/wall.model");
 	m_mirror->UpdateUniformVariables(Graphics::GetCurrentEffect());
-
-
 
 	m_cubemap = new cActor();
 	m_cubemap->Initialize();
@@ -116,7 +115,7 @@ void Assignment::CreateCamera()
 
 void Assignment::CreateLight()
 {
-	Graphics::CreateAmbientLight(Color(0.001f, 0.001f, 0.001f), aLight);
+	Graphics::CreateAmbientLight(Color(0.15f, 0.15f, 0.15f), aLight);
 	Graphics::CreatePointLight(glm::vec3(0, 150.f, 100.f), Color(1.8, 1.8, 1.8), 1.5f, 0.3f, 2.f, true, pLight1);
 	//Graphics::CreatePointLight(glm::vec3(-100, 40, -100), Color(0.8, 0.8, 0.8), 1.f, 0.7f, 1.8f, true, pLight2);
 	Graphics::CreateDirectionalLight(Color(.6, .6, .58f), glm::vec3(-1, -0.5f, -0.3f), true, dLight);
@@ -125,34 +124,24 @@ void Assignment::CreateLight()
 
 }
 
-
-void Assignment::SubmitLightingData()
+void Assignment::BeforeUpdate()
 {
-
-	std::vector<Graphics::cPointLight> _pLights;
-	std::vector<Graphics::cSpotLight> _spLights;
-	if (pLight1)
+	// Clear application thread data
+	Graphics::ClearApplicationThreadData();
+	// Submit lighting data
+	SubmitLightingData();
+	// submit shadow data
+	SubmitShadowData();
+	// submit render requests
+	for (int i = 0; i < 6; ++i)
 	{
-		pLight1->UpdateLightIndex(_pLights.size());
-		_pLights.push_back(*pLight1);
+		Graphics::cEnvProbe* _envProb = Graphics::GetEnvironmentProbe();
+		Graphics::UniformBufferFormats::sFrame _envProbeFrameData(_envProb->GetProjectionMat4(), _envProb->GetViewMat4(i));
+		_envProbeFrameData.ViewPosition = _envProb->GetPosition();
+		SubmitSceneData(&_envProbeFrameData);
 	}
-
-	if (pLight2)
-	{
-		pLight2->UpdateLightIndex(_pLights.size());
-		_pLights.push_back(*pLight2);
-	}
-	if (spLight)
-	{
-		spLight->UpdateLightIndex(_spLights.size());
-		_spLights.push_back(*spLight);
-	}
-	if (spLight2)
-	{
-		spLight2->UpdateLightIndex(_spLights.size());
-		_spLights.push_back(*spLight2);
-	}
-	Graphics::SubmitLightingData(_pLights, _spLights, *aLight, *dLight);
+	// Let the graphic thread know that the pre-render pass is ready to go
+	Graphics::Notify_DataHasBeenSubmited();
 }
 
 void Assignment::Run()
@@ -161,7 +150,7 @@ void Assignment::Run()
 
 	Graphics::cModel* _cubeMap = Graphics::cModel::s_manager.Get(m_cubemap->GetModelHandle());
 	Graphics::cMatCubemap* _matCubemap = dynamic_cast<Graphics::cMatCubemap*>(_cubeMap->GetMaterialAt());
-	_matCubemap->UpdateCubemap(Graphics::GetEnvironmentProbe()->GetCubemapTextureHandle());
+	//_matCubemap->UpdateCubemap(Graphics::GetIrrdianceMapProbe()->GetCubemapTextureHandle()); // used for debugging the environment
 	// loop until window closed
 	while (!m_shouldApplicationLoopExit)
 	{
@@ -174,41 +163,6 @@ void Assignment::Run()
 		// Swap buffers
 		m_window->SwapBuffers();
 	}
-}
-
-void Assignment::CleanUp()
-{
-	safe_delete(m_editorCamera);
-	safe_delete(m_teapot);
-	safe_delete(m_teapot2);
-	safe_delete(m_mirror);
-	safe_delete(m_cubemap);
-	safe_delete(m_spaceHolder);
-	for (auto i = 0; i < m_sphereList.size(); ++i)
-	{
-		safe_delete(m_sphereList[i]);
-	}
-	m_sphereList.clear();
-}
-
-
-void Assignment::BeforeUpdate()
-{
-	// Clear application thread data
-	Graphics::ClearApplicationThreadData();
-	// Submit lighting data
-	SubmitLightingData();
-	SubmitShadowData();
-	// submit render requests
-	for (int i = 0; i < 6; ++i)
-	{
-		Graphics::cEnvProbe* _envProb = Graphics::GetEnvironmentProbe();
-		Graphics::UniformBufferFormats::sFrame _envProbeFrameData(_envProb->GetProjectionMat4(), _envProb->GetViewMat4(i));
-		_envProbeFrameData.ViewPosition = _envProb->GetPosition();
-		SubmitSceneData(&_envProbeFrameData);
-	}
-	// Let the graphic thread know that the pre-render pass is ready to go
-	Graphics::Notify_DataHasBeenSubmited();
 }
 
 void Assignment::Tick(float second_since_lastFrame)
@@ -360,6 +314,36 @@ void Assignment::Tick(float second_since_lastFrame)
 		}
 	}
 }
+
+void Assignment::SubmitLightingData()
+{
+
+	std::vector<Graphics::cPointLight> _pLights;
+	std::vector<Graphics::cSpotLight> _spLights;
+	if (pLight1)
+	{
+		pLight1->UpdateLightIndex(_pLights.size());
+		_pLights.push_back(*pLight1);
+	}
+
+	if (pLight2)
+	{
+		pLight2->UpdateLightIndex(_pLights.size());
+		_pLights.push_back(*pLight2);
+	}
+	if (spLight)
+	{
+		spLight->UpdateLightIndex(_spLights.size());
+		_spLights.push_back(*spLight);
+	}
+	if (spLight2)
+	{
+		spLight2->UpdateLightIndex(_spLights.size());
+		_spLights.push_back(*spLight2);
+	}
+	Graphics::SubmitLightingData(_pLights, _spLights, *aLight, *dLight);
+}
+
 void Assignment::SubmitSceneData(Graphics::UniformBufferFormats::sFrame* const i_frameData)
 {
 	std::vector<std::pair<Graphics::cModel::HANDLE, cTransform>> _renderingMap;
@@ -429,4 +413,19 @@ void Assignment::SubmitShadowData()
 void Assignment::FixedTick()
 {
 
+}
+
+void Assignment::CleanUp()
+{
+	safe_delete(m_editorCamera);
+	safe_delete(m_teapot);
+	safe_delete(m_teapot2);
+	safe_delete(m_mirror);
+	safe_delete(m_cubemap);
+	safe_delete(m_spaceHolder);
+	for (auto i = 0; i < m_sphereList.size(); ++i)
+	{
+		safe_delete(m_sphereList[i]);
+	}
+	m_sphereList.clear();
 }

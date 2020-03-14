@@ -1,6 +1,6 @@
 #version 420
 // Constants
-const float PI = 3.1415926;
+const float PI = 3.14159265359;
 const int MAX_COUNT_PER_LIGHT = 5;
 
 // this sampler is connected to the texture unit, and binding with our texture
@@ -9,7 +9,7 @@ uniform sampler2D AlbedoMap; // 0
 uniform sampler2D MetallicMap; // 1
 uniform sampler2D RoughnessMap; // 2
 uniform sampler2D NormalMap; // 3
-
+uniform samplerCube IrradianceMap; // 4
 
 uniform sampler2D spotlightShadowMap[MAX_COUNT_PER_LIGHT]; // 6 -> 10
 uniform samplerCube pointLightShadowMap[MAX_COUNT_PER_LIGHT]; // 11-> 15
@@ -130,6 +130,10 @@ vec3 fresnelSchlick(float cosTheta, vec3 F0)
 {
     return F0 + (1.0 - F0) * pow(1.0 - cosTheta, 5.0);
 }
+vec3 fresnelSchlickRoughness(float cosTheta, vec3 F0, float roughness)
+{
+    return F0 + (max(vec3(1.0 - roughness), F0) - F0) * pow(1.0 - cosTheta, 5.0);
+} 
 //-------------------------------------------------------------------------
 // Shadow Fucntions
 //-------------------------------------------------------------------------
@@ -248,7 +252,17 @@ float CalcPointLightShadowMap(int idx, PointLight pLight, float dist_vV)
 //-------------------------------------------------------------------------
 // Light calculation
 //-------------------------------------------------------------------------
+vec3 CalcAmbientLight(AmbientLight aLight, vec3 albedoColor,float roughness, vec3 f0 ,vec3 vN,vec3 vV )
+{
+	vec3 kS = fresnelSchlickRoughness(max(dot(vN, vV), 0.0), f0, roughness); 
+	//vec3 kS = fresnelSchlick(max(dot(vN, vV), 0.0), f0);
+	vec3 kD = 1.0 - kS;
+	vec3 irradiance = texture(IrradianceMap, vN).rgb;
+	vec3 diffuse    = irradiance * albedoColor * aLight.base.color;
+	vec3 ambient    = (kD * diffuse) /** ao // no ao for now*/; 
 
+	return ambient;
+}
 //-------------------------------------------------------------------------
 // DirectionalLight
 //-------------------------------------------------------------------------
@@ -327,11 +341,11 @@ void main(){
 	float metalness = texture(MetallicMap, texCood0).r * metalnessIntensity;
 	float roughness = texture(RoughnessMap, texCood0).r * min((roughnessIntensity + 0.01f)/2.0f,1);
 	vec3 F0 = abs ((1.0 - ior) / (1.0 + ior)); //vec3(0.04);
-	//F0 = F0 * F0;
+	F0 = F0 * F0;
 	F0 = mix(F0, albedoColor, vec3(metalness));
 
 	// ambient light
-	vec3 ambientLightColor = albedoColor * g_ambientLight.base.color;
+	vec3 ambientLightColor = CalcAmbientLight(g_ambientLight,albedoColor,roughness, F0,normalized_normal,normalized_view);
 	
 	// cubemap light
 	//vec4 cubemapColor = IlluminateByCubemap(diffuseTexColor,specularTexColor, normalized_normal, normalized_view);
@@ -347,7 +361,7 @@ void main(){
 
 	vec3 allColor = ambientLightColor + pointLightColor + directionLightColor;
 	// Reinhard operator tone mapping
-	//allColor = allColor / (allColor + vec3(1.0));
+	allColor = allColor / (allColor + vec3(1.0));
 	// gama correction
 	allColor = pow(allColor, vec3(1.0/2.2)); 
 
