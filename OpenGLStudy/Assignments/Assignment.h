@@ -38,6 +38,7 @@ private:
 
 	void SubmitLightingData();
 	void SubmitSceneData(Graphics::UniformBufferFormats::sFrame* const i_frameData);
+	void SubmitSceneDataForEnvironmentCapture(Graphics::UniformBufferFormats::sFrame* const i_frameData);
 	void SubmitShadowData();
 
 	Color m_clearColor;
@@ -55,6 +56,7 @@ private:
 	cActor* m_mirror;
 	cActor* m_cubemap;
 	cActor* m_spaceHolder;
+	cActor* m_gun;
 
 	std::vector<cActor*> m_sphereList;
 

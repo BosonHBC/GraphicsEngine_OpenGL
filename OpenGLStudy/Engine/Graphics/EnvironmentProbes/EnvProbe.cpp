@@ -25,7 +25,7 @@ namespace Graphics
 
 	void cEnvProbe::StartCapture()
 	{
-
+		if (!m_captured) m_captured = true;
 		m_frameBuffer.Write();
 	}
 

@@ -29,7 +29,7 @@ namespace Graphics
 		bool Initialize(GLfloat i_range, GLuint i_width, GLuint i_height, const ETextureType& i_textureType, const glm::vec3& i_initialLocation = glm::vec3(0));
 		bool CleanUp();
 
-		bool IsValid() const { return m_frameBuffer.IsValid() && m_range > 0 && m_width > 0 && m_height > 0 && m_width == m_height; }
+		bool IsValid() const { return m_frameBuffer.IsValid() && m_range > 0 && m_width > 0 && m_height > 0 && m_width == m_height && m_captured; }
 
 		void StartCapture();
 		void StopCapture();

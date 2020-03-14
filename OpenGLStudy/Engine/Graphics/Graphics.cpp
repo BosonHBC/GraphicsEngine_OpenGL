@@ -113,13 +113,21 @@ namespace Graphics {
 		GLuint _programID = _effect->GetProgramID();
 		char _charBuffer[64] = { '\0' };
 
-		GLuint _irradMapID = glGetUniformLocation(_effect->GetProgramID(), "IrradianceMap");
-		if (_irradMapID > 0 && _irradMapID < static_cast<GLuint>(-1))
-			glUniform1i(_irradMapID, 4);
-
-		GLuint _preFilterMapID = glGetUniformLocation(_effect->GetProgramID(), "PrefilterMap");
-		if (_preFilterMapID > 0 && _preFilterMapID < static_cast<GLuint>(-1))
-			glUniform1i(_preFilterMapID, 5);
+		{
+			GLuint _irradMapID = glGetUniformLocation(_effect->GetProgramID(), "IrradianceMap");
+			if (_irradMapID > 0 && _irradMapID < static_cast<GLuint>(-1))
+				glUniform1i(_irradMapID, 4);
+		}
+		{
+			GLuint _preFilterMapID = glGetUniformLocation(_effect->GetProgramID(), "PrefilterMap");
+			if (_preFilterMapID > 0 && _preFilterMapID < static_cast<GLuint>(-1))
+				glUniform1i(_preFilterMapID, 5);
+		}
+		{
+			GLuint _LutTextureID = glGetUniformLocation(_effect->GetProgramID(), "BrdfLUTMap");
+			if (_LutTextureID > 0 && _LutTextureID < static_cast<GLuint>(-1))
+				glUniform1i(_LutTextureID, 17);
+		}
 
 		for (int i = 0; i < MAX_COUNT_PER_LIGHT; ++i)
 		{
@@ -288,7 +296,7 @@ namespace Graphics {
 
 			glm::vec3 _probePosition = glm::vec3(-400, 100, 0);
 			GLfloat _probeRange = 500;
-			GLuint envMapResolution = 1024;
+			GLuint envMapResolution = 1024 * 2;
 			if (!(result = s_envProbe.Initialize(_probeRange, envMapResolution, envMapResolution, ETT_FRAMEBUFFER_HDR_CUBEMAP, _probePosition))) {
 				printf("Fail to create environment probe.\n");
 				return result;
@@ -299,7 +307,7 @@ namespace Graphics {
 				return result;
 			}
 
-			if (!(result = s_prefilterCubemap.Initialize(_probeRange, 128, 128, ETT_FRAMEBUFFER_HDR_MIPMAP_CUBEMAP, _probePosition))) {
+			if (!(result = s_prefilterCubemap.Initialize(_probeRange, 256, 256, ETT_FRAMEBUFFER_HDR_MIPMAP_CUBEMAP, _probePosition))) {
 				printf("Fail to create irradiance Map.\n");
 				return result;
 			}
@@ -452,8 +460,8 @@ namespace Graphics {
 			{
 				GLuint mip = i - 1;
 				// resize frame buffer according to mip-level size.
-				GLuint mipWidth = 128 * glm::pow(0.5f, mip);
-				GLuint mipHeight = 128 * glm::pow(0.5f, mip);
+				GLuint mipWidth = s_prefilterCubemap.GetWidth() * glm::pow(0.5f, mip);
+				GLuint mipHeight = s_prefilterCubemap.GetHeight() * glm::pow(0.5f, mip);
 
 				glRenderbufferStorage(GL_RENDERBUFFER, GL_DEPTH_COMPONENT24, mipWidth, mipHeight); // resize render buffer too
 				Application::cApplication* _app = Application::GetCurrentApplication();
@@ -750,7 +758,7 @@ namespace Graphics {
 		s_currentEffect->ValidateProgram();
 
 		auto& renderList = s_dataRenderingByGraphicThread->s_renderPasses[s_currentRenderPass].ModelToTransform_map;
-		constexpr auto sphereOffset = 2;
+		constexpr auto sphereOffset = 3;
 		// draw the space first
 		for (int i = 0; i < sphereOffset; ++i)
 		{
@@ -774,8 +782,8 @@ namespace Graphics {
 				cModel* _model = cModel::s_manager.Get(renderList[i * 5 + j + sphereOffset].first);
 				if (_model) {
 					Graphics::cMatPBRMR* _sphereMat = dynamic_cast<Graphics::cMatPBRMR*>(_model->GetMaterialAt());
-					_sphereMat->UpdateMetalnessIntensity(1.f / 4.f * j);
-					_sphereMat->UpdateRoughnessIntensity(1 - 1.f / 4.f *i);
+					_sphereMat->UpdateMetalnessIntensity(1.f / 5.f * j + 0.1f);
+					_sphereMat->UpdateRoughnessIntensity(0.9f - 1.f / 5.f *i );
 					_model->UpdateUniformVariables(s_currentEffect->GetProgramID());
 					_model->Render();
 				}

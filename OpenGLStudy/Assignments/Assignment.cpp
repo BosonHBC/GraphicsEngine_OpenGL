@@ -87,6 +87,11 @@ void Assignment::CreateActor()
 	m_spaceHolder->SetModel("Contents/models/spaceHolder.model");
 	m_spaceHolder->UpdateUniformVariables(Graphics::GetEffectByKey("PBR_MR"));
 
+	m_gun = new cActor();
+	m_gun->Initialize();
+	m_gun->Transform()->SetTransform(glm::vec3(300, 50, 100), glm::quat(glm::vec3(0, glm::radians(90.f), 0)), glm::vec3(1,1,1));
+	m_gun->SetModel("Contents/models/Cerberus.model");
+	m_gun->UpdateUniformVariables(Graphics::GetEffectByKey("PBR_MR"));
 
 	m_sphereList.reserve(25);
 	for (int i = 0; i < 5; ++i)
@@ -115,7 +120,7 @@ void Assignment::CreateCamera()
 
 void Assignment::CreateLight()
 {
-	Graphics::CreateAmbientLight(Color(0.15f, 0.15f, 0.15f), aLight);
+	Graphics::CreateAmbientLight(Color(0.25f, 0.25f, 0.25f), aLight);
 	Graphics::CreatePointLight(glm::vec3(0, 150.f, 100.f), Color(1.8, 1.8, 1.8), 1.5f, 0.3f, 2.f, true, pLight1);
 	//Graphics::CreatePointLight(glm::vec3(-100, 40, -100), Color(0.8, 0.8, 0.8), 1.f, 0.7f, 1.8f, true, pLight2);
 	Graphics::CreateDirectionalLight(Color(.6, .6, .58f), glm::vec3(-1, -0.5f, -0.3f), true, dLight);
@@ -138,17 +143,7 @@ void Assignment::BeforeUpdate()
 		Graphics::cEnvProbe* _envProb = Graphics::GetEnvironmentProbe();
 		Graphics::UniformBufferFormats::sFrame _envProbeFrameData(_envProb->GetProjectionMat4(), _envProb->GetViewMat4(i));
 		_envProbeFrameData.ViewPosition = _envProb->GetPosition();
-
-		// Cube map
-/*
-		{
-			std::vector<std::pair<Graphics::cModel::HANDLE, cTransform>> _renderingMap;
-			_renderingMap.push_back({ m_cubemap->GetModelHandle(), *m_cubemap->Transform() });
-			Graphics::UniformBufferFormats::sFrame _frameData_Cubemap(_envProb->GetProjectionMat4(), glm::mat4(glm::mat3(_envProb->GetViewMat4(i))));
-			Graphics::SubmitDataToBeRendered(_frameData_Cubemap, _renderingMap, &Graphics::CubeMap_Pass);
-		}*/
-
-		SubmitSceneData(&_envProbeFrameData);
+		SubmitSceneDataForEnvironmentCapture(&_envProbeFrameData);
 	}
 	// Let the graphic thread know that the pre-render pass is ready to go
 	Graphics::Notify_DataHasBeenSubmited();
@@ -360,10 +355,38 @@ void Assignment::SubmitSceneData(Graphics::UniformBufferFormats::sFrame* const i
 		_renderingMap.reserve(m_sphereList.size() + 2);
 		_renderingMap.push_back({ m_spaceHolder->GetModelHandle(), *m_spaceHolder->Transform() });
 		_renderingMap.push_back({ m_teapot->GetModelHandle(), *m_teapot->Transform() });
+		_renderingMap.push_back({ m_gun->GetModelHandle(), *m_gun->Transform() });
 		for (int i = 0; i < m_sphereList.size(); ++i)
 		{
 			_renderingMap.push_back({ m_sphereList[i]->GetModelHandle(), *m_sphereList[i]->Transform() });
 		}
+		Graphics::SubmitDataToBeRendered(*i_frameData, _renderingMap, &Graphics::PBR_Pass);
+	}
+
+	// Cube map
+	{
+		_renderingMap.clear();
+		_renderingMap.push_back({ m_cubemap->GetModelHandle(), *m_cubemap->Transform() });
+		Graphics::UniformBufferFormats::sFrame _frameData_Cubemap(m_editorCamera->GetProjectionMatrix(), glm::mat4(glm::mat3(m_editorCamera->GetViewMatrix())));
+		Graphics::SubmitDataToBeRendered(*i_frameData, _renderingMap, &Graphics::CubeMap_Pass);
+	}
+}
+
+void Assignment::SubmitSceneDataForEnvironmentCapture(Graphics::UniformBufferFormats::sFrame* const i_frameData)
+{
+	std::vector<std::pair<Graphics::cModel::HANDLE, cTransform>> _renderingMap;
+	// PBR pass
+	{
+		_renderingMap.clear();
+		_renderingMap.reserve(m_sphereList.size() + 2);
+		_renderingMap.push_back({ m_spaceHolder->GetModelHandle(), *m_spaceHolder->Transform() });
+		_renderingMap.push_back({ m_teapot->GetModelHandle(), *m_teapot->Transform() });
+		_renderingMap.push_back({ m_gun->GetModelHandle(), *m_gun->Transform() });
+		for (int i = 0; i < m_sphereList.size(); ++i)
+		{
+			_renderingMap.push_back({ m_sphereList[i]->GetModelHandle(), *m_sphereList[i]->Transform() });
+		}
+
 		Graphics::SubmitDataToBeRendered(*i_frameData, _renderingMap, &Graphics::PBR_Pass);
 	}
 
@@ -389,6 +412,7 @@ void Assignment::SubmitShadowData()
 	{
 		_renderingMap.push_back({ m_sphereList[i]->GetModelHandle(), *m_sphereList[i]->Transform() });
 	}
+	_renderingMap.push_back({ m_gun->GetModelHandle(), *m_gun->Transform() });
 
 	{// Spot light shadow map pass
 		Graphics::SubmitDataToBeRendered(Graphics::UniformBufferFormats::sFrame(), _renderingMap, &Graphics::SpotLightShadowMap_Pass);
@@ -420,6 +444,7 @@ void Assignment::CleanUp()
 	safe_delete(m_mirror);
 	safe_delete(m_cubemap);
 	safe_delete(m_spaceHolder);
+	safe_delete(m_gun);
 	for (auto i = 0; i < m_sphereList.size(); ++i)
 	{
 		safe_delete(m_sphereList[i]);

@@ -40,7 +40,6 @@ namespace Graphics
 		m_metallicID = glGetUniformLocation(i_programID, "MetallicMap");
 		m_roughnessID = glGetUniformLocation(i_programID, "RoughnessMap");
 		m_normalD = glGetUniformLocation(i_programID, "NormalMap");
-
 		assert(GL_NO_ERROR == glGetError());
 		return result;
 	}
@@ -107,6 +106,8 @@ namespace Graphics
 			{
 				_lutTexture->UseTexture(GL_TEXTURE17);
 			}
+			else
+				cTexture::UnBindTexture(GL_TEXTURE17, ETT_FRAMEBUFFER_HDR_RG);
 		}
 
 		s_PBRMRUniformBlock.Update(&UniformBufferFormats::sPBRMRMaterial(m_diffuseIntensity, m_roughnessIntensity, m_ior, m_metallicIntensity));

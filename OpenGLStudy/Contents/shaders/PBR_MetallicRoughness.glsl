@@ -259,6 +259,7 @@ vec3 CalcAmbientLight(AmbientLight aLight, vec3 albedoColor,float metalness, flo
 	vec3 kS = fresnelSchlickRoughness(max(dot(vN, vV), 0.0), f0, roughness); 
 	//vec3 kS = fresnelSchlick(max(dot(vN, vV), 0.0), f0);
 	vec3 kD = 1.0 - kS;
+	kD *= (1.0 - metalness);
 	vec3 irradiance = texture(IrradianceMap, vN).rgb;
 	vec3 diffuse    = irradiance * albedoColor;
 	
@@ -350,7 +351,7 @@ void main(){
 	// material property
 	vec3 albedoColor = texture(AlbedoMap, texCood0).rgb * diffuseIntensity;
 	float metalness = texture(MetallicMap, texCood0).r * metalnessIntensity;
-	float roughness = texture(RoughnessMap, texCood0).r * min((roughnessIntensity + 0.01f)/2.0f,1);
+	float roughness = texture(RoughnessMap, texCood0).r * roughnessIntensity;
 	vec3 F0 = abs ((1.0 - ior) / (1.0 + ior)); //vec3(0.04);
 	F0 = F0 * F0;
 	F0 = mix(F0, albedoColor, vec3(metalness));

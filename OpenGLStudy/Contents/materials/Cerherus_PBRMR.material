@@ -1,0 +1,15 @@
+--[[
+    Physcis based rendering metallic roughness workflow for Cerherus
+]]
+return 
+{
+    MaterialType = 4,
+    AlbedoTexture = "Cerberus/Cerberus_Albedo.png",
+    MetallicTexture = "Cerberus/Cerberus_Metallic.png",
+    RoughnessTexture = "Cerberus/Cerberus_Roughness.png",
+    NormalTexture = "Cerberus/Cerberus_Normal.png",
+    DiffuseIntensity = {1.0,1.0,1.0},
+    MetallicIntensity = 1.0,
+    RoughnessIntensity = 1.0,
+    IOR = {2.5,2.5,2.5},
+}

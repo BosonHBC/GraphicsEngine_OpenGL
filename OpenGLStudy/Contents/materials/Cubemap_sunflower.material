@@ -1,0 +1,13 @@
+--[[
+    Snow Cube map material
+]]
+return 
+{
+    MaterialType = 2,
+    tex_PosX = "Cubemaps/sunflower/px.png",
+    tex_NegX = "Cubemaps/sunflower/nx.png",
+    tex_PosY = "Cubemaps/sunflower/py.png",
+    tex_NegY = "Cubemaps/sunflower/ny.png",
+    tex_PosZ = "Cubemaps/sunflower/pz.png",
+    tex_NegZ = "Cubemaps/sunflower/nz.png",
+}
