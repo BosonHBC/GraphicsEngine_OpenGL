@@ -9,7 +9,7 @@ namespace Graphics {
 		cSpotLight(Color i_color, const glm::vec3& i_position,
 			const glm::vec3& i_direction,
 			GLfloat i_edge,
-			GLfloat i_const, GLfloat i_linear, GLfloat i_quadratic);
+			GLfloat i_radius);
 
 		cSpotLight(const cSpotLight& i_other) : cPointLight(i_other), m_edge(i_other.m_edge), m_procEdge(i_other.m_procEdge)
 		{}

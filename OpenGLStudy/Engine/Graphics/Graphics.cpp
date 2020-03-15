@@ -751,6 +751,10 @@ namespace Graphics {
 	{
 		s_currentEffect = GetEffectByKey("PBR_MR");
 		s_currentEffect->UseEffect();
+		
+		glClearColor(s_clearColor.r, s_clearColor.g, s_clearColor.b, 0.f);
+		// A lot of things can be cleaned like color buffer, depth buffer, so we need to specify what to clear
+		glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
 		// Update Lighting Data
 		UpdateLightingData();
@@ -758,7 +762,7 @@ namespace Graphics {
 		s_currentEffect->ValidateProgram();
 
 		auto& renderList = s_dataRenderingByGraphicThread->s_renderPasses[s_currentRenderPass].ModelToTransform_map;
-		constexpr auto sphereOffset = 3;
+		const auto sphereOffset = renderList.size() - 25;
 		// draw the space first
 		for (int i = 0; i < sphereOffset; ++i)
 		{
@@ -1063,7 +1067,7 @@ namespace Graphics {
 		return result;
 	}
 
-	bool CreatePointLight(const glm::vec3& i_initialLocation, const Color& i_color, const GLfloat& i_const, const GLfloat& i_linear, const GLfloat& i_quadratic, bool i_enableShadow, cPointLight*& o_pointLight)
+	bool CreatePointLight(const glm::vec3& i_initialLocation, const Color& i_color,const GLfloat& i_radius , bool i_enableShadow, cPointLight*& o_pointLight)
 	{
 		auto result = true;
 		if (result = (s_currentEffect->GetProgramID() == 0)) {
@@ -1071,7 +1075,7 @@ namespace Graphics {
 			return result;
 		}
 		// TODO: lighting, range should be passed in
-		cPointLight* newPointLight = new cPointLight(i_color, i_initialLocation, i_const, i_linear, i_quadratic);
+		cPointLight* newPointLight = new cPointLight(i_color, i_initialLocation, i_radius);
 		newPointLight->SetupLight(s_currentEffect->GetProgramID(), s_pointLight_list.size());
 		newPointLight->SetEnableShadow(i_enableShadow);
 		newPointLight->CreateShadowMap(1024, 1024);
@@ -1080,14 +1084,14 @@ namespace Graphics {
 		return result;
 	}
 
-	bool CreateSpotLight(const glm::vec3& i_initialLocation, const glm::vec3& i_direction, const Color& i_color, const GLfloat& i_edge, const GLfloat& i_const, const GLfloat& i_linear, const GLfloat& i_quadratic, bool i_enableShadow, cSpotLight*& o_spotLight)
+	bool CreateSpotLight(const glm::vec3& i_initialLocation, const glm::vec3& i_direction, const Color& i_color, const GLfloat& i_edge, const GLfloat& i_radius, bool i_enableShadow, cSpotLight*& o_spotLight)
 	{
 		auto result = true;
 		if (result = (s_currentEffect->GetProgramID() == 0)) {
 			printf("Can not create spot light without a valid program id.\n");
 			return result;
 		}
-		cSpotLight* newSpotLight = new cSpotLight(i_color, i_initialLocation, glm::normalize(i_direction), i_edge, i_const, i_linear, i_quadratic);
+		cSpotLight* newSpotLight = new cSpotLight(i_color, i_initialLocation, glm::normalize(i_direction), i_edge, i_radius);
 		newSpotLight->SetupLight(s_currentEffect->GetProgramID(), s_spotLight_list.size());
 		newSpotLight->SetEnableShadow(i_enableShadow);
 		newSpotLight->CreateShadowMap(1024, 1024);

@@ -4,13 +4,10 @@
 #include "Graphics/Graphics.h"
 #include "Graphics/UniformBuffer/UniformBufferFormats.h"
 namespace Graphics {
-	cPointLight::cPointLight(Color i_color, const glm::vec3 & i_position, GLfloat i_const, GLfloat i_linear, GLfloat i_quadratic) :
-		m_const(i_const), m_linear(i_linear), m_quadratic(i_quadratic),
-		cGenLight(i_color)
+	cPointLight::cPointLight(Color i_color, const glm::vec3 & i_position, GLfloat i_range) :
+		m_range(i_range), cGenLight(i_color)
 	{
 		m_transform.SetTransform(i_position, glm::quat(1, 0, 0, 0), glm::vec3(1, 1, 1));
-
-		UpdateRange();
 	}
 	void cPointLight::Illuminate()
 	{
@@ -18,9 +15,6 @@ namespace Graphics {
 		gLighting.pointLights[m_lightIndex].base.color = m_color;
 		gLighting.pointLights[m_lightIndex].base.enableShadow = m_enableShadow;
 		gLighting.pointLights[m_lightIndex].position = m_transform.Position();
-		gLighting.pointLights[m_lightIndex].quadratic = m_quadratic;
-		gLighting.pointLights[m_lightIndex].linear = m_linear;
-		gLighting.pointLights[m_lightIndex].constant = m_const;
 		gLighting.pointLights[m_lightIndex].radius = m_range;
 	}
 
@@ -69,11 +63,5 @@ namespace Graphics {
 		glUniform1i(m_lightShadowMapID, i_textureUnit);
 	}
 
-	void cPointLight::UpdateRange()
-	{
-		float lightMax = fmax(m_color.r, fmax(m_color.g, m_color.b));
-		m_range = 300.f;// (-m_linear + sqrt(m_linear * m_linear - 4 * m_quadratic * (m_const - (256.f / 5.f) * lightMax))) / (2.f * m_quadratic) * 100.f;
-		printf("Point light[%d] range: %f\n", m_lightIndex, m_range);
-	}
 
 }

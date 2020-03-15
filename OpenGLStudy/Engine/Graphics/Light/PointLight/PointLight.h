@@ -6,14 +6,13 @@ namespace Graphics {
 	class cPointLight : public cGenLight
 	{
 	public:
-		cPointLight() : m_range(0), m_const(1), m_linear(0), m_quadratic(0), cGenLight()
+		cPointLight() : m_range(0), cGenLight()
 		{}
-		cPointLight(Color i_color, const glm::vec3& i_position, GLfloat i_const, GLfloat i_linear, GLfloat i_quadratic);
-		virtual ~cPointLight() { m_range = 0; m_const = 0; m_linear = 0; m_quadratic = 0; }
+		cPointLight(Color i_color, const glm::vec3& i_position,  GLfloat i_range);
+		virtual ~cPointLight() { m_range = 0; }
 
 		cPointLight(const cPointLight& i_other)
 			: cGenLight(i_other), m_range(i_other.m_range),
-			m_const(i_other.m_const), m_linear(i_other.m_linear), m_quadratic(i_other.m_quadratic),
 			m_lightTransformID(i_other.m_lightTransformID),
 			m_lightShadowMapID(i_other.m_lightShadowMapID), m_farPlaneID(i_other.m_farPlaneID)
 		{}
@@ -21,9 +20,6 @@ namespace Graphics {
 		{
 			cGenLight::operator=(i_other);
 			m_range = i_other.m_range;
-			m_const = i_other.m_const;
-			m_linear = i_other.m_linear;
-			m_quadratic = i_other.m_quadratic;
 			m_farPlaneID = i_other.m_farPlaneID;
 			return *this;
 		}
@@ -35,10 +31,9 @@ namespace Graphics {
 		void SetLightUniformTransform() override;
 		void UseShadowMap(GLuint i_textureUnit) override;
 	protected:
-		// for attenuation calculation: c+bx+ax^2, m_range is calculated
-		GLfloat m_range, m_const, m_linear, m_quadratic;
+		// use inverse squared fall off
+		GLfloat m_range;
 		GLuint m_lightTransformID, m_lightShadowMapID;
-		void UpdateRange();
 	private:
 		GLuint m_farPlaneID;
 	};

@@ -104,37 +104,31 @@ namespace Graphics {
 
 				DirectionalLight32() : direction(glm::vec3(0, 1, 0)) {}
 			};
-			struct PointLight48 {
+			struct PointLight32 {
 				Light16 base; // 16 bytes
 				glm::vec3 position; // 12 bytes
-				float constant; // 4bytes
-				float linear; // 4bytes
-				float quadratic; // 4bytes
 				float radius; // 4 bytes
-				V1Padding; // 4bytes
-
-				PointLight48() : position(glm::vec3(0,0,0)), constant(1), linear(0), quadratic(0)
+				PointLight32() : position(glm::vec3(0,0,0)), radius(300)
 				{}
 			};
-			struct SpotLight64 {
-				PointLight48 base; // 48 bytes
+			struct SpotLight48 {
+				PointLight32 base; // 32 bytes
 				glm::vec3 direction; // 12 bytes
 				float edge; // 4 bytes
-				SpotLight64() : direction(glm::vec3(0, 1, 0)), edge(1)
+				SpotLight48() : direction(glm::vec3(0, 1, 0)), edge(1)
 				{}
 			};
 		}
 
 		struct sLighting
 		{
+			SupportingData::SpotLight48 spotLights[MAX_COUNT_PER_LIGHT]; // 48 * MAX_COUNT_PER_LIGHT = 240 bytes
+			SupportingData::PointLight32 pointLights[MAX_COUNT_PER_LIGHT]; // 32 * MAX_COUNT_PER_LIGHT = 160 bytes
+			SupportingData::DirectionalLight32 directionalLight; // 32 bytes
+			SupportingData::AmbientLight16 ambientLight; // 16 bytes
 			int pointLightCount; // 4 bytes
 			int spotLightCount; // 4 bytes
-			V2Padding; // 8 bytes
-			SupportingData::AmbientLight16 ambientLight; // 16 bytes
-			SupportingData::DirectionalLight32 directionalLight; // 32 bytes
-			SupportingData::PointLight48 pointLights[MAX_COUNT_PER_LIGHT]; // 48 * MAX_COUNT_PER_LIGHT = 240 bytes
-			SupportingData::SpotLight64 spotLights[MAX_COUNT_PER_LIGHT]; // 64 * MAX_COUNT_PER_LIGHT = 320 bytes
-		}; // 624 bytes per lighting data
+		}; // 456 bytes in total
 
 		// Clipping plane data
 		// --------------------------------------------------------------------------------------------------------------------------------------------

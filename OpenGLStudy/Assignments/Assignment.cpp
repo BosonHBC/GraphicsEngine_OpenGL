@@ -67,8 +67,8 @@ void Assignment::CreateActor()
 	m_teapot2 = new cActor();
 	m_teapot2->Initialize();
 	m_teapot2->Transform()->SetTransform(glm::vec3(150, 0, 100), glm::quat(glm::vec3(-glm::radians(90.f), 0, 0)), glm::vec3(3, 3, 3));
-	m_teapot2->SetModel("Contents/models/teapot.model");
-	m_teapot2->UpdateUniformVariables(Graphics::GetCurrentEffect());
+	m_teapot2->SetModel("Contents/models/pbrTeapot.model");
+	m_teapot2->UpdateUniformVariables(Graphics::GetEffectByKey("PBR_MR"));
 
 	m_mirror = new cActor();
 	m_mirror->Initialize();
@@ -120,10 +120,10 @@ void Assignment::CreateCamera()
 
 void Assignment::CreateLight()
 {
-	Graphics::CreateAmbientLight(Color(0.025f, 0.025f, 0.025f), aLight);
-	Graphics::CreatePointLight(glm::vec3(0, 150.f, 100.f), Color(3, 3, 3), 1.5f, 0.3f, 2.f, true, pLight1);
-	//Graphics::CreatePointLight(glm::vec3(-100, 40, -100), Color(0.8, 0.8, 0.8), 1.f, 0.7f, 1.8f, true, pLight2);
-	//Graphics::CreateDirectionalLight(Color(.6, .6, .58f), glm::vec3(-1, -0.5f, -0.3f), true, dLight);
+	Graphics::CreateAmbientLight(Color(0.01f, 0.01f, 0.01f), aLight);
+	Graphics::CreatePointLight(glm::vec3(-100, 150.f, 100.f), Color(1,1,1), 300.f, true, pLight1);
+	//Graphics::CreatePointLight(glm::vec3(100, 150.f, 100.f), Color(1, 1, 1), 1.f, 0.7f, 1.8f, true, pLight2);
+	//Graphics::CreateDirectionalLight(Color(0.6,0.6,0.5), glm::vec3(-1, -0.5f, -0.3f), true, dLight);
 	//Graphics::CreateSpotLight(glm::vec3(0, 150, 0), glm::vec3(0, 1, 1), Color(1), 65.f, 1.5f, 0.3f, 5.f, true, spLight);
 	//Graphics::CreateSpotLight(glm::vec3(100, 150, 0), glm::vec3(1, 1, 0), Color(1), 65.f, 1.f, 0.7f, 1.8f, true, spLight2);
 
@@ -340,21 +340,13 @@ void Assignment::SubmitSceneData(Graphics::UniformBufferFormats::sFrame* const i
 {
 	std::vector<std::pair<Graphics::cModel::HANDLE, cTransform>> _renderingMap;
 
-	// Actual scene to render
-	{
-		_renderingMap.clear();
-
-		_renderingMap.push_back({ m_teapot2->GetModelHandle(), *m_teapot2->Transform() });
-		//_renderingMap.push_back({ m_mirror->GetModelHandle(), *m_mirror->Transform() });
-
-		Graphics::SubmitDataToBeRendered(*i_frameData, _renderingMap, &Graphics::Render_Pass);
-	}
 	// PBR pass
 	{
 		_renderingMap.clear();
 		_renderingMap.reserve(m_sphereList.size() + 2);
 		_renderingMap.push_back({ m_spaceHolder->GetModelHandle(), *m_spaceHolder->Transform() });
 		_renderingMap.push_back({ m_teapot->GetModelHandle(), *m_teapot->Transform() });
+		_renderingMap.push_back({ m_teapot2->GetModelHandle(), *m_teapot2->Transform() });
 		_renderingMap.push_back({ m_gun->GetModelHandle(), *m_gun->Transform() });
 		for (int i = 0; i < m_sphereList.size(); ++i)
 		{
@@ -381,6 +373,7 @@ void Assignment::SubmitSceneDataForEnvironmentCapture(Graphics::UniformBufferFor
 		_renderingMap.reserve(m_sphereList.size() + 2);
 		_renderingMap.push_back({ m_spaceHolder->GetModelHandle(), *m_spaceHolder->Transform() });
 		_renderingMap.push_back({ m_teapot->GetModelHandle(), *m_teapot->Transform() });
+		_renderingMap.push_back({ m_teapot2->GetModelHandle(), *m_teapot2->Transform() });
 		_renderingMap.push_back({ m_gun->GetModelHandle(), *m_gun->Transform() });
 		for (int i = 0; i < m_sphereList.size(); ++i)
 		{

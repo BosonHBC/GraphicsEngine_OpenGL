@@ -69,9 +69,6 @@ struct DirectionalLight{
 struct PointLight{
 	Light base;
 	vec3 position;
-	float constant;
-	float linear;
-	float quadratic;
 	float radius;
 };
 struct SpotLight{
@@ -81,15 +78,13 @@ struct SpotLight{
 };
 layout(std140, binding = 3) uniform g_uniformBuffer_Lighting
 {
+	SpotLight g_spotLights[MAX_COUNT_PER_LIGHT]; // 48 * MAX_COUNT_PER_LIGHT = 240 bytes
+	PointLight g_pointLights[MAX_COUNT_PER_LIGHT]; // 32 * MAX_COUNT_PER_LIGHT = 160 bytes
+	DirectionalLight g_directionalLight; // 32 bytes
+	AmbientLight g_ambientLight; // 16 bytes	
 	int g_pointLightCount; // 4 bytes
 	int g_spotLightCount; // 4 bytes
-	// For vec4 alignment
-	vec2 g_v2Padding;
-	AmbientLight g_ambientLight; // 16 bytes
-	DirectionalLight g_directionalLight; // 32 bytes
-	PointLight g_pointLights[MAX_COUNT_PER_LIGHT]; // 48 * MAX_COUNT_PER_LIGHT = 240 bytes
-	SpotLight g_spotLights[MAX_COUNT_PER_LIGHT]; // 64 * MAX_COUNT_PER_LIGHT = 320 bytes
-}; // 624 bytes per lighting data
+}; // 456 bytes per lighting data
 
 //-------------------------------------------------------------------------
 // Fucntions
@@ -262,15 +257,12 @@ vec4 CalcPointLight(int idx, PointLight pLight,vec4 diffusTexCol, vec4 specTexCo
 		float distRate = dist / pLight.radius;
 		// shadow
 		float shadowFactor = pLight.base.enableShadow ? (1.0 - CalcPointLightShadowMap(idx, pLight, dist_vV)) : 1.0;
-		shadowFactor = max(shadowFactor * (.99f -  distRate), 0.0);
 
 		vec4 color_kd = diffusTexCol * IlluminateByDirection_Kd(pLight.base, vN, dir);
 		vec4 color_ks = specTexCol * IlluminateByDirection_Ks(pLight.base, vN, dir, norm_vV);
-		float attenuationFactor = (pLight.quadratic * distRate * distRate + 
-													pLight.linear * distRate + 
-													pLight.constant);
-
-		return shadowFactor * ((color_kd + color_ks) / attenuationFactor);
+		
+		float falloff = pow(clamp(1-pow(distRate,4),0.0,1.0),2) / (1 + dist * dist);
+		return shadowFactor * ((color_kd + color_ks) * 10000.f * falloff);
 }
 
 vec4 CalcPointLights(vec4 diffusTexCol, vec4 specTexCol,vec3 vN, vec3 norm_vV, float dist_vV){
@@ -300,11 +292,9 @@ vec4 CalcSpotLight(int idx, SpotLight spLight,vec4 diffusTexCol, vec4 specTexCol
 			float distRate = dist / spLight.base.radius;
 			vec4 color_kd = diffusTexCol * IlluminateByDirection_Kd(spLight.base.base, vN, norm_dir);
 			vec4 color_ks = specTexCol * IlluminateByDirection_Ks(spLight.base.base, vN, norm_dir, vV);
-			float attenuationFactor = (spLight.base.quadratic * distRate * distRate+ 
-													spLight.base.linear * distRate + 
-													spLight.base.constant) ;
 
-			vec4 outColor = (color_kd + color_ks)  / attenuationFactor;
+			float falloff = pow(clamp(1-pow(distRate,4),0.0,1.0),2) / (1 + dist * dist);
+			vec4 outColor = (color_kd + color_ks) * 10000.f * falloff;
 			float shadowFactor = spLight.base.base.enableShadow ? (1.0 - CalcSpotLightShadowMap(idx,spLight ,vN)): 1.0;
 			outColor *= shadowFactor;
 			return outColor * (1.0f - (1-dir_dot_LDir) * (1.0f / (1.0f - spLight.edge)));
