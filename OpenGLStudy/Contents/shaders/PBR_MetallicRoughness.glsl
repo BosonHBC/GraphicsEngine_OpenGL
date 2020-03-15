@@ -303,13 +303,14 @@ vec3 albedoColor, float metalness, float roughness, vec3 f0, vec3 vN, vec3 vV, f
 		float attenuationFactor = 1.0 / (pLight.quadratic * distRate * distRate + 
 													pLight.linear * distRate + 
 													pLight.constant);
-		vec3 radiance = pLight.base.color * attenuationFactor;
+		float falloff = pow(clamp(1-pow(distRate,4),0.0,1.0),2) / (1 + dist * dist);									
+		vec3 radiance = pLight.base.color * 3000.f * falloff;
 
 		vec3 cookedIrrandance = CookTorranceBrdf(radiance, albedoColor, metalness, roughness, f0,vN, vH, vL ,vV);
 
 		// shadow
 		float shadowFactor = pLight.base.enableShadow ? (1.0 - CalcPointLightShadowMap(idx, pLight, viewDistance)) : 1.0;
-		shadowFactor = max(shadowFactor * (.99f -  distRate), 0.0);
+		//shadowFactor = max(shadowFactor * (.99f -  distRate), 0.0);
 
 		return shadowFactor * cookedIrrandance;
 	

@@ -72,7 +72,8 @@ namespace Graphics {
 	void cPointLight::UpdateRange()
 	{
 		float lightMax = fmax(m_color.r, fmax(m_color.g, m_color.b));
-		m_range = (-m_linear + sqrt(m_linear * m_linear - 4 * m_quadratic * (m_const - (256.f / 5.f) * lightMax))) / (2.f * m_quadratic) * 100.f;
+		m_range = 300.f;// (-m_linear + sqrt(m_linear * m_linear - 4 * m_quadratic * (m_const - (256.f / 5.f) * lightMax))) / (2.f * m_quadratic) * 100.f;
+		printf("Point light[%d] range: %f\n", m_lightIndex, m_range);
 	}
 
 }
