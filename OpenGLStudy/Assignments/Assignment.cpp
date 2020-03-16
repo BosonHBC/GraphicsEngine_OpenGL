@@ -120,7 +120,7 @@ void Assignment::CreateCamera()
 
 void Assignment::CreateLight()
 {
-	Graphics::CreateAmbientLight(Color(0.01f, 0.01f, 0.01f), aLight);
+	Graphics::CreateAmbientLight(Color(0.001f, 0.001f, 0.001f), aLight);
 	Graphics::CreatePointLight(glm::vec3(-100, 150.f, 100.f), Color(1,1,1), 300.f, true, pLight1);
 	//Graphics::CreatePointLight(glm::vec3(100, 150.f, 100.f), Color(1, 1, 1), 1.f, 0.7f, 1.8f, true, pLight2);
 	//Graphics::CreateDirectionalLight(Color(0.6,0.6,0.5), glm::vec3(-1, -0.5f, -0.3f), true, dLight);
