@@ -45,14 +45,13 @@ namespace Graphics {
 		if (_handleTex) {
 			_handleTex->UseTexture(GL_TEXTURE0);
 		}
+		else
+			cTexture::UnBindTexture(GL_TEXTURE0, ETT_CUBEMAP);
 	}
 
 	void cMatCubemap::CleanUpMaterialBind()
 	{
-		cTexture* _handleTex = cTexture::s_manager.Get(m_cubeMapHandle);
-		if (_handleTex) {
-			_handleTex->CleanUpTextureBind(GL_TEXTURE0);
-		}
+		cTexture::UnBindTexture(GL_TEXTURE0, ETT_CUBEMAP);
 	}
 
 	void cMatCubemap::CleanUp()

@@ -8,7 +8,6 @@ uniform samplerCube cubemapTex;
 void main()
 {    
     vec3 envColor = texture(cubemapTex, normalize(TexCoords)).rgb;
-    envColor = envColor / (envColor + vec3(1)); 
-    envColor = pow(envColor, vec3(1.0/2.2)); 
+
     outColor = vec4(envColor, 1.0);
 }

@@ -67,8 +67,8 @@ void Assignment::CreateActor()
 	m_teapot2 = new cActor();
 	m_teapot2->Initialize();
 	m_teapot2->Transform()->SetTransform(glm::vec3(150, 0, 100), glm::quat(glm::vec3(-glm::radians(90.f), 0, 0)), glm::vec3(3, 3, 3));
-	m_teapot2->SetModel("Contents/models/teapot.model");
-	m_teapot2->UpdateUniformVariables(Graphics::GetCurrentEffect());
+	m_teapot2->SetModel("Contents/models/pbrTeapot.model");
+	m_teapot2->UpdateUniformVariables(Graphics::GetEffectByKey("PBR_MR"));
 
 	m_mirror = new cActor();
 	m_mirror->Initialize();
@@ -80,6 +80,11 @@ void Assignment::CreateActor()
 	m_cubemap->Initialize();
 	m_cubemap->SetModel("Contents/models/cubemap.model");
 	m_cubemap->UpdateUniformVariables(Graphics::GetEffectByKey("CubemapEffect"));
+
+	Graphics::cModel* _cubeMap = Graphics::cModel::s_manager.Get(m_cubemap->GetModelHandle());
+	Graphics::cMatCubemap* _matCubemap = dynamic_cast<Graphics::cMatCubemap*>(_cubeMap->GetMaterialAt());
+	_matCubemap->UpdateCubemap(Graphics::GetHDRtoCubemap()->GetCubemapTextureHandle()); // used for debugging the environment
+
 
 	m_spaceHolder = new cActor();
 	m_spaceHolder->Initialize();
@@ -114,16 +119,16 @@ void Assignment::CreateCamera()
 {
 	m_editorCamera = new  cEditorCamera(glm::vec3(0, 150, 350), 5, 0, 300, 10.f);
 	float _aspect = (float)(GetCurrentWindow()->GetBufferWidth()) / (float)(GetCurrentWindow()->GetBufferHeight());
-	m_editorCamera->CreateProjectionMatrix(glm::radians(60.f), _aspect, 1.f, 1000.0f);
+	m_editorCamera->CreateProjectionMatrix(glm::radians(60.f), _aspect, 1.f, 3000.0f);
 	m_editorCamera->Transform()->Update();
 }
 
 void Assignment::CreateLight()
 {
-	Graphics::CreateAmbientLight(Color(0.25f, 0.25f, 0.25f), aLight);
-	Graphics::CreatePointLight(glm::vec3(0, 150.f, 100.f), Color(1.8, 1.8, 1.8), 1.5f, 0.3f, 2.f, true, pLight1);
-	//Graphics::CreatePointLight(glm::vec3(-100, 40, -100), Color(0.8, 0.8, 0.8), 1.f, 0.7f, 1.8f, true, pLight2);
-	Graphics::CreateDirectionalLight(Color(.6, .6, .58f), glm::vec3(-1, -0.5f, -0.3f), true, dLight);
+	Graphics::CreateAmbientLight(Color(0.5f, 0.5f, 0.5f), aLight);
+	Graphics::CreatePointLight(glm::vec3(-100, 150.f, 100.f), Color(1,1,1), 300.f, true, pLight1);
+	//Graphics::CreatePointLight(glm::vec3(100, 150.f, 100.f), Color(1, 1, 1), 1.f, 0.7f, 1.8f, true, pLight2);
+	Graphics::CreateDirectionalLight(Color(0.6,0.6,0.5), glm::vec3(-1, -0.5f, -0.5f), true, dLight);
 	//Graphics::CreateSpotLight(glm::vec3(0, 150, 0), glm::vec3(0, 1, 1), Color(1), 65.f, 1.5f, 0.3f, 5.f, true, spLight);
 	//Graphics::CreateSpotLight(glm::vec3(100, 150, 0), glm::vec3(1, 1, 0), Color(1), 65.f, 1.f, 0.7f, 1.8f, true, spLight2);
 
@@ -153,9 +158,8 @@ void Assignment::Run()
 {
 	Graphics::PreRenderFrame();
 
-	Graphics::cModel* _cubeMap = Graphics::cModel::s_manager.Get(m_cubemap->GetModelHandle());
-	Graphics::cMatCubemap* _matCubemap = dynamic_cast<Graphics::cMatCubemap*>(_cubeMap->GetMaterialAt());
-	//_matCubemap->UpdateCubemap(Graphics::GetIrrdianceMapProbe()->GetCubemapTextureHandle()); // used for debugging the environment
+
+
 	// loop until window closed
 	while (!m_shouldApplicationLoopExit)
 	{
@@ -340,21 +344,13 @@ void Assignment::SubmitSceneData(Graphics::UniformBufferFormats::sFrame* const i
 {
 	std::vector<std::pair<Graphics::cModel::HANDLE, cTransform>> _renderingMap;
 
-	// Actual scene to render
-	{
-		_renderingMap.clear();
-
-		_renderingMap.push_back({ m_teapot2->GetModelHandle(), *m_teapot2->Transform() });
-		//_renderingMap.push_back({ m_mirror->GetModelHandle(), *m_mirror->Transform() });
-
-		Graphics::SubmitDataToBeRendered(*i_frameData, _renderingMap, &Graphics::Render_Pass);
-	}
 	// PBR pass
 	{
 		_renderingMap.clear();
 		_renderingMap.reserve(m_sphereList.size() + 2);
 		_renderingMap.push_back({ m_spaceHolder->GetModelHandle(), *m_spaceHolder->Transform() });
 		_renderingMap.push_back({ m_teapot->GetModelHandle(), *m_teapot->Transform() });
+		_renderingMap.push_back({ m_teapot2->GetModelHandle(), *m_teapot2->Transform() });
 		_renderingMap.push_back({ m_gun->GetModelHandle(), *m_gun->Transform() });
 		for (int i = 0; i < m_sphereList.size(); ++i)
 		{
@@ -381,6 +377,7 @@ void Assignment::SubmitSceneDataForEnvironmentCapture(Graphics::UniformBufferFor
 		_renderingMap.reserve(m_sphereList.size() + 2);
 		_renderingMap.push_back({ m_spaceHolder->GetModelHandle(), *m_spaceHolder->Transform() });
 		_renderingMap.push_back({ m_teapot->GetModelHandle(), *m_teapot->Transform() });
+		_renderingMap.push_back({ m_teapot2->GetModelHandle(), *m_teapot2->Transform() });
 		_renderingMap.push_back({ m_gun->GetModelHandle(), *m_gun->Transform() });
 		for (int i = 0; i < m_sphereList.size(); ++i)
 		{

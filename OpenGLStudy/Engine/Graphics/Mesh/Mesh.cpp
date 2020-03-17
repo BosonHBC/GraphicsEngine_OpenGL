@@ -5,7 +5,7 @@ namespace Graphics {
 
 	Assets::cAssetManager <cMesh> cMesh::s_manager;
 
-	bool cMesh::Load(const std::string& i_path, cMesh*& o_mesh, std::vector<float>& i_vertices, std::vector<unsigned int>& i_indices)
+	bool cMesh::Load(const std::string& i_path, cMesh*& o_mesh, const EMeshType& i_meshType, std::vector<float>& i_vertices, std::vector<unsigned int>& i_indices)
 	{
 		auto result = true;
 
@@ -20,10 +20,25 @@ namespace Graphics {
 			return result;
 		}
 		else {
-			_mesh->CreateMesh(&i_vertices[0], &i_indices[0], static_cast<GLuint>(i_vertices.size()), static_cast<GLuint>(i_indices.size()));
-		}
+			switch (i_meshType)
+			{
+			case EMeshType::EMT_Mesh:
+				_mesh->CreateMesh(&i_vertices[0], &i_indices[0], static_cast<GLuint>(i_vertices.size()), static_cast<GLuint>(i_indices.size()));
+				break;
+			case EMT_Point:
+				_mesh->CreatePoint(&i_vertices[0], static_cast<GLuint>(i_vertices.size()));
+				break;
+			default:
+				printf("Invalid mesh type.");
+				result = false;
+				assert(result);
+				break;
+			}
 
+		}
+		
 		o_mesh = _mesh;
+		o_mesh->m_meshType = i_meshType;
 
 		//TODO: Loading information succeed!
 		printf("Succeed! Loading mesh: %s. Vertices: %d, Indices: %d \n", i_path.c_str(), i_vertices.size(), i_indices.size());
@@ -33,6 +48,7 @@ namespace Graphics {
 
 	cMesh::cMesh()
 	{
+		m_meshType = EMT_Mesh;
 		m_vao = 0;
 		m_vbo = 0;
 		m_ibo = 0;
@@ -112,22 +128,54 @@ namespace Graphics {
 		glBindVertexArray(0);
 	}
 
+	void cMesh::CreatePoint(GLfloat* i_vertices, GLuint i_numOfVertices)
+	{
+		m_indexCount = i_numOfVertices / 3; // this record how many points in this vertices arrays
+		// Use a Vertex Array Object
+		glGenVertexArrays(1, &m_vao);
+		glBindVertexArray(m_vao);
+
+		// generate a VBO
+		glGenBuffers(1, &m_vbo);
+		// bind this VBO to the VAO just created
+		glBindBuffer(GL_ARRAY_BUFFER, m_vbo);
+		// connect the buffer data(the vertices that just created) to gl array buffer for this vbo
+		glBufferData(GL_ARRAY_BUFFER, i_numOfVertices * sizeof(i_vertices[0]), i_vertices, GL_STATIC_DRAW);
+
+		glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 3, 0);
+		glEnableVertexAttribArray(0);
+	}
+
 	void cMesh::Render()
 	{
 		// bind VAO
 		glBindVertexArray(m_vao);
-		
-		//bind IBO
-		glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, m_ibo);
 
-		// Index draw
-		glDrawElements(GL_TRIANGLES, m_indexCount, GL_UNSIGNED_INT, 0);
-		assert(glGetError() == GL_NO_ERROR);
-		// Vertex draw
-		//glDrawArrays(GL_TRIANGLES, 0, 3);
+		switch (m_meshType)
+		{
+		case Graphics::EMT_Mesh:
+		{
+			//bind IBO
+			glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, m_ibo);
 
-		// clear IBO
-		glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0);
+			// Index draw
+			glDrawElements(GL_TRIANGLES, m_indexCount, GL_UNSIGNED_INT, 0);
+			assert(glGetError() == GL_NO_ERROR);
+			// Vertex draw
+			//glDrawArrays(GL_TRIANGLES, 0, 3);
+
+			// clear IBO
+			glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0);
+		}
+		break;
+		case Graphics::EMT_Point:
+			glDrawArrays(GL_POINTS, 0, m_indexCount);
+			assert(glGetError() == GL_NO_ERROR);
+			break;
+		default:
+			break;
+		}
+
 		// clear VAO
 		glBindVertexArray(0);
 	}

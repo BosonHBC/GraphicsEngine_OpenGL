@@ -121,6 +121,8 @@ namespace Graphics {
 		glBindFramebuffer(GL_FRAMEBUFFER, m_fbo);
 		if (m_rbo > 0 && m_rbo < static_cast<GLuint>(-1))
 			glBindRenderbuffer(GL_RENDERBUFFER, m_rbo);
+
+		assert(GL_NO_ERROR == glGetError());
 	}
 
 	void cFrameBuffer::UnWrite()
@@ -132,6 +134,8 @@ namespace Graphics {
 		// reset window size
 		Application::cApplication* _app = Application::GetCurrentApplication();
 		if (_app) { _app->ResetWindowSize(); }
+
+		assert(GL_NO_ERROR == glGetError());
 	}
 
 	void cFrameBuffer::Read(GLenum i_textureID)

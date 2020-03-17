@@ -65,15 +65,10 @@ struct AmbientLight{
 struct DirectionalLight{
 	Light base;
 	vec3 direction;
-	// For vec4 alignment
-	float v1Padding;
 };
 struct PointLight{
 	Light base;
 	vec3 position;
-	float constant;
-	float linear;
-	float quadratic;
 	float radius;
 };
 struct SpotLight{
@@ -83,15 +78,13 @@ struct SpotLight{
 };
 layout(std140, binding = 3) uniform g_uniformBuffer_Lighting
 {
+	SpotLight g_spotLights[MAX_COUNT_PER_LIGHT]; // 48 * MAX_COUNT_PER_LIGHT = 240 bytes
+	PointLight g_pointLights[MAX_COUNT_PER_LIGHT]; // 32 * MAX_COUNT_PER_LIGHT = 160 bytes
+	DirectionalLight g_directionalLight; // 32 bytes
+	AmbientLight g_ambientLight; // 16 bytes	
 	int g_pointLightCount; // 4 bytes
 	int g_spotLightCount; // 4 bytes
-	// For vec4 alignment
-	vec2 g_v2Padding;
-	AmbientLight g_ambientLight; // 16 bytes
-	DirectionalLight g_directionalLight; // 32 bytes
-	PointLight g_pointLights[MAX_COUNT_PER_LIGHT]; // 48 * MAX_COUNT_PER_LIGHT = 240 bytes
-	SpotLight g_spotLights[MAX_COUNT_PER_LIGHT]; // 64 * MAX_COUNT_PER_LIGHT = 320 bytes
-}; // 624 bytes per lighting data
+}; // 456 bytes per lighting data
 
 //-------------------------------------------------------------------------
 // Fucntions
@@ -286,7 +279,8 @@ vec3 albedoColor, float metalness, float roughness, vec3 f0, vec3 vN, vec3 vV)
 
 	vec3 cookedIrrandance = CookTorranceBrdf(radiance, albedoColor, metalness, roughness, f0,vN, vH, vL ,vV);
 	float shadowFactor = dLight.base.enableShadow ? (1.0 - CalcDirectionalLightShadowMap(vN)): 1.0;
-
+	shadowFactor = max(shadowFactor, 0.0);
+	
 	return shadowFactor * cookedIrrandance;
 }
 //-------------------------------------------------------------------------
@@ -300,19 +294,17 @@ vec3 albedoColor, float metalness, float roughness, vec3 f0, vec3 vN, vec3 vV, f
 		vL = normalize(vL); // normalzied light direction
 		vec3 vH = normalize(vV + vL); // halfway vector
 		float distRate = dist / pLight.radius;
-		float attenuationFactor = 1.0 / (pLight.quadratic * distRate * distRate + 
-													pLight.linear * distRate + 
-													pLight.constant);
-		vec3 radiance = pLight.base.color * attenuationFactor;
+		float falloff = pow(clamp(1-pow(distRate,4),0.0,1.0),2) / (1 + dist * dist);
+		// 10000.f is a intensity compensation of changing falloff method from Exponential Falloff to Inverse Square Falloff, light unit now is lumens
+		vec3 radiance = pLight.base.color * 10000.f * falloff;
 
 		vec3 cookedIrrandance = CookTorranceBrdf(radiance, albedoColor, metalness, roughness, f0,vN, vH, vL ,vV);
 
 		// shadow
 		float shadowFactor = pLight.base.enableShadow ? (1.0 - CalcPointLightShadowMap(idx, pLight, viewDistance)) : 1.0;
-		shadowFactor = max(shadowFactor * (.99f -  distRate), 0.0);
+		shadowFactor = max(shadowFactor, 0.0);
 
 		return shadowFactor * cookedIrrandance;
-	
 }
 
 vec3 CalcPointLights(vec3 albedoColor, float metalness, float roughtness, vec3 f0, vec3 vN, vec3 norm_vV, float viewDistance){

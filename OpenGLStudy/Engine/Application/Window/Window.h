@@ -33,6 +33,7 @@ public:
 	/** Getters */
 	const GLint& GetBufferWidth() const { return m_bufferWidth; }
 	const GLint& GetBufferHeight() const { return m_bufferHeight; }
+	GLfloat GetAOR() const { return static_cast<GLfloat>(m_bufferWidth) / m_bufferHeight; }
 	bool GetShouldClose() const;
 	GLFWwindow* GetWindow() const { return m_glfwWindow; }
 	sWindowInput* const GetWindowInput() const { return m_windowInput; }

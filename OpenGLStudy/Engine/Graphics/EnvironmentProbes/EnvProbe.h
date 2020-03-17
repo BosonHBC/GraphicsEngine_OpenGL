@@ -33,6 +33,7 @@ namespace Graphics
 
 		void StartCapture();
 		void StopCapture();
+
 		/** Getters */
 		GLuint GetCubemapTextureID() const;
 		glm::vec3 GetPosition() const { return m_transform.Position(); }
@@ -43,6 +44,8 @@ namespace Graphics
 		glm::mat4 GetViewMat4(GLuint i_face) const;
 		GLuint GetWidth() const { return m_width; }
 		GLuint GetHeight() const { return m_height; }
+		GLfloat GetRange() const { return m_range; }
+		const cTransform& GetTransform() const { return m_transform; }
 
 		GLuint fbo() const { return m_frameBuffer.rbo(); }
 		GLuint rbo() const { return m_frameBuffer.rbo(); }
