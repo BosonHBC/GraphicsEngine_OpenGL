@@ -25,7 +25,8 @@ namespace Graphics {
 		void UseEffect();
 		void UnUseEffect();
 		bool RecompileShader(const char* i_shaderName, GLenum i_shaderType);
-
+		void SetInteger(const char* const i_uniformName, const GLint& i_int);
+		void SetFloat(const char* const i_uniformName, const GLfloat& i_float);
 		/** Getters */
 		const GLuint& GetProgramID() const { return m_programID; }
 	protected:
@@ -42,6 +43,7 @@ namespace Graphics {
 
 		bool IsPathNull(const char* const i_incomingPath);
 
+		bool IsUniformIDValid(const GLuint& i_id);
 	};
 
 }

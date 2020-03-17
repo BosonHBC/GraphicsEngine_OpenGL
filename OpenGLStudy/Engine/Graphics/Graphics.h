@@ -64,6 +64,7 @@ namespace Graphics {
 
 	/** Others */
 	cFrameBuffer* GetCameraCaptureFrameBuffer();
+	cEnvProbe* GetHDRtoCubemap();
 	cEnvProbe* GetEnvironmentProbe();
 	cEnvProbe* GetIrrdianceMapProbe();
 	cEnvProbe* GetPreFilterMapProbe();

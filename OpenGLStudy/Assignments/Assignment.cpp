@@ -81,6 +81,11 @@ void Assignment::CreateActor()
 	m_cubemap->SetModel("Contents/models/cubemap.model");
 	m_cubemap->UpdateUniformVariables(Graphics::GetEffectByKey("CubemapEffect"));
 
+	Graphics::cModel* _cubeMap = Graphics::cModel::s_manager.Get(m_cubemap->GetModelHandle());
+	Graphics::cMatCubemap* _matCubemap = dynamic_cast<Graphics::cMatCubemap*>(_cubeMap->GetMaterialAt());
+	_matCubemap->UpdateCubemap(Graphics::GetHDRtoCubemap()->GetCubemapTextureHandle()); // used for debugging the environment
+
+
 	m_spaceHolder = new cActor();
 	m_spaceHolder->Initialize();
 	m_spaceHolder->Transform()->SetTransform(glm::vec3(0, 150.f, 0), glm::quat(1, 0, 0, 0), glm::vec3(5, 5, 5));
@@ -120,10 +125,10 @@ void Assignment::CreateCamera()
 
 void Assignment::CreateLight()
 {
-	Graphics::CreateAmbientLight(Color(0.001f, 0.001f, 0.001f), aLight);
+	Graphics::CreateAmbientLight(Color(0.5f, 0.5f, 0.5f), aLight);
 	Graphics::CreatePointLight(glm::vec3(-100, 150.f, 100.f), Color(1,1,1), 300.f, true, pLight1);
 	//Graphics::CreatePointLight(glm::vec3(100, 150.f, 100.f), Color(1, 1, 1), 1.f, 0.7f, 1.8f, true, pLight2);
-	//Graphics::CreateDirectionalLight(Color(0.6,0.6,0.5), glm::vec3(-1, -0.5f, -0.3f), true, dLight);
+	Graphics::CreateDirectionalLight(Color(0.6,0.6,0.5), glm::vec3(-1, -0.5f, -0.3f), true, dLight);
 	//Graphics::CreateSpotLight(glm::vec3(0, 150, 0), glm::vec3(0, 1, 1), Color(1), 65.f, 1.5f, 0.3f, 5.f, true, spLight);
 	//Graphics::CreateSpotLight(glm::vec3(100, 150, 0), glm::vec3(1, 1, 0), Color(1), 65.f, 1.f, 0.7f, 1.8f, true, spLight2);
 
@@ -153,9 +158,8 @@ void Assignment::Run()
 {
 	Graphics::PreRenderFrame();
 
-	Graphics::cModel* _cubeMap = Graphics::cModel::s_manager.Get(m_cubemap->GetModelHandle());
-	Graphics::cMatCubemap* _matCubemap = dynamic_cast<Graphics::cMatCubemap*>(_cubeMap->GetMaterialAt());
-	//_matCubemap->UpdateCubemap(Graphics::GetIrrdianceMapProbe()->GetCubemapTextureHandle()); // used for debugging the environment
+
+
 	// loop until window closed
 	while (!m_shouldApplicationLoopExit)
 	{

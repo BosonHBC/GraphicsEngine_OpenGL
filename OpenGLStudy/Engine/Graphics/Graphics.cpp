@@ -17,6 +17,7 @@
 #include "Material/Unlit/MatUnlit.h"
 #include "Material/PBR_MR/MatPBRMR.h"
 #include "Time/Time.h"
+#include "Assets/PathProcessor.h"
 
 namespace Graphics {
 
@@ -49,11 +50,11 @@ namespace Graphics {
 	cUniformBuffer s_uniformBuffer_Lighting(eUniformBufferType::UBT_Lighting);
 	cUniformBuffer s_uniformBuffer_ClipPlane(eUniformBufferType::UBT_ClipPlane);
 
-	// Pre-defined mesh
+	// Pre-defined mesh & textures
 	cModel::HANDLE s_cubeHandle;
 	cModel::HANDLE s_arrowHandle;
 	cModel::HANDLE s_quadHandle;
-
+	cTexture::HANDLE s_spruitSunRise_HDR;
 	// Lighting data
 	UniformBufferFormats::sLighting s_globalLightingData;
 
@@ -62,9 +63,12 @@ namespace Graphics {
 	// arrow colors
 	Color s_arrowColor[3] = { Color(0, 0, 0.8f), Color(0.8f, 0, 0),Color(0, 0.8f, 0) };
 
+	// Frame buffers
+	// --------------------------------------------------------------
 	// This buffer capture the camera view
 	cFrameBuffer s_cameraCapture;
-
+	// Rectangular HDR map to cubemap
+	cEnvProbe s_cubemapProbe;
 	// Environment probe, it capture the very detail version of the environment, by rendering the whole scene(actual geometries) 6 times. 
 	cEnvProbe s_envProbe;
 	// irradiance map for ambient lighting, by rendering a cube map to a cube and convolute it with special fragment shader
@@ -113,31 +117,16 @@ namespace Graphics {
 		GLuint _programID = _effect->GetProgramID();
 		char _charBuffer[64] = { '\0' };
 
-		{
-			GLuint _irradMapID = glGetUniformLocation(_effect->GetProgramID(), "IrradianceMap");
-			if (_irradMapID > 0 && _irradMapID < static_cast<GLuint>(-1))
-				glUniform1i(_irradMapID, 4);
-		}
-		{
-			GLuint _preFilterMapID = glGetUniformLocation(_effect->GetProgramID(), "PrefilterMap");
-			if (_preFilterMapID > 0 && _preFilterMapID < static_cast<GLuint>(-1))
-				glUniform1i(_preFilterMapID, 5);
-		}
-		{
-			GLuint _LutTextureID = glGetUniformLocation(_effect->GetProgramID(), "BrdfLUTMap");
-			if (_LutTextureID > 0 && _LutTextureID < static_cast<GLuint>(-1))
-				glUniform1i(_LutTextureID, 17);
-		}
+		_effect->SetInteger("IrradianceMap", 4);
+		_effect->SetInteger("PrefilterMap", 5);
+		_effect->SetInteger("BrdfLUTMap", 17);
 
 		for (int i = 0; i < MAX_COUNT_PER_LIGHT; ++i)
 		{
 			snprintf(_charBuffer, sizeof(_charBuffer), "spotlightShadowMap[%d]", i);
-			GLuint _spLightShadowMap = glGetUniformLocation(_programID, _charBuffer);
-			glUniform1i(_spLightShadowMap, SHADOWMAP_START_TEXTURE_UNIT + i);
-
+			_effect->SetInteger(_charBuffer, SHADOWMAP_START_TEXTURE_UNIT + i);
 			snprintf(_charBuffer, sizeof(_charBuffer), "pointLightShadowMap[%d]", i);
-			GLuint _pLightShadowMap = glGetUniformLocation(_programID, _charBuffer);
-			glUniform1i(_pLightShadowMap, SHADOWMAP_START_TEXTURE_UNIT + MAX_COUNT_PER_LIGHT + i);
+			_effect->SetInteger(_charBuffer, SHADOWMAP_START_TEXTURE_UNIT + MAX_COUNT_PER_LIGHT + i);
 		}
 		assert(GL_NO_ERROR == glGetError());
 		_effect->UnUseEffect();
@@ -220,6 +209,15 @@ namespace Graphics {
 					FixSamplerProblem("PBR_MR");
 				}
 			}
+			// Create rectangular HDR map to cubemap effect
+			{
+				if (!(result = CreateEffect("RectToCubemap",
+					"equirectangularToCubemap/rect_to_cube_vert.glsl",
+					"equirectangularToCubemap/rect_to_cube_frag.glsl"))) {
+					printf("Fail to create RectToCubemap effect.\n");
+					return result;
+				}
+			}
 			// Crete diffuse irradiance convolution effect
 			{
 				if (!(result = CreateEffect("IrradConvolution",
@@ -293,6 +291,11 @@ namespace Graphics {
 
 		// Initialize environment probes
 		{
+			// This is for changing rect hdr map to cubemap
+			if (!(result = s_cubemapProbe.Initialize(10, 2048, 2048, ETT_FRAMEBUFFER_HDR_CUBEMAP))) {
+				printf("Fail to create cubemap probe.\n");
+				return result;
+			}
 
 			glm::vec3 _probePosition = glm::vec3(-400, 100, 0);
 			GLfloat _probeRange = 500;
@@ -317,31 +320,41 @@ namespace Graphics {
 			}
 		}
 
-		// Load models
+		// Load models & textures
 		{
-			std::string _modelPath = "Contents/models/arrow.model";
-			if (!(result = Graphics::cModel::s_manager.Load(_modelPath, s_arrowHandle)))
+			std::string _path = "Contents/models/arrow.model";
+			if (!(result = Graphics::cModel::s_manager.Load(_path, s_arrowHandle)))
 			{
 				printf("Failed to Load arrow model!\n");
 				return result;
 			}
 
-			_modelPath = "Contents/models/cube.model";
-			if (!(result = Graphics::cModel::s_manager.Load(_modelPath, s_cubeHandle)))
+			_path = "Contents/models/cube.model";
+			if (!(result = Graphics::cModel::s_manager.Load(_path, s_cubeHandle)))
 			{
 				printf("Failed to Load cube model!\n");
 				return result;
 			}
 
-			_modelPath = "Contents/models/quad.model";
-			if (!(result = Graphics::cModel::s_manager.Load(_modelPath, s_quadHandle)))
+			_path = "Contents/models/quad.model";
+			if (!(result = Graphics::cModel::s_manager.Load(_path, s_quadHandle)))
 			{
 				printf("Failed to Load quad model!\n");
 				return result;
 			}
 		}
+		// Load textures
+		{
+			std::string _path = "HDR/spruit_sunrise_2k.png";
+			_path = Assets::ProcessPathTex(_path);
+			if (!(result = cTexture::s_manager.Load(_path, s_spruitSunRise_HDR)))
+			{
+				printf("Failed to LoadspruitSunRise_HDR texture!\n");
+				return result;
+			}
+		}
 
-		// Load cube
+		// Enable opengl features
 		glEnable(GL_DEPTH_TEST);
 		glEnable(GL_TEXTURE_CUBE_MAP_SEAMLESS);
 		glDepthFunc(GL_LEQUAL);
@@ -364,7 +377,42 @@ namespace Graphics {
 		// Notify the application thread that data is swapped and it is ready for receiving new data
 		s_whenDataHasBeenSwappedInRenderThread.notify_one();
 
-		/** 2. Start to render pass one by one */
+		/** 2. Convert all equirectangular HDR maps to cubemap */
+		{
+			s_currentEffect = Graphics::GetEffectByKey("RectToCubemap");
+			s_currentEffect->UseEffect();
+
+			s_currentEffect->SetInteger("rectangularHDRMap", 0);
+			cTexture* _hdr = cTexture::s_manager.Get(s_spruitSunRise_HDR);
+			_hdr->UseTexture(GL_TEXTURE0);
+
+			glDisable(GL_CULL_FACE);
+			s_cubemapProbe.StartCapture();
+			for (size_t i = 0; i < 6; ++i)
+			{
+				glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_CUBE_MAP_POSITIVE_X + i, s_cubemapProbe.GetCubemapTextureID(), 0);
+				assert(GL_NO_ERROR == glGetError());
+				glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+
+				UniformBufferFormats::sFrame _cubemapFrameData(s_cubemapProbe.GetProjectionMat4(), s_cubemapProbe.GetViewMat4(i));
+				_cubemapFrameData.ViewPosition = s_cubemapProbe.GetPosition();
+				s_uniformBuffer_frame.Update(&_cubemapFrameData);
+
+				// Render cube
+				cModel* _cube = cModel::s_manager.Get(s_cubeHandle);
+				if (_cube) { _cube->RenderWithoutMaterial(); }
+			}
+
+			s_cubemapProbe.StopCapture();
+			glEnable(GL_CULL_FACE);
+			s_currentEffect->UnUseEffect();
+			// After capturing the scene, generate the mip map by opengl itself
+			glBindTexture(GL_TEXTURE_CUBE_MAP, s_cubemapProbe.GetCubemapTextureID());
+			glGenerateMipmap(GL_TEXTURE_CUBE_MAP);
+			glBindTexture(GL_TEXTURE_CUBE_MAP, 0);
+		}
+
+		/** 3. Start to render pass one by one */
 		s_uniformBuffer_ClipPlane.Update(&s_dataRenderingByGraphicThread->s_ClipPlane);
 		constexpr GLuint shadowmapPassesCount = 3; // point, spot, directional
 		// i. First deal with existing shadow maps
@@ -400,7 +448,7 @@ namespace Graphics {
 			}
 
 			s_envProbe.StopCapture();
-			
+
 			// After capturing the scene, generate the mip map by opengl itself
 			glBindTexture(GL_TEXTURE_CUBE_MAP, s_envProbe.GetCubemapTextureID());
 			glGenerateMipmap(GL_TEXTURE_CUBE_MAP);
@@ -413,8 +461,7 @@ namespace Graphics {
 			s_currentEffect = Graphics::GetEffectByKey("IrradConvolution");
 			s_currentEffect->UseEffect();
 
-			GLuint _cubemapTexID = glGetUniformLocation(s_currentEffect->GetProgramID(), "cubemapTex");
-			glUniform1i(_cubemapTexID, 0);
+			s_currentEffect->SetInteger("cubemapTex", 0);
 			s_currentEffect->ValidateProgram();
 			cTexture* _envProbeTexture = cTexture::s_manager.Get(s_envProbe.GetCubemapTextureHandle());
 			_envProbeTexture->UseTexture(GL_TEXTURE0);
@@ -424,6 +471,7 @@ namespace Graphics {
 			{
 				glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_CUBE_MAP_POSITIVE_X + i, s_irradianceMap.GetCubemapTextureID(), 0);
 				glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+				
 				UniformBufferFormats::sFrame _cubemapFrameData(s_irradianceMap.GetProjectionMat4(), s_irradianceMap.GetViewMat4(i));
 				_cubemapFrameData.ViewPosition = s_irradianceMap.GetPosition();
 				s_uniformBuffer_frame.Update(&_cubemapFrameData);
@@ -435,7 +483,7 @@ namespace Graphics {
 			s_irradianceMap.StopCapture();
 
 			s_currentEffect->UnUseEffect();
-			
+
 		}
 
 		// iv. start to capture the pre-filter cube map
@@ -443,11 +491,8 @@ namespace Graphics {
 			s_currentEffect = Graphics::GetEffectByKey("CubemapPrefilter");
 			s_currentEffect->UseEffect();
 
-			GLuint _cubemapTexID = glGetUniformLocation(s_currentEffect->GetProgramID(), "cubemapTex");
-			glUniform1i(_cubemapTexID, 0);
-			GLuint _roughnessID = glGetUniformLocation(s_currentEffect->GetProgramID(), "roughness");
-			GLuint _resolutionID = glGetUniformLocation(s_currentEffect->GetProgramID(), "resolution");
-			glUniform1i(_resolutionID, s_envProbe.GetWidth());
+			s_currentEffect->SetInteger("cubemapTex", 0);
+			s_currentEffect->SetInteger("resolution", s_envProbe.GetWidth());
 
 			s_currentEffect->ValidateProgram();
 			cTexture* _envProbeTexture = cTexture::s_manager.Get(s_envProbe.GetCubemapTextureHandle());
@@ -468,7 +513,7 @@ namespace Graphics {
 				if (_app) { _app->GetCurrentWindow()->SetViewportSize(mipWidth, mipHeight); }
 
 				float roughness = static_cast<float>(mip) / static_cast<float>(maxMipLevels - 1);
-				glUniform1f(_roughnessID, roughness);
+				s_currentEffect->SetFloat("roughness", roughness);
 
 				for (size_t i = 0; i < 6; ++i)
 				{
@@ -499,12 +544,12 @@ namespace Graphics {
 			// Render quad
 			cModel* _quad = cModel::s_manager.Get(s_quadHandle);
 			if (_quad) {
-				_quad->RenderWithoutMaterial(); 
+				_quad->RenderWithoutMaterial();
 			}
 
 			s_brdfLUTTexture.UnWrite();
 			s_currentEffect->UnUseEffect();
-			
+
 		}
 		printf("---------------------------------Pre-Rendering stage done.---------------------------------\n");
 	}
@@ -751,7 +796,7 @@ namespace Graphics {
 	{
 		s_currentEffect = GetEffectByKey("PBR_MR");
 		s_currentEffect->UseEffect();
-		
+
 		glClearColor(s_clearColor.r, s_clearColor.g, s_clearColor.b, 0.f);
 		// A lot of things can be cleaned like color buffer, depth buffer, so we need to specify what to clear
 		glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
@@ -787,7 +832,7 @@ namespace Graphics {
 				if (_model) {
 					Graphics::cMatPBRMR* _sphereMat = dynamic_cast<Graphics::cMatPBRMR*>(_model->GetMaterialAt());
 					_sphereMat->UpdateMetalnessIntensity(1.f / 5.f * j + 0.1f);
-					_sphereMat->UpdateRoughnessIntensity(0.9f - 1.f / 5.f *i );
+					_sphereMat->UpdateRoughnessIntensity(0.9f - 1.f / 5.f *i);
 					_model->UpdateUniformVariables(s_currentEffect->GetProgramID());
 					_model->Render();
 				}
@@ -800,7 +845,7 @@ namespace Graphics {
 	void CubeMap_Pass()
 	{
 		// change depth function so depth test passes when values are equal to depth buffer's content
-		glFrontFace(GL_CW);
+		glDisable(GL_CULL_FACE);
 
 		s_currentEffect = GetEffectByKey("CubemapEffect");
 		s_currentEffect->UseEffect();
@@ -820,7 +865,7 @@ namespace Graphics {
 
 		s_currentEffect->UnUseEffect();
 		// set depth function back to default
-		glFrontFace(GL_CCW);
+		glEnable(GL_CULL_FACE);
 	}
 
 	void Gizmo_RenderTransform()
@@ -937,9 +982,10 @@ namespace Graphics {
 		if (!(result = s_uniformBuffer_ClipPlane.CleanUp())) {
 			printf("Fail to cleanup uniformBuffer_ClipPlane\n");
 		}
-		Graphics::cModel::s_manager.Release(s_arrowHandle);
-		Graphics::cModel::s_manager.Release(s_cubeHandle);
-		Graphics::cModel::s_manager.Release(s_quadHandle);
+		cModel::s_manager.Release(s_arrowHandle);
+		cModel::s_manager.Release(s_cubeHandle);
+		cModel::s_manager.Release(s_quadHandle);
+		cTexture::s_manager.Release(s_spruitSunRise_HDR);
 		// Clean up effect
 		for (auto it = s_KeyToEffect_map.begin(); it != s_KeyToEffect_map.end(); ++it)
 		{
@@ -971,6 +1017,7 @@ namespace Graphics {
 		safe_delete(s_directionalLight);
 
 		s_cameraCapture.~cFrameBuffer();
+		s_cubemapProbe.~cEnvProbe();
 		s_envProbe.~cEnvProbe();
 		s_irradianceMap.~cEnvProbe();
 		s_prefilterCubemap.~cEnvProbe();
@@ -982,27 +1029,32 @@ namespace Graphics {
 	/** Getters */
 	//----------------------------------------------------------------------------------
 
-	Graphics::cFrameBuffer* GetCameraCaptureFrameBuffer()
+	cFrameBuffer* GetCameraCaptureFrameBuffer()
 	{
 		return &s_cameraCapture;
 	}
 
-	Graphics::cEnvProbe* GetEnvironmentProbe()
+	cEnvProbe* GetHDRtoCubemap()
+	{
+		return &s_cubemapProbe;
+	}
+
+	cEnvProbe* GetEnvironmentProbe()
 	{
 		return &s_envProbe;
 	}
 
-	Graphics::cEnvProbe* GetIrrdianceMapProbe()
+	cEnvProbe* GetIrrdianceMapProbe()
 	{
 		return &s_irradianceMap;
 	}
 
-	Graphics::cEnvProbe* GetPreFilterMapProbe()
+	cEnvProbe* GetPreFilterMapProbe()
 	{
 		return &s_prefilterCubemap;
 	}
 
-	Graphics::cFrameBuffer* GetBRDFLutFrameBuffer()
+	cFrameBuffer* GetBRDFLutFrameBuffer()
 	{
 		return &s_brdfLUTTexture;
 	}
@@ -1027,7 +1079,7 @@ namespace Graphics {
 		return result;
 	}
 
-	Graphics::cEffect* GetEffectByKey(const char* i_key)
+	cEffect* GetEffectByKey(const char* i_key)
 	{
 		if (s_KeyToEffect_map.find(i_key) != s_KeyToEffect_map.end()) {
 			return s_KeyToEffect_map.at(i_key);
@@ -1035,7 +1087,7 @@ namespace Graphics {
 		return nullptr;
 	}
 
-	Graphics::cEffect* GetCurrentEffect()
+	cEffect* GetCurrentEffect()
 	{
 		return s_currentEffect;
 	}
@@ -1044,7 +1096,7 @@ namespace Graphics {
 	/** Lighting related */
 	//----------------------------------------------------------------------------------
 
-	Graphics::UniformBufferFormats::sLighting& GetGlobalLightingData()
+	UniformBufferFormats::sLighting& GetGlobalLightingData()
 	{
 		return s_globalLightingData;
 	}
@@ -1067,7 +1119,7 @@ namespace Graphics {
 		return result;
 	}
 
-	bool CreatePointLight(const glm::vec3& i_initialLocation, const Color& i_color,const GLfloat& i_radius , bool i_enableShadow, cPointLight*& o_pointLight)
+	bool CreatePointLight(const glm::vec3& i_initialLocation, const Color& i_color, const GLfloat& i_radius, bool i_enableShadow, cPointLight*& o_pointLight)
 	{
 		auto result = true;
 		if (result = (s_currentEffect->GetProgramID() == 0)) {

@@ -118,6 +118,11 @@ namespace Graphics {
 		return false;
 	}
 
+	bool cEffect::IsUniformIDValid(const GLuint& i_id)
+	{
+		return i_id >= 0 && i_id < static_cast<GLuint>(-1);
+	}
+
 	void cEffect::UseEffect()
 	{
 		// Bind program
@@ -134,6 +139,22 @@ namespace Graphics {
 	{
 
 		return true;
+	}
+
+	void cEffect::SetInteger(const char* const i_uniformName, const GLint& i_int)
+	{
+		GLuint _ID = glGetUniformLocation(m_programID, i_uniformName);
+		if (IsUniformIDValid(_ID)) 
+			glUniform1i(_ID, i_int);
+		assert(GL_NO_ERROR == glGetError());
+	}
+
+	void cEffect::SetFloat(const char* const i_uniformName, const GLfloat& i_float)
+	{
+		GLuint _ID = glGetUniformLocation(m_programID, i_uniformName);
+		if(IsUniformIDValid(_ID)) glUniform1f(_ID, i_float);
+		
+		assert(GL_NO_ERROR == glGetError());
 	}
 
 	bool cEffect::LoadShader(const char* i_shaderName, GLenum i_shaderType)
