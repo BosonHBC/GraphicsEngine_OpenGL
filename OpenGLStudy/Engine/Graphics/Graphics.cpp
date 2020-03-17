@@ -54,6 +54,7 @@ namespace Graphics {
 	cModel::HANDLE s_cubeHandle;
 	cModel::HANDLE s_arrowHandle;
 	cModel::HANDLE s_quadHandle;
+	cMesh::HANDLE s_point;
 	cTexture::HANDLE s_spruitSunRise_HDR;
 	// Lighting data
 	UniformBufferFormats::sLighting s_globalLightingData;
@@ -105,9 +106,9 @@ namespace Graphics {
 
 	//functions
 	void RenderScene();
-
 	void RenderSceneWithoutMaterial();
-
+	void Gizmo_DrawDebugCircle(const cTransform& i_transform, float i_radius);
+	
 	void FixSamplerProblem(const char* i_effectKey)
 	{
 		// Fix sampler problem before validating the program
@@ -155,7 +156,7 @@ namespace Graphics {
 					return result;
 				}
 			}
-			// Create normal display effect
+			// Create OmniShadowmap display effect
 			{
 				if (!(result = CreateEffect("OmniShadowMap",
 					"shadowmaps/omniShadowMap/omni_shadow_map_vert.glsl",
@@ -245,6 +246,18 @@ namespace Graphics {
 					return result;
 				}
 			}
+			// Create draw debug circle
+			{
+				if (!(result = CreateEffect("DrawDebugCircles",
+					"drawDebugCircles/debugCircle_vert.glsl",
+					"drawDebugCircles/debugCircle_frag.glsl",
+					"drawDebugCircles/debugCircle_geom.glsl"
+				))) {
+					printf("Fail to create OmniShadowMap effect.\n");
+					return result;
+				}
+				GetEffectByKey("DrawDebugCircles")->ValidateProgram();
+			}
 		}
 
 		// Initialize uniform buffer
@@ -297,9 +310,9 @@ namespace Graphics {
 				return result;
 			}
 
-			glm::vec3 _probePosition = glm::vec3(-400, 100, 0);
-			GLfloat _probeRange = 500;
-			GLuint envMapResolution = 1024 * 2;
+			glm::vec3 _probePosition = glm::vec3(-500, 100, 0);
+			GLfloat _probeRange = 450;
+			GLuint envMapResolution = 2048;
 			if (!(result = s_envProbe.Initialize(_probeRange, envMapResolution, envMapResolution, ETT_FRAMEBUFFER_HDR_CUBEMAP, _probePosition))) {
 				printf("Fail to create environment probe.\n");
 				return result;
@@ -340,6 +353,14 @@ namespace Graphics {
 			if (!(result = Graphics::cModel::s_manager.Load(_path, s_quadHandle)))
 			{
 				printf("Failed to Load quad model!\n");
+				return result;
+			}
+			std::vector<float> _points;
+			_points.push_back(0.0f); _points.push_back(0.0f); _points.push_back(0.0f);
+			std::vector<GLuint> _indices;
+			if (!(result == cMesh::s_manager.Load("Point", s_point, EMT_Point, _points, _indices)))
+			{
+				printf("Failed to Load point!\n");
 				return result;
 			}
 		}
@@ -471,7 +492,7 @@ namespace Graphics {
 			{
 				glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_CUBE_MAP_POSITIVE_X + i, s_irradianceMap.GetCubemapTextureID(), 0);
 				glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-				
+
 				UniformBufferFormats::sFrame _cubemapFrameData(s_irradianceMap.GetProjectionMat4(), s_irradianceMap.GetViewMat4(i));
 				_cubemapFrameData.ViewPosition = s_irradianceMap.GetPosition();
 				s_uniformBuffer_frame.Update(&_cubemapFrameData);
@@ -578,6 +599,7 @@ namespace Graphics {
 			// Execute pass function
 			s_dataRenderingByGraphicThread->s_renderPasses[i].RenderPassFunction();
 		}
+		Gizmo_DrawDebugCircle(s_prefilterCubemap.GetTransform(), s_prefilterCubemap.GetRange());
 	}
 
 	void DirectionalShadowMap_Pass()
@@ -870,7 +892,6 @@ namespace Graphics {
 
 	void Gizmo_RenderTransform()
 	{
-		//glDisable(GL_DEPTH_TEST);
 		s_currentEffect = GetEffectByKey("UnlitEffect");
 		s_currentEffect->UseEffect();
 
@@ -910,7 +931,19 @@ namespace Graphics {
 
 
 		s_currentEffect->UnUseEffect();
-		glEnable(GL_DEPTH_TEST);
+	}
+
+	void Gizmo_DrawDebugCircle(const cTransform& i_transform, float i_radius) {
+
+		s_currentEffect = GetEffectByKey("DrawDebugCircles");
+		s_currentEffect->UseEffect();
+		s_currentEffect->SetFloat("radius", i_radius);
+		
+		s_uniformBuffer_drawcall.Update(&UniformBufferFormats::sDrawCall(i_transform.M(), i_transform.TranspostInverse()));
+		cMesh* _Point = cMesh::s_manager.Get(s_point);
+		_Point->Render();
+
+		s_currentEffect->UnUseEffect();
 	}
 
 	void Gizmo_RenderVertexNormal()
@@ -986,6 +1019,7 @@ namespace Graphics {
 		cModel::s_manager.Release(s_cubeHandle);
 		cModel::s_manager.Release(s_quadHandle);
 		cTexture::s_manager.Release(s_spruitSunRise_HDR);
+		cMesh::s_manager.Release(s_point);
 		// Clean up effect
 		for (auto it = s_KeyToEffect_map.begin(); it != s_KeyToEffect_map.end(); ++it)
 		{

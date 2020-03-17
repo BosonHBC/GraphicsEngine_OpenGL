@@ -241,7 +241,7 @@ namespace Graphics {
 		}
 		cMesh::HANDLE _newMeshHandle;
 		std::string meshKey = std::string(i_path).append("_" + std::to_string(m_meshList.size()));
-		if (cMesh::s_manager.Load(meshKey, _newMeshHandle, _vertices, _indices))
+		if (cMesh::s_manager.Load(meshKey, _newMeshHandle, EMT_Mesh, _vertices, _indices))
 		{
 			// Stored new mesh to the list and store its index to material
 			m_meshList.push_back(_newMeshHandle);
