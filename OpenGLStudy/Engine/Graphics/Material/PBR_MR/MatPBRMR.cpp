@@ -3,6 +3,7 @@
 #include "Assets/PathProcessor.h"
 #include "Constants/Constants.h"
 #include "Graphics/Graphics.h"
+#include "Graphics/EnvironmentCaptureManager.h"
 namespace Graphics
 {
 	Graphics::cUniformBuffer cMatPBRMR::s_PBRMRUniformBlock(eUniformBufferType::UBT_PBRMR);
@@ -76,9 +77,9 @@ namespace Graphics
 
 		// Irradiance cube map
 		{
-			cEnvProbe* _irradProbe = Graphics::GetIrrdianceMapProbe();
+			const cEnvProbe& _irradProbe = Graphics::EnvironmentCaptureManager::GetCaptureProbesAt(0).IrradianceProbe;
 			cTexture* _irrdianceMap = nullptr;
-			if (_irradProbe && (_irrdianceMap = cTexture::s_manager.Get(_irradProbe->GetCubemapTextureHandle())))
+			if (_irradProbe.IsValid() && (_irrdianceMap = cTexture::s_manager.Get(_irradProbe.GetCubemapTextureHandle())))
 			{
 				_irrdianceMap->UseTexture(GL_TEXTURE4);
 			}
@@ -88,9 +89,9 @@ namespace Graphics
 
 		// pre-filter cube map
 		{
-			cEnvProbe* _preFilteProbe = Graphics::GetPreFilterMapProbe();
+			const cEnvProbe& _preFilteProbe = Graphics::EnvironmentCaptureManager::GetCaptureProbesAt(0).PrefilterProbe;
 			cTexture* _preFilterCubemap = nullptr;
-			if (_preFilteProbe && _preFilteProbe->IsValid() && (_preFilterCubemap = cTexture::s_manager.Get(_preFilteProbe->GetCubemapTextureHandle())))
+			if (_preFilteProbe.IsValid() && (_preFilterCubemap = cTexture::s_manager.Get(_preFilteProbe.GetCubemapTextureHandle())))
 			{
 				_preFilterCubemap->UseTexture(GL_TEXTURE5);
 			}

@@ -40,6 +40,6 @@ namespace Graphics
 		// During rendering, update the weights according to the point of interest
 		void UpdatePointOfInterest(const glm::vec3& i_position);
 
-
+		const sCaptureProbes& GetCaptureProbesAt(int i_idx);
 	}
 }

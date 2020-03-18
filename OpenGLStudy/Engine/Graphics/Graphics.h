@@ -39,8 +39,9 @@ namespace Graphics {
 	void SubmitClipPlaneData(const glm::vec4& i_plane0, const glm::vec4& i_plane1 = glm::vec4(0, 0, 0, 0), const glm::vec4& i_plane2 = glm::vec4(0, 0, 0, 0), const glm::vec4& i_plane3 = glm::vec4(0, 0, 0, 0));
 	void SubmitLightingData(const std::vector<cPointLight>& i_pointLights, const std::vector<cSpotLight>& i_spotLights, const cAmbientLight& i_ambientLight, const cDirectionalLight& i_directionalLight);
 	void SubmitDataToBeRendered(const UniformBufferFormats::sFrame& i_frameData, const std::vector<std::pair<Graphics::cModel::HANDLE, cTransform>>& i_modelToTransform_map, void(*func_ptr)());
-
 	void ClearApplicationThreadData();
+	void SetCurrentPass(int i_currentPass);
+
 
 	/** Usage function*/
 	bool CreateEffect(const char* i_key, const char* i_vertexShaderPath, const char* i_fragmentShaderPath, const char* i_geometryShaderPath = "");
@@ -62,8 +63,9 @@ namespace Graphics {
 	/** Others */
 	cFrameBuffer* GetCameraCaptureFrameBuffer();
 	cEnvProbe* GetHDRtoCubemap();
-	cEnvProbe* GetEnvironmentProbe();
-	cEnvProbe* GetIrrdianceMapProbe();
-	cEnvProbe* GetPreFilterMapProbe();
 	cFrameBuffer* GetBRDFLutFrameBuffer();
+	cUniformBuffer* GetUniformBuffer(const eUniformBufferType& i_uniformBufferType);
+
+	/** Predefined model and textures*/
+	const cModel::HANDLE& GetPrimitive(const EPrimitiveType& i_primitiveType);
 }

@@ -13,13 +13,13 @@ namespace Graphics {
 		m_width = i_height; m_height = i_height;
 		// record the previous frame buffer object
 		glGetIntegerv(GL_FRAMEBUFFER_BINDING, &m_prevFbo);
-
+		
 		const GLuint mipMapLevel = 0;
 
 		// Generate another frame buffer
 		glGenFramebuffers(1, &m_fbo);
 		std::string key = "FB_" + std::to_string(m_fbo) + "_ETT_" + std::to_string(i_textureType);
-
+		
 		// Generate render_to_texture texture
 		cTexture::s_manager.Load(key, m_renderToTexture, i_textureType, m_width, m_height);
 		cTexture* _texture = cTexture::s_manager.Get(m_renderToTexture);
@@ -77,9 +77,12 @@ namespace Graphics {
 				break;
 
 			case ETT_FRAMEBUFFER_HDR_RG:
-				glBindRenderbuffer(GL_RENDERBUFFER, m_rbo);
-				glRenderbufferStorage(GL_RENDERBUFFER, GL_DEPTH_COMPONENT24, m_width, m_height);
 				glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, _texture->GetTextureID(), 0);
+				/*glGenRenderbuffers(1, &m_rbo);
+				glBindRenderbuffer(GL_RENDERBUFFER, m_rbo);
+				glRenderbufferStorage(GL_RENDERBUFFER, GL_DEPTH_COMPONENT24, m_width, m_height);*/
+			
+				assert(GL_NO_ERROR == glGetError());
 				break;
 			default:
 				result = false;

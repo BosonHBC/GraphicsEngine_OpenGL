@@ -20,7 +20,7 @@
 #include "Material/Cubemap/MatCubemap.h"
 #include "Graphics/Texture/Texture.h"
 #include "Assets/Handle.h"
-#include "Graphics/EnvironmentProbes/EnvProbe.h"
+#include "Graphics/EnvironmentCaptureManager.h"
 #include <map>
 
 bool Assignment::Initialize(GLuint i_width, GLuint i_height, const char* i_windowName /*= "Default Window"*/)
@@ -145,10 +145,7 @@ void Assignment::BeforeUpdate()
 	// submit render requests
 	for (int i = 0; i < 6; ++i)
 	{
-		Graphics::cEnvProbe* _envProb = Graphics::GetEnvironmentProbe();
-		Graphics::UniformBufferFormats::sFrame _envProbeFrameData(_envProb->GetProjectionMat4(), _envProb->GetViewMat4(i));
-		_envProbeFrameData.ViewPosition = _envProb->GetPosition();
-		SubmitSceneDataForEnvironmentCapture(&_envProbeFrameData);
+		SubmitSceneDataForEnvironmentCapture(&Graphics::UniformBufferFormats::sFrame());
 	}
 	// Let the graphic thread know that the pre-render pass is ready to go
 	Graphics::Notify_DataHasBeenSubmited();

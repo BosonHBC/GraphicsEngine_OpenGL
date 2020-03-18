@@ -27,4 +27,12 @@ namespace Graphics{
 		cAmbientLight s_ambientLight;
 		cDirectionalLight s_directionalLight;
 	};
+
+	// Primitive types
+	enum EPrimitiveType : uint8_t
+	{
+		EPT_Cube = 0,
+		EPT_Arrow = 1,
+		EPT_Quad = 2
+	};
 }
