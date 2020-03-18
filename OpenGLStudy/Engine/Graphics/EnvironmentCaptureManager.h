@@ -1,5 +1,6 @@
 #pragma once
 #include "Graphics/EnvironmentProbes/EnvProbe.h"
+#include "Math/Sphere.h"
 namespace Graphics
 {
 	// Forward declaration
@@ -12,16 +13,15 @@ namespace Graphics
 			cEnvProbe IrradianceProbe;		// Storing the irradiance map for ambient lighting, by rendering a cube map to a cube and convolute it with special fragment shader
 			cEnvProbe PrefilterProbe;			// pre-filtering cube map for environment reflection
 			
-			glm::vec3 Position;						// The center of the probe, this should not change after initialization
-			float Radius;								// The radius of the probe, if a sphere is inside another one, the smaller sphere should have higher influence
+			cSphere BV;								// The bounding volume of this probe, should not change after initialization; If a sphere is inside another one, the smaller sphere should have higher influence
 			float Influence;								// The influence of this probe, clamp to [0,1]; dynamically changes depends on the POI.
-			float Resolution;						// Resolution of Environment cubemap(each size)
+			float Resolution;							// Resolution of Environment cubemap(each size)
 
 			sCaptureProbes() {}
-			sCaptureProbes(const glm::vec3&i_position, float i_radius, float i_resolution) : Position(i_position), Radius(i_radius), Resolution(i_resolution) {}
+			sCaptureProbes(const glm::vec3&i_position, float i_radius, float i_resolution) : Resolution(i_resolution) { BV.SetCenter(i_position); BV.SetRadius(i_radius); }
 			sCaptureProbes(const sCaptureProbes& i_other) :
 				EnvironmentProbe(i_other.EnvironmentProbe), IrradianceProbe(i_other.IrradianceProbe), PrefilterProbe(i_other.PrefilterProbe),
-				Position(i_other.Position), Radius(i_other.Radius), Influence(i_other.Influence), Resolution(i_other.Resolution) {}
+				BV(i_other.BV), Influence(i_other.Influence), Resolution(i_other.Resolution) {}
 			void CleanUp() {
 				EnvironmentProbe.CleanUp();
 				IrradianceProbe.CleanUp();

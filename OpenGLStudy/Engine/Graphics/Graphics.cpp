@@ -352,6 +352,7 @@ namespace Graphics {
 		glEnable(GL_CULL_FACE);
 		glCullFace(GL_BACK);
 		assert(GL_NO_ERROR == glGetError());
+
 		return result;
 	}
 
@@ -453,7 +454,7 @@ namespace Graphics {
 		}
 
 		const EnvironmentCaptureManager::sCaptureProbes& firstCapture = EnvironmentCaptureManager::GetCaptureProbesAt(0);
-		Gizmo_DrawDebugCircle(firstCapture.Position, firstCapture.Radius);
+		Gizmo_DrawDebugCircle(firstCapture.BV.c(), firstCapture.BV.r());
 	}
 
 	void DirectionalShadowMap_Pass()

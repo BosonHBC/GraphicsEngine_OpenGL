@@ -22,7 +22,6 @@ namespace Graphics {
 		}
 		else
 		{
-
 			switch (i_ett)
 			{
 			case ETT_FILE:
@@ -78,7 +77,8 @@ namespace Graphics {
 		o_texture = _texture;
 
 		//TODO: Loading information succeed!
-		printf("Succeed! Loading texture: %s. \n", i_path.c_str());
+		// No need to display right now
+		//printf("Succeed! Loading texture: %s. \n", i_path.c_str());
 		assert(GL_NO_ERROR == glGetError());
 		return result;
 	}

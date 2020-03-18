@@ -105,7 +105,7 @@ void Assignment::CreateActor()
 		{
 			cActor * _sphere = new cActor();
 			_sphere->Initialize();
-			_sphere->Transform()->SetTransform(glm::vec3(-200.f + i * 100, 25.f + j * 50, -100), glm::quat(1, 0, 0, 0), glm::vec3(2.5f, 2.5f, 2.5f));
+			_sphere->Transform()->SetTransform(glm::vec3(-200.f + i * 100, 25.f + j * 50, -200), glm::quat(1, 0, 0, 0), glm::vec3(2.5f, 2.5f, 2.5f));
 			_sphere->SetModel("Contents/models/pbrSphere.model");
 			_sphere->UpdateUniformVariables(Graphics::GetEffectByKey("PBR_MR"));
 			_sphere->Transform()->Update();

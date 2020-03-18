@@ -8,6 +8,7 @@
 #include "Graphics/Graphics.h"
 #include "Application/Application.h"
 #include "Application/Window/Window.h"
+
 namespace Graphics
 {
 	namespace EnvironmentCaptureManager
@@ -125,7 +126,7 @@ namespace Graphics
 							Graphics::SetCurrentPass(_currentRenderPass);
 							// Update frame data using the environment probes' projection and view matrix
 							Graphics::UniformBufferFormats::sFrame _frame(g_CaptureProbesList[k].EnvironmentProbe.GetProjectionMat4(), g_CaptureProbesList[k].EnvironmentProbe.GetViewMat4(i));
-							_frame.ViewPosition = g_CaptureProbesList[k].Position;
+							_frame.ViewPosition = g_CaptureProbesList[k].BV.c();
 							_uniformBuffer_frame->Update(&_frame);
 							// Execute pass function
 							i_renderThreadData->s_renderPasses[_currentRenderPass].RenderPassFunction();
