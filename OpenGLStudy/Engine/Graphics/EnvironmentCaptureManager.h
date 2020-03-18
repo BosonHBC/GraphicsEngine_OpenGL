@@ -1,6 +1,6 @@
 #pragma once
 #include "Graphics/EnvironmentProbes/EnvProbe.h"
-#include "Math/Sphere.h"
+#include "Math/Shape/Sphere.h"
 namespace Graphics
 {
 	// Forward declaration

@@ -33,10 +33,10 @@
     <ClCompile Include="Quaternion\Quaternion.cpp">
       <Filter>Source Files\Quaternion</Filter>
     </ClCompile>
-    <ClCompile Include="Sphere.cpp">
+    <ClCompile Include="Shape\Sphere.cpp">
       <Filter>Source Files\Shape\Sphere</Filter>
     </ClCompile>
-    <ClCompile Include="Shape.cpp">
+    <ClCompile Include="Shape\Shape.cpp">
       <Filter>Source Files\Shape</Filter>
     </ClCompile>
   </ItemGroup>
@@ -47,11 +47,11 @@
     <ClInclude Include="Quaternion\Quaternion.h">
       <Filter>Source Files\Quaternion</Filter>
     </ClInclude>
-    <ClInclude Include="Shape.h">
-      <Filter>Source Files\Shape</Filter>
-    </ClInclude>
-    <ClInclude Include="Sphere.h">
+    <ClInclude Include="Shape\Sphere.h">
       <Filter>Source Files\Shape\Sphere</Filter>
+    </ClInclude>
+    <ClInclude Include="Shape\Shape.h">
+      <Filter>Source Files\Shape</Filter>
     </ClInclude>
   </ItemGroup>
 </Project>

@@ -1,7 +1,7 @@
 #pragma once
 #include "Shape.h"
 
-class cSphere : cShape
+class cSphere : public cShape
 {
 public:
 	cSphere() :m_radius(0), m_center(0) {};

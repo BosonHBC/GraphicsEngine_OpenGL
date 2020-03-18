@@ -420,7 +420,6 @@ namespace Graphics {
 
 			s_brdfLUTTexture.UnWrite();
 			s_currentEffect->UnUseEffect();
-
 		}
 		/** 4. Start to render pass one by one */
 		EnvironmentCaptureManager::CaptureEnvironment(s_dataRenderingByGraphicThread);
