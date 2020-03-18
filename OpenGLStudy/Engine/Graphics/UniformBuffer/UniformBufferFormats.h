@@ -148,5 +148,12 @@ namespace Graphics {
 				Planes[3] = i_fourth;
 			}
 		};
+
+		// Environment capture textures weights
+		// --------------------------------------------------------------------------------------------------------------------------------------------
+		struct sEnvCaptureWeight
+		{
+			glm::vec4 Weights; // Maximum 4 textures
+		};
 	}
 }

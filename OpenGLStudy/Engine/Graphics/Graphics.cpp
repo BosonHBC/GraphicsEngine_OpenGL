@@ -18,33 +18,21 @@
 #include "Material/PBR_MR/MatPBRMR.h"
 #include "Time/Time.h"
 #include "Assets/PathProcessor.h"
-
+#include "EnvironmentCaptureManager.h" 
 namespace Graphics {
 
-	// TODO:
-	struct sPass
-	{
-		UniformBufferFormats::sFrame FrameData;
-		std::vector<std::pair<Graphics::cModel::HANDLE, cTransform>> ModelToTransform_map;
-		void(*RenderPassFunction) ();
-		sPass() {}
-	};
-	// Data required to render a frame, right now do not support switching effect(shader)
-	struct sDataRequiredToRenderAFrame
-	{
-		UniformBufferFormats::sClipPlane s_ClipPlane;
-		std::vector<sPass> s_renderPasses;
-		// Lighting data
-		std::vector<cPointLight> s_pointLights;
-		std::vector<cSpotLight> s_spotLights;
-		cAmbientLight s_ambientLight;
-		cDirectionalLight s_directionalLight;
-	};
 	unsigned int s_currentRenderPass = 0;
-
+	sDataRequiredToRenderAFrame s_dataRequiredToRenderAFrame[2];
+	auto* s_dataSubmittedByApplicationThread = &s_dataRequiredToRenderAFrame[0];
+	auto* s_dataRenderingByGraphicThread = &s_dataRequiredToRenderAFrame[1];
+	
+	// Threading
+	std::condition_variable s_whenAllDataHasBeenSubmittedFromApplicationThread;
+	std::condition_variable s_whenDataHasBeenSwappedInRenderThread;
+	std::mutex s_graphicMutex;
 
 	// Global data
-	// ---------------------------------
+	// ------------------------------------------------------------------------------------------------------------------------------------
 	cUniformBuffer s_uniformBuffer_frame(eUniformBufferType::UBT_Frame);
 	cUniformBuffer s_uniformBuffer_drawcall(eUniformBufferType::UBT_Drawcall);
 	cUniformBuffer s_uniformBuffer_Lighting(eUniformBufferType::UBT_Lighting);
@@ -65,7 +53,7 @@ namespace Graphics {
 	Color s_arrowColor[3] = { Color(0, 0, 0.8f), Color(0.8f, 0, 0),Color(0, 0.8f, 0) };
 
 	// Frame buffers
-	// --------------------------------------------------------------
+	// ------------------------------------------------------------------------------------------------------------------------------------
 	// This buffer capture the camera view
 	cFrameBuffer s_cameraCapture;
 	// Rectangular HDR map to cubemap
@@ -79,17 +67,14 @@ namespace Graphics {
 	// the brdfLUTTexture for integrating the brdf
 	cFrameBuffer s_brdfLUTTexture;
 
-	sDataRequiredToRenderAFrame s_dataRequiredToRenderAFrame[2];
-	auto* s_dataSubmittedByApplicationThread = &s_dataRequiredToRenderAFrame[0];
-	auto* s_dataRenderingByGraphicThread = &s_dataRequiredToRenderAFrame[1];
 
 	// Effect
-	// ---------------------------------
+	// ------------------------------------------------------------------------------------------------------------------------------------
 	std::map<const char*, cEffect*> s_KeyToEffect_map;
 	cEffect* s_currentEffect;
 
 	// Lighting
-	// ---------------------------------
+	// ------------------------------------------------------------------------------------------------------------------------------------
 	// There are only one ambient and directional light
 	cAmbientLight* s_ambientLight;
 	cDirectionalLight* s_directionalLight;
@@ -99,15 +84,11 @@ namespace Graphics {
 	// spot light first
 #define SHADOWMAP_START_TEXTURE_UNIT 6
 
-	// Threading
-	std::condition_variable s_whenAllDataHasBeenSubmittedFromApplicationThread;
-	std::condition_variable s_whenDataHasBeenSwappedInRenderThread;
-	std::mutex s_graphicMutex;
-
-	//functions
+	// Functions
+	// ------------------------------------------------------------------------------------------------------------------------------------
 	void RenderScene();
 	void RenderSceneWithoutMaterial();
-	void Gizmo_DrawDebugCircle(const cTransform& i_transform, float i_radius);
+	void Gizmo_DrawDebugCircle(const glm::vec3& i_transform, float i_radius);
 	
 	void FixSamplerProblem(const char* i_effectKey)
 	{
@@ -136,6 +117,14 @@ namespace Graphics {
 	bool Initialize()
 	{
 		auto result = true;
+		// Initialize sub-modules
+		{
+			if (!(result = EnvironmentCaptureManager::Initialize()))
+			{
+				printf("Fail to initialize environment capture manager.\n");
+				return result;
+			}
+		}
 		// Create effects
 		{
 			// Create default effect
@@ -327,7 +316,7 @@ namespace Graphics {
 				printf("Fail to create irradiance Map.\n");
 				return result;
 			}
-			if (!(result = s_brdfLUTTexture.Initialize(envMapResolution, envMapResolution, ETT_FRAMEBUFFER_PLANNER_REFLECTION))) {
+			if (!(result = s_brdfLUTTexture.Initialize(envMapResolution, envMapResolution, ETT_FRAMEBUFFER_HDR_RG))) {
 				printf("Fail to create brdfLUTTexture.\n");
 				return result;
 			}
@@ -432,8 +421,24 @@ namespace Graphics {
 			glGenerateMipmap(GL_TEXTURE_CUBE_MAP);
 			glBindTexture(GL_TEXTURE_CUBE_MAP, 0);
 		}
+		/** 3. start generate BRDF LUTTexture */
+		{
+			s_currentEffect = Graphics::GetEffectByKey("BrdfIntegration");
+			s_currentEffect->UseEffect();
+			s_brdfLUTTexture.Write();
 
-		/** 3. Start to render pass one by one */
+			glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+			// Render quad
+			cModel* _quad = cModel::s_manager.Get(s_quadHandle);
+			if (_quad) {
+				_quad->RenderWithoutMaterial();
+			}
+
+			s_brdfLUTTexture.UnWrite();
+			s_currentEffect->UnUseEffect();
+
+		}
+		/** 4. Start to render pass one by one */
 		s_uniformBuffer_ClipPlane.Update(&s_dataRenderingByGraphicThread->s_ClipPlane);
 		constexpr GLuint shadowmapPassesCount = 3; // point, spot, directional
 		// i. First deal with existing shadow maps
@@ -555,23 +560,7 @@ namespace Graphics {
 			glFrontFace(GL_CCW);
 		}
 
-		// v. start generate BRDF LUTTexture
-		{
-			s_currentEffect = Graphics::GetEffectByKey("BrdfIntegration");
-			s_currentEffect->UseEffect();
-			s_brdfLUTTexture.Write();
-
-			glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-			// Render quad
-			cModel* _quad = cModel::s_manager.Get(s_quadHandle);
-			if (_quad) {
-				_quad->RenderWithoutMaterial();
-			}
-
-			s_brdfLUTTexture.UnWrite();
-			s_currentEffect->UnUseEffect();
-
-		}
+		
 		printf("---------------------------------Pre-Rendering stage done.---------------------------------\n");
 	}
 
@@ -599,7 +588,7 @@ namespace Graphics {
 			// Execute pass function
 			s_dataRenderingByGraphicThread->s_renderPasses[i].RenderPassFunction();
 		}
-		Gizmo_DrawDebugCircle(s_prefilterCubemap.GetTransform(), s_prefilterCubemap.GetRange());
+		Gizmo_DrawDebugCircle(s_prefilterCubemap.GetPosition(), s_prefilterCubemap.GetRange());
 	}
 
 	void DirectionalShadowMap_Pass()
@@ -933,13 +922,13 @@ namespace Graphics {
 		s_currentEffect->UnUseEffect();
 	}
 
-	void Gizmo_DrawDebugCircle(const cTransform& i_transform, float i_radius) {
+	void Gizmo_DrawDebugCircle(const glm::vec3& i_position, float i_radius) {
 
 		s_currentEffect = GetEffectByKey("DrawDebugCircles");
 		s_currentEffect->UseEffect();
 		s_currentEffect->SetFloat("radius", i_radius);
-		
-		s_uniformBuffer_drawcall.Update(&UniformBufferFormats::sDrawCall(i_transform.M(), i_transform.TranspostInverse()));
+		cTransform _temp(i_position, glm::quat(1,0,0,0), glm::vec3(1,1,1));
+		s_uniformBuffer_drawcall.Update(&UniformBufferFormats::sDrawCall(_temp.M(), _temp.TranspostInverse()));
 		cMesh* _Point = cMesh::s_manager.Get(s_point);
 		_Point->Render();
 
@@ -1050,12 +1039,17 @@ namespace Graphics {
 			s_directionalLight->CleanUpShadowMap();
 		safe_delete(s_directionalLight);
 
-		s_cameraCapture.~cFrameBuffer();
-		s_cubemapProbe.~cEnvProbe();
-		s_envProbe.~cEnvProbe();
-		s_irradianceMap.~cEnvProbe();
-		s_prefilterCubemap.~cEnvProbe();
-		s_brdfLUTTexture.~cFrameBuffer();
+		s_cameraCapture.CleanUp();
+		s_cubemapProbe.CleanUp();
+		s_envProbe.CleanUp();
+		s_irradianceMap.CleanUp();
+		s_prefilterCubemap.CleanUp();
+		s_brdfLUTTexture.CleanUp();
+
+		if (!(result = EnvironmentCaptureManager::CleanUp()))
+		{
+			printf("Fail to clean up Environment Capture Manager.\n");
+		}
 		return result;
 	}
 

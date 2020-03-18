@@ -7,12 +7,8 @@
 
 #include "Color/Color.h"
 #include "Effect/Effect.h"
-#include "Light/PointLight/PointLight.h"
-#include "Light/AmbientLight/AmbientLight.h"
-#include "Light/DirectionalLight/DirectionalLight.h"
-#include "Light/SpotLight/SpotLight.h"
+#include "RenderStructs.h"
 #include "Camera/Camera.h"
-#include "Model/Model.h"
 #include "UniformBuffer/UniformBuffer.h"
 #include "FrameBuffer/cFrameBuffer.h"
 #include "Graphics/UniformBuffer/UniformBufferFormats.h"
@@ -21,9 +17,10 @@
 // Graphics stores, initializes, cleans up all data that needs to be rendered
 namespace Graphics {
 
+
 	/** Initialization and clean up function*/
 	bool Initialize();
-	void PreRenderFrame(); // Render frames before rendering the actual scene, like rendering the irrandance cube map, baking static light stuffs
+	void PreRenderFrame(); // Render frames before rendering the actual scene, like rendering the irradiance cube map, baking static light stuffs
 	void RenderFrame();
 	bool CleanUp();
 
@@ -44,7 +41,7 @@ namespace Graphics {
 	void SubmitDataToBeRendered(const UniformBufferFormats::sFrame& i_frameData, const std::vector<std::pair<Graphics::cModel::HANDLE, cTransform>>& i_modelToTransform_map, void(*func_ptr)());
 
 	void ClearApplicationThreadData();
-	
+
 	/** Usage function*/
 	bool CreateEffect(const char* i_key, const char* i_vertexShaderPath, const char* i_fragmentShaderPath, const char* i_geometryShaderPath = "");
 	cEffect* GetEffectByKey(const char* i_key);
@@ -53,7 +50,7 @@ namespace Graphics {
 	/** Lighting related*/
 	UniformBufferFormats::sLighting& GetGlobalLightingData();
 	bool CreateAmbientLight(const Color& i_color, cAmbientLight*& o_ambientLight);
-	bool CreatePointLight(const glm::vec3& i_initialLocation,const Color& i_color,const GLfloat& i_radius, bool i_enableShadow, cPointLight*& o_pointLight);
+	bool CreatePointLight(const glm::vec3& i_initialLocation, const Color& i_color, const GLfloat& i_radius, bool i_enableShadow, cPointLight*& o_pointLight);
 	bool CreateSpotLight(const glm::vec3& i_initialLocation, const glm::vec3& i_direction, const Color& i_color, const GLfloat& i_edge, const GLfloat& i_radius, bool i_enableShadow, cSpotLight*& o_spotLight);
 	bool CreateDirectionalLight(const Color& i_color, glm::vec3 i_direction, bool i_enableShadow, cDirectionalLight*& o_directionalLight);
 	void UpdateLightingData();

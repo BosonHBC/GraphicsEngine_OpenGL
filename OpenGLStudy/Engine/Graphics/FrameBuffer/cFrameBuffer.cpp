@@ -148,6 +148,12 @@ namespace Graphics {
 
 	cFrameBuffer::~cFrameBuffer()
 	{
+
+
+	}
+
+	void cFrameBuffer::CleanUp()
+	{
 		if (m_fbo) {
 			glDeleteFramebuffers(1, &m_fbo);
 			m_fbo = 0;
@@ -161,7 +167,6 @@ namespace Graphics {
 		}
 
 		cTexture::s_manager.Release(m_renderToTexture);
-
 	}
 
 	bool cFrameBuffer::IsValid() const

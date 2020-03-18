@@ -32,6 +32,9 @@ namespace Graphics {
 		case UBT_PBRMR:
 			m_size = sizeof(UniformBufferFormats::sPBRMRMaterial);
 			break;
+		case UBT_EnvCaptureWeight:
+			m_size = sizeof(UniformBufferFormats::sEnvCaptureWeight);
+			break;
 		case UBT_Invalid:
 			result = false;
 			return result;

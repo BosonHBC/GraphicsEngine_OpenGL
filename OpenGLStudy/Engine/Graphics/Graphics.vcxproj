@@ -33,6 +33,7 @@
     <ClCompile Include="Camera\Camera.cpp" />
     <ClCompile Include="Camera\EditorCamera\EditorCamera.cpp" />
     <ClCompile Include="Effect\Effect.cpp" />
+    <ClCompile Include="EnvironmentCaptureManager.cpp" />
     <ClCompile Include="EnvironmentProbes\EnvProbe.cpp" />
     <ClCompile Include="FrameBuffer\cFrameBuffer.cpp" />
     <ClCompile Include="Graphics.cpp" />
@@ -57,6 +58,7 @@
     <ClInclude Include="Color\Color.h" />
     <ClInclude Include="Effect\Effect.h" />
     <ClInclude Include="Effect\Shader\GLShader.h" />
+    <ClInclude Include="EnvironmentCaptureManager.h" />
     <ClInclude Include="EnvironmentProbes\EnvProbe.h" />
     <ClInclude Include="FrameBuffer\cFrameBuffer.h" />
     <ClInclude Include="Graphics.h" />
@@ -72,6 +74,7 @@
     <ClInclude Include="Material\Unlit\MatUnlit.h" />
     <ClInclude Include="Mesh\Mesh.h" />
     <ClInclude Include="Model\Model.h" />
+    <ClInclude Include="RenderStructs.h" />
     <ClInclude Include="Texture\Texture.h" />
     <ClInclude Include="UniformBuffer\UniformBuffer.h" />
     <ClInclude Include="UniformBuffer\UniformBufferFormats.h" />

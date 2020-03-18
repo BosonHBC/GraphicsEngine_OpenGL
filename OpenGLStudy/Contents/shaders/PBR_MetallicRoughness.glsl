@@ -46,6 +46,10 @@ layout(std140, binding = 5) uniform g_uniformBuffer_pbrMRModel
 	vec3 ior;
 	float metalnessIntensity;
 };
+layout(std140, binding = 6) uniform g_uniformBuffer_envCaptureWeight
+{
+	vec4 envCapWeights;
+};
 // the color of the pixel
 out vec4 color;
 
