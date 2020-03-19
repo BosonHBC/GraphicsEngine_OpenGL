@@ -19,8 +19,9 @@ public:
 
 	~cBox() {};
 
-	eCollisionType Intersect(const glm::vec3& i_point) override;
-	eCollisionType Intersect(const cSphere* const i_sphere);
+	eCollisionType Intersect(const glm::vec3& i_point)const override;
+	float NDF(const glm::vec3& i_point) const override;
+	eCollisionType Intersect(const cSphere* const i_sphere) const;
 
 	glm::vec3 b, t; // b and t stand for bottom corner and top corner
 

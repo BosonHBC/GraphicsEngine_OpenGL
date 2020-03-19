@@ -11,9 +11,9 @@ public:
 	cSphere(const cSphere& i_other) : m_radius(i_other.m_radius), m_center(i_other.m_center) {}
 	cSphere& operator = (const cSphere& i_other) { m_radius = i_other.m_radius; m_center = i_other.m_center; return *this; }
 	
-	eCollisionType Intersect(const glm::vec3& i_point) override;
-	eCollisionType Intersect(const cSphere& i_sphere);
-
+	eCollisionType Intersect(const glm::vec3& i_point) const override;
+	eCollisionType Intersect(const cSphere& i_sphere) const ;
+	float NDF(const glm::vec3& i_point) const override;
 	void SetRadius(float i_radius) { m_radius = i_radius; }
 	void SetCenter(const glm::vec3& i_center) { m_center = i_center; }
 	float r() const { return m_radius; }

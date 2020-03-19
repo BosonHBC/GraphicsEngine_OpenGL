@@ -6,7 +6,18 @@
 namespace Graphics
 {    // pbr: set up projection and view matrices for capturing data onto the 6 cubemap face directions
 
-	bool cEnvProbe::Initialize(GLfloat i_range, GLuint i_width, GLuint i_height, const ETextureType& i_textureType,const glm::vec3& i_initialLocation /*= glm::vec3(0)*/)
+	Graphics::cEnvProbe& cEnvProbe::operator=(const cEnvProbe& i_other)
+	{
+		m_position = i_other.m_position;
+		m_captured = i_other.m_captured;
+		m_frameBuffer = i_other.m_frameBuffer;
+		m_range = i_other.m_range;
+		m_width = i_other.m_width;
+		m_height = i_other.m_height;
+		return *this;
+	}
+
+	bool cEnvProbe::Initialize(GLfloat i_range, GLuint i_width, GLuint i_height, const ETextureType& i_textureType, const glm::vec3& i_initialLocation /*= glm::vec3(0)*/)
 	{
 		auto result = true;
 		m_range = i_range; m_width = i_width; m_height = i_height;

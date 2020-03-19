@@ -1,7 +1,7 @@
 #include "Sphere.h"
 #include "glm/gtx/norm.hpp"
 
-eCollisionType cSphere::Intersect(const glm::vec3& i_point)
+eCollisionType cSphere::Intersect(const glm::vec3& i_point) const
 {
 	double rr = m_radius * m_radius;
 	double dd = glm::distance2(m_center, i_point);
@@ -12,7 +12,7 @@ eCollisionType cSphere::Intersect(const glm::vec3& i_point)
 	else return ECT_Tangency;
 }
 
-eCollisionType cSphere::Intersect(const cSphere& i_sphere)
+eCollisionType cSphere::Intersect(const cSphere& i_sphere) const
 {
 	double dd = glm::distance2(m_center, i_sphere.m_center);
 	float r_sum = m_radius + i_sphere.m_radius;
@@ -24,4 +24,9 @@ eCollisionType cSphere::Intersect(const cSphere& i_sphere)
 	else if (dd - r_sum_sqr < -TangencyPrecision && dd > r_sub_sqr) return ECT_Overlap;
 	else if (dd <= r_sub_sqr) return ECT_Contain;
 	else return ECT_Tangency;
+}
+
+float cSphere::NDF(const glm::vec3& i_point) const
+{
+	return glm::distance(m_center, i_point) / m_radius;
 }

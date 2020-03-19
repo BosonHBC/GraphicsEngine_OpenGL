@@ -15,6 +15,7 @@ namespace Graphics {
 			m_fbo(i_other.m_fbo), m_rbo(i_other.m_rbo), m_prevFbo(i_other.m_prevFbo),
 			m_renderToTexture(i_other.m_renderToTexture), m_width(i_other.m_width), m_height(i_other.m_height)
 		{}
+		cFrameBuffer& operator = (const cFrameBuffer& i_other);
 		// Write current buffer data to this frame buffer
 		void Write();
 		// Switch back to original frame buffer
@@ -35,8 +36,6 @@ namespace Graphics {
 		GLuint fbo() const { return m_fbo; }
 		GLuint rbo() const { return m_rbo; }
 	protected:
-		cFrameBuffer& operator = (const cFrameBuffer& i_other) = delete;
-
 		// fbo: frame buffer object
 		GLuint m_fbo; // this is necessary
 		GLuint m_rbo; // alternative render buffer object if needed.

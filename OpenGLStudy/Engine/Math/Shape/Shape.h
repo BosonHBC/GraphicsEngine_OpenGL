@@ -17,8 +17,9 @@ public:
 	~cShape() {};
 
 	// Intersection between points
-	virtual eCollisionType Intersect(const glm::vec3& i_point) = 0;
-
+	virtual eCollisionType Intersect(const glm::vec3& i_point) const = 0;
+	// normalized distance function, center to boundary -> [0 , 1]
+	virtual float NDF(const glm::vec3& i_point) const = 0;
 	static const char* CollisionEnumToString(const eCollisionType& i_collisionType);
 private:
 

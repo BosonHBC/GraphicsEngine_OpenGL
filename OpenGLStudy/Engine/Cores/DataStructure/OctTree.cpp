@@ -1,10 +1,15 @@
 #include "OctTree.h"
 #include "Graphics/EnvironmentCaptureManager.h"
 
+
 void sOctTree::InitializeTree(const cBox& i_initialVolume, const std::vector<PROBE*>& i_initialProbeList)
 {
 	Volume = i_initialVolume;
-	m_probeList = i_initialProbeList;
+	m_probeList.reserve(i_initialProbeList.size());
+	for (auto it : i_initialProbeList)
+	{
+		m_probeList.push_back(it);
+	}
 
 	BuildTree();
 }
@@ -12,7 +17,11 @@ void sOctTree::InitializeTree(const cBox& i_initialVolume, const std::vector<PRO
 void sOctTree::BuildTree()
 {
 	// If this node is a leaf node or If this is the deepest level, no need to build the tree any more
-	if (m_probeList.size() <= 1 || m_currentDepth >= MAX_DEPTH) return;
+	if (m_probeList.size() <= 1 || m_currentDepth >= MAX_DEPTH)
+	{
+		m_isLeaf = true;
+		return;
+	}
 
 	cBox _8Boxes[8];
 	std::vector<PROBE*> _childInitialProbeList[8];
@@ -23,13 +32,13 @@ void sOctTree::BuildTree()
 		cBox _octSubBox = Volume.getOctSubBox(); // a box with 1/8 size of Volume box and the same center
 
 		_8Boxes[0] = _octSubBox + _diagonalQuater * glm::vec3(-1, -1, -1);
-		_8Boxes[1] =_octSubBox +_diagonalQuater * glm::vec3(1, -1, -1);
-		_8Boxes[2] =_octSubBox +_diagonalQuater * glm::vec3(-1, 1, -1);
-		_8Boxes[3] =_octSubBox +_diagonalQuater * glm::vec3(1, 1, -1);
-		_8Boxes[4] =_octSubBox +_diagonalQuater * glm::vec3(-1, -1, 1);
-		_8Boxes[5] =_octSubBox +_diagonalQuater * glm::vec3(1, -1, 1);
-		_8Boxes[6] =_octSubBox +_diagonalQuater * glm::vec3(-1, 1, 1);
-		_8Boxes[7] =_octSubBox +_diagonalQuater * glm::vec3(1, 1, 1);
+		_8Boxes[1] = _octSubBox + _diagonalQuater * glm::vec3(1, -1, -1);
+		_8Boxes[2] = _octSubBox + _diagonalQuater * glm::vec3(-1, 1, -1);
+		_8Boxes[3] = _octSubBox + _diagonalQuater * glm::vec3(1, 1, -1);
+		_8Boxes[4] = _octSubBox + _diagonalQuater * glm::vec3(-1, -1, 1);
+		_8Boxes[5] = _octSubBox + _diagonalQuater * glm::vec3(1, -1, 1);
+		_8Boxes[6] = _octSubBox + _diagonalQuater * glm::vec3(-1, 1, 1);
+		_8Boxes[7] = _octSubBox + _diagonalQuater * glm::vec3(1, 1, 1);
 
 	}
 	// 2. determine if there is object in this node
@@ -59,10 +68,10 @@ void sOctTree::BuildTree()
 			// Update parent
 			m_childNode[i]->m_parent = this;
 			m_childNode[i]->InitializeTree(_8Boxes[i], _childInitialProbeList[i]);
-			printf("OctTree level[%d][%d] building done, probe list count: %d.\n", m_currentDepth, i,m_probeList.size());
+			printf("OctTree level[%d][%d] building done, probe list count: %d.\n", m_currentDepth, i, m_probeList.size());
 		}
 	}
-	
+
 }
 
 void sOctTree::CleanUp()
@@ -81,6 +90,19 @@ void sOctTree::CleanUp()
 
 sOctTree* sOctTree::LocatePoint(const glm::vec3& i_POI)
 {
+	// If the parent volume is intersecting with the point
+	if (Volume.Intersect(i_POI))
+	{
+		// if this s a leaf, so this is the node
+		if (m_isLeaf) return this;
+
+		// check the 8 child one by one if the parent node is not a leaf node
+		for (size_t i = 0; i < 8; i++)
+		{
+			sOctTree* _childNodeResult = ((m_childNode[i] != nullptr) ? m_childNode[i]->LocatePoint(i_POI) : nullptr);
+			if (_childNodeResult != nullptr) return _childNodeResult; // if it already finds the result, no need to go the next child node
+		}
+	}
 	return nullptr;
 }
 
@@ -90,12 +112,16 @@ std::vector<sOctTree::PROBE*> sOctTree::GetIntersectProbes(const glm::vec3& i_PO
 
 	// 1. locate the leaf node where this POI is.
 	sOctTree* _node = LocatePoint(i_POI);
+	if (!_node) 
+		return _result;
 	// 2. check collision of this point with all objects inside this node.
 	for (auto it : _node->m_probeList)
 	{
 		// if this point is inside the Bounding volume, requested result
-		if (it->BV.Intersect(i_POI)) _result.push_back(it);
+		if (it->BV.Intersect(i_POI))
+		{
+			_result.push_back(it);
+		}
 	}
-
 	return _result;
 }

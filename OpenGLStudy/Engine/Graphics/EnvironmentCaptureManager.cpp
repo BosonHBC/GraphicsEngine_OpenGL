@@ -26,6 +26,7 @@ namespace Graphics
 
 		cUniformBuffer s_uniformBuffer_EnvCaptureWeight(eUniformBufferType::UBT_EnvCaptureWeight);
 		std::vector<sCaptureProbes> g_CaptureProbesList; // Storing the actual capture probes
+		std::vector<sCaptureProbes*> g_CaptureProbesReferences; 
 		std::vector<cSphere> g_CaptureProbeVolumes; // Storing a copy of the volume of the capture probes
 		sOctTree g_EnvironmentCaptureAccelerationTree;
 		
@@ -96,19 +97,16 @@ namespace Graphics
 				printf("Fail to create Pre-filter probe.\n");
 				return result;
 			}
+
+			g_CaptureProbesReferences.push_back(&g_CaptureProbesList[_lastIdx]);
 		}
 
 		void BuildAccelerationStructure() 
 		{
 			GLuint _halfWidth = g_octTreeMaxVolumeWidth / 2;
 			glm::vec3 _posHalfDimension = glm::vec3(_halfWidth, _halfWidth, _halfWidth);
-			// instance list to pointer list
-			std::vector<sCaptureProbes*> _initialProbes;
-			for (auto it: g_CaptureProbesList)
-			{
-				_initialProbes.push_back(&it);
-			}
-			g_EnvironmentCaptureAccelerationTree.InitializeTree(cBox(-_posHalfDimension, _posHalfDimension), _initialProbes);
+
+			g_EnvironmentCaptureAccelerationTree.InitializeTree(cBox(-_posHalfDimension, _posHalfDimension), g_CaptureProbesReferences);
 		}
 
 		void CaptureEnvironment(Graphics::sDataRequiredToRenderAFrame* i_renderThreadData)
@@ -244,6 +242,7 @@ namespace Graphics
 
 		void UpdatePointOfInterest(const glm::vec3& i_position)
 		{
+			auto _intersectProbes = g_EnvironmentCaptureAccelerationTree.GetIntersectProbes(i_position);
 
 		}
 

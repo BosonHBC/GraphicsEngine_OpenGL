@@ -31,6 +31,7 @@ struct sOctTree
 	std::vector<PROBE*> GetIntersectProbes(const glm::vec3& i_POI);
 
 private:
+	bool m_isLeaf = false;
 	int m_currentDepth = 0; // Start with level 0, which is the root node
 	sOctTree* m_parent = nullptr;
 	// 8 child nodes

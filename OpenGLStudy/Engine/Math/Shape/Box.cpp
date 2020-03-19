@@ -8,14 +8,14 @@ glm::vec3& cBox::operator[](int i)
 	else return this->t;
 }
 
-eCollisionType cBox::Intersect(const glm::vec3& i_point)
+eCollisionType cBox::Intersect(const glm::vec3& i_point) const
 {
-	if (i_point.x > b.x && i_point.y > b.y && i_point.z > b.z
-		&& i_point.x < t.x && i_point.y < t.y && i_point.z < t.z) return ECT_Contain;
+	if (i_point.x >= b.x && i_point.y >= b.y && i_point.z >= b.z
+		&& i_point.x <= t.x && i_point.y <= t.y && i_point.z <= t.z) return ECT_Contain;
 	else return ECT_NoIntersect;
 }
 
-eCollisionType cBox::Intersect(const cSphere* const i_sphere)
+eCollisionType cBox::Intersect(const cSphere* const i_sphere) const
 {
 	double rr = i_sphere->r() * i_sphere->r(); // radius squared
 	glm::vec3 sc = i_sphere->c(); // sphere center
@@ -31,6 +31,13 @@ eCollisionType cBox::Intersect(const cSphere* const i_sphere)
 
 	if (rr > 0) return ECT_Overlap;
 	else return ECT_NoIntersect;
+}
+
+float cBox::NDF(const glm::vec3& i_point) const
+{
+	glm::vec3 _center = center();
+
+	return 0;
 }
 
 glm::vec3 cBox::corner(int i_corner)

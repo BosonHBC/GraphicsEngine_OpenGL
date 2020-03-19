@@ -28,6 +28,7 @@ namespace Graphics
 		cEnvProbe(const cEnvProbe& i_other) :
 			m_position(i_other.m_position), m_captured(i_other.m_captured), m_frameBuffer(i_other.m_frameBuffer), 
 			m_range(i_other.m_range), m_width(i_other.m_width), m_height(i_other.m_height) {}
+		cEnvProbe& operator = (const cEnvProbe& i_other);
 
 		bool Initialize(GLfloat i_range, GLuint i_width, GLuint i_height, const ETextureType& i_textureType, const glm::vec3& i_initialLocation = glm::vec3(0));
 		bool CleanUp();

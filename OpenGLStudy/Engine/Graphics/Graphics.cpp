@@ -298,9 +298,10 @@ namespace Graphics {
 			}
 
 			EnvironmentCaptureManager::AddCaptureProbes(glm::vec3(-470, 100, 0), 500.f, envMapResolution);
-			EnvironmentCaptureManager::AddCaptureProbes(glm::vec3(0, 100, 0), 1000.f, envMapResolution);
+			EnvironmentCaptureManager::AddCaptureProbes(glm::vec3(0, 100, 0), 500.f, envMapResolution);
 			EnvironmentCaptureManager::AddCaptureProbes(glm::vec3(470, 100, 0), 500.f, envMapResolution);
 			EnvironmentCaptureManager::BuildAccelerationStructure();
+
 		}
 
 		// Load models & textures
@@ -479,7 +480,7 @@ namespace Graphics {
 			// Execute pass function
 			s_dataRenderingByGraphicThread->s_renderPasses[i].RenderPassFunction();
 		}
-
+		EnvironmentCaptureManager::UpdatePointOfInterest(s_dataRenderingByGraphicThread->s_renderPasses[3].FrameData.ViewPosition);
 		Gizmo_DrawDebugCircle(EnvironmentCaptureManager::GetCaptureProbesVolumes());
 	}
 
@@ -770,8 +771,8 @@ namespace Graphics {
 				_model->Render();
 			}
 		}
-
 		s_currentEffect->UnUseEffect();
+		
 		// set depth function back to default
 		glEnable(GL_CULL_FACE);
 	}
