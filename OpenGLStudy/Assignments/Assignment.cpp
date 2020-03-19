@@ -119,7 +119,7 @@ void Assignment::CreateCamera()
 {
 	m_editorCamera = new  cEditorCamera(glm::vec3(0, 150, 350), 5, 0, 300, 10.f);
 	float _aspect = (float)(GetCurrentWindow()->GetBufferWidth()) / (float)(GetCurrentWindow()->GetBufferHeight());
-	m_editorCamera->CreateProjectionMatrix(glm::radians(60.f), _aspect, 1.f, 3000.0f);
+	m_editorCamera->CreateProjectionMatrix(glm::radians(60.f), _aspect, 1.f, 6000.0f);
 	m_editorCamera->Transform()->Update();
 }
 

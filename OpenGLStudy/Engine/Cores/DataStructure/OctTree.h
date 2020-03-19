@@ -12,7 +12,7 @@ namespace Graphics {
 	}
 }
 // Only allow maximum 4 level sub-division
-#define MAX_DEPTH 3
+#define MAX_DEPTH 4
 struct sOctTree
 {
 	typedef Graphics::EnvironmentCaptureManager::sCaptureProbes PROBE; // for simplicity
@@ -23,6 +23,7 @@ struct sOctTree
 	/** Construction functions */
 	void InitializeTree(const cBox& i_initialVolume, const std::vector<PROBE*>& i_initialProbeList);
 	void BuildTree();
+	void CleanUp();
 
 	/** Query functions */
 	// Find out the leaf node this point is in

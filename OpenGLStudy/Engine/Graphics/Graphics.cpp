@@ -19,6 +19,7 @@
 #include "Time/Time.h"
 #include "Assets/PathProcessor.h"
 #include "EnvironmentCaptureManager.h" 
+#include "Cores/DataStructure/OctTree.h"
 namespace Graphics {
 
 	unsigned int s_currentRenderPass = 0;
@@ -61,7 +62,6 @@ namespace Graphics {
 	// the brdfLUTTexture for integrating the brdf
 	cFrameBuffer s_brdfLUTTexture;
 
-
 	// Effect
 	// ------------------------------------------------------------------------------------------------------------------------------------
 	std::map<const char*, cEffect*> s_KeyToEffect_map;
@@ -82,7 +82,7 @@ namespace Graphics {
 	// ------------------------------------------------------------------------------------------------------------------------------------
 	void RenderScene();
 	void RenderSceneWithoutMaterial();
-	void Gizmo_DrawDebugCircle(const glm::vec3& i_transform, float i_radius);
+	void Gizmo_DrawDebugCircle(const std::vector<const cSphere*>& i_spheres);
 
 	void FixSamplerProblem(const char* i_effectKey)
 	{
@@ -278,8 +278,6 @@ namespace Graphics {
 			return result;
 		}
 
-
-
 		if (!(result = s_cameraCapture.Initialize(800, 600, ETT_FRAMEBUFFER_PLANNER_REFLECTION))) {
 			printf("Fail to create camera capture frame buffer.\n");
 			return result;
@@ -353,6 +351,33 @@ namespace Graphics {
 		glCullFace(GL_BACK);
 		assert(GL_NO_ERROR == glGetError());
 
+/*
+		probes[0].BV.SetCenter(glm::vec3(351.88, -1493.418, -1417.933));
+		probes[0].BV.SetRadius(450);
+		probes[1].BV.SetCenter(glm::vec3(0,0,0));
+		probes[1].BV.SetRadius(2040);
+		probes[2].BV.SetCenter(glm::vec3(16.343, 100, -867.531));
+		probes[2].BV.SetRadius(1150);
+		probes[3].BV.SetCenter(glm::vec3(-263.649, 100, 657.22));
+		probes[3].BV.SetRadius(1150);
+		probes[4].BV.SetCenter(glm::vec3(1094.423, 100, -662.934));
+		probes[4].BV.SetRadius(550);
+		probes[5].BV.SetCenter(glm::vec3(-864.332, 100, -1209.285));
+		probes[5].BV.SetRadius(450);
+		probes[6].BV.SetCenter(glm::vec3(832.455, -563.017, -854.386));
+		probes[6].BV.SetRadius(450);
+		probes[7].BV.SetCenter(glm::vec3(1294.19, 911.611, 705.533));
+		probes[7].BV.SetRadius(570);
+		probes[7].BV.SetCenter(glm::vec3(-75.668, 100, 1117.274));
+		probes[7].BV.SetRadius(450);
+
+
+		for (int i = 0; i < 9; ++i)
+		{
+			g_initialList.push_back(&probes[i]);
+		}
+
+		parent.InitializeTree(parentBox, g_initialList);*/
 		return result;
 	}
 
@@ -453,7 +478,9 @@ namespace Graphics {
 		}
 
 		const EnvironmentCaptureManager::sCaptureProbes& firstCapture = EnvironmentCaptureManager::GetCaptureProbesAt(0);
-		Gizmo_DrawDebugCircle(firstCapture.BV.c(), firstCapture.BV.r());
+		std::vector<const cSphere*> _spheres;
+		_spheres.push_back(&firstCapture.BV);
+		Gizmo_DrawDebugCircle(_spheres);
 	}
 
 	void DirectionalShadowMap_Pass()
@@ -792,16 +819,18 @@ namespace Graphics {
 		s_currentEffect->UnUseEffect();
 	}
 
-	void Gizmo_DrawDebugCircle(const glm::vec3& i_position, float i_radius) {
+	void Gizmo_DrawDebugCircle(const std::vector<const cSphere*>& i_spheres) {
 
 		s_currentEffect = GetEffectByKey("DrawDebugCircles");
 		s_currentEffect->UseEffect();
-		s_currentEffect->SetFloat("radius", i_radius);
-		cTransform _temp(i_position, glm::quat(1, 0, 0, 0), glm::vec3(1, 1, 1));
-		s_uniformBuffer_drawcall.Update(&UniformBufferFormats::sDrawCall(_temp.M(), _temp.TranspostInverse()));
-		cMesh* _Point = cMesh::s_manager.Get(s_point);
-		_Point->Render();
-
+		for (int i = 0; i < i_spheres.size(); ++i)
+		{
+			s_currentEffect->SetFloat("radius", i_spheres[i]->r());
+			cTransform _temp(i_spheres[i]->c(), glm::quat(1, 0, 0, 0), glm::vec3(1, 1, 1));
+			s_uniformBuffer_drawcall.Update(&UniformBufferFormats::sDrawCall(_temp.M(), _temp.TranspostInverse()));
+			cMesh* _Point = cMesh::s_manager.Get(s_point);
+			_Point->Render();
+		}
 		s_currentEffect->UnUseEffect();
 	}
 

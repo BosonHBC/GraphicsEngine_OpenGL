@@ -25,6 +25,9 @@
     <Filter Include="Source Files\Shape\Sphere">
       <UniqueIdentifier>{f3eb9f6f-b352-4290-9b00-7ce98435edeb}</UniqueIdentifier>
     </Filter>
+    <Filter Include="Source Files\Shape\Box">
+      <UniqueIdentifier>{b82e55ca-3776-4a7e-8c9b-73630140881e}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="..\Math\Transform\Transform.cpp">
@@ -39,6 +42,9 @@
     <ClCompile Include="Shape\Shape.cpp">
       <Filter>Source Files\Shape</Filter>
     </ClCompile>
+    <ClCompile Include="Shape\Box.cpp">
+      <Filter>Source Files\Shape\Box</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\Math\Transform\Transform.h">
@@ -52,6 +58,9 @@
     </ClInclude>
     <ClInclude Include="Shape\Shape.h">
       <Filter>Source Files\Shape</Filter>
+    </ClInclude>
+    <ClInclude Include="Shape\Box.h">
+      <Filter>Source Files\Shape\Box</Filter>
     </ClInclude>
   </ItemGroup>
 </Project>
