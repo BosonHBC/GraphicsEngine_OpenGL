@@ -18,7 +18,7 @@ namespace Graphics
 			float Resolution;							// Resolution of Environment cubemap(each size)
 
 			sCaptureProbes() {}
-			sCaptureProbes(const glm::vec3&i_position, float i_radius, float i_resolution) : Resolution(i_resolution) { BV.SetCenter(i_position); BV.SetRadius(i_radius); }
+			sCaptureProbes(const cSphere& i_sphere, float i_resolution) : BV(i_sphere), Resolution(i_resolution) { }
 			sCaptureProbes(const sCaptureProbes& i_other) :
 				EnvironmentProbe(i_other.EnvironmentProbe), IrradianceProbe(i_other.IrradianceProbe), PrefilterProbe(i_other.PrefilterProbe),
 				BV(i_other.BV), Influence(i_other.Influence), Resolution(i_other.Resolution) {}
@@ -40,6 +40,10 @@ namespace Graphics
 		// During rendering, update the weights according to the point of interest
 		void UpdatePointOfInterest(const glm::vec3& i_position);
 
+		// After adding all capture probes, build the octTree
+		void BuildAccelerationStructure();
+
 		const sCaptureProbes& GetCaptureProbesAt(int i_idx);
+		const std::vector<cSphere>& GetCaptureProbesVolumes();
 	}
 }

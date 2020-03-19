@@ -19,7 +19,7 @@
 #include "Time/Time.h"
 #include "Assets/PathProcessor.h"
 #include "EnvironmentCaptureManager.h" 
-#include "Cores/DataStructure/OctTree.h"
+
 namespace Graphics {
 
 	unsigned int s_currentRenderPass = 0;
@@ -82,7 +82,7 @@ namespace Graphics {
 	// ------------------------------------------------------------------------------------------------------------------------------------
 	void RenderScene();
 	void RenderSceneWithoutMaterial();
-	void Gizmo_DrawDebugCircle(const std::vector<const cSphere*>& i_spheres);
+	void Gizmo_DrawDebugCircle(const std::vector<cSphere>& i_spheres);
 
 	void FixSamplerProblem(const char* i_effectKey)
 	{
@@ -296,9 +296,11 @@ namespace Graphics {
 				printf("Fail to create brdfLUTTexture.\n");
 				return result;
 			}
-			glm::vec3 _probePosition = glm::vec3(-470, 100, 0);
-			GLfloat _probeRange = 450.f;
-			EnvironmentCaptureManager::AddCaptureProbes(_probePosition, _probeRange, envMapResolution);
+
+			EnvironmentCaptureManager::AddCaptureProbes(glm::vec3(-470, 100, 0), 500.f, envMapResolution);
+			EnvironmentCaptureManager::AddCaptureProbes(glm::vec3(0, 100, 0), 1000.f, envMapResolution);
+			EnvironmentCaptureManager::AddCaptureProbes(glm::vec3(470, 100, 0), 500.f, envMapResolution);
+			EnvironmentCaptureManager::BuildAccelerationStructure();
 		}
 
 		// Load models & textures
@@ -446,6 +448,7 @@ namespace Graphics {
 			s_brdfLUTTexture.UnWrite();
 			s_currentEffect->UnUseEffect();
 		}
+
 		/** 4. Start to render pass one by one */
 		EnvironmentCaptureManager::CaptureEnvironment(s_dataRenderingByGraphicThread);
 
@@ -477,10 +480,7 @@ namespace Graphics {
 			s_dataRenderingByGraphicThread->s_renderPasses[i].RenderPassFunction();
 		}
 
-		const EnvironmentCaptureManager::sCaptureProbes& firstCapture = EnvironmentCaptureManager::GetCaptureProbesAt(0);
-		std::vector<const cSphere*> _spheres;
-		_spheres.push_back(&firstCapture.BV);
-		Gizmo_DrawDebugCircle(_spheres);
+		Gizmo_DrawDebugCircle(EnvironmentCaptureManager::GetCaptureProbesVolumes());
 	}
 
 	void DirectionalShadowMap_Pass()
@@ -819,14 +819,14 @@ namespace Graphics {
 		s_currentEffect->UnUseEffect();
 	}
 
-	void Gizmo_DrawDebugCircle(const std::vector<const cSphere*>& i_spheres) {
+	void Gizmo_DrawDebugCircle(const std::vector<cSphere>& i_spheres) {
 
 		s_currentEffect = GetEffectByKey("DrawDebugCircles");
 		s_currentEffect->UseEffect();
 		for (int i = 0; i < i_spheres.size(); ++i)
 		{
-			s_currentEffect->SetFloat("radius", i_spheres[i]->r());
-			cTransform _temp(i_spheres[i]->c(), glm::quat(1, 0, 0, 0), glm::vec3(1, 1, 1));
+			s_currentEffect->SetFloat("radius", i_spheres[i].r());
+			cTransform _temp(i_spheres[i].c(), glm::quat(1, 0, 0, 0), glm::vec3(1, 1, 1));
 			s_uniformBuffer_drawcall.Update(&UniformBufferFormats::sDrawCall(_temp.M(), _temp.TranspostInverse()));
 			cMesh* _Point = cMesh::s_manager.Get(s_point);
 			_Point->Render();

@@ -8,6 +8,7 @@
 #include "Graphics/Graphics.h"
 #include "Application/Application.h"
 #include "Application/Window/Window.h"
+#include "Cores/DataStructure/OctTree.h"
 
 namespace Graphics
 {
@@ -19,12 +20,15 @@ namespace Graphics
 		const int g_MaximumCaptureProbesInAScene = 10;
 		const GLuint g_IrradianceMapResolution = 32;
 		const GLuint g_PrefilterMapResolution = 256;
+		const GLuint g_octTreeMaxVolumeWidth = 4096;
 		// Global data
 		// ------------------------------------------------------------------------------------------------------------------------------------
 
 		cUniformBuffer s_uniformBuffer_EnvCaptureWeight(eUniformBufferType::UBT_EnvCaptureWeight);
-		std::vector<sCaptureProbes> g_CaptureProbesList; // Storing the capture probes
-
+		std::vector<sCaptureProbes> g_CaptureProbesList; // Storing the actual capture probes
+		std::vector<cSphere> g_CaptureProbeVolumes; // Storing a copy of the volume of the capture probes
+		sOctTree g_EnvironmentCaptureAccelerationTree;
+		
 		bool Initialize()
 		{
 			auto result = true;
@@ -51,6 +55,8 @@ namespace Graphics
 			if (!(result = s_uniformBuffer_EnvCaptureWeight.CleanUp())) {
 				printf("Fail to cleanup uniformBuffer_EnvCaptureWeight\n");
 			}
+			
+			g_EnvironmentCaptureAccelerationTree.CleanUp();
 
 			for (size_t i = 0; i < g_CaptureProbesList.size(); ++i)
 			{
@@ -69,8 +75,9 @@ namespace Graphics
 				printf("No more capture probe can be added to the scene because it reaches the capacity cap.\n");
 				return result;
 			}
-
-			g_CaptureProbesList.push_back(sCaptureProbes(i_position, i_radius, i_environmentCubemapSize));
+			cSphere _volume(i_position, i_radius);
+			g_CaptureProbesList.push_back(sCaptureProbes(_volume, i_environmentCubemapSize));
+			g_CaptureProbeVolumes.push_back(_volume);
 			GLuint _lastIdx = g_CaptureProbesList.size() - 1;
 			assert(i_environmentCubemapSize > 512);
 
@@ -89,6 +96,19 @@ namespace Graphics
 				printf("Fail to create Pre-filter probe.\n");
 				return result;
 			}
+		}
+
+		void BuildAccelerationStructure() 
+		{
+			GLuint _halfWidth = g_octTreeMaxVolumeWidth / 2;
+			glm::vec3 _posHalfDimension = glm::vec3(_halfWidth, _halfWidth, _halfWidth);
+			// instance list to pointer list
+			std::vector<sCaptureProbes*> _initialProbes;
+			for (auto it: g_CaptureProbesList)
+			{
+				_initialProbes.push_back(&it);
+			}
+			g_EnvironmentCaptureAccelerationTree.InitializeTree(cBox(-_posHalfDimension, _posHalfDimension), _initialProbes);
 		}
 
 		void CaptureEnvironment(Graphics::sDataRequiredToRenderAFrame* i_renderThreadData)
@@ -232,6 +252,11 @@ namespace Graphics
 			assert(i_idx < g_CaptureProbesList.size());
 
 			return g_CaptureProbesList[i_idx];
+		}
+
+		const std::vector<cSphere>& GetCaptureProbesVolumes()
+		{
+			return g_CaptureProbeVolumes;
 		}
 
 	}
