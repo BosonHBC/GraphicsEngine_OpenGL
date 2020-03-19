@@ -289,7 +289,7 @@ namespace Graphics {
 			if (!(result = s_cubemapProbe.Initialize(10, 2048, 2048, ETT_FRAMEBUFFER_HDR_CUBEMAP))) {
 				printf("Fail to create cubemap probe.\n");
 				return result;
-			}
+			}  
 
 			constexpr GLuint envMapResolution = 2048;
 			if (!(result = s_brdfLUTTexture.Initialize(envMapResolution, envMapResolution, ETT_FRAMEBUFFER_HDR_RG))) {
