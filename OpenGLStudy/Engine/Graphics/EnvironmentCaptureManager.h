@@ -15,7 +15,7 @@ namespace Graphics
 
 			cSphere BV;								// The bounding volume of this probe, should not change after initialization; 
 			cSphere InnerBV;						// If a sphere is inside the inner sphere, this weight should be 1
-			float Influence;								// The influence of this probe // 0 at the inner boundary; 1 at the outer boundary; < 0 inside the inner boundary. > 1, outside the outer boundary
+			float Influence;								// 1 at the inner boundary; 0 at the outer boundary; > 1 inside the inner boundary. < 0, outside the outer boundary
 			float Resolution;							// Resolution of Environment cubemap(each size)
 
 			sCaptureProbes() {}
@@ -40,11 +40,11 @@ namespace Graphics
 				PrefilterProbe.CleanUp();
 			}
 
-			// 0 at the inner boundary; 1 at the outer boundary; < 0 inside the inner boundary. > 1, outside the outer boundary
+			// 1 at the inner boundary; 0 at the outer boundary; > 1 inside the inner boundary. < 0, outside the outer boundary
 			void CalcInfluenceWeight(const glm::vec3& i_POI)
 			{
 				float dist2center = glm::distance(i_POI, BV.c());
-				Influence = (dist2center - InnerBV.r()) / (BV.r() - InnerBV.r());
+				Influence = 1 - (dist2center - InnerBV.r()) / (BV.r() - InnerBV.r());
 			}
 		};
 

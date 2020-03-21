@@ -276,38 +276,53 @@ namespace Graphics
 						// Calculate the influence weight
 						it->CalcInfluenceWeight(i_position);
 
-						assert(it->Influence <= 1.0f); // Make sure the POI is inside the outer sphere
+						assert(it->Influence >= 0.0f); // Make sure the POI is inside the outer sphere
 						// Only record the first InnerBV 
-						if (it->Influence < 0 && _POI_inInnerBV_captureProbesRef != nullptr) { _POI_inInnerBV_captureProbesRef = it; }
+						if (it->Influence > 1.0 ) { 
+							if(_POI_inInnerBV_captureProbesRef == nullptr)
+								_POI_inInnerBV_captureProbesRef = it; 
+							else
+							{
+								// if POI is closer to the center of the new one, update the inner BV
+								if (glm::distance2(it->InnerBV.c(), i_position) < glm::distance2(_POI_inInnerBV_captureProbesRef->InnerBV.c(), i_position))
+									_POI_inInnerBV_captureProbesRef = it;
+							}
+						}
 					}
 					// if POI is in any inner BV of intersected probes, Use this probes and the remaining references are nullptr
 					if (_POI_inInnerBV_captureProbesRef != nullptr)
 					{
 						captureWeights.Weights[0] = 1.0f;
 						g_capturesReadyToBeMixed[0] = _POI_inInnerBV_captureProbesRef;
-						printf("In inner boundary__");
+						g_capturesReadyToBeMixedCount = 1;
 					}
 					else // Get the mixing weights
 					{
 						glm::vec4 blendWeights;
 						float sumBlendWeight = 0;
-						// sort the intersecting probes by most influential, the smaller CaptureProbes->Influence is, the closer to the center, the more important
-						std::sort(_intersectProbes.begin(), _intersectProbes.end(), [](const sCaptureProbes* a, const sCaptureProbes* b) { return a->Influence < b->Influence; });
+						// sort the intersecting probes by most influential, the bigger CaptureProbes->Influence is, the closer to the center, the more important
+						std::sort(_intersectProbes.begin(), _intersectProbes.end(), [](const sCaptureProbes* a, const sCaptureProbes* b) { return a->Influence > b->Influence; });
+						for (int i = 0; i < _intersectProbes.size(); ++i)
+						{
+							printf("IW%d:%f ", i, _intersectProbes[i]->Influence);
+						}
+						printf("_____");
 						// Calculate sumIW and InvSumIW
 						float sumIW = 0;
 						float invSumIW = 0;
 						for (size_t i = 0; i < numOfShape; ++i) {
-							float _ndf = _intersectProbes[i]->BV.NDF(i_position);
+							//float _ndf = _intersectProbes[i]->BV.NDF(i_position);
+							float _ndf = _intersectProbes[i]->Influence;
 							sumIW += _ndf;
 							invSumIW += 1.0f - _ndf;
 						}
 
 						for (size_t i = 0; i < numOfShape; ++i)
 						{
-							float _ndf = _intersectProbes[i]->BV.NDF(i_position);
-
-							blendWeights[i] = (1.0f - (_ndf / sumIW)) / (numOfShape - 1);
-							blendWeights[i] *= ((1.0f - _ndf) / invSumIW);
+							//float _ndf = _intersectProbes[i]->BV.NDF(i_position);
+							float _ndf = _intersectProbes[i]->Influence;
+							blendWeights[i] = (_ndf / sumIW) / (numOfShape - 1);
+							blendWeights[i] *=  _ndf / invSumIW;
 							sumBlendWeight += blendWeights[i];
 						}
 						assert(sumBlendWeight > 0);
