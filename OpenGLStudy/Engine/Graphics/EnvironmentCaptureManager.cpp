@@ -4,6 +4,7 @@
 #include "RenderStructs.h"
 #include <stdio.h>
 #include <vector>
+#include <algorithm>
 #include "Graphics/Effect/Effect.h"
 #include "Graphics/Graphics.h"
 #include "Application/Application.h"
@@ -18,24 +19,31 @@ namespace Graphics
 		// ------------------------------------------------------------------------------------------------------------------------------------
 		const int g_MaximumOverlapVolumes = 4; // Only allow maximum 4 spheres overlap with the POI (point of interests)
 		const int g_MaximumCaptureProbesInAScene = 10;
-		const GLuint g_IrradianceMapResolution = 32;
+		const GLuint g_IrradianceMapResolution = 64;
 		const GLuint g_PrefilterMapResolution = 256;
 		const GLuint g_octTreeMaxVolumeWidth = 4096;
 		// Global data
 		// ------------------------------------------------------------------------------------------------------------------------------------
 
-		cUniformBuffer s_uniformBuffer_EnvCaptureWeight(eUniformBufferType::UBT_EnvCaptureWeight);
+		cUniformBuffer g_uniformBuffer_EnvCaptureWeight(eUniformBufferType::UBT_EnvCaptureWeight);
 		std::vector<sCaptureProbes> g_CaptureProbesList; // Storing the actual capture probes
-		std::vector<sCaptureProbes*> g_CaptureProbesReferences; 
+		std::vector<sCaptureProbes*> g_CaptureProbesReferences;
 		std::vector<cSphere> g_CaptureProbeVolumes; // Storing a copy of the volume of the capture probes
 		sOctTree g_EnvironmentCaptureAccelerationTree;
-		
+
+
+		// before update the POI, all elements in this array should be set to nullptr
+		// depends on the mixing algorithm, element should point to different captures
+		// after updating the POI, this array has the reference to all captures (maximum 4) that will be sent to the shader
+		sCaptureProbes* g_capturesReadyToBeMixed[g_MaximumOverlapVolumes];
+		// How many captures are valid in the g_capturesReadyToBeMixed array
+		GLuint g_capturesReadyToBeMixedCount = 0;
 		bool Initialize()
 		{
 			auto result = true;
 
-			if (result = s_uniformBuffer_EnvCaptureWeight.Initialize(nullptr)) {
-				s_uniformBuffer_EnvCaptureWeight.Bind();
+			if (result = g_uniformBuffer_EnvCaptureWeight.Initialize(nullptr)) {
+				g_uniformBuffer_EnvCaptureWeight.Bind();
 			}
 			else
 			{
@@ -53,10 +61,10 @@ namespace Graphics
 		bool CleanUp()
 		{
 			auto result = true;
-			if (!(result = s_uniformBuffer_EnvCaptureWeight.CleanUp())) {
+			if (!(result = g_uniformBuffer_EnvCaptureWeight.CleanUp())) {
 				printf("Fail to cleanup uniformBuffer_EnvCaptureWeight\n");
 			}
-			
+
 			g_EnvironmentCaptureAccelerationTree.CleanUp();
 
 			for (size_t i = 0; i < g_CaptureProbesList.size(); ++i)
@@ -68,7 +76,7 @@ namespace Graphics
 			return result;
 		}
 
-		bool AddCaptureProbes(const glm::vec3& i_position, GLfloat i_radius, GLuint i_environmentCubemapSize)
+		bool AddCaptureProbes(const cSphere& i_outerSphere, float i_innerRadius, GLuint i_environmentCubemapSize)
 		{
 			auto result = true;
 			if (g_CaptureProbesList.size() >= g_MaximumCaptureProbesInAScene) {
@@ -76,23 +84,28 @@ namespace Graphics
 				printf("No more capture probe can be added to the scene because it reaches the capacity cap.\n");
 				return result;
 			}
-			cSphere _volume(i_position, i_radius);
-			g_CaptureProbesList.push_back(sCaptureProbes(_volume, i_environmentCubemapSize));
-			g_CaptureProbeVolumes.push_back(_volume);
+			cSphere _innerSphere(i_outerSphere.c(), i_innerRadius);
+			if (!(result = (i_outerSphere.Intersect(_innerSphere) == ECT_Contain)))
+			{
+				printf("Inner sphere is not contained by the outer sphere.\n");
+				return result;
+			}
+			g_CaptureProbesList.push_back(sCaptureProbes(i_outerSphere, _innerSphere,1.0, i_environmentCubemapSize));
+			g_CaptureProbeVolumes.push_back(i_outerSphere);
 			GLuint _lastIdx = g_CaptureProbesList.size() - 1;
 			assert(i_environmentCubemapSize > 512);
 
-			if (!(result = g_CaptureProbesList[_lastIdx].EnvironmentProbe.Initialize(i_radius, i_environmentCubemapSize, i_environmentCubemapSize, ETT_FRAMEBUFFER_HDR_MIPMAP_CUBEMAP, i_position)))
+			if (!(result = g_CaptureProbesList[_lastIdx].EnvironmentProbe.Initialize(i_outerSphere.r(), i_environmentCubemapSize, i_environmentCubemapSize, ETT_FRAMEBUFFER_HDR_MIPMAP_CUBEMAP, i_outerSphere.c())))
 			{
 				printf("Fail to create environment probe.\n");
 				return result;
 			}
-			if (!(result = g_CaptureProbesList[_lastIdx].IrradianceProbe.Initialize(i_radius, g_IrradianceMapResolution, g_IrradianceMapResolution, ETT_FRAMEBUFFER_HDR_CUBEMAP, i_position)))
+			if (!(result = g_CaptureProbesList[_lastIdx].IrradianceProbe.Initialize(i_outerSphere.r(), g_IrradianceMapResolution, g_IrradianceMapResolution, ETT_FRAMEBUFFER_HDR_CUBEMAP, i_outerSphere.c())))
 			{
 				printf("Fail to create Irradiance probe.\n");
 				return result;
 			}
-			if (!(result = g_CaptureProbesList[_lastIdx].PrefilterProbe.Initialize(i_radius, g_PrefilterMapResolution, g_PrefilterMapResolution, ETT_FRAMEBUFFER_HDR_MIPMAP_CUBEMAP, i_position)))
+			if (!(result = g_CaptureProbesList[_lastIdx].PrefilterProbe.Initialize(i_outerSphere.r(), g_PrefilterMapResolution, g_PrefilterMapResolution, ETT_FRAMEBUFFER_HDR_MIPMAP_CUBEMAP, i_outerSphere.c())))
 			{
 				printf("Fail to create Pre-filter probe.\n");
 				return result;
@@ -101,7 +114,7 @@ namespace Graphics
 			g_CaptureProbesReferences.push_back(&g_CaptureProbesList[_lastIdx]);
 		}
 
-		void BuildAccelerationStructure() 
+		void BuildAccelerationStructure()
 		{
 			GLuint _halfWidth = g_octTreeMaxVolumeWidth / 2;
 			glm::vec3 _posHalfDimension = glm::vec3(_halfWidth, _halfWidth, _halfWidth);
@@ -242,20 +255,100 @@ namespace Graphics
 
 		void UpdatePointOfInterest(const glm::vec3& i_position)
 		{
-			auto _intersectProbes = g_EnvironmentCaptureAccelerationTree.GetIntersectProbes(i_position);
+			// clear references
+			for (size_t i = 0; i < g_MaximumOverlapVolumes; ++i) g_capturesReadyToBeMixed[i] = nullptr;
+			g_capturesReadyToBeMixedCount = 0;
 
+			auto _intersectProbes = g_EnvironmentCaptureAccelerationTree.GetIntersectProbes(i_position);
+			const GLuint numOfShape = glm::min(_intersectProbes.size(), static_cast<size_t>(g_MaximumOverlapVolumes));
+			UniformBufferFormats::sEnvCaptureWeight captureWeights;
+
+			if (numOfShape > 0)
+			{
+				if (numOfShape > 1)
+				{
+					sCaptureProbes* _POI_inInnerBV_captureProbesRef = nullptr; // if POI is in inner BV, this pointer will point that capture probes
+					for (auto it : _intersectProbes)
+					{
+						// Calculate the influence weight
+						it->CalcInfluenceWeight(i_position);
+
+						assert(it->Influence <= 1.0f); // Make sure the POI is inside the outer sphere
+						// Only record the first InnerBV 
+						if (it->Influence < 0 && _POI_inInnerBV_captureProbesRef != nullptr) { _POI_inInnerBV_captureProbesRef = it; }
+					}
+					// if POI is in any inner BV of intersected probes, Use this probes and the remaining references are nullptr
+					if (_POI_inInnerBV_captureProbesRef != nullptr)
+					{
+						captureWeights.Weights[0] = 1.0f;
+						g_capturesReadyToBeMixed[0] = _POI_inInnerBV_captureProbesRef;
+						printf("In inner boundary__");
+					}
+					else // Get the mixing weights
+					{
+						glm::vec4 blendWeights;
+						float sumBlendWeight = 0;
+						// sort the intersecting probes by most influential, the smaller CaptureProbes->Influence is, the closer to the center, the more important
+						std::sort(_intersectProbes.begin(), _intersectProbes.end(), [](const sCaptureProbes* a, const sCaptureProbes* b) { return a->Influence < b->Influence; });
+						// Calculate sumIW and InvSumIW
+						float sumIW = 0;
+						float invSumIW = 0;
+						for (size_t i = 0; i < numOfShape; ++i) {
+							float _ndf = _intersectProbes[i]->BV.NDF(i_position);
+							sumIW += _ndf;
+							invSumIW += 1.0f - _ndf;
+						}
+
+						for (size_t i = 0; i < numOfShape; ++i)
+						{
+							float _ndf = _intersectProbes[i]->BV.NDF(i_position);
+
+							blendWeights[i] = (1.0f - (_ndf / sumIW)) / (numOfShape - 1);
+							blendWeights[i] *= ((1.0f - _ndf) / invSumIW);
+							sumBlendWeight += blendWeights[i];
+						}
+						assert(sumBlendWeight > 0);
+						const float normlizedValue = 1.0 / sumBlendWeight;
+						for (size_t i = 0; i < numOfShape; ++i) {
+							blendWeights[i] *= normlizedValue;
+							captureWeights.Weights[i] = blendWeights[i];
+							g_capturesReadyToBeMixed[i] = _intersectProbes[i];
+							g_capturesReadyToBeMixedCount = numOfShape;
+						}
+					}
+				}
+				else
+				{
+					captureWeights.Weights[0] = 1.0f;
+					g_capturesReadyToBeMixed[0] = _intersectProbes[0];
+					g_capturesReadyToBeMixedCount = 1;
+				}
+			}
+			// Update weight data in the GPU
+			g_uniformBuffer_EnvCaptureWeight.Update(&captureWeights);
+			printf("w1:%f , w2:%f ,w3:%f ,w4:%f. \n", captureWeights.Weights.x, captureWeights.Weights.y, captureWeights.Weights.z, captureWeights.Weights.w);
 		}
 
 		const Graphics::EnvironmentCaptureManager::sCaptureProbes& GetCaptureProbesAt(int i_idx)
 		{
-			assert(i_idx < g_CaptureProbesList.size());
+			assert(i_idx < g_MaximumOverlapVolumes);
 
-			return g_CaptureProbesList[i_idx];
+			return *g_capturesReadyToBeMixed[i_idx];
+		}
+
+		GLuint GetReadyCapturesCount()
+		{
+			return g_capturesReadyToBeMixedCount;
 		}
 
 		const std::vector<cSphere>& GetCaptureProbesVolumes()
 		{
 			return g_CaptureProbeVolumes;
+		}
+
+		const GLuint MaximumCubemapMixingCount()
+		{
+			return g_MaximumOverlapVolumes;
 		}
 
 	}

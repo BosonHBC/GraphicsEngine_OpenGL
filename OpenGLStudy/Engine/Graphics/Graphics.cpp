@@ -76,7 +76,7 @@ namespace Graphics {
 	std::vector<cSpotLight*> s_spotLight_list;
 
 	// spot light first
-#define SHADOWMAP_START_TEXTURE_UNIT 6
+#define SHADOWMAP_START_TEXTURE_UNIT 13
 
 	// Functions
 	// ------------------------------------------------------------------------------------------------------------------------------------
@@ -93,10 +93,17 @@ namespace Graphics {
 		GLuint _programID = _effect->GetProgramID();
 		char _charBuffer[64] = { '\0' };
 
-		_effect->SetInteger("IrradianceMap", 4);
-		_effect->SetInteger("PrefilterMap", 5);
-		_effect->SetInteger("BrdfLUTMap", 17);
+		_effect->SetInteger("BrdfLUTMap", 4);
 
+		const auto maxCubemapMixing = EnvironmentCaptureManager::MaximumCubemapMixingCount();
+		constexpr auto cubemapStartID = 5;
+		for (size_t i = 0; i < maxCubemapMixing; ++i)
+		{
+			snprintf(_charBuffer, sizeof(_charBuffer), "IrradianceMap[%d]", i);
+			_effect->SetInteger(_charBuffer, cubemapStartID + i);
+			snprintf(_charBuffer, sizeof(_charBuffer), "PrefilterMap[%d]", i);
+			_effect->SetInteger(_charBuffer, cubemapStartID + maxCubemapMixing + i);
+		}
 		for (int i = 0; i < MAX_COUNT_PER_LIGHT; ++i)
 		{
 			snprintf(_charBuffer, sizeof(_charBuffer), "spotlightShadowMap[%d]", i);
@@ -104,6 +111,7 @@ namespace Graphics {
 			snprintf(_charBuffer, sizeof(_charBuffer), "pointLightShadowMap[%d]", i);
 			_effect->SetInteger(_charBuffer, SHADOWMAP_START_TEXTURE_UNIT + MAX_COUNT_PER_LIGHT + i);
 		}
+		_effect->SetInteger("directionalShadowMap", SHADOWMAP_START_TEXTURE_UNIT + MAX_COUNT_PER_LIGHT * 2);
 		assert(GL_NO_ERROR == glGetError());
 		_effect->UnUseEffect();
 	}
@@ -289,17 +297,20 @@ namespace Graphics {
 			if (!(result = s_cubemapProbe.Initialize(10, 2048, 2048, ETT_FRAMEBUFFER_HDR_CUBEMAP))) {
 				printf("Fail to create cubemap probe.\n");
 				return result;
-			}  
+			}
 
 			constexpr GLuint envMapResolution = 2048;
 			if (!(result = s_brdfLUTTexture.Initialize(envMapResolution, envMapResolution, ETT_FRAMEBUFFER_HDR_RG))) {
 				printf("Fail to create brdfLUTTexture.\n");
 				return result;
 			}
-
-			EnvironmentCaptureManager::AddCaptureProbes(glm::vec3(-470, 100, 0), 500.f, envMapResolution);
-			EnvironmentCaptureManager::AddCaptureProbes(glm::vec3(0, 100, 0), 500.f, envMapResolution);
-			EnvironmentCaptureManager::AddCaptureProbes(glm::vec3(470, 100, 0), 500.f, envMapResolution);
+			EnvironmentCaptureManager::AddCaptureProbes(cSphere(glm::vec3(-450, 30, 100), 300.f), 150.f, envMapResolution);
+			EnvironmentCaptureManager::AddCaptureProbes(cSphere(glm::vec3(-300, 30, 100), 300.f), 150.f, envMapResolution);
+			EnvironmentCaptureManager::AddCaptureProbes(cSphere(glm::vec3(-150, 30, 100), 300.f), 150.f, envMapResolution);
+			EnvironmentCaptureManager::AddCaptureProbes(cSphere(glm::vec3(0, 30, 100), 600.f), 150.f, envMapResolution);
+			EnvironmentCaptureManager::AddCaptureProbes(cSphere(glm::vec3(150, 30, 100), 300.f), 150.f, envMapResolution);
+			EnvironmentCaptureManager::AddCaptureProbes(cSphere(glm::vec3(300, 30, 100), 300.f), 150.f, envMapResolution);
+			EnvironmentCaptureManager::AddCaptureProbes(cSphere(glm::vec3(450, 30, 100), 300.f), 150.f, envMapResolution);
 			EnvironmentCaptureManager::BuildAccelerationStructure();
 
 		}
@@ -354,33 +365,6 @@ namespace Graphics {
 		glCullFace(GL_BACK);
 		assert(GL_NO_ERROR == glGetError());
 
-/*
-		probes[0].BV.SetCenter(glm::vec3(351.88, -1493.418, -1417.933));
-		probes[0].BV.SetRadius(450);
-		probes[1].BV.SetCenter(glm::vec3(0,0,0));
-		probes[1].BV.SetRadius(2040);
-		probes[2].BV.SetCenter(glm::vec3(16.343, 100, -867.531));
-		probes[2].BV.SetRadius(1150);
-		probes[3].BV.SetCenter(glm::vec3(-263.649, 100, 657.22));
-		probes[3].BV.SetRadius(1150);
-		probes[4].BV.SetCenter(glm::vec3(1094.423, 100, -662.934));
-		probes[4].BV.SetRadius(550);
-		probes[5].BV.SetCenter(glm::vec3(-864.332, 100, -1209.285));
-		probes[5].BV.SetRadius(450);
-		probes[6].BV.SetCenter(glm::vec3(832.455, -563.017, -854.386));
-		probes[6].BV.SetRadius(450);
-		probes[7].BV.SetCenter(glm::vec3(1294.19, 911.611, 705.533));
-		probes[7].BV.SetRadius(570);
-		probes[7].BV.SetCenter(glm::vec3(-75.668, 100, 1117.274));
-		probes[7].BV.SetRadius(450);
-
-
-		for (int i = 0; i < 9; ++i)
-		{
-			g_initialList.push_back(&probes[i]);
-		}
-
-		parent.InitializeTree(parentBox, g_initialList);*/
 		return result;
 	}
 
@@ -469,6 +453,9 @@ namespace Graphics {
 		// Notify the application thread that data is swapped and it is ready for receiving new data
 		s_whenDataHasBeenSwappedInRenderThread.notify_one();
 
+		// Update cubemap weights before rendering, actually, this step should be done at the application thread
+		EnvironmentCaptureManager::UpdatePointOfInterest(s_dataRenderingByGraphicThread->s_renderPasses[3].FrameData.ViewPosition);
+
 		/** 2. Start to render pass one by one */
 		for (size_t i = 0; i < s_dataRenderingByGraphicThread->s_renderPasses.size(); ++i)
 		{
@@ -480,7 +467,7 @@ namespace Graphics {
 			// Execute pass function
 			s_dataRenderingByGraphicThread->s_renderPasses[i].RenderPassFunction();
 		}
-		EnvironmentCaptureManager::UpdatePointOfInterest(s_dataRenderingByGraphicThread->s_renderPasses[3].FrameData.ViewPosition);
+
 		Gizmo_DrawDebugCircle(EnvironmentCaptureManager::GetCaptureProbesVolumes());
 	}
 
@@ -715,6 +702,49 @@ namespace Graphics {
 
 		s_currentEffect->ValidateProgram();
 
+		// update BRDF LUT texture
+		{
+			cTexture* _lutTexture = nullptr;
+			if (&s_brdfLUTTexture && s_brdfLUTTexture.IsValid() && (_lutTexture = cTexture::s_manager.Get(s_brdfLUTTexture.GetTextureHandle())))
+			{
+				_lutTexture->UseTexture(GL_TEXTURE4);
+			}
+			else
+				cTexture::UnBindTexture(GL_TEXTURE4, ETT_FRAMEBUFFER_HDR_RG);
+		}
+
+		const auto currentReadyCapturesCount = EnvironmentCaptureManager::GetReadyCapturesCount();
+		const auto maxCubemapMixing = EnvironmentCaptureManager::MaximumCubemapMixingCount();
+		const auto cubemapStartUnit = 5;
+		for (size_t i = 0; i < currentReadyCapturesCount; ++i)
+		{
+			// Irradiance cube map
+			{
+				const cEnvProbe& _irradProbe = EnvironmentCaptureManager::GetCaptureProbesAt(i).IrradianceProbe;
+				cTexture* _irrdianceMap = nullptr;
+				if (_irradProbe.IsValid() && (_irrdianceMap = cTexture::s_manager.Get(_irradProbe.GetCubemapTextureHandle())))
+				{
+					_irrdianceMap->UseTexture(GL_TEXTURE0 + cubemapStartUnit + i);
+				}
+			}
+
+			// pre-filter cube map
+			{
+				const cEnvProbe& _preFilteProbe = EnvironmentCaptureManager::GetCaptureProbesAt(i).PrefilterProbe;
+				cTexture* _preFilterCubemap = nullptr;
+				if (_preFilteProbe.IsValid() && (_preFilterCubemap = cTexture::s_manager.Get(_preFilteProbe.GetCubemapTextureHandle())))
+				{
+					_preFilterCubemap->UseTexture(GL_TEXTURE0 + cubemapStartUnit + maxCubemapMixing + i);
+				}
+			}
+		}
+		// Unbind last frame's textures
+		for (int i = currentReadyCapturesCount; i < maxCubemapMixing; ++i)
+		{
+			cTexture::UnBindTexture(GL_TEXTURE0 + cubemapStartUnit + i, ETT_FRAMEBUFFER_HDR_CUBEMAP);
+			cTexture::UnBindTexture(GL_TEXTURE0 + cubemapStartUnit + maxCubemapMixing + i, ETT_FRAMEBUFFER_HDR_MIPMAP_CUBEMAP);
+		}
+
 		auto& renderList = s_dataRenderingByGraphicThread->s_renderPasses[s_currentRenderPass].ModelToTransform_map;
 		const auto sphereOffset = renderList.size() - 25;
 		// draw the space first
@@ -772,7 +802,7 @@ namespace Graphics {
 			}
 		}
 		s_currentEffect->UnUseEffect();
-		
+
 		// set depth function back to default
 		glEnable(GL_CULL_FACE);
 	}
@@ -980,7 +1010,7 @@ namespace Graphics {
 			return nullptr;
 			break;
 		}
-		
+
 	}
 
 	const Graphics::cModel::HANDLE& GetPrimitive(const EPrimitiveType& i_primitiveType)
@@ -1118,17 +1148,7 @@ namespace Graphics {
 	{
 		s_dataRenderingByGraphicThread->s_ambientLight.Illuminate();
 
-		// Directional Light
-		{
-			cDirectionalLight* _directionalLight = &s_dataRenderingByGraphicThread->s_directionalLight;
-			s_dataRenderingByGraphicThread->s_directionalLight.SetupLight(s_currentEffect->GetProgramID(), 0);
-			_directionalLight->Illuminate();
-			_directionalLight->SetLightUniformTransform();
-			if (_directionalLight->IsShadowEnabled()) {
-				_directionalLight->UseShadowMap(16);
-				_directionalLight->GetShadowMap()->Read(GL_TEXTURE16);
-			}
-		}
+
 
 		for (int i = 0; i < s_dataRenderingByGraphicThread->s_spotLights.size(); ++i)
 		{
@@ -1154,6 +1174,21 @@ namespace Graphics {
 				// has offset
 				it->UseShadowMap(MAX_COUNT_PER_LIGHT + SHADOWMAP_START_TEXTURE_UNIT + i);
 				it->GetShadowMap()->Read(GL_TEXTURE0 + MAX_COUNT_PER_LIGHT + SHADOWMAP_START_TEXTURE_UNIT + i);
+			}
+		}
+
+		// Directional Light
+		{
+			cDirectionalLight* _directionalLight = &s_dataRenderingByGraphicThread->s_directionalLight;
+			s_dataRenderingByGraphicThread->s_directionalLight.SetupLight(s_currentEffect->GetProgramID(), 0);
+			_directionalLight->Illuminate();
+			_directionalLight->SetLightUniformTransform();
+			if (_directionalLight->IsShadowEnabled()) {
+				constexpr GLuint _uniformID = SHADOWMAP_START_TEXTURE_UNIT + MAX_COUNT_PER_LIGHT * 2;
+				_directionalLight->UseShadowMap(_uniformID);
+				// GL_TEXTURE0 + POINT_LIGHT_COUNT + SPOT_LIGHT_COUNT + SHADOWMAP_OFFSET
+				constexpr auto _textureID = GL_TEXTURE0 + SHADOWMAP_START_TEXTURE_UNIT + MAX_COUNT_PER_LIGHT * 2;
+				_directionalLight->GetShadowMap()->Read(_textureID);
 			}
 		}
 

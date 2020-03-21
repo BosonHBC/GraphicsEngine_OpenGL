@@ -1,10 +1,9 @@
 #version 420
 const float PI = 3.14159265359;
 out vec4 outColor;
-
 in vec3 TexCoords;
 
-uniform samplerCube cubemapTex;
+uniform samplerCube cubemapTex; // 0
 uniform float roughness;
 uniform int resolution;
 

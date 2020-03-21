@@ -75,41 +75,9 @@ namespace Graphics
 		else
 			cTexture::UnBindTexture(GL_TEXTURE3, ETT_FILE);
 
-		// Irradiance cube map
-		{
-			const cEnvProbe& _irradProbe = Graphics::EnvironmentCaptureManager::GetCaptureProbesAt(0).IrradianceProbe;
-			cTexture* _irrdianceMap = nullptr;
-			if (_irradProbe.IsValid() && (_irrdianceMap = cTexture::s_manager.Get(_irradProbe.GetCubemapTextureHandle())))
-			{
-				_irrdianceMap->UseTexture(GL_TEXTURE4);
-			}
-			else
-				cTexture::UnBindTexture(GL_TEXTURE4, ETT_FRAMEBUFFER_HDR_CUBEMAP);
-		}
 
-		// pre-filter cube map
-		{
-			const cEnvProbe& _preFilteProbe = Graphics::EnvironmentCaptureManager::GetCaptureProbesAt(0).PrefilterProbe;
-			cTexture* _preFilterCubemap = nullptr;
-			if (_preFilteProbe.IsValid() && (_preFilterCubemap = cTexture::s_manager.Get(_preFilteProbe.GetCubemapTextureHandle())))
-			{
-				_preFilterCubemap->UseTexture(GL_TEXTURE5);
-			}
-			else
-				cTexture::UnBindTexture(GL_TEXTURE5, ETT_FRAMEBUFFER_HDR_MIPMAP_CUBEMAP);
-		}
 
-		// BRDF LUT texture
-		{
-			cFrameBuffer* _lutTextureFrameBuffer = Graphics::GetBRDFLutFrameBuffer();
-			cTexture* _lutTexture = nullptr;
-			if (_lutTextureFrameBuffer && _lutTextureFrameBuffer->IsValid() && (_lutTexture = cTexture::s_manager.Get(_lutTextureFrameBuffer->GetTextureHandle())))
-			{
-				_lutTexture->UseTexture(GL_TEXTURE17);
-			}
-			else
-				cTexture::UnBindTexture(GL_TEXTURE17, ETT_FRAMEBUFFER_HDR_RG);
-		}
+
 
 		s_PBRMRUniformBlock.Update(&UniformBufferFormats::sPBRMRMaterial(m_diffuseIntensity, m_roughnessIntensity, m_ior, m_metallicIntensity));
 	}
@@ -132,10 +100,6 @@ namespace Graphics
 		cTexture* _normalTex = cTexture::s_manager.Get(m_normalMapHandle);
 		if (_normalTex)
 			_normalTex->CleanUpTextureBind(GL_TEXTURE3);
-
-		cTexture::UnBindTexture(GL_TEXTURE4, ETT_FRAMEBUFFER_HDR_CUBEMAP);
-		cTexture::UnBindTexture(GL_TEXTURE5, ETT_FRAMEBUFFER_HDR_MIPMAP_CUBEMAP);
-		cTexture::UnBindTexture(GL_TEXTURE17, ETT_FRAMEBUFFER_HDR_RG);
 
 	}
 

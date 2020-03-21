@@ -23,7 +23,7 @@ namespace Graphics {
 			// PVMatrix stands for projection * view matrix
 			glm::f32 PVMatrix[16];
 			glm::vec3 ViewPosition = glm::vec3(0,0,0);
-
+			V1Padding;
 			sFrame() {}
 
 			sFrame(const glm::mat4& i_projectionMatrix, const glm::mat4& i_viewMatrix)
@@ -154,6 +154,9 @@ namespace Graphics {
 		struct sEnvCaptureWeight
 		{
 			glm::vec4 Weights; // Maximum 4 textures
+			
+			sEnvCaptureWeight() : Weights(0) {}
+			sEnvCaptureWeight(float w1, float w2, float w3, float w4) : Weights(w1, w2, w3, w4) {}
 		};
 	}
 }
