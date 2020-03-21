@@ -2,6 +2,8 @@
 // Constants
 const float PI = 3.14159265359;
 const int MAX_COUNT_PER_LIGHT = 5;
+const int MAX_COUNT_CUBEMAP_MIXING = 4;
+const float MAX_REFLECTION_LOD = 4.0;
 
 // this sampler is connected to the texture unit, and binding with our texture
 // this uniform is default 0, if we need more texture unit, we need to bind manually
@@ -9,13 +11,15 @@ uniform sampler2D AlbedoMap; // 0
 uniform sampler2D MetallicMap; // 1
 uniform sampler2D RoughnessMap; // 2
 uniform sampler2D NormalMap; // 3
-uniform samplerCube IrradianceMap; // 4
-uniform samplerCube PrefilterMap; // 5
+uniform sampler2D BrdfLUTMap; // 4
 
-uniform sampler2D spotlightShadowMap[MAX_COUNT_PER_LIGHT]; // 6 -> 10
-uniform samplerCube pointLightShadowMap[MAX_COUNT_PER_LIGHT]; // 11-> 15
-uniform sampler2D directionalShadowMap; // 16
-uniform sampler2D BrdfLUTMap; // 17
+uniform samplerCube IrradianceMap[MAX_COUNT_CUBEMAP_MIXING]; // 5 - 8
+uniform samplerCube PrefilterMap[MAX_COUNT_CUBEMAP_MIXING]; // 9 - 12
+
+uniform sampler2D spotlightShadowMap[MAX_COUNT_PER_LIGHT]; // 13 -> 17
+uniform samplerCube pointLightShadowMap[MAX_COUNT_PER_LIGHT]; // 18-> 22
+uniform sampler2D directionalShadowMap; // 23
+
 
 const vec3 gridSamplingDisk[20] =vec3[]
 (
@@ -45,6 +49,10 @@ layout(std140, binding = 5) uniform g_uniformBuffer_pbrMRModel
 	float roughnessIntensity;
 	vec3 ior;
 	float metalnessIntensity;
+};
+layout(std140, binding = 6) uniform g_uniformBuffer_envCaptureWeight
+{
+	vec4 envCapWeights;
 };
 // the color of the pixel
 out vec4 color;
@@ -247,18 +255,48 @@ float CalcPointLightShadowMap(int idx, PointLight pLight, float dist_vV)
 //-------------------------------------------------------------------------
 // Light calculation
 //-------------------------------------------------------------------------
+vec3 GetBlendedIrradTexture(vec3 vN)
+{
+	vec3 outColor = vec3(0,0,0);
+	outColor += ((envCapWeights.x > 0.0) ? envCapWeights.x * texture(IrradianceMap[0], vN).rgb : vec3(0.0));
+	outColor += ((envCapWeights.y > 0.0) ? envCapWeights.y * texture(IrradianceMap[1], vN).rgb : vec3(0.0));
+	outColor += ((envCapWeights.z > 0.0) ? envCapWeights.z * texture(IrradianceMap[2], vN).rgb : vec3(0.0));		
+	outColor += ((envCapWeights.w > 0.0) ? envCapWeights.w * texture(IrradianceMap[3], vN).rgb : vec3(0.0));
+
+	//outColor += envCapWeights.x * texture(IrradianceMap[0], vN).rgb;
+	//outColor += envCapWeights.y * texture(IrradianceMap[1], vN).rgb;
+	//outColor += envCapWeights.z * texture(IrradianceMap[2], vN).rgb;
+	//outColor += envCapWeights.w * texture(IrradianceMap[3], vN).rgb;
+
+	return outColor;
+}
+vec3 GetBlendedPreFilterTexture(vec3 vR, float roughness)
+{
+	
+	vec3 outColor = vec3(0,0,0);
+	float lod = roughness * MAX_REFLECTION_LOD;
+	outColor += ((envCapWeights.x > 0.0) ? envCapWeights.x * textureLod(PrefilterMap[0], vR, lod).rgb : vec3(0.0));
+	outColor += ((envCapWeights.y > 0.0) ? envCapWeights.y * textureLod(PrefilterMap[1], vR, lod).rgb : vec3(0.0));
+	outColor += ((envCapWeights.z > 0.0) ? envCapWeights.z * textureLod(PrefilterMap[2], vR, lod).rgb : vec3(0.0));		
+	outColor += ((envCapWeights.w > 0.0) ? envCapWeights.w * textureLod(PrefilterMap[3], vR, lod).rgb : vec3(0.0));
+	//outColor += envCapWeights.x * textureLod(PrefilterMap[0], vR, lod).rgb;
+	//outColor += envCapWeights.y * textureLod(PrefilterMap[1], vR, lod).rgb;
+	//outColor += envCapWeights.z * textureLod(PrefilterMap[2], vR, lod).rgb;
+	//outColor += envCapWeights.w * textureLod(PrefilterMap[3], vR, lod).rgb;
+	//outColor = max(outColor, vec3(0));
+	return outColor;
+}
 vec3 CalcAmbientLight(AmbientLight aLight, vec3 albedoColor,float metalness, float roughness, vec3 f0 ,vec3 vN,vec3 vV,vec3 vR )
 {
 	vec3 kS = fresnelSchlickRoughness(max(dot(vN, vV), 0.0), f0, roughness); 
 	//vec3 kS = fresnelSchlick(max(dot(vN, vV), 0.0), f0);
 	vec3 kD = 1.0 - kS;
 	kD *= (1.0 - metalness);
-	vec3 irradiance = texture(IrradianceMap, vN).rgb;
+	vec3 irradiance = GetBlendedIrradTexture(vN);
 	vec3 diffuse    = irradiance * albedoColor;
 	
-	// sample both the pre-filter map and the BRDF lut and combine them together as per the Split-Sum approximation to get the IBL specular part.
-    const float MAX_REFLECTION_LOD = 4.0;
-    vec3 prefilteredColor = textureLod(PrefilterMap, vR,  roughness * MAX_REFLECTION_LOD).rgb; 
+	// sample both the pre-filter map and the BRDF lut and combine them together as per the Split-Sum approximation to get the IBL specular part.    
+	vec3 prefilteredColor = GetBlendedPreFilterTexture(vR, roughness);
 	vec2 brdfuv = vec2(max(dot(vN, vV), 0.0), roughness);
     vec2 brdf  = texture(BrdfLUTMap, brdfuv).rg;
     vec3 specular = prefilteredColor * (kS * brdf.x + brdf.y);

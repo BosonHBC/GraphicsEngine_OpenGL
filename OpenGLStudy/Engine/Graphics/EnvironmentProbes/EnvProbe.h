@@ -24,7 +24,11 @@ namespace Graphics
 	public:
 		cEnvProbe() {}
 
-		~cEnvProbe() { CleanUp(); };
+		~cEnvProbe() { };
+		cEnvProbe(const cEnvProbe& i_other) :
+			m_position(i_other.m_position), m_captured(i_other.m_captured), m_frameBuffer(i_other.m_frameBuffer), 
+			m_range(i_other.m_range), m_width(i_other.m_width), m_height(i_other.m_height) {}
+		cEnvProbe& operator = (const cEnvProbe& i_other);
 
 		bool Initialize(GLfloat i_range, GLuint i_width, GLuint i_height, const ETextureType& i_textureType, const glm::vec3& i_initialLocation = glm::vec3(0));
 		bool CleanUp();
@@ -36,22 +40,21 @@ namespace Graphics
 
 		/** Getters */
 		GLuint GetCubemapTextureID() const;
-		glm::vec3 GetPosition() const { return m_transform.Position(); }
+		glm::vec3 GetPosition() const { return m_position; }
 		Assets::cHandle<cTexture> GetCubemapTextureHandle() const { return m_frameBuffer.GetTextureHandle(); }
 		glm::mat4 GetProjectionMat4() const {
-			return glm::perspective(glm::radians(90.f), 1.f, 1.f, m_range);
+			return glm::perspective(glm::radians(90.f), 1.f, 1.f, 2000.f);
 		}
 		glm::mat4 GetViewMat4(GLuint i_face) const;
 		GLuint GetWidth() const { return m_width; }
 		GLuint GetHeight() const { return m_height; }
 		GLfloat GetRange() const { return m_range; }
-		const cTransform& GetTransform() const { return m_transform; }
 
 		GLuint fbo() const { return m_frameBuffer.rbo(); }
 		GLuint rbo() const { return m_frameBuffer.rbo(); }
 	private:
 
-		cTransform m_transform;
+		glm::vec3 m_position;
 		cFrameBuffer m_frameBuffer;
 		bool m_captured;
 

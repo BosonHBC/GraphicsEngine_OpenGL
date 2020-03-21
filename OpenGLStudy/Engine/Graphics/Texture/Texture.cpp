@@ -22,7 +22,6 @@ namespace Graphics {
 		}
 		else
 		{
-
 			switch (i_ett)
 			{
 			case ETT_FILE:
@@ -78,8 +77,9 @@ namespace Graphics {
 		o_texture = _texture;
 
 		//TODO: Loading information succeed!
-		printf("Succeed! Loading texture: %s. \n", i_path.c_str());
-
+		// No need to display right now
+		//printf("Succeed! Loading texture: %s. \n", i_path.c_str());
+		assert(GL_NO_ERROR == glGetError());
 		return result;
 	}
 
@@ -376,7 +376,7 @@ namespace Graphics {
 		glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_WRAP_R, GL_CLAMP_TO_EDGE);
 
 		// Set up texture filtering for looking closer
-		glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_LINEAR); // enable pre-filter mipmap sampling (combating visible dots artifact)
+		glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_MIN_FILTER, GL_LINEAR); 
 		// Set up texture filtering for looking further
 		glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
 
@@ -410,7 +410,7 @@ namespace Graphics {
 		glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_WRAP_R, GL_CLAMP_TO_EDGE);
 
 		// Set up texture filtering for looking closer
-		glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_LINEAR);  // set minification filter to mip_linear 
+		glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_LINEAR);  // enable pre-filter mipmap sampling (combating visible dots artifact)
 		// Set up texture filtering for looking further
 		glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
 		// generate mip-maps for the cube map so OpenGL automatically allocates the required memory.
@@ -433,7 +433,7 @@ namespace Graphics {
 
 		// pre-allocate enough memory for the LUT texture.
 		glBindTexture(GL_TEXTURE_2D, m_textureID);
-		glTexImage2D(GL_TEXTURE_2D, 0, GL_RG16F, m_width, m_width, 0, GL_RG, GL_FLOAT, 0);
+		glTexImage2D(GL_TEXTURE_2D, 0, GL_RG16F, m_width, m_width, 0, GL_RG, GL_FLOAT, nullptr);
 
 		// use GL_CLAMP_TO_EDGE to prevent from edge sampling artifacts
 		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
@@ -441,10 +441,10 @@ namespace Graphics {
 		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
 		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
 		
+		assert(GL_NO_ERROR == glGetError());
+		
 		// unbind texture
 		glBindTexture(GL_TEXTURE_2D, 0);
-
-		assert(GL_NO_ERROR == glGetError());
 		return result;
 	}
 
@@ -472,7 +472,9 @@ namespace Graphics {
 		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
 		// Set up texture filtering for looking further
 		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
-
+		
+		assert(GL_NO_ERROR == glGetError());
+		
 		// unbind texture
 		glBindTexture(GL_TEXTURE_2D, 0);
 		return result;

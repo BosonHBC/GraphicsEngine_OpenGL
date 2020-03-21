@@ -3,13 +3,13 @@
 
 namespace Graphics {
 
-	cGenLight::cGenLight(): m_color(Color::Black()),
+	cGenLight::cGenLight() : m_color(Color::Black()),
 		m_lightIndex(0), m_enableShadow(false),
 		m_transform(cTransform()), m_lightPrjectionMatrix(glm::mat4(1)), m_shadowMap(nullptr)
 	{
 	}
 
-	cGenLight::cGenLight(Color i_color): m_color(i_color)
+	cGenLight::cGenLight(Color i_color) : m_color(i_color)
 	{
 	}
 
@@ -38,12 +38,12 @@ namespace Graphics {
 			*this = cGenLight();
 			return *this;
 		}
-		
+
 	}
 
 	void cGenLight::SetupLight(const GLuint& i_programID, GLuint i_lightIndex)
 	{
-		m_lightIndex = (i_lightIndex < MAX_COUNT_PER_LIGHT)? i_lightIndex : MAX_COUNT_PER_LIGHT-1;
+		m_lightIndex = (i_lightIndex < MAX_COUNT_PER_LIGHT) ? i_lightIndex : MAX_COUNT_PER_LIGHT - 1;
 	}
 
 	void cGenLight::UpdateLightIndex(GLuint i_lightIndex)
@@ -70,6 +70,8 @@ namespace Graphics {
 	void cGenLight::CleanUpShadowMap()
 	{
 		// Shadow map should be cleanup manually
+		if (m_shadowMap)
+			m_shadowMap->CleanUp();
 		safe_delete(m_shadowMap);
 	}
 

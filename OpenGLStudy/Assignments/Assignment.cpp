@@ -20,7 +20,7 @@
 #include "Material/Cubemap/MatCubemap.h"
 #include "Graphics/Texture/Texture.h"
 #include "Assets/Handle.h"
-#include "Graphics/EnvironmentProbes/EnvProbe.h"
+#include "Graphics/EnvironmentCaptureManager.h"
 #include <map>
 
 bool Assignment::Initialize(GLuint i_width, GLuint i_height, const char* i_windowName /*= "Default Window"*/)
@@ -32,7 +32,7 @@ bool Assignment::Initialize(GLuint i_width, GLuint i_height, const char* i_windo
 		printf("Failed to initialize Application!");
 		return false;
 	}
-
+	
 	CreateActor();
 	CreateCamera();
 	CreateLight();
@@ -105,7 +105,7 @@ void Assignment::CreateActor()
 		{
 			cActor * _sphere = new cActor();
 			_sphere->Initialize();
-			_sphere->Transform()->SetTransform(glm::vec3(-200.f + i * 100, 25.f + j * 50, -100), glm::quat(1, 0, 0, 0), glm::vec3(2.5f, 2.5f, 2.5f));
+			_sphere->Transform()->SetTransform(glm::vec3(-200.f + i * 100, 25.f + j * 50, -200), glm::quat(1, 0, 0, 0), glm::vec3(2.5f, 2.5f, 2.5f));
 			_sphere->SetModel("Contents/models/pbrSphere.model");
 			_sphere->UpdateUniformVariables(Graphics::GetEffectByKey("PBR_MR"));
 			_sphere->Transform()->Update();
@@ -119,7 +119,7 @@ void Assignment::CreateCamera()
 {
 	m_editorCamera = new  cEditorCamera(glm::vec3(0, 150, 350), 5, 0, 300, 10.f);
 	float _aspect = (float)(GetCurrentWindow()->GetBufferWidth()) / (float)(GetCurrentWindow()->GetBufferHeight());
-	m_editorCamera->CreateProjectionMatrix(glm::radians(60.f), _aspect, 1.f, 3000.0f);
+	m_editorCamera->CreateProjectionMatrix(glm::radians(60.f), _aspect, 1.f, 6000.0f);
 	m_editorCamera->Transform()->Update();
 }
 
@@ -145,10 +145,7 @@ void Assignment::BeforeUpdate()
 	// submit render requests
 	for (int i = 0; i < 6; ++i)
 	{
-		Graphics::cEnvProbe* _envProb = Graphics::GetEnvironmentProbe();
-		Graphics::UniformBufferFormats::sFrame _envProbeFrameData(_envProb->GetProjectionMat4(), _envProb->GetViewMat4(i));
-		_envProbeFrameData.ViewPosition = _envProb->GetPosition();
-		SubmitSceneDataForEnvironmentCapture(&_envProbeFrameData);
+		SubmitSceneDataForEnvironmentCapture(&Graphics::UniformBufferFormats::sFrame());
 	}
 	// Let the graphic thread know that the pre-render pass is ready to go
 	Graphics::Notify_DataHasBeenSubmited();

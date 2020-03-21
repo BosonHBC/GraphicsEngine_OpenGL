@@ -21,11 +21,13 @@
   <ItemGroup>
     <ClCompile Include="Actor\Actor.cpp" />
     <ClCompile Include="BitArray\BitArray.cpp" />
+    <ClCompile Include="DataStructure\OctTree.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Actor\Actor.h" />
     <ClInclude Include="BitArray\BitArray.h" />
     <ClInclude Include="Core.h" />
+    <ClInclude Include="DataStructure\OctTree.h" />
   </ItemGroup>
   <PropertyGroup Label="Globals">
     <VCProjectVersion>15.0</VCProjectVersion>

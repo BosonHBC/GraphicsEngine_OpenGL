@@ -1,9 +1,12 @@
 #version 420
-layout(points) in;
-layout(line_strip, max_vertices = 64)out;
-
-const int MAX_VERTICES = 16;
+const int MAX_VERTICES = 20;
 const float PI = 3.14159265359;
+
+layout(points) in;
+layout(line_strip, max_vertices = 63)out;
+
+
+
 
 layout(std140, binding = 0) uniform uniformBuffer_frame
 {

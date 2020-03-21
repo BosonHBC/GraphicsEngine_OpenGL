@@ -21,10 +21,16 @@
   <ItemGroup>
     <ClCompile Include="..\Math\Transform\Transform.cpp" />
     <ClCompile Include="Quaternion\Quaternion.cpp" />
+    <ClCompile Include="Shape\Box.cpp" />
+    <ClCompile Include="Shape\Shape.cpp" />
+    <ClCompile Include="Shape\Sphere.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\Math\Transform\Transform.h" />
     <ClInclude Include="Quaternion\Quaternion.h" />
+    <ClInclude Include="Shape\Box.h" />
+    <ClInclude Include="Shape\Shape.h" />
+    <ClInclude Include="Shape\Sphere.h" />
   </ItemGroup>
   <PropertyGroup Label="Globals">
     <VCProjectVersion>15.0</VCProjectVersion>

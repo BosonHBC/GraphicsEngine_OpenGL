@@ -19,6 +19,9 @@
     <Filter Include="Source Files\BitArray">
       <UniqueIdentifier>{def54805-63ff-4438-b03f-7de7580e7185}</UniqueIdentifier>
     </Filter>
+    <Filter Include="Source Files\DataStructure">
+      <UniqueIdentifier>{08bfa901-26a0-4f6a-8eac-9645c0516012}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="Actor\Actor.cpp">
@@ -26,6 +29,9 @@
     </ClCompile>
     <ClCompile Include="BitArray\BitArray.cpp">
       <Filter>Source Files\BitArray</Filter>
+    </ClCompile>
+    <ClCompile Include="DataStructure\OctTree.cpp">
+      <Filter>Source Files\DataStructure</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
@@ -37,6 +43,9 @@
     </ClInclude>
     <ClInclude Include="Core.h">
       <Filter>Source Files</Filter>
+    </ClInclude>
+    <ClInclude Include="DataStructure\OctTree.h">
+      <Filter>Source Files\DataStructure</Filter>
     </ClInclude>
   </ItemGroup>
 </Project>

@@ -75,7 +75,7 @@ namespace Graphics {
 		o_model = _model;
 
 		//TODO: Loading information succeed!
-		printf("Succeed! Loading model: %s. Mesh size: %d, texture size: %d\n", i_path.c_str(), o_model->m_meshList.size(), o_model->m_materialList.size());
+		//printf("Succeed! Loading model: %s. Mesh size: %d, texture size: %d\n", i_path.c_str(), o_model->m_meshList.size(), o_model->m_materialList.size());
 
 		return result;
 	}

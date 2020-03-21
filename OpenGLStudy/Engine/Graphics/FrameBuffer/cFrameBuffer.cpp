@@ -77,9 +77,12 @@ namespace Graphics {
 				break;
 
 			case ETT_FRAMEBUFFER_HDR_RG:
-				glBindRenderbuffer(GL_RENDERBUFFER, m_rbo);
-				glRenderbufferStorage(GL_RENDERBUFFER, GL_DEPTH_COMPONENT24, m_width, m_height);
 				glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, _texture->GetTextureID(), 0);
+				/*glGenRenderbuffers(1, &m_rbo);
+				glBindRenderbuffer(GL_RENDERBUFFER, m_rbo);
+				glRenderbufferStorage(GL_RENDERBUFFER, GL_DEPTH_COMPONENT24, m_width, m_height);*/
+
+				assert(GL_NO_ERROR == glGetError());
 				break;
 			default:
 				result = false;
@@ -108,6 +111,18 @@ namespace Graphics {
 			result = false;
 		}
 		return result;
+	}
+
+	Graphics::cFrameBuffer& cFrameBuffer::operator=(const cFrameBuffer& i_other)
+	{
+		m_fbo = i_other.m_fbo;
+		m_rbo = i_other.m_rbo;
+		m_prevFbo = i_other.m_prevFbo;
+		m_renderToTexture = i_other.m_renderToTexture;
+		m_width = i_other.m_width;
+		m_height = i_other.m_height;
+
+		return *this;
 	}
 
 	void cFrameBuffer::Write()
@@ -148,6 +163,12 @@ namespace Graphics {
 
 	cFrameBuffer::~cFrameBuffer()
 	{
+
+
+	}
+
+	void cFrameBuffer::CleanUp()
+	{
 		if (m_fbo) {
 			glDeleteFramebuffers(1, &m_fbo);
 			m_fbo = 0;
@@ -161,7 +182,6 @@ namespace Graphics {
 		}
 
 		cTexture::s_manager.Release(m_renderToTexture);
-
 	}
 
 	bool cFrameBuffer::IsValid() const

@@ -27,6 +27,7 @@ namespace Graphics {
 		bool RecompileShader(const char* i_shaderName, GLenum i_shaderType);
 		void SetInteger(const char* const i_uniformName, const GLint& i_int);
 		void SetFloat(const char* const i_uniformName, const GLfloat& i_float);
+		void SetVec3(const char* const i_uniformName, const glm::vec3& i_vec3);
 		/** Getters */
 		const GLuint& GetProgramID() const { return m_programID; }
 	protected:

@@ -6,11 +6,22 @@
 namespace Graphics
 {    // pbr: set up projection and view matrices for capturing data onto the 6 cubemap face directions
 
-	bool cEnvProbe::Initialize(GLfloat i_range, GLuint i_width, GLuint i_height, const ETextureType& i_textureType,const glm::vec3& i_initialLocation /*= glm::vec3(0)*/)
+	Graphics::cEnvProbe& cEnvProbe::operator=(const cEnvProbe& i_other)
+	{
+		m_position = i_other.m_position;
+		m_captured = i_other.m_captured;
+		m_frameBuffer = i_other.m_frameBuffer;
+		m_range = i_other.m_range;
+		m_width = i_other.m_width;
+		m_height = i_other.m_height;
+		return *this;
+	}
+
+	bool cEnvProbe::Initialize(GLfloat i_range, GLuint i_width, GLuint i_height, const ETextureType& i_textureType, const glm::vec3& i_initialLocation /*= glm::vec3(0)*/)
 	{
 		auto result = true;
 		m_range = i_range; m_width = i_width; m_height = i_height;
-		m_transform.SetTransform(i_initialLocation, glm::quat(1, 0, 0, 0), glm::vec3(1, 1, 1));
+		m_position = i_initialLocation;
 		result = m_frameBuffer.Initialize(m_width, m_height, i_textureType);
 		return result;
 	}
@@ -19,7 +30,7 @@ namespace Graphics
 
 	bool cEnvProbe::CleanUp()
 	{
-		m_frameBuffer.~cFrameBuffer();
+		m_frameBuffer.CleanUp();
 		return true;
 	}
 
@@ -46,15 +57,14 @@ namespace Graphics
 
 	glm::mat4 cEnvProbe::GetViewMat4(GLuint i_face) const
 	{
-		glm::vec3 _pos = m_transform.Position();
 		glm::mat4 _captureViews[6] =
 		{
-			glm::lookAt(_pos, _pos + glm::vec3(1.0f,  0.0f,  0.0f), glm::vec3(0.0f, -1.0f,  0.0f)),
-			glm::lookAt(_pos, _pos + glm::vec3(-1.0f,  0.0f,  0.0f), glm::vec3(0.0f, -1.0f,  0.0f)),
-			glm::lookAt(_pos, _pos + glm::vec3(0.0f,  1.0f,  0.0f),  glm::vec3(0.0f,  0.0f,  1.0f)),
-			glm::lookAt(_pos, _pos + glm::vec3(0.0f,  -1.0f,  0.0f), glm::vec3(0.0f,  0.0f, -1.0f)),
-			glm::lookAt(_pos, _pos + glm::vec3(0.0f,  0.0f,  1.0f), glm::vec3(0.0f, -1.0f,  0.0f)),
-			glm::lookAt(_pos, _pos + glm::vec3(0.0f,  0.0f,  -1.0f), glm::vec3(0.0f, -1.0f,  0.0f))
+			glm::lookAt(m_position, m_position+ glm::vec3(1.0f,  0.0f,  0.0f), glm::vec3(0.0f, -1.0f,  0.0f)),
+			glm::lookAt(m_position, m_position+ glm::vec3(-1.0f,  0.0f,  0.0f), glm::vec3(0.0f, -1.0f,  0.0f)),
+			glm::lookAt(m_position, m_position+ glm::vec3(0.0f,  1.0f,  0.0f),  glm::vec3(0.0f,  0.0f,  1.0f)),
+			glm::lookAt(m_position, m_position+ glm::vec3(0.0f,  -1.0f,  0.0f), glm::vec3(0.0f,  0.0f, -1.0f)),
+			glm::lookAt(m_position, m_position+ glm::vec3(0.0f,  0.0f,  1.0f), glm::vec3(0.0f, -1.0f,  0.0f)),
+			glm::lookAt(m_position, m_position+ glm::vec3(0.0f,  0.0f,  -1.0f), glm::vec3(0.0f, -1.0f,  0.0f))
 		};
 
 		return _captureViews[i_face];
