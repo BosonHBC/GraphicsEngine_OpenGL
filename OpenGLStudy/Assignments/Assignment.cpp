@@ -32,7 +32,7 @@ bool Assignment::Initialize(GLuint i_width, GLuint i_height, const char* i_windo
 		printf("Failed to initialize Application!");
 		return false;
 	}
-
+	
 	CreateActor();
 	CreateCamera();
 	CreateLight();

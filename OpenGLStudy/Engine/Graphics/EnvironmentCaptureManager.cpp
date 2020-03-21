@@ -19,7 +19,7 @@ namespace Graphics
 		// ------------------------------------------------------------------------------------------------------------------------------------
 		const int g_MaximumOverlapVolumes = 4; // Only allow maximum 4 spheres overlap with the POI (point of interests)
 		const int g_MaximumCaptureProbesInAScene = 10;
-		const GLuint g_IrradianceMapResolution = 64;
+		const GLuint g_IrradianceMapResolution = 32;
 		const GLuint g_PrefilterMapResolution = 256;
 		const GLuint g_octTreeMaxVolumeWidth = 4096;
 		// Global data

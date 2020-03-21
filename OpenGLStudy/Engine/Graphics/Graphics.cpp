@@ -304,13 +304,16 @@ namespace Graphics {
 				printf("Fail to create brdfLUTTexture.\n");
 				return result;
 			}
-			EnvironmentCaptureManager::AddCaptureProbes(cSphere(glm::vec3(-450, 30, 100), 300.f), 150.f, envMapResolution);
-			EnvironmentCaptureManager::AddCaptureProbes(cSphere(glm::vec3(-300, 30, 100), 300.f), 150.f, envMapResolution);
-			EnvironmentCaptureManager::AddCaptureProbes(cSphere(glm::vec3(-150, 30, 100), 300.f), 150.f, envMapResolution);
-			EnvironmentCaptureManager::AddCaptureProbes(cSphere(glm::vec3(0, 30, 100), 600.f), 150.f, envMapResolution);
-			EnvironmentCaptureManager::AddCaptureProbes(cSphere(glm::vec3(150, 30, 100), 300.f), 150.f, envMapResolution);
-			EnvironmentCaptureManager::AddCaptureProbes(cSphere(glm::vec3(300, 30, 100), 300.f), 150.f, envMapResolution);
-			EnvironmentCaptureManager::AddCaptureProbes(cSphere(glm::vec3(450, 30, 100), 300.f), 150.f, envMapResolution);
+
+			EnvironmentCaptureManager::AddCaptureProbes(cSphere(glm::vec3(-450, 130, 0), 600.f), 250.f, envMapResolution);
+			//EnvironmentCaptureManager::AddCaptureProbes(cSphere(glm::vec3(-300, 30, 100), 300.f), 150.f, envMapResolution);
+			EnvironmentCaptureManager::AddCaptureProbes(cSphere(glm::vec3(-150, 130, 0), 300.f), 150.f, envMapResolution);
+		
+			EnvironmentCaptureManager::AddCaptureProbes(cSphere(glm::vec3(0, 1130, 0), 600.f), 150.f, envMapResolution);
+
+			EnvironmentCaptureManager::AddCaptureProbes(cSphere(glm::vec3(150, 30, 0), 300.f), 150.f, envMapResolution);
+			//EnvironmentCaptureManager::AddCaptureProbes(cSphere(glm::vec3(300, 30, 100), 300.f), 150.f, envMapResolution);
+			EnvironmentCaptureManager::AddCaptureProbes(cSphere(glm::vec3(450, 130, 0), 600.f), 250.f, envMapResolution);
 			EnvironmentCaptureManager::BuildAccelerationStructure();
 
 		}

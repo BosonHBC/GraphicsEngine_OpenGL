@@ -267,6 +267,7 @@ vec3 GetBlendedIrradTexture(vec3 vN)
 	//outColor += envCapWeights.y * texture(IrradianceMap[1], vN).rgb;
 	//outColor += envCapWeights.z * texture(IrradianceMap[2], vN).rgb;
 	//outColor += envCapWeights.w * texture(IrradianceMap[3], vN).rgb;
+
 	return outColor;
 }
 vec3 GetBlendedPreFilterTexture(vec3 vR, float roughness)
@@ -282,6 +283,7 @@ vec3 GetBlendedPreFilterTexture(vec3 vR, float roughness)
 	//outColor += envCapWeights.y * textureLod(PrefilterMap[1], vR, lod).rgb;
 	//outColor += envCapWeights.z * textureLod(PrefilterMap[2], vR, lod).rgb;
 	//outColor += envCapWeights.w * textureLod(PrefilterMap[3], vR, lod).rgb;
+	//outColor = max(outColor, vec3(0));
 	return outColor;
 }
 vec3 CalcAmbientLight(AmbientLight aLight, vec3 albedoColor,float metalness, float roughness, vec3 f0 ,vec3 vN,vec3 vV,vec3 vR )

@@ -85,9 +85,13 @@ void main()
             float saTexel  = 4.0 * PI / (6.0 * resolution * resolution);
             float saSample = 1.0 / (float(SAMPLE_COUNT) * pdf + 0.0001);
 
-            float mipLevel = roughness == 0.0 ? 0.0 : 0.5 * log2(saSample / saTexel); 
-            
-            prefilteredColor += textureLod(cubemapTex, L, mipLevel).rgb * NdotL;
+            float mipLevel = 0.0;
+            if(roughness > 0.001)
+                mipLevel = 0.5 * log2(saSample / saTexel); 
+            vec3 prefilterColor = textureLod(cubemapTex, L, mipLevel).rgb;
+            if(isnan(prefilterColor.r) || isnan(prefilterColor.g) || isnan(prefilterColor.b))
+                prefilterColor = vec3(0.5, 0.5, 0.5);
+            prefilteredColor += prefilterColor * NdotL;
             totalWeight      += NdotL;
         }
     }
