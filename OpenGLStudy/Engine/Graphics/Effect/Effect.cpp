@@ -157,6 +157,14 @@ namespace Graphics {
 		assert(GL_NO_ERROR == glGetError());
 	}
 
+	void cEffect::SetVec3(const char* const i_uniformName, const glm::vec3& i_vec3)
+	{
+		GLuint _ID = glGetUniformLocation(m_programID, i_uniformName);
+		if (IsUniformIDValid(_ID)) glUniform3f(_ID, i_vec3.x, i_vec3.y, i_vec3.z);
+
+		assert(GL_NO_ERROR == glGetError());
+	}
+
 	bool cEffect::LoadShader(const char* i_shaderName, GLenum i_shaderType)
 	{
 		// this type of shader did not exist in GL context

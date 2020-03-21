@@ -43,7 +43,7 @@ namespace Graphics
 		glm::vec3 GetPosition() const { return m_position; }
 		Assets::cHandle<cTexture> GetCubemapTextureHandle() const { return m_frameBuffer.GetTextureHandle(); }
 		glm::mat4 GetProjectionMat4() const {
-			return glm::perspective(glm::radians(90.f), 1.f, 1.f, m_range);
+			return glm::perspective(glm::radians(90.f), 1.f, 1.f, 2000.f);
 		}
 		glm::mat4 GetViewMat4(GLuint i_face) const;
 		GLuint GetWidth() const { return m_width; }

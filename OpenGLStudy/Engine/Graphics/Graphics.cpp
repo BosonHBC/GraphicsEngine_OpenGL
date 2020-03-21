@@ -82,7 +82,7 @@ namespace Graphics {
 	// ------------------------------------------------------------------------------------------------------------------------------------
 	void RenderScene();
 	void RenderSceneWithoutMaterial();
-	void Gizmo_DrawDebugCircle(const std::vector<cSphere>& i_spheres);
+	void Gizmo_DrawDebugCaptureVolume();
 
 	void FixSamplerProblem(const char* i_effectKey)
 	{
@@ -306,14 +306,13 @@ namespace Graphics {
 			}
 
 			EnvironmentCaptureManager::AddCaptureProbes(cSphere(glm::vec3(-450, 130, 0), 600.f), 250.f, envMapResolution);
-			//EnvironmentCaptureManager::AddCaptureProbes(cSphere(glm::vec3(-300, 30, 100), 300.f), 150.f, envMapResolution);
-			EnvironmentCaptureManager::AddCaptureProbes(cSphere(glm::vec3(-150, 130, 0), 300.f), 150.f, envMapResolution);
+			//EnvironmentCaptureManager::AddCaptureProbes(cSphere(glm::vec3(-150, 130, 0), 300.f), 150.f, envMapResolution);
 		
-			EnvironmentCaptureManager::AddCaptureProbes(cSphere(glm::vec3(0, 1130, 0), 600.f), 150.f, envMapResolution);
+			//EnvironmentCaptureManager::AddCaptureProbes(cSphere(glm::vec3(0, 130, 0), 600.f), 150.f, envMapResolution);
 
-			EnvironmentCaptureManager::AddCaptureProbes(cSphere(glm::vec3(150, 30, 0), 300.f), 150.f, envMapResolution);
-			//EnvironmentCaptureManager::AddCaptureProbes(cSphere(glm::vec3(300, 30, 100), 300.f), 150.f, envMapResolution);
-			EnvironmentCaptureManager::AddCaptureProbes(cSphere(glm::vec3(450, 130, 0), 600.f), 250.f, envMapResolution);
+			//EnvironmentCaptureManager::AddCaptureProbes(cSphere(glm::vec3(150, 130, 0), 300.f), 150.f, envMapResolution);
+			//EnvironmentCaptureManager::AddCaptureProbes(cSphere(glm::vec3(450, 130, 0), 600.f), 250.f, envMapResolution);
+			
 			EnvironmentCaptureManager::BuildAccelerationStructure();
 
 		}
@@ -471,7 +470,7 @@ namespace Graphics {
 			s_dataRenderingByGraphicThread->s_renderPasses[i].RenderPassFunction();
 		}
 
-		Gizmo_DrawDebugCircle(EnvironmentCaptureManager::GetCaptureProbesVolumes());
+	//	Gizmo_DrawDebugCaptureVolume();
 	}
 
 	void DirectionalShadowMap_Pass()
@@ -853,16 +852,32 @@ namespace Graphics {
 		s_currentEffect->UnUseEffect();
 	}
 
-	void Gizmo_DrawDebugCircle(const std::vector<cSphere>& i_spheres) {
+	void Gizmo_DrawDebugCaptureVolume() {
 
 		s_currentEffect = GetEffectByKey("DrawDebugCircles");
 		s_currentEffect->UseEffect();
-		for (int i = 0; i < i_spheres.size(); ++i)
+		auto _capturesRef = EnvironmentCaptureManager::GetCapturesReferences();
+		for (int i = 0; i < _capturesRef.size(); ++i)
 		{
-			s_currentEffect->SetFloat("radius", i_spheres[i].r());
-			cTransform _temp(i_spheres[i].c(), glm::quat(1, 0, 0, 0), glm::vec3(1, 1, 1));
-			s_uniformBuffer_drawcall.Update(&UniformBufferFormats::sDrawCall(_temp.M(), _temp.TranspostInverse()));
 			cMesh* _Point = cMesh::s_manager.Get(s_point);
+			const cSphere& _outerBV = _capturesRef[i]->BV;
+			const cSphere& _innerBV = _capturesRef[i]->InnerBV;
+			cTransform _tempTransform;
+
+			// outer
+			s_currentEffect->SetFloat("radius", _outerBV.r());
+			s_currentEffect->SetVec3("color", glm::vec3(1, 1, 1));
+			_tempTransform.SetPosition(_outerBV.c());
+			_tempTransform.Update();
+			s_uniformBuffer_drawcall.Update(&UniformBufferFormats::sDrawCall(_tempTransform.M(), _tempTransform.TranspostInverse()));
+			_Point->Render();
+
+			// inner
+			s_currentEffect->SetFloat("radius", _innerBV.r());
+			s_currentEffect->SetVec3("color", glm::vec3(1, 0, 0));
+			_tempTransform.SetPosition(_innerBV.c());
+			_tempTransform.Update();
+			s_uniformBuffer_drawcall.Update(&UniformBufferFormats::sDrawCall(_tempTransform.M(), _tempTransform.TranspostInverse()));
 			_Point->Render();
 		}
 		s_currentEffect->UnUseEffect();

@@ -62,9 +62,9 @@ namespace Graphics
 		// After adding all capture probes, build the octTree
 		void BuildAccelerationStructure();
 
+		const std::vector<sCaptureProbes*>& GetCapturesReferences();
 		const sCaptureProbes& GetCaptureProbesAt(int i_idx);
 		GLuint GetReadyCapturesCount();
-		const std::vector<cSphere>& GetCaptureProbesVolumes();
 		const GLuint MaximumCubemapMixingCount();
 	}
 }

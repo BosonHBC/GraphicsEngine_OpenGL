@@ -28,7 +28,6 @@ namespace Graphics
 		cUniformBuffer g_uniformBuffer_EnvCaptureWeight(eUniformBufferType::UBT_EnvCaptureWeight);
 		std::vector<sCaptureProbes> g_CaptureProbesList; // Storing the actual capture probes
 		std::vector<sCaptureProbes*> g_CaptureProbesReferences;
-		std::vector<cSphere> g_CaptureProbeVolumes; // Storing a copy of the volume of the capture probes
 		sOctTree g_EnvironmentCaptureAccelerationTree;
 
 
@@ -91,7 +90,6 @@ namespace Graphics
 				return result;
 			}
 			g_CaptureProbesList.push_back(sCaptureProbes(i_outerSphere, _innerSphere,1.0, i_environmentCubemapSize));
-			g_CaptureProbeVolumes.push_back(i_outerSphere);
 			GLuint _lastIdx = g_CaptureProbesList.size() - 1;
 			assert(i_environmentCubemapSize > 512);
 
@@ -120,6 +118,11 @@ namespace Graphics
 			glm::vec3 _posHalfDimension = glm::vec3(_halfWidth, _halfWidth, _halfWidth);
 
 			g_EnvironmentCaptureAccelerationTree.InitializeTree(cBox(-_posHalfDimension, _posHalfDimension), g_CaptureProbesReferences);
+		}
+
+		const std::vector<sCaptureProbes*>& GetCapturesReferences()
+		{
+			return g_CaptureProbesReferences;
 		}
 
 		void CaptureEnvironment(Graphics::sDataRequiredToRenderAFrame* i_renderThreadData)
@@ -339,11 +342,6 @@ namespace Graphics
 		GLuint GetReadyCapturesCount()
 		{
 			return g_capturesReadyToBeMixedCount;
-		}
-
-		const std::vector<cSphere>& GetCaptureProbesVolumes()
-		{
-			return g_CaptureProbeVolumes;
 		}
 
 		const GLuint MaximumCubemapMixingCount()
