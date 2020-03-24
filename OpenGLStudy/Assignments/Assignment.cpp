@@ -161,8 +161,6 @@ void Assignment::Run()
 {
 	Graphics::PreRenderFrame();
 
-
-
 	// loop until window closed
 	while (!m_shouldApplicationLoopExit)
 	{
@@ -279,37 +277,43 @@ void Assignment::Tick(float second_since_lastFrame)
 			_frameData_Camera.ViewPosition = m_editorCamera->CamLocation();
 			// Submit geometry data
 			SubmitSceneData(&_frameData_Camera);
-
-			// Transform Gizmo
+			
+			// Gizmos
 			{
 				std::vector<std::pair<Graphics::cModel::HANDLE, cTransform>> _renderingMap;
-				_renderingMap.reserve(8);
-				Assets::cHandle<Graphics::cModel> unneccessaryHandle;
-				//cTransform _worldTransform;
-				//_renderingMap.push_back({ unneccessaryHandle, _worldTransform });
-				//_renderingMap.push_back({ unneccessaryHandle, *m_teapot->Transform() });
+				// Transform Gizmo
+				{
+					_renderingMap.reserve(8);
+					Assets::cHandle<Graphics::cModel> unneccessaryHandle;
+					//cTransform _worldTransform;
+					//_renderingMap.push_back({ unneccessaryHandle, _worldTransform });
+					//_renderingMap.push_back({ unneccessaryHandle, *m_teapot->Transform() });
 
-				if (pLight1)
-					_renderingMap.push_back({ unneccessaryHandle, *pLight1->Transform() });
-				if (pLight2)
-					_renderingMap.push_back({ unneccessaryHandle, *pLight2->Transform() });
-				if (spLight)
-					_renderingMap.push_back({ unneccessaryHandle, *spLight->Transform() });
-				if (spLight2)
-					_renderingMap.push_back({ unneccessaryHandle, *spLight2->Transform() });
-				Graphics::SubmitDataToBeRendered(_frameData_Camera, _renderingMap, &Graphics::Gizmo_RenderTransform);
-			}
+					if (pLight1)
+						_renderingMap.push_back({ unneccessaryHandle, *pLight1->Transform() });
+					if (pLight2)
+						_renderingMap.push_back({ unneccessaryHandle, *pLight2->Transform() });
+					if (spLight)
+						_renderingMap.push_back({ unneccessaryHandle, *spLight->Transform() });
+					if (spLight2)
+						_renderingMap.push_back({ unneccessaryHandle, *spLight2->Transform() });
+					Graphics::SubmitDataToBeRendered(_frameData_Camera, _renderingMap, &Graphics::Gizmo_RenderTransform);
+				}
 
-			// Normal gizmo
-			if (false)
-			{
-				std::vector<std::pair<Graphics::cModel::HANDLE, cTransform>> _renderingMap;
+				// Normal Gizmo
+				if (false)
+				{
+					_renderingMap.clear();
+					_renderingMap.reserve(1);
+					_renderingMap.push_back({ m_teapot2->GetModelHandle(), *m_teapot2->Transform() });
+					Graphics::SubmitDataToBeRendered(_frameData_Camera, _renderingMap, &Graphics::Gizmo_RenderVertexNormal);
+				}
+				// Triangulation Gizmo
+				_renderingMap.clear();
 				_renderingMap.reserve(1);
-				_renderingMap.push_back({ m_teapot2->GetModelHandle(), *m_teapot2->Transform() });
-				Graphics::SubmitDataToBeRendered(_frameData_Camera, _renderingMap, &Graphics::Gizmo_RenderVertexNormal);
+				_renderingMap.push_back({ m_teapotQuad->GetModelHandle(), *m_teapotQuad->Transform() });
+				Graphics::SubmitDataToBeRendered(_frameData_Camera, _renderingMap, &Graphics::Gizmo_RenderTriangulation);
 			}
-
-
 		}
 	}
 }

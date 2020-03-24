@@ -186,6 +186,7 @@ namespace Graphics {
 					printf("Fail to create normal display effect.\n");
 					return result;
 				}
+				GetEffectByKey("NormalDisplay")->ValidateProgram();
 			}
 			// Create PBR_MetallicRoughness effect
 			{
@@ -253,7 +254,10 @@ namespace Graphics {
 			{
 				if (!(result = CreateEffect("TessQuad",
 					"tessellation/tess_vert.glsl",
-					"PBR_MetallicRoughness.glsl"
+					"PBR_MetallicRoughness.glsl",
+					"",
+					"", // tessellation/tess_ctrl.glsl
+					"" // tessellation/tess_evalue.glsl
 				))) {
 					printf("Fail to create TessQuad effect.\n");
 					return result;
@@ -263,6 +267,18 @@ namespace Graphics {
 					FixSamplerProblem("TessQuad");
 				}
 				GetEffectByKey("TessQuad")->ValidateProgram();
+			}
+			// Create triangulation display effect
+			{
+				if (!(result = CreateEffect("TriangulationDisplay",
+					"normalDisplayer/normal_vert.glsl",
+					"normalDisplayer/normal_frag.glsl",
+					"triangulationDisplayer/triangulation_geom.glsl"
+				))) {
+					printf("Fail to create TriangulationDisplay effect.\n");
+					return result;
+				}
+				GetEffectByKey("TriangulationDisplay")->ValidateProgram();
 			}
 		}
 
@@ -928,12 +944,22 @@ namespace Graphics {
 		s_currentEffect->UseEffect();
 
 		glClear(GL_DEPTH_BUFFER_BIT);
-		s_currentEffect->ValidateProgram();
+		
 		RenderSceneWithoutMaterial();
 
 		s_currentEffect->UnUseEffect();
 	}
+	void Gizmo_RenderTriangulation()
+	{
+		s_currentEffect = GetEffectByKey("TriangulationDisplay");
+		s_currentEffect->UseEffect();
 
+		glClear(GL_DEPTH_BUFFER_BIT);
+
+		RenderSceneWithoutMaterial();
+
+		s_currentEffect->UnUseEffect();
+	}
 	void RenderSceneWithoutMaterial()
 	{
 		// loop through every single model

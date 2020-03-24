@@ -35,6 +35,7 @@ namespace Graphics {
 	void Tessellation_Pass();
 	void Gizmo_RenderTransform();
 	void Gizmo_RenderVertexNormal();
+	void Gizmo_RenderTriangulation();
 
 	/** Submit function*/
 	void SubmitClipPlaneData(const glm::vec4& i_plane0, const glm::vec4& i_plane1 = glm::vec4(0, 0, 0, 0), const glm::vec4& i_plane2 = glm::vec4(0, 0, 0, 0), const glm::vec4& i_plane3 = glm::vec4(0, 0, 0, 0));
