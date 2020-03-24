@@ -18,7 +18,7 @@ namespace Graphics {
 		CleanUp();
 	}
 
-	bool cEffect::CreateProgram(const char* const i_vertexShaderPath, const char* const i_fragmentShaderPath, const char* const i_geometryShaderPath /*= ""*/)
+	bool cEffect::CreateProgram(const char* const i_vertexShaderPath, const char* const i_fragmentShaderPath, const char* const i_geometryShaderPath /*= ""*/, const char* const i_TCSPath /*= ""*/, const char* const i_TESPath/* = ""*/)
 	{
 		m_programID = glCreateProgram();
 		if (!m_programID) {
@@ -44,7 +44,22 @@ namespace Graphics {
 				return false;
 			}
 		}
-
+		if (!IsPathNull(i_TCSPath))
+		{
+			if (!LoadShader(i_TCSPath, GL_TESS_CONTROL_SHADER))
+			{
+				printf("Can not create program because of failing compiling TCS shader. \n");
+				return false;
+			}
+		}
+		if (!IsPathNull(i_TESPath))
+		{
+			if (!LoadShader(i_TESPath, GL_TESS_EVALUATION_SHADER))
+			{
+				printf("Can not create program because of failing compiling TCS shader. \n");
+				return false;
+			}
+		}
 		// link the program
 		if (!LinkProgram()) {
 			return false;

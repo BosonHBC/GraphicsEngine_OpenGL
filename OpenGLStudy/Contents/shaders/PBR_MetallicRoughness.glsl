@@ -32,7 +32,6 @@ const vec3 gridSamplingDisk[20] =vec3[]
 
 in vec2 texCood0;
 in vec3 fragPos;
-in vec4 clipSpaceCoord;
 in mat3 TBN;
 
 in vec4 DirectionalLightSpacePos;

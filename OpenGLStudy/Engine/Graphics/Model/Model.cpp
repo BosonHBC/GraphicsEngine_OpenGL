@@ -101,7 +101,7 @@ namespace Graphics {
 			if (_material) {
 				_material->UseMaterial();
 			}
-
+			
 			auto _mesh = cMesh::s_manager.Get(m_meshList[i]);
 			if (_mesh)
 				_mesh->Render();

@@ -302,11 +302,12 @@ namespace Graphics
 						float sumBlendWeight = 0;
 						// sort the intersecting probes by most influential, the bigger CaptureProbes->Influence is, the closer to the center, the more important
 						std::sort(_intersectProbes.begin(), _intersectProbes.end(), [](const sCaptureProbes* a, const sCaptureProbes* b) { return a->Influence > b->Influence; });
+/*
 						for (int i = 0; i < _intersectProbes.size(); ++i)
 						{
 							printf("IW%d:%f ", i, _intersectProbes[i]->Influence);
 						}
-						printf("_____");
+						printf("_____");*/
 						// Calculate sumIW and InvSumIW
 						float sumIW = 0;
 						float invSumIW = 0;
@@ -344,7 +345,7 @@ namespace Graphics
 			}
 			// Update weight data in the GPU
 			g_uniformBuffer_EnvCaptureWeight.Update(&captureWeights);
-			printf("w1:%f , w2:%f ,w3:%f ,w4:%f. \n", captureWeights.Weights.x, captureWeights.Weights.y, captureWeights.Weights.z, captureWeights.Weights.w);
+			//printf("w1:%f , w2:%f ,w3:%f ,w4:%f. \n", captureWeights.Weights.x, captureWeights.Weights.y, captureWeights.Weights.z, captureWeights.Weights.w);
 		}
 
 		const Graphics::EnvironmentCaptureManager::sCaptureProbes& GetCaptureProbesAt(int i_idx)

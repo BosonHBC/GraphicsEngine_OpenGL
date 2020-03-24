@@ -27,11 +27,6 @@ layout(std140, binding = 1) uniform uniformBuffer_drawcall
 	mat4 normalMatrix;
 };
 
-layout(std140, binding = 4) uniform uniformBuffer_ClipPlane
-{
-	vec4 Planes[4];
-};
-
 void main()
 {
 	gl_Position = PVMatrix * modelMatrix * vec4(pos, 1.0);
@@ -53,8 +48,6 @@ void main()
 	vec4 worldPos = modelMatrix * vec4(pos.x, pos.y, pos.z, 1.0);
 	fragPos = worldPos.xyz;
 	
-	gl_ClipDistance[0] = dot(worldPos, Planes[0]);
-
 	// Directional light space
 	DirectionalLightSpacePos = directionalLightTransform * modelMatrix * vec4(pos, 1.0);
 

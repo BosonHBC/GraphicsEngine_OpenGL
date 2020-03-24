@@ -32,6 +32,7 @@ namespace Graphics {
 	void Render_Pass();
 	void PBR_Pass();
 	void CubeMap_Pass();
+	void Tessellation_Pass();
 	void Gizmo_RenderTransform();
 	void Gizmo_RenderVertexNormal();
 
@@ -44,7 +45,7 @@ namespace Graphics {
 
 
 	/** Usage function*/
-	bool CreateEffect(const char* i_key, const char* i_vertexShaderPath, const char* i_fragmentShaderPath, const char* i_geometryShaderPath = "");
+	bool CreateEffect(const char* i_key, const char* i_vertexShaderPath, const char* i_fragmentShaderPath, const char* i_geometryShaderPath = "", const char* const i_TCSPath = "", const char* const i_TESPath = "");
 	cEffect* GetEffectByKey(const char* i_key);
 	cEffect* GetCurrentEffect();
 

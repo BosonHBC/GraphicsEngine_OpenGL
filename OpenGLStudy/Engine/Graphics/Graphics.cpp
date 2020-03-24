@@ -249,6 +249,21 @@ namespace Graphics {
 				}
 				GetEffectByKey("DrawDebugCircles")->ValidateProgram();
 			}
+			// Tess quad effect
+			{
+				if (!(result = CreateEffect("TessQuad",
+					"tessellation/tess_vert.glsl",
+					"PBR_MetallicRoughness.glsl"
+				))) {
+					printf("Fail to create TessQuad effect.\n");
+					return result;
+				}
+				else
+				{
+					FixSamplerProblem("TessQuad");
+				}
+				GetEffectByKey("TessQuad")->ValidateProgram();
+			}
 		}
 
 		// Initialize uniform buffer
@@ -304,17 +319,20 @@ namespace Graphics {
 				printf("Fail to create brdfLUTTexture.\n");
 				return result;
 			}
+
+/*
 			EnvironmentCaptureManager::AddCaptureProbes(cSphere(glm::vec3(-450, 10, 0), 600.f), 50.f, envMapResolution);
 			EnvironmentCaptureManager::AddCaptureProbes(cSphere(glm::vec3(-225, 10, 0), 600.f), 50.f, envMapResolution);
 			EnvironmentCaptureManager::AddCaptureProbes(cSphere(glm::vec3(-450, 290, 0), 600.f), 50.f, envMapResolution);
-			EnvironmentCaptureManager::AddCaptureProbes(cSphere(glm::vec3(-225, 290, 0), 600.f), 50.f, envMapResolution);
+			EnvironmentCaptureManager::AddCaptureProbes(cSphere(glm::vec3(-225, 290, 0), 600.f), 50.f, envMapResolution);*/
 		
 			EnvironmentCaptureManager::AddCaptureProbes(cSphere(glm::vec3(0, 130, 0), 600.f), 50.f, envMapResolution);
 
+/*
 			EnvironmentCaptureManager::AddCaptureProbes(cSphere(glm::vec3(225, 290, 0), 600.f), 50.f, envMapResolution);
-			EnvironmentCaptureManager::AddCaptureProbes(cSphere(glm::vec3(450,290, 0), 600.f), 50.f, envMapResolution);
+			EnvironmentCaptureManager::AddCaptureProbes(cSphere(glm::vec3(450, 290, 0), 600.f), 50.f, envMapResolution);
 			EnvironmentCaptureManager::AddCaptureProbes(cSphere(glm::vec3(225, 10, 0), 600.f), 50.f, envMapResolution);
-			EnvironmentCaptureManager::AddCaptureProbes(cSphere(glm::vec3(450, 10, 0), 600.f), 50.f, envMapResolution);
+			EnvironmentCaptureManager::AddCaptureProbes(cSphere(glm::vec3(450, 10, 0), 600.f), 50.f, envMapResolution);*/
 			EnvironmentCaptureManager::BuildAccelerationStructure();
 
 		}
@@ -692,15 +710,8 @@ namespace Graphics {
 		// Swap buffers happens in main rendering loop, not in this render function.
 	}
 
-	void PBR_Pass()
+	void UpdateInfoForPBR()
 	{
-		s_currentEffect = GetEffectByKey("PBR_MR");
-		s_currentEffect->UseEffect();
-
-		glClearColor(s_clearColor.r, s_clearColor.g, s_clearColor.b, 0.f);
-		// A lot of things can be cleaned like color buffer, depth buffer, so we need to specify what to clear
-		glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-
 		// Update Lighting Data
 		UpdateLightingData();
 
@@ -748,6 +759,20 @@ namespace Graphics {
 			cTexture::UnBindTexture(GL_TEXTURE0 + cubemapStartUnit + i, ETT_FRAMEBUFFER_HDR_CUBEMAP);
 			cTexture::UnBindTexture(GL_TEXTURE0 + cubemapStartUnit + maxCubemapMixing + i, ETT_FRAMEBUFFER_HDR_MIPMAP_CUBEMAP);
 		}
+		assert(glGetError() == GL_NO_ERROR);
+
+	}
+
+	void PBR_Pass()
+	{
+		s_currentEffect = GetEffectByKey("PBR_MR");
+		s_currentEffect->UseEffect();
+
+		glClearColor(s_clearColor.r, s_clearColor.g, s_clearColor.b, 0.f);
+		// A lot of things can be cleaned like color buffer, depth buffer, so we need to specify what to clear
+		glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+
+		UpdateInfoForPBR();
 
 		auto& renderList = s_dataRenderingByGraphicThread->s_renderPasses[s_currentRenderPass].ModelToTransform_map;
 		const auto sphereOffset = renderList.size() - 25;
@@ -809,6 +834,18 @@ namespace Graphics {
 
 		// set depth function back to default
 		glEnable(GL_CULL_FACE);
+	}
+
+	void Tessellation_Pass()
+	{
+		s_currentEffect = GetEffectByKey("TessQuad");
+		s_currentEffect->UseEffect();
+
+		UpdateInfoForPBR();
+
+		RenderScene();
+
+		s_currentEffect->UnUseEffect();
 	}
 
 	void Gizmo_RenderTransform()
@@ -1056,12 +1093,12 @@ namespace Graphics {
 	/** Effect related */
 	//----------------------------------------------------------------------------------
 
-	bool CreateEffect(const char* i_key, const char* i_vertexShaderPath, const char* i_fragmentShaderPath, const char* i_geometryShaderPath/* = ""*/)
+	bool CreateEffect(const char* i_key, const char* i_vertexShaderPath, const char* i_fragmentShaderPath, const char* i_geometryShaderPath/* = ""*/, const char* const i_TCSPath /*= ""*/, const char* const i_TESPath/* = ""*/)
 	{
 		auto result = true;
 
 		cEffect* newEffect = new  Graphics::cEffect();
-		if (!(result = newEffect->CreateProgram(i_vertexShaderPath, i_fragmentShaderPath, i_geometryShaderPath))) {
+		if (!(result = newEffect->CreateProgram(i_vertexShaderPath, i_fragmentShaderPath, i_geometryShaderPath, i_TCSPath, i_TESPath))) {
 			printf("Fail to create default effect.\n");
 			safe_delete(newEffect);
 			return result;
@@ -1167,8 +1204,6 @@ namespace Graphics {
 	void UpdateLightingData()
 	{
 		s_dataRenderingByGraphicThread->s_ambientLight.Illuminate();
-
-
 
 		for (int i = 0; i < s_dataRenderingByGraphicThread->s_spotLights.size(); ++i)
 		{

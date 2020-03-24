@@ -60,7 +60,7 @@ void Assignment::CreateActor()
 {
 	m_teapot = new cActor();
 	m_teapot->Initialize();
-	m_teapot->Transform()->SetTransform(glm::vec3(0, 0, 130), glm::quat(glm::vec3(-glm::radians(90.f), 0, 0)), glm::vec3(5, 5, 5));
+	m_teapot->Transform()->SetTransform(glm::vec3(0, 0, 190), glm::quat(glm::vec3(-glm::radians(90.f), 0, 0)), glm::vec3(5, 5, 5));
 	m_teapot->SetModel("Contents/models/pbrTeapot.model");
 	m_teapot->UpdateUniformVariables(Graphics::GetEffectByKey("PBR_MR"));
 
@@ -113,11 +113,17 @@ void Assignment::CreateActor()
 		}
 	}
 
+	m_teapotQuad = new cActor();
+	m_teapotQuad->Initialize();
+	m_teapotQuad->Transform()->SetTransform(glm::vec3(0, 50, 0), glm::quat(glm::vec3(glm::radians(-90.f), glm::radians(180.f), 0)), glm::vec3(50, 50, 1));
+	m_teapotQuad->SetModel("Contents/models/tessQuad.model");
+	m_teapotQuad->UpdateUniformVariables(Graphics::GetEffectByKey("TessQuad"));
+
 }
 
 void Assignment::CreateCamera()
 {
-	m_editorCamera = new  cEditorCamera(glm::vec3(0, 150, 350), 5, 0, 300, 10.f);
+	m_editorCamera = new  cEditorCamera(glm::vec3(0, 150, 50), 65, 0, 300, 10.f);
 	float _aspect = (float)(GetCurrentWindow()->GetBufferWidth()) / (float)(GetCurrentWindow()->GetBufferHeight());
 	m_editorCamera->CreateProjectionMatrix(glm::radians(60.f), _aspect, 1.f, 6000.0f);
 	m_editorCamera->Transform()->Update();
@@ -125,7 +131,7 @@ void Assignment::CreateCamera()
 
 void Assignment::CreateLight()
 {
-	Graphics::CreateAmbientLight(Color(0.5f, 0.5f, 0.5f), aLight);
+	Graphics::CreateAmbientLight(Color(0.1f, 0.1f, 0.1f), aLight);
 	Graphics::CreatePointLight(glm::vec3(-100, 150.f, 100.f), Color(1,1,1), 300.f, true, pLight1);
 	//Graphics::CreatePointLight(glm::vec3(100, 150.f, 100.f), Color(1, 1, 1), 1.f, 0.7f, 1.8f, true, pLight2);
 	Graphics::CreateDirectionalLight(Color(0.6,0.6,0.5), glm::vec3(-1, -0.5f, -0.5f), true, dLight);
@@ -278,9 +284,9 @@ void Assignment::Tick(float second_since_lastFrame)
 			{
 				std::vector<std::pair<Graphics::cModel::HANDLE, cTransform>> _renderingMap;
 				_renderingMap.reserve(8);
-				cTransform _worldTransform;
 				Assets::cHandle<Graphics::cModel> unneccessaryHandle;
-				_renderingMap.push_back({ unneccessaryHandle, _worldTransform });
+				//cTransform _worldTransform;
+				//_renderingMap.push_back({ unneccessaryHandle, _worldTransform });
 				//_renderingMap.push_back({ unneccessaryHandle, *m_teapot->Transform() });
 
 				if (pLight1)
@@ -348,14 +354,19 @@ void Assignment::SubmitSceneData(Graphics::UniformBufferFormats::sFrame* const i
 		_renderingMap.push_back({ m_spaceHolder->GetModelHandle(), *m_spaceHolder->Transform() });
 		_renderingMap.push_back({ m_teapot->GetModelHandle(), *m_teapot->Transform() });
 		_renderingMap.push_back({ m_teapot2->GetModelHandle(), *m_teapot2->Transform() });
-		_renderingMap.push_back({ m_gun->GetModelHandle(), *m_gun->Transform() });
+		//_renderingMap.push_back({ m_gun->GetModelHandle(), *m_gun->Transform() });
 		for (int i = 0; i < m_sphereList.size(); ++i)
 		{
 			_renderingMap.push_back({ m_sphereList[i]->GetModelHandle(), *m_sphereList[i]->Transform() });
 		}
 		Graphics::SubmitDataToBeRendered(*i_frameData, _renderingMap, &Graphics::PBR_Pass);
 	}
-
+	// Tess pass
+	{
+		_renderingMap.clear();
+		_renderingMap.push_back({ m_teapotQuad->GetModelHandle(), *m_teapotQuad->Transform() });
+		Graphics::SubmitDataToBeRendered(*i_frameData, _renderingMap, &Graphics::Tessellation_Pass);
+	}
 	// Cube map
 	{
 		_renderingMap.clear();
@@ -375,7 +386,7 @@ void Assignment::SubmitSceneDataForEnvironmentCapture(Graphics::UniformBufferFor
 		_renderingMap.push_back({ m_spaceHolder->GetModelHandle(), *m_spaceHolder->Transform() });
 		_renderingMap.push_back({ m_teapot->GetModelHandle(), *m_teapot->Transform() });
 		_renderingMap.push_back({ m_teapot2->GetModelHandle(), *m_teapot2->Transform() });
-		_renderingMap.push_back({ m_gun->GetModelHandle(), *m_gun->Transform() });
+		//_renderingMap.push_back({ m_gun->GetModelHandle(), *m_gun->Transform() });
 		for (int i = 0; i < m_sphereList.size(); ++i)
 		{
 			_renderingMap.push_back({ m_sphereList[i]->GetModelHandle(), *m_sphereList[i]->Transform() });
@@ -401,12 +412,13 @@ void Assignment::SubmitShadowData()
 	_renderingMap.push_back({ m_teapot->GetModelHandle(), *m_teapot->Transform() });
 	_renderingMap.push_back({ m_teapot2->GetModelHandle(), *m_teapot2->Transform() });
 	_renderingMap.push_back({ m_spaceHolder->GetModelHandle(), *m_spaceHolder->Transform() });
+	_renderingMap.push_back({ m_teapotQuad->GetModelHandle(), *m_teapotQuad->Transform() });
 
 	for (int i = 0; i < m_sphereList.size(); ++i)
 	{
 		_renderingMap.push_back({ m_sphereList[i]->GetModelHandle(), *m_sphereList[i]->Transform() });
 	}
-	_renderingMap.push_back({ m_gun->GetModelHandle(), *m_gun->Transform() });
+	//_renderingMap.push_back({ m_gun->GetModelHandle(), *m_gun->Transform() });
 
 	{// Spot light shadow map pass
 		Graphics::SubmitDataToBeRendered(Graphics::UniformBufferFormats::sFrame(), _renderingMap, &Graphics::SpotLightShadowMap_Pass);

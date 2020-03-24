@@ -5,8 +5,10 @@ layout (location = 2) in vec3 normal;
 layout (location = 3) in vec3 tangent;
 layout (location = 4) in vec3 biTangent;
 
-out vec3 fragPos;
 out vec2 texCood0;
+out vec3 fragPos;
+
+out vec4 clipSpaceCoord;
 out mat3 TBN;
 
 const int MAX_COUNT_PER_LIGHT = 5;
@@ -34,7 +36,8 @@ layout(std140, binding = 4) uniform uniformBuffer_ClipPlane
 
 void main()
 {
-	gl_Position = PVMatrix * modelMatrix * vec4(pos, 1.0);
+	clipSpaceCoord = PVMatrix * modelMatrix * vec4(pos, 1.0);
+	gl_Position = clipSpaceCoord;
 
 	texCood0 = texcood;
 
