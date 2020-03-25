@@ -17,10 +17,6 @@ in vec3 WorldPos_ES_in[];
 in vec2 TexCood_ES_in[];
 in mat3 TBN_ES_in[];
 
-out vec3 fragPos;
-out vec2 texCood0;
-out mat3 TBN;
-
 uniform sampler2D NormalMap; // 3
 uniform sampler2D displacementMap; // 24
 uniform float displaceIntensity;
@@ -49,17 +45,14 @@ vec3 interpoalte3D_Quad(vec3 v0, vec3 v1, vec3 v2, vec3 v3)
 }
 void main()
 {
-	
-	texCood0 = interpolate2D(TexCood_ES_in[0], TexCood_ES_in[1],TexCood_ES_in[2]);
-	TBN = interpolateMat3(TBN_ES_in[0],	TBN_ES_in[1], TBN_ES_in[2]);
-	fragPos = interpolate3D(WorldPos_ES_in[0], WorldPos_ES_in[1],WorldPos_ES_in[2]);
+	vec3 fragPos = interpolate3D(WorldPos_ES_in[0], WorldPos_ES_in[1],WorldPos_ES_in[2]);
+	vec2 texCood0 = interpolate2D(TexCood_ES_in[0], TexCood_ES_in[1],TexCood_ES_in[2]);
+	mat3 TBN = interpolateMat3(TBN_ES_in[0],	TBN_ES_in[1], TBN_ES_in[2]);
 	//fragPos = interpoalte3D_Quad(WorldPos_ES_in[0], WorldPos_ES_in[1], WorldPos_ES_in[2], WorldPos_ES_in[3]);
 	// calculate displacement
 	float displacement = texture(displacementMap, texCood0).r;
-	vec3 normal = texture(NormalMap, texCood0).rgb;
-	normal = normalize(normal * 2.0f - 1.0f);   
-	normal = normalize(TBN * vec3(0,0,1));
+	vec3 normal = normalize(TBN * vec3(0,0,1));
 	fragPos += normal * displacement * displaceIntensity;
 	
-	gl_Position = PVMatrix * vec4(fragPos ,1.0);
+	gl_Position = vec4(fragPos ,1.0);
 }

@@ -419,12 +419,13 @@ void Assignment::SubmitShadowData()
 	_renderingMap.push_back({ m_teapot->GetModelHandle(), *m_teapot->Transform() });
 	_renderingMap.push_back({ m_teapot2->GetModelHandle(), *m_teapot2->Transform() });
 	_renderingMap.push_back({ m_spaceHolder->GetModelHandle(), *m_spaceHolder->Transform() });
-	_renderingMap.push_back({ m_teapotQuad->GetModelHandle(), *m_teapotQuad->Transform() });
+	
 
 	for (int i = 0; i < m_sphereList.size(); ++i)
 	{
 		_renderingMap.push_back({ m_sphereList[i]->GetModelHandle(), *m_sphereList[i]->Transform() });
 	}
+	_renderingMap.push_back({ m_teapotQuad->GetModelHandle(), *m_teapotQuad->Transform() });
 	//_renderingMap.push_back({ m_gun->GetModelHandle(), *m_gun->Transform() });
 
 	{// Spot light shadow map pass

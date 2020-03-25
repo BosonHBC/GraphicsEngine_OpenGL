@@ -9,7 +9,7 @@ return
     RoughnessTexture = "",
     NormalTexture = "teapot_normal.png",
     DiffuseIntensity = {1.0,1.0,1.0},
-    MetallicIntensity = 0.1,
-    RoughnessIntensity = 0.01,
+    MetallicIntensity = 0.5,
+    RoughnessIntensity = 0.5,
     IOR = {1,1,1},
 }

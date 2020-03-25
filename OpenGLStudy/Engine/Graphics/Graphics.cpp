@@ -155,7 +155,9 @@ namespace Graphics {
 				if (!(result = CreateEffect("OmniShadowMap",
 					"shadowmaps/omniShadowMap/omni_shadow_map_vert.glsl",
 					"shadowmaps/omniShadowMap/omni_shadow_map_frag.glsl",
-					"shadowmaps/omniShadowMap/omni_shadow_map_geom.glsl"
+					"shadowmaps/omniShadowMap/omni_shadow_map_geom.glsl",
+					"shadowmaps/omniShadowMap/tess_pointShadow_ctrl.glsl",
+					"shadowmaps/omniShadowMap/tess_pointShadow_evalue.glsl"
 				))) {
 					printf("Fail to create OmniShadowMap effect.\n");
 					return result;
@@ -573,6 +575,9 @@ namespace Graphics {
 		s_currentEffect = GetEffectByKey("OmniShadowMap");
 		s_currentEffect->UseEffect();
 
+		s_currentEffect->SetInteger("displacementMap", 24);
+		s_currentEffect->SetFloat("displaceIntensity", 20.0f);
+
 		for (auto i = 0; i < s_dataRenderingByGraphicThread->s_pointLights.size(); ++i)
 		{
 			auto* it = &s_dataRenderingByGraphicThread->s_pointLights[i];
@@ -594,8 +599,33 @@ namespace Graphics {
 				glClear(GL_DEPTH_BUFFER_BIT);
 
 				s_currentEffect->ValidateProgram();
+				s_currentEffect->SetFloat("tessLevel", 1);
+
 				// Draw scenes
-				RenderSceneWithoutMaterial();
+				auto& renderList = s_dataRenderingByGraphicThread->s_renderPasses[s_currentRenderPass].ModelToTransform_map;
+				for (int j  = 0;  j< renderList.size()-1; ++j)
+				{
+					// 1. Update draw call data
+					s_uniformBuffer_drawcall.Update(&UniformBufferFormats::sDrawCall(renderList[j].second.M(), renderList[j].second.TranspostInverse()));
+					// 2. Draw
+					cModel* _model = cModel::s_manager.Get(renderList[j].first);
+					if (_model) {
+						_model->RenderWithoutMaterial(GL_PATCHES);
+					}
+				}
+				const int lastidx = renderList.size() - 1;
+				s_currentEffect->SetFloat("tessLevel", 100);
+
+
+				cTexture* _dispalcementMap = cTexture::s_manager.Get(g_quadTeapotDisplacementMapHandle);
+				_dispalcementMap->UseTexture(GL_TEXTURE24);
+				// 1. Update draw call data
+				s_uniformBuffer_drawcall.Update(&UniformBufferFormats::sDrawCall(renderList[lastidx].second.M(), renderList[lastidx].second.TranspostInverse()));
+				cModel* _model = cModel::s_manager.Get(renderList[lastidx].first);
+				if (_model) {
+					_model->RenderWithoutMaterial(GL_PATCHES);
+				}
+				_dispalcementMap->UnBindTexture(GL_TEXTURE24,ETT_FILE);
 
 				// switch back to original buffer
 				_pointLightFBO->UnWrite();
@@ -892,7 +922,18 @@ namespace Graphics {
 		cTexture* _dispalcementMap = cTexture::s_manager.Get(g_quadTeapotDisplacementMapHandle);
 		_dispalcementMap->UseTexture(GL_TEXTURE24);
 
-		RenderScene(GL_PATCHES);
+		auto& renderList = s_dataRenderingByGraphicThread->s_renderPasses[s_currentRenderPass].ModelToTransform_map;
+		auto& _pair = renderList[renderList.size() -1];
+		{
+			// 1. Update draw call data
+			s_uniformBuffer_drawcall.Update(&UniformBufferFormats::sDrawCall(_pair.second.M(), _pair.second.TranspostInverse()));
+			// 2. Draw
+			cModel* _model = cModel::s_manager.Get(_pair.first);
+			if (_model) {
+				_model->UpdateUniformVariables(s_currentEffect->GetProgramID());
+				_model->Render(GL_PATCHES);
+			}
+		}
 
 		s_currentEffect->UnUseEffect();
 	}
@@ -985,7 +1026,7 @@ namespace Graphics {
 	void Gizmo_RenderTriangulation()
 	{
 		sWindowInput* _input = Application::GetCurrentApplication()->GetCurrentWindow()->GetWindowInput();
-		//if (!_input->IsKeyDown(GLFW_KEY_T)) return;
+		if (!_input->IsKeyDown(GLFW_KEY_T)) return;
 
 		s_currentEffect = GetEffectByKey("TriangulationDisplay");
 		s_currentEffect->UseEffect();
