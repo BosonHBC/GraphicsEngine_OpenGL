@@ -115,7 +115,7 @@ void Assignment::CreateActor()
 
 	m_teapotQuad = new cActor();
 	m_teapotQuad->Initialize();
-	m_teapotQuad->Transform()->SetTransform(glm::vec3(0, 50, 0), glm::quat(glm::vec3(glm::radians(-90.f), glm::radians(180.f), 0)), glm::vec3(50, 50, 1));
+	m_teapotQuad->Transform()->SetTransform(glm::vec3(0, 50, 0), glm::quat(glm::vec3(0, 0, 0)), glm::vec3(50, 1, 50));
 	m_teapotQuad->SetModel("Contents/models/tessQuad.model");
 	m_teapotQuad->UpdateUniformVariables(Graphics::GetEffectByKey("TessQuad"));
 
@@ -123,7 +123,7 @@ void Assignment::CreateActor()
 
 void Assignment::CreateCamera()
 {
-	m_editorCamera = new  cEditorCamera(glm::vec3(0, 150, 50), 65, 0, 300, 10.f);
+	m_editorCamera = new  cEditorCamera(glm::vec3(0, 150, 10), 89, 0, 300, 10.f);
 	float _aspect = (float)(GetCurrentWindow()->GetBufferWidth()) / (float)(GetCurrentWindow()->GetBufferHeight());
 	m_editorCamera->CreateProjectionMatrix(glm::radians(60.f), _aspect, 1.f, 6000.0f);
 	m_editorCamera->Transform()->Update();
@@ -311,6 +311,8 @@ void Assignment::Tick(float second_since_lastFrame)
 				// Triangulation Gizmo
 				_renderingMap.clear();
 				_renderingMap.reserve(1);
+				//_renderingMap.push_back({ m_teapotQuad->GetModelHandle(), *m_teapotQuad->Transform() });
+				//_renderingMap.push_back({ m_teapotQuad->GetModelHandle(), *m_teapotQuad->Transform() });
 				_renderingMap.push_back({ m_teapotQuad->GetModelHandle(), *m_teapotQuad->Transform() });
 				Graphics::SubmitDataToBeRendered(_frameData_Camera, _renderingMap, &Graphics::Gizmo_RenderTriangulation);
 			}
@@ -455,6 +457,7 @@ void Assignment::CleanUp()
 	safe_delete(m_cubemap);
 	safe_delete(m_spaceHolder);
 	safe_delete(m_gun);
+	safe_delete(m_teapotQuad);
 	for (auto i = 0; i < m_sphereList.size(); ++i)
 	{
 		safe_delete(m_sphereList[i]);

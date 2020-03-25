@@ -3,9 +3,6 @@ layout (triangles) in;
 layout (line_strip, max_vertices = 6) out;
 
 const float MAGNITUDE = 1;
-in VS_OUT {
-    vec3 Normal;
-} gs_in[];
 
 void GenerateLine(int id1, int id2)
 {

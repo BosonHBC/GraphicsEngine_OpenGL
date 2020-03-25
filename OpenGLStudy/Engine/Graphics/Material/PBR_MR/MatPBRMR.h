@@ -22,6 +22,7 @@ namespace Graphics
 		void UpdateMetalnessIntensity(const float& i_metal) { m_metallicIntensity = i_metal; }
 		float GetRoughnessIntensity() const { return m_roughnessIntensity; }
 		void UpdateRoughnessIntensity(const float& i_rough) { m_roughnessIntensity = i_rough; }
+		const Assets::cHandle<cTexture>& GetNormalMapHandle() const { return m_albedoMapHandle; }
 	private:
 		Assets::cHandle<cTexture> m_albedoMapHandle;
 		Assets::cHandle<cTexture> m_metallicMapHandle;

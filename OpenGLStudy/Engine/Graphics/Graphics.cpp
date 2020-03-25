@@ -45,6 +45,7 @@ namespace Graphics {
 	cModel::HANDLE s_quadHandle;
 	cMesh::HANDLE s_point;
 	cTexture::HANDLE s_spruitSunRise_HDR;
+	cTexture::HANDLE g_quadTeapotDisplacementMapHandle;
 	// Lighting data
 	UniformBufferFormats::sLighting s_globalLightingData;
 
@@ -80,7 +81,7 @@ namespace Graphics {
 
 	// Functions
 	// ------------------------------------------------------------------------------------------------------------------------------------
-	void RenderScene();
+	void RenderScene(GLenum i_drawMode = GL_TRIANGLES);
 	void RenderSceneWithoutMaterial();
 	void Gizmo_DrawDebugCaptureVolume();
 
@@ -253,11 +254,11 @@ namespace Graphics {
 			// Tess quad effect
 			{
 				if (!(result = CreateEffect("TessQuad",
-					"tessellation/tess_vert.glsl",
+					"tessellation/tess_quad_vert.glsl",
 					"PBR_MetallicRoughness.glsl",
 					"",
-					"", // tessellation/tess_ctrl.glsl
-					"" // tessellation/tess_evalue.glsl
+					"tessellation/tess_quad_ctrl.glsl",
+					"tessellation/tess_quad_evalue.glsl"
 				))) {
 					printf("Fail to create TessQuad effect.\n");
 					return result;
@@ -271,9 +272,11 @@ namespace Graphics {
 			// Create triangulation display effect
 			{
 				if (!(result = CreateEffect("TriangulationDisplay",
-					"normalDisplayer/normal_vert.glsl",
+					"tessellation/tess_quad_vert.glsl",
 					"normalDisplayer/normal_frag.glsl",
-					"triangulationDisplayer/triangulation_geom.glsl"
+					"triangulationDisplayer/triangulation_geom.glsl",
+					"tessellation/tess_quad_ctrl.glsl",
+					"tessellation/tess_quad_evalue.glsl"
 				))) {
 					printf("Fail to create TriangulationDisplay effect.\n");
 					return result;
@@ -393,6 +396,13 @@ namespace Graphics {
 				printf("Failed to LoadspruitSunRise_HDR texture!\n");
 				return result;
 			}
+			_path = "teapot_disp.png";
+			_path = Assets::ProcessPathTex(_path);
+			if (!(result = cTexture::s_manager.Load(_path, g_quadTeapotDisplacementMapHandle)))
+			{
+				printf("Failed to quadTeapot DisplacementMap texture!\n");
+				return result;
+			}
 		}
 
 		// Enable opengl features
@@ -462,6 +472,12 @@ namespace Graphics {
 			s_brdfLUTTexture.Write();
 
 			glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+			cTransform quadTransform;
+			quadTransform.SetRotation(glm::vec3(glm::radians(90.f), 0, 0));
+
+			quadTransform.Update();
+			s_uniformBuffer_drawcall.Update(&UniformBufferFormats::sDrawCall(quadTransform.M(), quadTransform.TranspostInverse()));
+
 			// Render quad
 			cModel* _quad = cModel::s_manager.Get(s_quadHandle);
 			if (_quad) {
@@ -852,6 +868,8 @@ namespace Graphics {
 		glEnable(GL_CULL_FACE);
 	}
 
+
+
 	void Tessellation_Pass()
 	{
 		s_currentEffect = GetEffectByKey("TessQuad");
@@ -859,7 +877,14 @@ namespace Graphics {
 
 		UpdateInfoForPBR();
 
-		RenderScene();
+		s_currentEffect->SetFloat("tessLevel", 100);
+		s_currentEffect->SetInteger("displacementMap", 24);
+		s_currentEffect->SetFloat("displaceIntensity", 20.0f);
+
+		cTexture* _dispalcementMap = cTexture::s_manager.Get(g_quadTeapotDisplacementMapHandle);
+		_dispalcementMap->UseTexture(GL_TEXTURE24);
+
+		RenderScene(GL_PATCHES);
 
 		s_currentEffect->UnUseEffect();
 	}
@@ -955,9 +980,35 @@ namespace Graphics {
 		s_currentEffect->UseEffect();
 
 		glClear(GL_DEPTH_BUFFER_BIT);
+		
+		s_currentEffect->SetFloat("tessLevel", 100);
+		s_currentEffect->SetInteger("displacementMap", 24);
+		s_currentEffect->SetFloat("displaceIntensity", 20.0f);
 
-		RenderSceneWithoutMaterial();
+		cTexture* _dispalcementMap = cTexture::s_manager.Get(g_quadTeapotDisplacementMapHandle);
+		_dispalcementMap->UseTexture(GL_TEXTURE24);
 
+		// loop through every single model
+		for (auto it = s_dataRenderingByGraphicThread->s_renderPasses[s_currentRenderPass].ModelToTransform_map.begin();
+			it != s_dataRenderingByGraphicThread->s_renderPasses[s_currentRenderPass].ModelToTransform_map.end(); ++it)
+		{
+			// 1. Update draw call data
+			s_uniformBuffer_drawcall.Update(&UniformBufferFormats::sDrawCall(it->second.M(), it->second.TranspostInverse()));
+			// 2. Draw
+			cModel* _model = cModel::s_manager.Get(it->first);
+
+			if (_model) {
+				cMatPBRMR* _pbrMat = dynamic_cast<cMatPBRMR*>(_model->GetMaterialAt());
+				cTexture* _normal = cTexture::s_manager.Get(_pbrMat->GetNormalMapHandle());
+				s_currentEffect->SetInteger("NormalMap", 3);
+				_normal->UseTexture(GL_TEXTURE3);
+				_model->RenderWithoutMaterial(GL_PATCHES);
+				_normal->UnBindTexture(GL_TEXTURE3, ETT_FILE);
+			}
+			
+		}
+
+		_dispalcementMap->UnBindTexture(GL_TEXTURE24, ETT_FILE);
 		s_currentEffect->UnUseEffect();
 	}
 	void RenderSceneWithoutMaterial()
@@ -977,7 +1028,7 @@ namespace Graphics {
 
 	}
 
-	void RenderScene()
+	void RenderScene(GLenum i_drawMode /*= GL_TRIANGLES*/)
 	{
 		// loop through every single model
 		for (auto it = s_dataRenderingByGraphicThread->s_renderPasses[s_currentRenderPass].ModelToTransform_map.begin();
@@ -990,7 +1041,7 @@ namespace Graphics {
 			cModel* _model = cModel::s_manager.Get(it->first);
 			if (_model) {
 				_model->UpdateUniformVariables(s_currentEffect->GetProgramID());
-				_model->Render();
+				_model->Render(i_drawMode);
 			}
 		}
 
@@ -1022,6 +1073,7 @@ namespace Graphics {
 		cModel::s_manager.Release(s_quadHandle);
 		cTexture::s_manager.Release(s_spruitSunRise_HDR);
 		cMesh::s_manager.Release(s_point);
+		cTexture::s_manager.Release(g_quadTeapotDisplacementMapHandle);
 		// Clean up effect
 		for (auto it = s_KeyToEffect_map.begin(); it != s_KeyToEffect_map.end(); ++it)
 		{
