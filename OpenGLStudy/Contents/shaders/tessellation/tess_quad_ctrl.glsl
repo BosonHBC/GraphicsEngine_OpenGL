@@ -16,17 +16,17 @@ uniform float tessLevel;
 void main()
 {
     
-    if (gl_InvocationID == 0)
-    {
-        gl_TessLevelOuter[0] = tessLevel;
-        gl_TessLevelOuter[1] = tessLevel;
-        gl_TessLevelOuter[2] = tessLevel;
-        //gl_TessLevelOuter[3] = 5.f;
-
-        gl_TessLevelInner[0] = tessLevel-2.f;
-       // gl_TessLevelInner[1] = 9.f;
-    }
     WorldPos_ES_in[gl_InvocationID] = fragPos[gl_InvocationID];
     TexCood_ES_in[gl_InvocationID]  = texCood0[gl_InvocationID];
     TBN_ES_in[gl_InvocationID]      = TBN[gl_InvocationID];       
+
+    gl_TessLevelOuter[0] = tessLevel;
+    gl_TessLevelOuter[1] = tessLevel;
+    gl_TessLevelOuter[2] = tessLevel;
+    //gl_TessLevelOuter[3] = tessLevel;
+
+    gl_TessLevelInner[0] = tessLevel;
+    //gl_TessLevelInner[1] = tessLevel;
+
+
 }

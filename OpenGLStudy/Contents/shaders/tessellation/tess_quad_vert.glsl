@@ -45,7 +45,7 @@ void main()
 		vec3 B = cross(N, T);
 	*/
 
-	vec4 worldPos = modelMatrix * vec4(pos.x, pos.y, pos.z, 1.0);
+	vec4 worldPos = modelMatrix * vec4(pos, 1.0);
 	fragPos = worldPos.xyz;
 	
 	// Directional light space

@@ -32,7 +32,7 @@ bool Assignment::Initialize(GLuint i_width, GLuint i_height, const char* i_windo
 		printf("Failed to initialize Application!");
 		return false;
 	}
-	
+
 	CreateActor();
 	CreateCamera();
 	CreateLight();
@@ -83,7 +83,8 @@ void Assignment::CreateActor()
 
 	Graphics::cModel* _cubeMap = Graphics::cModel::s_manager.Get(m_cubemap->GetModelHandle());
 	Graphics::cMatCubemap* _matCubemap = dynamic_cast<Graphics::cMatCubemap*>(_cubeMap->GetMaterialAt());
-	_matCubemap->UpdateCubemap(Graphics::GetHDRtoCubemap()->GetCubemapTextureHandle()); // used for debugging the environment
+	if (_matCubemap)
+		_matCubemap->UpdateCubemap(Graphics::GetHDRtoCubemap()->GetCubemapTextureHandle()); // used for debugging the environment
 
 
 	m_spaceHolder = new cActor();
@@ -94,7 +95,7 @@ void Assignment::CreateActor()
 
 	m_gun = new cActor();
 	m_gun->Initialize();
-	m_gun->Transform()->SetTransform(glm::vec3(300, 50, 100), glm::quat(glm::vec3(0, glm::radians(90.f), 0)), glm::vec3(1,1,1));
+	m_gun->Transform()->SetTransform(glm::vec3(300, 50, 100), glm::quat(glm::vec3(0, glm::radians(90.f), 0)), glm::vec3(1, 1, 1));
 	m_gun->SetModel("Contents/models/Cerberus.model");
 	m_gun->UpdateUniformVariables(Graphics::GetEffectByKey("PBR_MR"));
 
@@ -115,7 +116,7 @@ void Assignment::CreateActor()
 
 	m_teapotQuad = new cActor();
 	m_teapotQuad->Initialize();
-	m_teapotQuad->Transform()->SetTransform(glm::vec3(0, 50, 0), glm::quat(glm::vec3(0, 0, 0)), glm::vec3(50, 1, 50));
+	m_teapotQuad->Transform()->SetTransform(glm::vec3(0, 50, 0), glm::quat(glm::vec3(0, 0, 0)), glm::vec3(50, 50, 50));
 	m_teapotQuad->SetModel("Contents/models/tessQuad.model");
 	m_teapotQuad->UpdateUniformVariables(Graphics::GetEffectByKey("TessQuad"));
 
@@ -132,9 +133,9 @@ void Assignment::CreateCamera()
 void Assignment::CreateLight()
 {
 	Graphics::CreateAmbientLight(Color(0.1f, 0.1f, 0.1f), aLight);
-	Graphics::CreatePointLight(glm::vec3(-100, 150.f, 100.f), Color(1,1,1), 300.f, true, pLight1);
+	Graphics::CreatePointLight(glm::vec3(-100, 150.f, 100.f), Color(1, 1, 1), 300.f, true, pLight1);
 	//Graphics::CreatePointLight(glm::vec3(100, 150.f, 100.f), Color(1, 1, 1), 1.f, 0.7f, 1.8f, true, pLight2);
-	Graphics::CreateDirectionalLight(Color(0.6,0.6,0.5), glm::vec3(-1, -0.5f, -0.5f), true, dLight);
+	Graphics::CreateDirectionalLight(Color(0.6, 0.6, 0.5), glm::vec3(-1, -0.5f, -0.5f), true, dLight);
 	//Graphics::CreateSpotLight(glm::vec3(0, 150, 0), glm::vec3(0, 1, 1), Color(1), 65.f, 1.5f, 0.3f, 5.f, true, spLight);
 	//Graphics::CreateSpotLight(glm::vec3(100, 150, 0), glm::vec3(1, 1, 0), Color(1), 65.f, 1.f, 0.7f, 1.8f, true, spLight2);
 
@@ -277,7 +278,7 @@ void Assignment::Tick(float second_since_lastFrame)
 			_frameData_Camera.ViewPosition = m_editorCamera->CamLocation();
 			// Submit geometry data
 			SubmitSceneData(&_frameData_Camera);
-			
+
 			// Gizmos
 			{
 				std::vector<std::pair<Graphics::cModel::HANDLE, cTransform>> _renderingMap;

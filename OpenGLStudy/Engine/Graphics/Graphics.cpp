@@ -20,6 +20,8 @@
 #include "Assets/PathProcessor.h"
 #include "EnvironmentCaptureManager.h" 
 
+#include "Application/Window/WindowInput.h"
+
 namespace Graphics {
 
 	unsigned int s_currentRenderPass = 0;
@@ -411,6 +413,12 @@ namespace Graphics {
 		glDepthFunc(GL_LEQUAL);
 		glEnable(GL_CULL_FACE);
 		glCullFace(GL_BACK);
+
+		GLint MaxPatchVertices = 0;
+		glGetIntegerv(GL_MAX_PATCH_VERTICES, &MaxPatchVertices);
+		printf("Max supported patch vertices %d\n", MaxPatchVertices);
+		glPatchParameteri(GL_PATCH_VERTICES, 3);
+
 		assert(GL_NO_ERROR == glGetError());
 
 		return result;
@@ -976,6 +984,9 @@ namespace Graphics {
 	}
 	void Gizmo_RenderTriangulation()
 	{
+		sWindowInput* _input = Application::GetCurrentApplication()->GetCurrentWindow()->GetWindowInput();
+		//if (!_input->IsKeyDown(GLFW_KEY_T)) return;
+
 		s_currentEffect = GetEffectByKey("TriangulationDisplay");
 		s_currentEffect->UseEffect();
 
@@ -998,8 +1009,10 @@ namespace Graphics {
 			cModel* _model = cModel::s_manager.Get(it->first);
 
 			if (_model) {
+				_model->UpdateUniformVariables(s_currentEffect->GetProgramID());
 				cMatPBRMR* _pbrMat = dynamic_cast<cMatPBRMR*>(_model->GetMaterialAt());
-				cTexture* _normal = cTexture::s_manager.Get(_pbrMat->GetNormalMapHandle());
+				auto _handle = _pbrMat->GetNormalMapHandle();
+				cTexture* _normal = cTexture::s_manager.Get(_handle);
 				s_currentEffect->SetInteger("NormalMap", 3);
 				_normal->UseTexture(GL_TEXTURE3);
 				_model->RenderWithoutMaterial(GL_PATCHES);
