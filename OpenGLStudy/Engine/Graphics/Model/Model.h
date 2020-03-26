@@ -25,10 +25,10 @@ namespace Graphics {
 
 		/** Usage functions*/
 		void UpdateUniformVariables(GLuint i_programID);
-		void Render();
+		void Render(GLenum i_drawMode = GL_TRIANGLES);
 		// This rendering only draw elements without using material data
 		// Usually is used for shadow map
-		void RenderWithoutMaterial();
+		void RenderWithoutMaterial(GLenum i_drawMode = GL_TRIANGLES);
 		void CleanUp();
 
 		/** Getters */

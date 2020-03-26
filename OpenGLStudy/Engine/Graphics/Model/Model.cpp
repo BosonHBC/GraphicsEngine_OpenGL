@@ -91,7 +91,7 @@ namespace Graphics {
 		}
 	}
 
-	void cModel::Render()
+	void cModel::Render(GLenum i_drawMode/* = GL_TRIANGLES*/)
 	{
 
 		for (size_t i = 0; i < m_meshList.size(); ++i)
@@ -101,10 +101,10 @@ namespace Graphics {
 			if (_material) {
 				_material->UseMaterial();
 			}
-
+			
 			auto _mesh = cMesh::s_manager.Get(m_meshList[i]);
 			if (_mesh)
-				_mesh->Render();
+				_mesh->Render(i_drawMode);
 
 			if (_material) {
 				_material->CleanUpMaterialBind();
@@ -112,13 +112,13 @@ namespace Graphics {
 		}
 	}
 
-	void cModel::RenderWithoutMaterial()
+	void cModel::RenderWithoutMaterial(GLenum i_drawMode/* = GL_TRIANGLES*/)
 	{
 		for (size_t i = 0; i < m_meshList.size(); ++i)
 		{
 			auto _mesh = cMesh::s_manager.Get(m_meshList[i]);
 			if (_mesh)
-				_mesh->Render();
+				_mesh->Render(i_drawMode);
 		}
 	}
 

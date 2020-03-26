@@ -30,13 +30,13 @@ const vec3 gridSamplingDisk[20] =vec3[]
    vec3(0, 1,  1), vec3( 0, -1,  1), vec3( 0, -1, -1), vec3( 0, 1, -1)
 );
 
-in vec2 texCood0;
 in vec3 fragPos;
-in vec4 clipSpaceCoord;
+in vec2 texCood0;
 in mat3 TBN;
 
 in vec4 DirectionalLightSpacePos;
 in vec4 SpotLightSpacePos[MAX_COUNT_PER_LIGHT];
+
 layout(std140, binding = 0) uniform uniformBuffer_frame
 {
 	// PVMatrix stands for projection * view matrix
@@ -297,7 +297,7 @@ vec3 CalcAmbientLight(AmbientLight aLight, vec3 albedoColor,float metalness, flo
 	
 	// sample both the pre-filter map and the BRDF lut and combine them together as per the Split-Sum approximation to get the IBL specular part.    
 	vec3 prefilteredColor = GetBlendedPreFilterTexture(vR, roughness);
-	vec2 brdfuv = vec2(max(dot(vN, vV), 0.0), roughness);
+	vec2 brdfuv = vec2(max(dot(vN, vV), 0.0), 1 - roughness);
     vec2 brdf  = texture(BrdfLUTMap, brdfuv).rg;
     vec3 specular = prefilteredColor * (kS * brdf.x + brdf.y);
 	

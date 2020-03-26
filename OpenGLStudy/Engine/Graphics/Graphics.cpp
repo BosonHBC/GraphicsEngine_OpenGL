@@ -20,6 +20,8 @@
 #include "Assets/PathProcessor.h"
 #include "EnvironmentCaptureManager.h" 
 
+#include "Application/Window/WindowInput.h"
+
 namespace Graphics {
 
 	unsigned int s_currentRenderPass = 0;
@@ -45,6 +47,7 @@ namespace Graphics {
 	cModel::HANDLE s_quadHandle;
 	cMesh::HANDLE s_point;
 	cTexture::HANDLE s_spruitSunRise_HDR;
+	cTexture::HANDLE g_quadTeapotDisplacementMapHandle;
 	// Lighting data
 	UniformBufferFormats::sLighting s_globalLightingData;
 
@@ -80,7 +83,7 @@ namespace Graphics {
 
 	// Functions
 	// ------------------------------------------------------------------------------------------------------------------------------------
-	void RenderScene();
+	void RenderScene(GLenum i_drawMode = GL_TRIANGLES);
 	void RenderSceneWithoutMaterial();
 	void Gizmo_DrawDebugCaptureVolume();
 
@@ -157,6 +160,9 @@ namespace Graphics {
 					printf("Fail to create OmniShadowMap effect.\n");
 					return result;
 				}
+				else {
+						GetEffectByKey("OmniShadowMap")->ValidateProgram();
+				}
 			}
 			// Create cube map effect
 			{
@@ -186,6 +192,7 @@ namespace Graphics {
 					printf("Fail to create normal display effect.\n");
 					return result;
 				}
+				GetEffectByKey("NormalDisplay")->ValidateProgram();
 			}
 			// Create PBR_MetallicRoughness effect
 			{
@@ -249,6 +256,38 @@ namespace Graphics {
 				}
 				GetEffectByKey("DrawDebugCircles")->ValidateProgram();
 			}
+			// Tess quad effect
+			{
+				if (!(result = CreateEffect("TessQuad",
+					"tessellation/tess_quad_vert.glsl",
+					"PBR_MetallicRoughness.glsl",
+					"",
+					"tessellation/tess_quad_ctrl.glsl",
+					"tessellation/tess_quad_evalue.glsl"
+				))) {
+					printf("Fail to create TessQuad effect.\n");
+					return result;
+				}
+				else
+				{
+					FixSamplerProblem("TessQuad");
+				}
+				GetEffectByKey("TessQuad")->ValidateProgram();
+			}
+			// Create triangulation display effect
+			{
+				if (!(result = CreateEffect("TriangulationDisplay",
+					"tessellation/tess_quad_vert.glsl",
+					"normalDisplayer/normal_frag.glsl",
+					"triangulationDisplayer/triangulation_geom.glsl",
+					"tessellation/tess_quad_ctrl.glsl",
+					"tessellation/tess_quad_evalue.glsl"
+				))) {
+					printf("Fail to create TriangulationDisplay effect.\n");
+					return result;
+				}
+				GetEffectByKey("TriangulationDisplay")->ValidateProgram();
+			}
 		}
 
 		// Initialize uniform buffer
@@ -304,17 +343,20 @@ namespace Graphics {
 				printf("Fail to create brdfLUTTexture.\n");
 				return result;
 			}
+
+/*
 			EnvironmentCaptureManager::AddCaptureProbes(cSphere(glm::vec3(-450, 10, 0), 600.f), 50.f, envMapResolution);
 			EnvironmentCaptureManager::AddCaptureProbes(cSphere(glm::vec3(-225, 10, 0), 600.f), 50.f, envMapResolution);
 			EnvironmentCaptureManager::AddCaptureProbes(cSphere(glm::vec3(-450, 290, 0), 600.f), 50.f, envMapResolution);
-			EnvironmentCaptureManager::AddCaptureProbes(cSphere(glm::vec3(-225, 290, 0), 600.f), 50.f, envMapResolution);
+			EnvironmentCaptureManager::AddCaptureProbes(cSphere(glm::vec3(-225, 290, 0), 600.f), 50.f, envMapResolution);*/
 		
 			EnvironmentCaptureManager::AddCaptureProbes(cSphere(glm::vec3(0, 130, 0), 600.f), 50.f, envMapResolution);
 
+/*
 			EnvironmentCaptureManager::AddCaptureProbes(cSphere(glm::vec3(225, 290, 0), 600.f), 50.f, envMapResolution);
-			EnvironmentCaptureManager::AddCaptureProbes(cSphere(glm::vec3(450,290, 0), 600.f), 50.f, envMapResolution);
+			EnvironmentCaptureManager::AddCaptureProbes(cSphere(glm::vec3(450, 290, 0), 600.f), 50.f, envMapResolution);
 			EnvironmentCaptureManager::AddCaptureProbes(cSphere(glm::vec3(225, 10, 0), 600.f), 50.f, envMapResolution);
-			EnvironmentCaptureManager::AddCaptureProbes(cSphere(glm::vec3(450, 10, 0), 600.f), 50.f, envMapResolution);
+			EnvironmentCaptureManager::AddCaptureProbes(cSphere(glm::vec3(450, 10, 0), 600.f), 50.f, envMapResolution);*/
 			EnvironmentCaptureManager::BuildAccelerationStructure();
 
 		}
@@ -359,6 +401,13 @@ namespace Graphics {
 				printf("Failed to LoadspruitSunRise_HDR texture!\n");
 				return result;
 			}
+			_path = "teapot_disp.png";
+			_path = Assets::ProcessPathTex(_path);
+			if (!(result = cTexture::s_manager.Load(_path, g_quadTeapotDisplacementMapHandle)))
+			{
+				printf("Failed to quadTeapot DisplacementMap texture!\n");
+				return result;
+			}
 		}
 
 		// Enable opengl features
@@ -367,6 +416,12 @@ namespace Graphics {
 		glDepthFunc(GL_LEQUAL);
 		glEnable(GL_CULL_FACE);
 		glCullFace(GL_BACK);
+
+		GLint MaxPatchVertices = 0;
+		glGetIntegerv(GL_MAX_PATCH_VERTICES, &MaxPatchVertices);
+		printf("Max supported patch vertices %d\n", MaxPatchVertices);
+		glPatchParameteri(GL_PATCH_VERTICES, 3);
+
 		assert(GL_NO_ERROR == glGetError());
 
 		return result;
@@ -428,6 +483,12 @@ namespace Graphics {
 			s_brdfLUTTexture.Write();
 
 			glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+			cTransform quadTransform;
+			quadTransform.SetRotation(glm::vec3(glm::radians(90.f), 0, 0));
+
+			quadTransform.Update();
+			s_uniformBuffer_drawcall.Update(&UniformBufferFormats::sDrawCall(quadTransform.M(), quadTransform.TranspostInverse()));
+
 			// Render quad
 			cModel* _quad = cModel::s_manager.Get(s_quadHandle);
 			if (_quad) {
@@ -515,6 +576,9 @@ namespace Graphics {
 		s_currentEffect = GetEffectByKey("OmniShadowMap");
 		s_currentEffect->UseEffect();
 
+		s_currentEffect->SetInteger("displacementMap", 24);
+		s_currentEffect->SetFloat("displaceIntensity", 20.0f);
+
 		for (auto i = 0; i < s_dataRenderingByGraphicThread->s_pointLights.size(); ++i)
 		{
 			auto* it = &s_dataRenderingByGraphicThread->s_pointLights[i];
@@ -535,7 +599,6 @@ namespace Graphics {
 				glClearColor(0, 0, 0, 1.f);
 				glClear(GL_DEPTH_BUFFER_BIT);
 
-				s_currentEffect->ValidateProgram();
 				// Draw scenes
 				RenderSceneWithoutMaterial();
 
@@ -692,15 +755,8 @@ namespace Graphics {
 		// Swap buffers happens in main rendering loop, not in this render function.
 	}
 
-	void PBR_Pass()
+	void UpdateInfoForPBR()
 	{
-		s_currentEffect = GetEffectByKey("PBR_MR");
-		s_currentEffect->UseEffect();
-
-		glClearColor(s_clearColor.r, s_clearColor.g, s_clearColor.b, 0.f);
-		// A lot of things can be cleaned like color buffer, depth buffer, so we need to specify what to clear
-		glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-
 		// Update Lighting Data
 		UpdateLightingData();
 
@@ -748,6 +804,20 @@ namespace Graphics {
 			cTexture::UnBindTexture(GL_TEXTURE0 + cubemapStartUnit + i, ETT_FRAMEBUFFER_HDR_CUBEMAP);
 			cTexture::UnBindTexture(GL_TEXTURE0 + cubemapStartUnit + maxCubemapMixing + i, ETT_FRAMEBUFFER_HDR_MIPMAP_CUBEMAP);
 		}
+		assert(glGetError() == GL_NO_ERROR);
+
+	}
+
+	void PBR_Pass()
+	{
+		s_currentEffect = GetEffectByKey("PBR_MR");
+		s_currentEffect->UseEffect();
+
+		glClearColor(s_clearColor.r, s_clearColor.g, s_clearColor.b, 0.f);
+		// A lot of things can be cleaned like color buffer, depth buffer, so we need to specify what to clear
+		glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+
+		UpdateInfoForPBR();
 
 		auto& renderList = s_dataRenderingByGraphicThread->s_renderPasses[s_currentRenderPass].ModelToTransform_map;
 		const auto sphereOffset = renderList.size() - 25;
@@ -809,6 +879,36 @@ namespace Graphics {
 
 		// set depth function back to default
 		glEnable(GL_CULL_FACE);
+	}
+
+	void Tessellation_Pass()
+	{
+		s_currentEffect = GetEffectByKey("TessQuad");
+		s_currentEffect->UseEffect();
+
+		UpdateInfoForPBR();
+
+		s_currentEffect->SetFloat("tessLevel", 100);
+		s_currentEffect->SetInteger("displacementMap", 24);
+		s_currentEffect->SetFloat("displaceIntensity", 20.0f);
+
+		cTexture* _dispalcementMap = cTexture::s_manager.Get(g_quadTeapotDisplacementMapHandle);
+		_dispalcementMap->UseTexture(GL_TEXTURE24);
+
+		auto& renderList = s_dataRenderingByGraphicThread->s_renderPasses[s_currentRenderPass].ModelToTransform_map;
+		auto& _pair = renderList[renderList.size() -1];
+		{
+			// 1. Update draw call data
+			s_uniformBuffer_drawcall.Update(&UniformBufferFormats::sDrawCall(_pair.second.M(), _pair.second.TranspostInverse()));
+			// 2. Draw
+			cModel* _model = cModel::s_manager.Get(_pair.first);
+			if (_model) {
+				_model->UpdateUniformVariables(s_currentEffect->GetProgramID());
+				_model->Render(GL_PATCHES);
+			}
+		}
+
+		s_currentEffect->UnUseEffect();
 	}
 
 	void Gizmo_RenderTransform()
@@ -891,12 +991,53 @@ namespace Graphics {
 		s_currentEffect->UseEffect();
 
 		glClear(GL_DEPTH_BUFFER_BIT);
-		s_currentEffect->ValidateProgram();
+		
 		RenderSceneWithoutMaterial();
 
 		s_currentEffect->UnUseEffect();
 	}
+	void Gizmo_RenderTriangulation()
+	{
+		sWindowInput* _input = Application::GetCurrentApplication()->GetCurrentWindow()->GetWindowInput();
+		if (!_input->IsKeyDown(GLFW_KEY_T)) return;
 
+		s_currentEffect = GetEffectByKey("TriangulationDisplay");
+		s_currentEffect->UseEffect();
+
+		glClear(GL_DEPTH_BUFFER_BIT);
+		
+		s_currentEffect->SetFloat("tessLevel", 100);
+		s_currentEffect->SetInteger("displacementMap", 24);
+		s_currentEffect->SetFloat("displaceIntensity", 20.0f);
+
+		cTexture* _dispalcementMap = cTexture::s_manager.Get(g_quadTeapotDisplacementMapHandle);
+		_dispalcementMap->UseTexture(GL_TEXTURE24);
+
+		// loop through every single model
+		for (auto it = s_dataRenderingByGraphicThread->s_renderPasses[s_currentRenderPass].ModelToTransform_map.begin();
+			it != s_dataRenderingByGraphicThread->s_renderPasses[s_currentRenderPass].ModelToTransform_map.end(); ++it)
+		{
+			// 1. Update draw call data
+			s_uniformBuffer_drawcall.Update(&UniformBufferFormats::sDrawCall(it->second.M(), it->second.TranspostInverse()));
+			// 2. Draw
+			cModel* _model = cModel::s_manager.Get(it->first);
+
+			if (_model) {
+				_model->UpdateUniformVariables(s_currentEffect->GetProgramID());
+				cMatPBRMR* _pbrMat = dynamic_cast<cMatPBRMR*>(_model->GetMaterialAt());
+				auto _handle = _pbrMat->GetNormalMapHandle();
+				cTexture* _normal = cTexture::s_manager.Get(_handle);
+				s_currentEffect->SetInteger("NormalMap", 3);
+				_normal->UseTexture(GL_TEXTURE3);
+				_model->RenderWithoutMaterial(GL_PATCHES);
+				_normal->UnBindTexture(GL_TEXTURE3, ETT_FILE);
+			}
+			
+		}
+
+		_dispalcementMap->UnBindTexture(GL_TEXTURE24, ETT_FILE);
+		s_currentEffect->UnUseEffect();
+	}
 	void RenderSceneWithoutMaterial()
 	{
 		// loop through every single model
@@ -914,7 +1055,7 @@ namespace Graphics {
 
 	}
 
-	void RenderScene()
+	void RenderScene(GLenum i_drawMode /*= GL_TRIANGLES*/)
 	{
 		// loop through every single model
 		for (auto it = s_dataRenderingByGraphicThread->s_renderPasses[s_currentRenderPass].ModelToTransform_map.begin();
@@ -927,7 +1068,7 @@ namespace Graphics {
 			cModel* _model = cModel::s_manager.Get(it->first);
 			if (_model) {
 				_model->UpdateUniformVariables(s_currentEffect->GetProgramID());
-				_model->Render();
+				_model->Render(i_drawMode);
 			}
 		}
 
@@ -959,6 +1100,7 @@ namespace Graphics {
 		cModel::s_manager.Release(s_quadHandle);
 		cTexture::s_manager.Release(s_spruitSunRise_HDR);
 		cMesh::s_manager.Release(s_point);
+		cTexture::s_manager.Release(g_quadTeapotDisplacementMapHandle);
 		// Clean up effect
 		for (auto it = s_KeyToEffect_map.begin(); it != s_KeyToEffect_map.end(); ++it)
 		{
@@ -1056,12 +1198,12 @@ namespace Graphics {
 	/** Effect related */
 	//----------------------------------------------------------------------------------
 
-	bool CreateEffect(const char* i_key, const char* i_vertexShaderPath, const char* i_fragmentShaderPath, const char* i_geometryShaderPath/* = ""*/)
+	bool CreateEffect(const char* i_key, const char* i_vertexShaderPath, const char* i_fragmentShaderPath, const char* i_geometryShaderPath/* = ""*/, const char* const i_TCSPath /*= ""*/, const char* const i_TESPath/* = ""*/)
 	{
 		auto result = true;
 
 		cEffect* newEffect = new  Graphics::cEffect();
-		if (!(result = newEffect->CreateProgram(i_vertexShaderPath, i_fragmentShaderPath, i_geometryShaderPath))) {
+		if (!(result = newEffect->CreateProgram(i_vertexShaderPath, i_fragmentShaderPath, i_geometryShaderPath, i_TCSPath, i_TESPath))) {
 			printf("Fail to create default effect.\n");
 			safe_delete(newEffect);
 			return result;
@@ -1167,8 +1309,6 @@ namespace Graphics {
 	void UpdateLightingData()
 	{
 		s_dataRenderingByGraphicThread->s_ambientLight.Illuminate();
-
-
 
 		for (int i = 0; i < s_dataRenderingByGraphicThread->s_spotLights.size(); ++i)
 		{

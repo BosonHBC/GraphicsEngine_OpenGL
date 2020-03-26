@@ -146,11 +146,12 @@ namespace Graphics {
 		glEnableVertexAttribArray(0);
 	}
 
-	void cMesh::Render()
+
+	void cMesh::Render(GLenum i_drawMode /*= GL_TRIANGLES*/)
 	{
 		// bind VAO
 		glBindVertexArray(m_vao);
-
+		GLenum _drawMode = i_drawMode;
 		switch (m_meshType)
 		{
 		case Graphics::EMT_Mesh:
@@ -158,8 +159,10 @@ namespace Graphics {
 			//bind IBO
 			glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, m_ibo);
 
+			if (_drawMode != GL_PATCHES)
+				_drawMode = GL_TRIANGLES;
 			// Index draw
-			glDrawElements(GL_TRIANGLES, m_indexCount, GL_UNSIGNED_INT, 0);
+			glDrawElements(_drawMode, m_indexCount, GL_UNSIGNED_INT, 0);
 			assert(glGetError() == GL_NO_ERROR);
 			// Vertex draw
 			//glDrawArrays(GL_TRIANGLES, 0, 3);
@@ -169,7 +172,9 @@ namespace Graphics {
 		}
 		break;
 		case Graphics::EMT_Point:
-			glDrawArrays(GL_POINTS, 0, m_indexCount);
+			if (_drawMode != GL_PATCHES)
+				_drawMode = GL_POINTS;
+			glDrawArrays(_drawMode, 0, m_indexCount);
 			assert(glGetError() == GL_NO_ERROR);
 			break;
 		default:

@@ -75,11 +75,10 @@ namespace Graphics
 		else
 			cTexture::UnBindTexture(GL_TEXTURE3, ETT_FILE);
 
-
-
-
-
 		s_PBRMRUniformBlock.Update(&UniformBufferFormats::sPBRMRMaterial(m_diffuseIntensity, m_roughnessIntensity, m_ior, m_metallicIntensity));
+
+		assert(GL_NO_ERROR == glGetError());
+
 	}
 
 	void cMatPBRMR::CleanUpMaterialBind()
@@ -100,6 +99,8 @@ namespace Graphics
 		cTexture* _normalTex = cTexture::s_manager.Get(m_normalMapHandle);
 		if (_normalTex)
 			_normalTex->CleanUpTextureBind(GL_TEXTURE3);
+
+		assert(GL_NO_ERROR == glGetError());
 
 	}
 

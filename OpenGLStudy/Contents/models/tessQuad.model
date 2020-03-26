@@ -3,7 +3,7 @@
 ]]
 return 
 {
-    ModelPath = "quad.obj",
+    ModelPath = "quad2.obj",
     MaterialPath = "tessQuad.material",
 
 }

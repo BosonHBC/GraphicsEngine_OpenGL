@@ -32,7 +32,7 @@ bool Assignment::Initialize(GLuint i_width, GLuint i_height, const char* i_windo
 		printf("Failed to initialize Application!");
 		return false;
 	}
-	
+
 	CreateActor();
 	CreateCamera();
 	CreateLight();
@@ -60,7 +60,7 @@ void Assignment::CreateActor()
 {
 	m_teapot = new cActor();
 	m_teapot->Initialize();
-	m_teapot->Transform()->SetTransform(glm::vec3(0, 0, 130), glm::quat(glm::vec3(-glm::radians(90.f), 0, 0)), glm::vec3(5, 5, 5));
+	m_teapot->Transform()->SetTransform(glm::vec3(0, 0, 190), glm::quat(glm::vec3(-glm::radians(90.f), 0, 0)), glm::vec3(5, 5, 5));
 	m_teapot->SetModel("Contents/models/pbrTeapot.model");
 	m_teapot->UpdateUniformVariables(Graphics::GetEffectByKey("PBR_MR"));
 
@@ -83,7 +83,8 @@ void Assignment::CreateActor()
 
 	Graphics::cModel* _cubeMap = Graphics::cModel::s_manager.Get(m_cubemap->GetModelHandle());
 	Graphics::cMatCubemap* _matCubemap = dynamic_cast<Graphics::cMatCubemap*>(_cubeMap->GetMaterialAt());
-	_matCubemap->UpdateCubemap(Graphics::GetHDRtoCubemap()->GetCubemapTextureHandle()); // used for debugging the environment
+	if (_matCubemap)
+		_matCubemap->UpdateCubemap(Graphics::GetHDRtoCubemap()->GetCubemapTextureHandle()); // used for debugging the environment
 
 
 	m_spaceHolder = new cActor();
@@ -94,7 +95,7 @@ void Assignment::CreateActor()
 
 	m_gun = new cActor();
 	m_gun->Initialize();
-	m_gun->Transform()->SetTransform(glm::vec3(300, 50, 100), glm::quat(glm::vec3(0, glm::radians(90.f), 0)), glm::vec3(1,1,1));
+	m_gun->Transform()->SetTransform(glm::vec3(300, 50, 100), glm::quat(glm::vec3(0, glm::radians(90.f), 0)), glm::vec3(1, 1, 1));
 	m_gun->SetModel("Contents/models/Cerberus.model");
 	m_gun->UpdateUniformVariables(Graphics::GetEffectByKey("PBR_MR"));
 
@@ -112,12 +113,11 @@ void Assignment::CreateActor()
 			m_sphereList.push_back(_sphere);
 		}
 	}
-
 }
 
 void Assignment::CreateCamera()
 {
-	m_editorCamera = new  cEditorCamera(glm::vec3(0, 150, 350), 5, 0, 300, 10.f);
+	m_editorCamera = new  cEditorCamera(glm::vec3(0, 150, 10), 89, 0, 300, 10.f);
 	float _aspect = (float)(GetCurrentWindow()->GetBufferWidth()) / (float)(GetCurrentWindow()->GetBufferHeight());
 	m_editorCamera->CreateProjectionMatrix(glm::radians(60.f), _aspect, 1.f, 6000.0f);
 	m_editorCamera->Transform()->Update();
@@ -125,10 +125,10 @@ void Assignment::CreateCamera()
 
 void Assignment::CreateLight()
 {
-	Graphics::CreateAmbientLight(Color(0.5f, 0.5f, 0.5f), aLight);
-	Graphics::CreatePointLight(glm::vec3(-100, 150.f, 100.f), Color(1,1,1), 300.f, true, pLight1);
+	Graphics::CreateAmbientLight(Color(0.1f, 0.1f, 0.1f), aLight);
+	Graphics::CreatePointLight(glm::vec3(-100, 150.f, 100.f), Color(1, 1, 1), 300.f, true, pLight1);
 	//Graphics::CreatePointLight(glm::vec3(100, 150.f, 100.f), Color(1, 1, 1), 1.f, 0.7f, 1.8f, true, pLight2);
-	Graphics::CreateDirectionalLight(Color(0.6,0.6,0.5), glm::vec3(-1, -0.5f, -0.5f), true, dLight);
+	Graphics::CreateDirectionalLight(Color(0.6, 0.6, 0.5), glm::vec3(-1, -0.5f, -0.5f), true, dLight);
 	//Graphics::CreateSpotLight(glm::vec3(0, 150, 0), glm::vec3(0, 1, 1), Color(1), 65.f, 1.5f, 0.3f, 5.f, true, spLight);
 	//Graphics::CreateSpotLight(glm::vec3(100, 150, 0), glm::vec3(1, 1, 0), Color(1), 65.f, 1.f, 0.7f, 1.8f, true, spLight2);
 
@@ -154,8 +154,6 @@ void Assignment::BeforeUpdate()
 void Assignment::Run()
 {
 	Graphics::PreRenderFrame();
-
-
 
 	// loop until window closed
 	while (!m_shouldApplicationLoopExit)
@@ -274,36 +272,43 @@ void Assignment::Tick(float second_since_lastFrame)
 			// Submit geometry data
 			SubmitSceneData(&_frameData_Camera);
 
-			// Transform Gizmo
+			// Gizmos
 			{
 				std::vector<std::pair<Graphics::cModel::HANDLE, cTransform>> _renderingMap;
-				_renderingMap.reserve(8);
-				cTransform _worldTransform;
-				Assets::cHandle<Graphics::cModel> unneccessaryHandle;
-				_renderingMap.push_back({ unneccessaryHandle, _worldTransform });
-				//_renderingMap.push_back({ unneccessaryHandle, *m_teapot->Transform() });
+				// Transform Gizmo
+				{
+					_renderingMap.reserve(8);
+					Assets::cHandle<Graphics::cModel> unneccessaryHandle;
+					//cTransform _worldTransform;
+					//_renderingMap.push_back({ unneccessaryHandle, _worldTransform });
+					//_renderingMap.push_back({ unneccessaryHandle, *m_teapot->Transform() });
 
-				if (pLight1)
-					_renderingMap.push_back({ unneccessaryHandle, *pLight1->Transform() });
-				if (pLight2)
-					_renderingMap.push_back({ unneccessaryHandle, *pLight2->Transform() });
-				if (spLight)
-					_renderingMap.push_back({ unneccessaryHandle, *spLight->Transform() });
-				if (spLight2)
-					_renderingMap.push_back({ unneccessaryHandle, *spLight2->Transform() });
-				Graphics::SubmitDataToBeRendered(_frameData_Camera, _renderingMap, &Graphics::Gizmo_RenderTransform);
-			}
+					if (pLight1)
+						_renderingMap.push_back({ unneccessaryHandle, *pLight1->Transform() });
+					if (pLight2)
+						_renderingMap.push_back({ unneccessaryHandle, *pLight2->Transform() });
+					if (spLight)
+						_renderingMap.push_back({ unneccessaryHandle, *spLight->Transform() });
+					if (spLight2)
+						_renderingMap.push_back({ unneccessaryHandle, *spLight2->Transform() });
+					Graphics::SubmitDataToBeRendered(_frameData_Camera, _renderingMap, &Graphics::Gizmo_RenderTransform);
+				}
 
-			// Normal gizmo
-			if (false)
-			{
-				std::vector<std::pair<Graphics::cModel::HANDLE, cTransform>> _renderingMap;
+				// Normal Gizmo
+				if (false)
+				{
+					_renderingMap.clear();
+					_renderingMap.reserve(1);
+					_renderingMap.push_back({ m_teapot2->GetModelHandle(), *m_teapot2->Transform() });
+					Graphics::SubmitDataToBeRendered(_frameData_Camera, _renderingMap, &Graphics::Gizmo_RenderVertexNormal);
+				}
+				// Triangulation Gizmo
+				_renderingMap.clear();
 				_renderingMap.reserve(1);
-				_renderingMap.push_back({ m_teapot2->GetModelHandle(), *m_teapot2->Transform() });
-				Graphics::SubmitDataToBeRendered(_frameData_Camera, _renderingMap, &Graphics::Gizmo_RenderVertexNormal);
+				//_renderingMap.push_back({ m_teapotQuad->GetModelHandle(), *m_teapotQuad->Transform() });
+				//_renderingMap.push_back({ m_teapotQuad->GetModelHandle(), *m_teapotQuad->Transform() });
+				//Graphics::SubmitDataToBeRendered(_frameData_Camera, _renderingMap, &Graphics::Gizmo_RenderTriangulation);
 			}
-
-
 		}
 	}
 }
@@ -348,7 +353,7 @@ void Assignment::SubmitSceneData(Graphics::UniformBufferFormats::sFrame* const i
 		_renderingMap.push_back({ m_spaceHolder->GetModelHandle(), *m_spaceHolder->Transform() });
 		_renderingMap.push_back({ m_teapot->GetModelHandle(), *m_teapot->Transform() });
 		_renderingMap.push_back({ m_teapot2->GetModelHandle(), *m_teapot2->Transform() });
-		_renderingMap.push_back({ m_gun->GetModelHandle(), *m_gun->Transform() });
+		//_renderingMap.push_back({ m_gun->GetModelHandle(), *m_gun->Transform() });
 		for (int i = 0; i < m_sphereList.size(); ++i)
 		{
 			_renderingMap.push_back({ m_sphereList[i]->GetModelHandle(), *m_sphereList[i]->Transform() });
@@ -375,7 +380,7 @@ void Assignment::SubmitSceneDataForEnvironmentCapture(Graphics::UniformBufferFor
 		_renderingMap.push_back({ m_spaceHolder->GetModelHandle(), *m_spaceHolder->Transform() });
 		_renderingMap.push_back({ m_teapot->GetModelHandle(), *m_teapot->Transform() });
 		_renderingMap.push_back({ m_teapot2->GetModelHandle(), *m_teapot2->Transform() });
-		_renderingMap.push_back({ m_gun->GetModelHandle(), *m_gun->Transform() });
+		//_renderingMap.push_back({ m_gun->GetModelHandle(), *m_gun->Transform() });
 		for (int i = 0; i < m_sphereList.size(); ++i)
 		{
 			_renderingMap.push_back({ m_sphereList[i]->GetModelHandle(), *m_sphereList[i]->Transform() });
@@ -401,12 +406,13 @@ void Assignment::SubmitShadowData()
 	_renderingMap.push_back({ m_teapot->GetModelHandle(), *m_teapot->Transform() });
 	_renderingMap.push_back({ m_teapot2->GetModelHandle(), *m_teapot2->Transform() });
 	_renderingMap.push_back({ m_spaceHolder->GetModelHandle(), *m_spaceHolder->Transform() });
+	
 
 	for (int i = 0; i < m_sphereList.size(); ++i)
 	{
 		_renderingMap.push_back({ m_sphereList[i]->GetModelHandle(), *m_sphereList[i]->Transform() });
 	}
-	_renderingMap.push_back({ m_gun->GetModelHandle(), *m_gun->Transform() });
+	//_renderingMap.push_back({ m_gun->GetModelHandle(), *m_gun->Transform() });
 
 	{// Spot light shadow map pass
 		Graphics::SubmitDataToBeRendered(Graphics::UniformBufferFormats::sFrame(), _renderingMap, &Graphics::SpotLightShadowMap_Pass);

@@ -16,7 +16,7 @@ namespace Graphics {
 
 		/** Initializations and clean up*/
 		/** Create program with default vertex shader and fragment shader*/
-		bool CreateProgram(const char* const i_vertexShaderPath, const char* const i_fragmentShaderPath, const char* const i_geometryShaderPath = "");
+		bool CreateProgram(const char* const i_vertexShaderPath, const char* const i_fragmentShaderPath, const char* const i_geometryShaderPath = "", const char* const i_TCSPath = "", const char* const i_TESPath = "");
 		bool LinkProgram();
 		bool ValidateProgram();
 		void CleanUp();
