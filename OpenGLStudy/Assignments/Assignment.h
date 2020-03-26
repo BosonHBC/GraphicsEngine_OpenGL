@@ -58,8 +58,6 @@ private:
 	cActor* m_spaceHolder;
 	cActor* m_gun;
 
-	cActor* m_teapotQuad;
-
 	std::vector<cActor*> m_sphereList;
 
 

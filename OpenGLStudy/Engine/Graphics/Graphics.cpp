@@ -155,12 +155,13 @@ namespace Graphics {
 				if (!(result = CreateEffect("OmniShadowMap",
 					"shadowmaps/omniShadowMap/omni_shadow_map_vert.glsl",
 					"shadowmaps/omniShadowMap/omni_shadow_map_frag.glsl",
-					"shadowmaps/omniShadowMap/omni_shadow_map_geom.glsl",
-					"shadowmaps/omniShadowMap/tess_pointShadow_ctrl.glsl",
-					"shadowmaps/omniShadowMap/tess_pointShadow_evalue.glsl"
+					"shadowmaps/omniShadowMap/omni_shadow_map_geom.glsl"
 				))) {
 					printf("Fail to create OmniShadowMap effect.\n");
 					return result;
+				}
+				else {
+						GetEffectByKey("OmniShadowMap")->ValidateProgram();
 				}
 			}
 			// Create cube map effect
@@ -598,34 +599,8 @@ namespace Graphics {
 				glClearColor(0, 0, 0, 1.f);
 				glClear(GL_DEPTH_BUFFER_BIT);
 
-				s_currentEffect->ValidateProgram();
-				s_currentEffect->SetFloat("tessLevel", 1);
-
 				// Draw scenes
-				auto& renderList = s_dataRenderingByGraphicThread->s_renderPasses[s_currentRenderPass].ModelToTransform_map;
-				for (int j  = 0;  j< renderList.size()-1; ++j)
-				{
-					// 1. Update draw call data
-					s_uniformBuffer_drawcall.Update(&UniformBufferFormats::sDrawCall(renderList[j].second.M(), renderList[j].second.TranspostInverse()));
-					// 2. Draw
-					cModel* _model = cModel::s_manager.Get(renderList[j].first);
-					if (_model) {
-						_model->RenderWithoutMaterial(GL_PATCHES);
-					}
-				}
-				const int lastidx = renderList.size() - 1;
-				s_currentEffect->SetFloat("tessLevel", 100);
-
-
-				cTexture* _dispalcementMap = cTexture::s_manager.Get(g_quadTeapotDisplacementMapHandle);
-				_dispalcementMap->UseTexture(GL_TEXTURE24);
-				// 1. Update draw call data
-				s_uniformBuffer_drawcall.Update(&UniformBufferFormats::sDrawCall(renderList[lastidx].second.M(), renderList[lastidx].second.TranspostInverse()));
-				cModel* _model = cModel::s_manager.Get(renderList[lastidx].first);
-				if (_model) {
-					_model->RenderWithoutMaterial(GL_PATCHES);
-				}
-				_dispalcementMap->UnBindTexture(GL_TEXTURE24,ETT_FILE);
+				RenderSceneWithoutMaterial();
 
 				// switch back to original buffer
 				_pointLightFBO->UnWrite();
@@ -905,8 +880,6 @@ namespace Graphics {
 		// set depth function back to default
 		glEnable(GL_CULL_FACE);
 	}
-
-
 
 	void Tessellation_Pass()
 	{

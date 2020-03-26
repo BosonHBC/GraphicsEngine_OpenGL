@@ -113,13 +113,6 @@ void Assignment::CreateActor()
 			m_sphereList.push_back(_sphere);
 		}
 	}
-
-	m_teapotQuad = new cActor();
-	m_teapotQuad->Initialize();
-	m_teapotQuad->Transform()->SetTransform(glm::vec3(0, 50, 0), glm::quat(glm::vec3(0, 0, 0)), glm::vec3(50, 50, 50));
-	m_teapotQuad->SetModel("Contents/models/tessQuad.model");
-	m_teapotQuad->UpdateUniformVariables(Graphics::GetEffectByKey("TessQuad"));
-
 }
 
 void Assignment::CreateCamera()
@@ -314,8 +307,7 @@ void Assignment::Tick(float second_since_lastFrame)
 				_renderingMap.reserve(1);
 				//_renderingMap.push_back({ m_teapotQuad->GetModelHandle(), *m_teapotQuad->Transform() });
 				//_renderingMap.push_back({ m_teapotQuad->GetModelHandle(), *m_teapotQuad->Transform() });
-				_renderingMap.push_back({ m_teapotQuad->GetModelHandle(), *m_teapotQuad->Transform() });
-				Graphics::SubmitDataToBeRendered(_frameData_Camera, _renderingMap, &Graphics::Gizmo_RenderTriangulation);
+				//Graphics::SubmitDataToBeRendered(_frameData_Camera, _renderingMap, &Graphics::Gizmo_RenderTriangulation);
 			}
 		}
 	}
@@ -368,12 +360,7 @@ void Assignment::SubmitSceneData(Graphics::UniformBufferFormats::sFrame* const i
 		}
 		Graphics::SubmitDataToBeRendered(*i_frameData, _renderingMap, &Graphics::PBR_Pass);
 	}
-	// Tess pass
-	{
-		_renderingMap.clear();
-		_renderingMap.push_back({ m_teapotQuad->GetModelHandle(), *m_teapotQuad->Transform() });
-		Graphics::SubmitDataToBeRendered(*i_frameData, _renderingMap, &Graphics::Tessellation_Pass);
-	}
+
 	// Cube map
 	{
 		_renderingMap.clear();
@@ -425,7 +412,6 @@ void Assignment::SubmitShadowData()
 	{
 		_renderingMap.push_back({ m_sphereList[i]->GetModelHandle(), *m_sphereList[i]->Transform() });
 	}
-	_renderingMap.push_back({ m_teapotQuad->GetModelHandle(), *m_teapotQuad->Transform() });
 	//_renderingMap.push_back({ m_gun->GetModelHandle(), *m_gun->Transform() });
 
 	{// Spot light shadow map pass
@@ -459,7 +445,6 @@ void Assignment::CleanUp()
 	safe_delete(m_cubemap);
 	safe_delete(m_spaceHolder);
 	safe_delete(m_gun);
-	safe_delete(m_teapotQuad);
 	for (auto i = 0; i < m_sphereList.size(); ++i)
 	{
 		safe_delete(m_sphereList[i]);
