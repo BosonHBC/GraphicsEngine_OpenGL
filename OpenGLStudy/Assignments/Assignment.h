@@ -53,7 +53,6 @@ private:
 
 	cActor* m_teapot;
 	cActor* m_teapot2;
-	cActor* m_mirror;
 	cActor* m_cubemap;
 	cActor* m_spaceHolder;
 	cActor* m_gun;

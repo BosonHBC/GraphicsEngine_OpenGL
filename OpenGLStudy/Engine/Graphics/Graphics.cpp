@@ -134,28 +134,25 @@ namespace Graphics {
 		{
 			// Create BlinnPhong effect
 			{
-				if (!(result = CreateEffect(ETT_BlinnPhong, Constants::CONST_PATH_DEFAULT_VERTEXSHADER, Constants::CONST_PATH_BLINNPHONG_FRAGMENTSHADER))) {
+				if (!(result = CreateEffect(EET_BlinnPhong, Constants::CONST_PATH_DEFAULT_VERTEXSHADER, Constants::CONST_PATH_BLINNPHONG_FRAGMENTSHADER))) {
 					printf("Fail to create default effect.\n");
 					return result;
 				}
-				s_currentEffect = GetEffectByKey(ETT_BlinnPhong);
-				FixSamplerProblem(ETT_BlinnPhong);
-				s_currentEffect->ValidateProgram();
+				s_currentEffect = GetEffectByKey(EET_BlinnPhong);
+				FixSamplerProblem(EET_BlinnPhong);
 			}
 			// Create shadow map effect
 			{
-				if (!(result = CreateEffect(ETT_ShadowMap,
+				if (!(result = CreateEffect(EET_ShadowMap,
 					"shadowmaps/directionalShadowMap/directional_shadow_map_vert.glsl",
 					"shadowmaps/directionalShadowMap/directional_shadow_map_frag.glsl"))) {
 					printf("Fail to create shadow map effect.\n");
 					return result;
 				}
-				GetEffectByKey(ETT_ShadowMap)->ValidateProgram();
-
 			}
 			// Create OmniShadowmap display effect
 			{
-				if (!(result = CreateEffect(ETT_OmniShadowMap,
+				if (!(result = CreateEffect(EET_OmniShadowMap,
 					"shadowmaps/omniShadowMap/omni_shadow_map_vert.glsl",
 					"shadowmaps/omniShadowMap/omni_shadow_map_frag.glsl",
 					"shadowmaps/omniShadowMap/omni_shadow_map_geom.glsl"
@@ -163,33 +160,28 @@ namespace Graphics {
 					printf("Fail to create OmniShadowMap effect.\n");
 					return result;
 				}
-				GetEffectByKey(ETT_OmniShadowMap)->ValidateProgram();
-
 			}
 			// Create cube map effect
 			{
-				if (!(result = CreateEffect(ETT_Cubemap,
+				if (!(result = CreateEffect(EET_Cubemap,
 					"cubemap/cubemap_vert.glsl",
 					"cubemap/cubemap_frag.glsl"))) {
 					printf("Fail to create cube map effect.\n");
 					return result;
 				}
-
-				GetEffectByKey(ETT_Cubemap)->ValidateProgram();
 			}
 			// Create unlit effect
 			{
-				if (!(result = CreateEffect(ETT_Unlit,
+				if (!(result = CreateEffect(EET_Unlit,
 					"unlit/arrow_vert.glsl",
 					"unlit/arrow_frag.glsl"))) {
 					printf("Fail to create unlit effect.\n");
 					return result;
 				}
-				GetEffectByKey(ETT_Unlit)->ValidateProgram();
 			}
 			// Create normal display effect
 			{
-				if (!(result = CreateEffect(ETT_NormalDisplay,
+				if (!(result = CreateEffect(EET_NormalDisplay,
 					"normalDisplayer/normal_vert.glsl",
 					"normalDisplayer/normal_frag.glsl",
 					"normalDisplayer/normal_geom.glsl"
@@ -197,23 +189,21 @@ namespace Graphics {
 					printf("Fail to create normal display effect.\n");
 					return result;
 				}
-				GetEffectByKey(ETT_NormalDisplay)->ValidateProgram();
 			}
 			// Create PBR_MetallicRoughness effect
 			{
-				if (!(result = CreateEffect(ETT_PBR_MR,
+				if (!(result = CreateEffect(EET_PBR_MR,
 					"vertexShader.glsl",
 					"PBR_MetallicRoughness.glsl"
 				))) {
 					printf("Fail to create PBR_MR effect.\n");
 					return result;
 				}
-				FixSamplerProblem(ETT_PBR_MR);
-				GetEffectByKey(ETT_PBR_MR)->ValidateProgram();
+				FixSamplerProblem(EET_PBR_MR);
 			}
 			// Create rectangular HDR map to cubemap effect
 			{
-				if (!(result = CreateEffect(ETT_HDRToCubemap,
+				if (!(result = CreateEffect(EET_HDRToCubemap,
 					"equirectangularToCubemap/rect_to_cube_vert.glsl",
 					"equirectangularToCubemap/rect_to_cube_frag.glsl"))) {
 					printf("Fail to create RectToCubemap effect.\n");
@@ -222,7 +212,7 @@ namespace Graphics {
 			}
 			// Crete diffuse irradiance convolution effect
 			{
-				if (!(result = CreateEffect(ETT_IrradConvolution,
+				if (!(result = CreateEffect(EET_IrradConvolution,
 					"cubemap/cubemap_vert.glsl",
 					"cubemap/cubemap_diff_irrad_convolution_frag.glsl"))) {
 					printf("Fail to create IrradConvolution effect.\n");
@@ -231,7 +221,7 @@ namespace Graphics {
 			}
 			// Crete cube map pre-filtering effect
 			{
-				if (!(result = CreateEffect(ETT_CubemapPrefilter,
+				if (!(result = CreateEffect(EET_CubemapPrefilter,
 					"cubemap/cubemap_vert.glsl",
 					"cubemap/cubemap_spec_prefilter_frag.glsl"))) {
 					printf("Fail to create CubemapPrefilter effect.\n");
@@ -240,7 +230,7 @@ namespace Graphics {
 			}
 			// Crete BRDF integration effect
 			{
-				if (!(result = CreateEffect(ETT_BrdfIntegration,
+				if (!(result = CreateEffect(EET_BrdfIntegration,
 					"IntegrateBRDF/intergrate_brdf_vert.glsl",
 					"IntegrateBRDF/intergrate_brdf_frag.glsl"))) {
 					printf("Fail to create BRDF Integration effect.\n");
@@ -249,7 +239,7 @@ namespace Graphics {
 			}
 			// Create draw debug circle
 			{
-				if (!(result = CreateEffect(ETT_DrawDebugCircles,
+				if (!(result = CreateEffect(EET_DrawDebugCircles,
 					"drawDebugCircles/debugCircle_vert.glsl",
 					"drawDebugCircles/debugCircle_frag.glsl",
 					"drawDebugCircles/debugCircle_geom.glsl"
@@ -257,11 +247,10 @@ namespace Graphics {
 					printf("Fail to create OmniShadowMap effect.\n");
 					return result;
 				}
-				GetEffectByKey(ETT_DrawDebugCircles)->ValidateProgram();
 			}
 			// Tess quad effect
 			{
-				if (!(result = CreateEffect(ETT_TessQuad,
+				if (!(result = CreateEffect(EET_TessQuad,
 					"tessellation/tess_quad_vert.glsl",
 					"PBR_MetallicRoughness.glsl",
 					"",
@@ -272,12 +261,11 @@ namespace Graphics {
 					return result;
 				}
 
-				FixSamplerProblem(ETT_TessQuad);
-				GetEffectByKey(ETT_TessQuad)->ValidateProgram();
+				FixSamplerProblem(EET_TessQuad);
 			}
 			// Create triangulation display effect
 			{
-				if (!(result = CreateEffect(ETT_TriangulationDisplay,
+				if (!(result = CreateEffect(EET_TriangulationDisplay,
 					"tessellation/tess_quad_vert.glsl",
 					"normalDisplayer/normal_frag.glsl",
 					"triangulationDisplayer/triangulation_geom.glsl",
@@ -287,12 +275,16 @@ namespace Graphics {
 					printf("Fail to create TriangulationDisplay effect.\n");
 					return result;
 				}
-				GetEffectByKey(ETT_TriangulationDisplay)->ValidateProgram();
+			}
+			
+			// validate all programs
+			for (auto it : s_KeyToEffect_map)
+			{
+				it.second->ValidateProgram();
 			}
 		}
 
 		// Initialize uniform buffer
-
 		// Frame buffer
 		if (result = s_uniformBuffer_frame.Initialize(nullptr)) {
 			s_uniformBuffer_frame.Bind();
@@ -346,18 +338,18 @@ namespace Graphics {
 			}
 
 			/*
-						EnvironmentCaptureManager::AddCaptureProbes(cSphere(glm::vec3(-450, 10, 0), 600.f), 50.f, envMapResolution);
-						EnvironmentCaptureManager::AddCaptureProbes(cSphere(glm::vec3(-225, 10, 0), 600.f), 50.f, envMapResolution);
-						EnvironmentCaptureManager::AddCaptureProbes(cSphere(glm::vec3(-450, 290, 0), 600.f), 50.f, envMapResolution);
-						EnvironmentCaptureManager::AddCaptureProbes(cSphere(glm::vec3(-225, 290, 0), 600.f), 50.f, envMapResolution);*/
+			EnvironmentCaptureManager::AddCaptureProbes(cSphere(glm::vec3(-450, 10, 0), 600.f), 50.f, envMapResolution);
+			EnvironmentCaptureManager::AddCaptureProbes(cSphere(glm::vec3(-225, 10, 0), 600.f), 50.f, envMapResolution);
+			EnvironmentCaptureManager::AddCaptureProbes(cSphere(glm::vec3(-450, 290, 0), 600.f), 50.f, envMapResolution);
+			EnvironmentCaptureManager::AddCaptureProbes(cSphere(glm::vec3(-225, 290, 0), 600.f), 50.f, envMapResolution);*/
 
 			EnvironmentCaptureManager::AddCaptureProbes(cSphere(glm::vec3(0, 130, 0), 600.f), 50.f, envMapResolution);
 
 			/*
-						EnvironmentCaptureManager::AddCaptureProbes(cSphere(glm::vec3(225, 290, 0), 600.f), 50.f, envMapResolution);
-						EnvironmentCaptureManager::AddCaptureProbes(cSphere(glm::vec3(450, 290, 0), 600.f), 50.f, envMapResolution);
-						EnvironmentCaptureManager::AddCaptureProbes(cSphere(glm::vec3(225, 10, 0), 600.f), 50.f, envMapResolution);
-						EnvironmentCaptureManager::AddCaptureProbes(cSphere(glm::vec3(450, 10, 0), 600.f), 50.f, envMapResolution);*/
+			EnvironmentCaptureManager::AddCaptureProbes(cSphere(glm::vec3(225, 290, 0), 600.f), 50.f, envMapResolution);
+			EnvironmentCaptureManager::AddCaptureProbes(cSphere(glm::vec3(450, 290, 0), 600.f), 50.f, envMapResolution);
+			EnvironmentCaptureManager::AddCaptureProbes(cSphere(glm::vec3(225, 10, 0), 600.f), 50.f, envMapResolution);
+			EnvironmentCaptureManager::AddCaptureProbes(cSphere(glm::vec3(450, 10, 0), 600.f), 50.f, envMapResolution);*/
 			EnvironmentCaptureManager::BuildAccelerationStructure();
 
 		}
@@ -445,7 +437,7 @@ namespace Graphics {
 
 		/** 2. Convert all equirectangular HDR maps to cubemap */
 		{
-			s_currentEffect = Graphics::GetEffectByKey(ETT_HDRToCubemap);
+			s_currentEffect = Graphics::GetEffectByKey(EET_HDRToCubemap);
 			s_currentEffect->UseEffect();
 
 			s_currentEffect->SetInteger("rectangularHDRMap", 0);
@@ -479,7 +471,7 @@ namespace Graphics {
 		}
 		/** 3. start generate BRDF LUTTexture */
 		{
-			s_currentEffect = Graphics::GetEffectByKey(ETT_BrdfIntegration);
+			s_currentEffect = Graphics::GetEffectByKey(EET_BrdfIntegration);
 			s_currentEffect->UseEffect();
 			s_brdfLUTTexture.Write();
 
@@ -540,7 +532,7 @@ namespace Graphics {
 	void DirectionalShadowMap_Pass()
 	{
 		glDisable(GL_CULL_FACE);
-		s_currentEffect = GetEffectByKey(ETT_ShadowMap);
+		s_currentEffect = GetEffectByKey(EET_ShadowMap);
 		s_currentEffect->UseEffect();
 		cDirectionalLight* _directionalLight = &s_dataRenderingByGraphicThread->s_directionalLight;
 
@@ -556,7 +548,6 @@ namespace Graphics {
 				glClearColor(0, 0, 0, 1.f);
 				glClear(/*GL_COLOR_BUFFER_BIT | */GL_DEPTH_BUFFER_BIT);
 
-				s_currentEffect->ValidateProgram();
 				// Draw scenes
 				RenderSceneWithoutMaterial();
 
@@ -574,7 +565,7 @@ namespace Graphics {
 	{
 		if (s_dataRenderingByGraphicThread->s_pointLights.size() <= 0) return;
 		glDisable(GL_CULL_FACE);
-		s_currentEffect = GetEffectByKey(ETT_OmniShadowMap);
+		s_currentEffect = GetEffectByKey(EET_OmniShadowMap);
 		s_currentEffect->UseEffect();
 
 		s_currentEffect->SetInteger("displacementMap", 24);
@@ -617,7 +608,7 @@ namespace Graphics {
 	{
 		if (s_dataRenderingByGraphicThread->s_spotLights.size() <= 0) return;
 		glDisable(GL_CULL_FACE);
-		s_currentEffect = GetEffectByKey(ETT_ShadowMap);
+		s_currentEffect = GetEffectByKey(EET_ShadowMap);
 		s_currentEffect->UseEffect();
 
 		for (auto i = 0; i < s_dataRenderingByGraphicThread->s_spotLights.size(); ++i)
@@ -691,7 +682,7 @@ namespace Graphics {
 
 		// Bind effect
 		{
-			s_currentEffect = GetEffectByKey(ETT_BlinnPhong);
+			s_currentEffect = GetEffectByKey(EET_BlinnPhong);
 			s_currentEffect->UseEffect();
 
 		}
@@ -720,8 +711,6 @@ namespace Graphics {
 	{
 		// Update Lighting Data
 		UpdateLightingData();
-
-		s_currentEffect->ValidateProgram();
 
 		// update BRDF LUT texture
 		{
@@ -771,7 +760,7 @@ namespace Graphics {
 
 	void PBR_Pass()
 	{
-		s_currentEffect = GetEffectByKey(ETT_PBR_MR);
+		s_currentEffect = GetEffectByKey(EET_PBR_MR);
 		s_currentEffect->UseEffect();
 
 		glClearColor(s_clearColor.r, s_clearColor.g, s_clearColor.b, 0.f);
@@ -821,7 +810,7 @@ namespace Graphics {
 		// change depth function so depth test passes when values are equal to depth buffer's content
 		glDisable(GL_CULL_FACE);
 
-		s_currentEffect = GetEffectByKey(ETT_Cubemap);
+		s_currentEffect = GetEffectByKey(EET_Cubemap);
 		s_currentEffect->UseEffect();
 
 		for (auto it = s_dataRenderingByGraphicThread->s_renderPasses[s_currentRenderPass].ModelToTransform_map.begin();
@@ -843,7 +832,7 @@ namespace Graphics {
 
 	void Tessellation_Pass()
 	{
-		s_currentEffect = GetEffectByKey(ETT_TessQuad);
+		s_currentEffect = GetEffectByKey(EET_TessQuad);
 		s_currentEffect->UseEffect();
 
 		UpdateInfoForPBR();
@@ -873,7 +862,7 @@ namespace Graphics {
 
 	void Gizmo_RenderTransform()
 	{
-		s_currentEffect = GetEffectByKey(ETT_Unlit);
+		s_currentEffect = GetEffectByKey(EET_Unlit);
 		s_currentEffect->UseEffect();
 
 		for (auto it = s_dataRenderingByGraphicThread->s_renderPasses[s_currentRenderPass].ModelToTransform_map.begin();
@@ -914,7 +903,7 @@ namespace Graphics {
 
 	void Gizmo_DrawDebugCaptureVolume() {
 
-		s_currentEffect = GetEffectByKey(ETT_DrawDebugCircles);
+		s_currentEffect = GetEffectByKey(EET_DrawDebugCircles);
 		s_currentEffect->UseEffect();
 		auto _capturesRef = EnvironmentCaptureManager::GetCapturesReferences();
 		for (int i = 0; i < _capturesRef.size(); ++i)
@@ -945,7 +934,7 @@ namespace Graphics {
 
 	void Gizmo_RenderVertexNormal()
 	{
-		s_currentEffect = GetEffectByKey(ETT_NormalDisplay);
+		s_currentEffect = GetEffectByKey(EET_NormalDisplay);
 		s_currentEffect->UseEffect();
 
 		glClear(GL_DEPTH_BUFFER_BIT);
@@ -959,7 +948,7 @@ namespace Graphics {
 		sWindowInput* _input = Application::GetCurrentApplication()->GetCurrentWindow()->GetWindowInput();
 		if (!_input->IsKeyDown(GLFW_KEY_T)) return;
 
-		s_currentEffect = GetEffectByKey(ETT_TriangulationDisplay);
+		s_currentEffect = GetEffectByKey(EET_TriangulationDisplay);
 		s_currentEffect->UseEffect();
 
 		glClear(GL_DEPTH_BUFFER_BIT);

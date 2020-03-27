@@ -33,7 +33,7 @@ namespace Graphics
 		float m_metallicIntensity, m_roughnessIntensity;
 		glm::vec3 m_ior;
 
-		GLuint m_albedoID, m_metallicID, m_roughnessID, m_normalD;
+		GLuint m_albedoID, m_metallicID, m_roughnessID, m_normalID;
 
 		/* private functions */
 		cMatPBRMR()
