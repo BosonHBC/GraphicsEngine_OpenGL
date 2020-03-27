@@ -67,7 +67,7 @@ namespace Graphics {
 
 	// Effect
 	// ------------------------------------------------------------------------------------------------------------------------------------
-	std::map<const char*, cEffect*> s_KeyToEffect_map;
+	std::map<eEffectType, cEffect*> s_KeyToEffect_map;
 	cEffect* s_currentEffect;
 
 	// Lighting
@@ -87,7 +87,7 @@ namespace Graphics {
 	void RenderSceneWithoutMaterial();
 	void Gizmo_DrawDebugCaptureVolume();
 
-	void FixSamplerProblem(const char* i_effectKey)
+	void FixSamplerProblem(const eEffectType& i_effectKey)
 	{
 		// Fix sampler problem before validating the program
 
@@ -132,27 +132,30 @@ namespace Graphics {
 		}
 		// Create effects
 		{
-			// Create default effect
+			// Create BlinnPhong effect
 			{
-				if (!(result = CreateEffect(Constants::CONST_DEFAULT_EFFECT_KEY, Constants::CONST_PATH_DEFAULT_VERTEXSHADER, Constants::CONST_PATH_BLINNPHONG_FRAGMENTSHADER))) {
+				if (!(result = CreateEffect(ETT_BlinnPhong, Constants::CONST_PATH_DEFAULT_VERTEXSHADER, Constants::CONST_PATH_BLINNPHONG_FRAGMENTSHADER))) {
 					printf("Fail to create default effect.\n");
 					return result;
 				}
-				s_currentEffect = GetEffectByKey(Constants::CONST_DEFAULT_EFFECT_KEY);
-				FixSamplerProblem(Constants::CONST_DEFAULT_EFFECT_KEY);
+				s_currentEffect = GetEffectByKey(ETT_BlinnPhong);
+				FixSamplerProblem(ETT_BlinnPhong);
+				s_currentEffect->ValidateProgram();
 			}
 			// Create shadow map effect
 			{
-				if (!(result = CreateEffect("ShadowMap",
+				if (!(result = CreateEffect(ETT_ShadowMap,
 					"shadowmaps/directionalShadowMap/directional_shadow_map_vert.glsl",
 					"shadowmaps/directionalShadowMap/directional_shadow_map_frag.glsl"))) {
 					printf("Fail to create shadow map effect.\n");
 					return result;
 				}
+				GetEffectByKey(ETT_ShadowMap)->ValidateProgram();
+
 			}
 			// Create OmniShadowmap display effect
 			{
-				if (!(result = CreateEffect("OmniShadowMap",
+				if (!(result = CreateEffect(ETT_OmniShadowMap,
 					"shadowmaps/omniShadowMap/omni_shadow_map_vert.glsl",
 					"shadowmaps/omniShadowMap/omni_shadow_map_frag.glsl",
 					"shadowmaps/omniShadowMap/omni_shadow_map_geom.glsl"
@@ -160,31 +163,33 @@ namespace Graphics {
 					printf("Fail to create OmniShadowMap effect.\n");
 					return result;
 				}
-				else {
-						GetEffectByKey("OmniShadowMap")->ValidateProgram();
-				}
+				GetEffectByKey(ETT_OmniShadowMap)->ValidateProgram();
+
 			}
 			// Create cube map effect
 			{
-				if (!(result = CreateEffect("CubemapEffect",
+				if (!(result = CreateEffect(ETT_Cubemap,
 					"cubemap/cubemap_vert.glsl",
 					"cubemap/cubemap_frag.glsl"))) {
 					printf("Fail to create cube map effect.\n");
 					return result;
 				}
+
+				GetEffectByKey(ETT_Cubemap)->ValidateProgram();
 			}
 			// Create unlit effect
 			{
-				if (!(result = CreateEffect("UnlitEffect",
+				if (!(result = CreateEffect(ETT_Unlit,
 					"unlit/arrow_vert.glsl",
 					"unlit/arrow_frag.glsl"))) {
 					printf("Fail to create unlit effect.\n");
 					return result;
 				}
+				GetEffectByKey(ETT_Unlit)->ValidateProgram();
 			}
 			// Create normal display effect
 			{
-				if (!(result = CreateEffect("NormalDisplay",
+				if (!(result = CreateEffect(ETT_NormalDisplay,
 					"normalDisplayer/normal_vert.glsl",
 					"normalDisplayer/normal_frag.glsl",
 					"normalDisplayer/normal_geom.glsl"
@@ -192,25 +197,23 @@ namespace Graphics {
 					printf("Fail to create normal display effect.\n");
 					return result;
 				}
-				GetEffectByKey("NormalDisplay")->ValidateProgram();
+				GetEffectByKey(ETT_NormalDisplay)->ValidateProgram();
 			}
 			// Create PBR_MetallicRoughness effect
 			{
-				if (!(result = CreateEffect("PBR_MR",
+				if (!(result = CreateEffect(ETT_PBR_MR,
 					"vertexShader.glsl",
 					"PBR_MetallicRoughness.glsl"
 				))) {
 					printf("Fail to create PBR_MR effect.\n");
 					return result;
 				}
-				else
-				{
-					FixSamplerProblem("PBR_MR");
-				}
+				FixSamplerProblem(ETT_PBR_MR);
+				GetEffectByKey(ETT_PBR_MR)->ValidateProgram();
 			}
 			// Create rectangular HDR map to cubemap effect
 			{
-				if (!(result = CreateEffect("RectToCubemap",
+				if (!(result = CreateEffect(ETT_HDRToCubemap,
 					"equirectangularToCubemap/rect_to_cube_vert.glsl",
 					"equirectangularToCubemap/rect_to_cube_frag.glsl"))) {
 					printf("Fail to create RectToCubemap effect.\n");
@@ -219,7 +222,7 @@ namespace Graphics {
 			}
 			// Crete diffuse irradiance convolution effect
 			{
-				if (!(result = CreateEffect("IrradConvolution",
+				if (!(result = CreateEffect(ETT_IrradConvolution,
 					"cubemap/cubemap_vert.glsl",
 					"cubemap/cubemap_diff_irrad_convolution_frag.glsl"))) {
 					printf("Fail to create IrradConvolution effect.\n");
@@ -228,7 +231,7 @@ namespace Graphics {
 			}
 			// Crete cube map pre-filtering effect
 			{
-				if (!(result = CreateEffect("CubemapPrefilter",
+				if (!(result = CreateEffect(ETT_CubemapPrefilter,
 					"cubemap/cubemap_vert.glsl",
 					"cubemap/cubemap_spec_prefilter_frag.glsl"))) {
 					printf("Fail to create CubemapPrefilter effect.\n");
@@ -237,7 +240,7 @@ namespace Graphics {
 			}
 			// Crete BRDF integration effect
 			{
-				if (!(result = CreateEffect("BrdfIntegration",
+				if (!(result = CreateEffect(ETT_BrdfIntegration,
 					"IntegrateBRDF/intergrate_brdf_vert.glsl",
 					"IntegrateBRDF/intergrate_brdf_frag.glsl"))) {
 					printf("Fail to create BRDF Integration effect.\n");
@@ -246,7 +249,7 @@ namespace Graphics {
 			}
 			// Create draw debug circle
 			{
-				if (!(result = CreateEffect("DrawDebugCircles",
+				if (!(result = CreateEffect(ETT_DrawDebugCircles,
 					"drawDebugCircles/debugCircle_vert.glsl",
 					"drawDebugCircles/debugCircle_frag.glsl",
 					"drawDebugCircles/debugCircle_geom.glsl"
@@ -254,11 +257,11 @@ namespace Graphics {
 					printf("Fail to create OmniShadowMap effect.\n");
 					return result;
 				}
-				GetEffectByKey("DrawDebugCircles")->ValidateProgram();
+				GetEffectByKey(ETT_DrawDebugCircles)->ValidateProgram();
 			}
 			// Tess quad effect
 			{
-				if (!(result = CreateEffect("TessQuad",
+				if (!(result = CreateEffect(ETT_TessQuad,
 					"tessellation/tess_quad_vert.glsl",
 					"PBR_MetallicRoughness.glsl",
 					"",
@@ -268,15 +271,13 @@ namespace Graphics {
 					printf("Fail to create TessQuad effect.\n");
 					return result;
 				}
-				else
-				{
-					FixSamplerProblem("TessQuad");
-				}
-				GetEffectByKey("TessQuad")->ValidateProgram();
+
+				FixSamplerProblem(ETT_TessQuad);
+				GetEffectByKey(ETT_TessQuad)->ValidateProgram();
 			}
 			// Create triangulation display effect
 			{
-				if (!(result = CreateEffect("TriangulationDisplay",
+				if (!(result = CreateEffect(ETT_TriangulationDisplay,
 					"tessellation/tess_quad_vert.glsl",
 					"normalDisplayer/normal_frag.glsl",
 					"triangulationDisplayer/triangulation_geom.glsl",
@@ -286,7 +287,7 @@ namespace Graphics {
 					printf("Fail to create TriangulationDisplay effect.\n");
 					return result;
 				}
-				GetEffectByKey("TriangulationDisplay")->ValidateProgram();
+				GetEffectByKey(ETT_TriangulationDisplay)->ValidateProgram();
 			}
 		}
 
@@ -344,19 +345,19 @@ namespace Graphics {
 				return result;
 			}
 
-/*
-			EnvironmentCaptureManager::AddCaptureProbes(cSphere(glm::vec3(-450, 10, 0), 600.f), 50.f, envMapResolution);
-			EnvironmentCaptureManager::AddCaptureProbes(cSphere(glm::vec3(-225, 10, 0), 600.f), 50.f, envMapResolution);
-			EnvironmentCaptureManager::AddCaptureProbes(cSphere(glm::vec3(-450, 290, 0), 600.f), 50.f, envMapResolution);
-			EnvironmentCaptureManager::AddCaptureProbes(cSphere(glm::vec3(-225, 290, 0), 600.f), 50.f, envMapResolution);*/
-		
+			/*
+						EnvironmentCaptureManager::AddCaptureProbes(cSphere(glm::vec3(-450, 10, 0), 600.f), 50.f, envMapResolution);
+						EnvironmentCaptureManager::AddCaptureProbes(cSphere(glm::vec3(-225, 10, 0), 600.f), 50.f, envMapResolution);
+						EnvironmentCaptureManager::AddCaptureProbes(cSphere(glm::vec3(-450, 290, 0), 600.f), 50.f, envMapResolution);
+						EnvironmentCaptureManager::AddCaptureProbes(cSphere(glm::vec3(-225, 290, 0), 600.f), 50.f, envMapResolution);*/
+
 			EnvironmentCaptureManager::AddCaptureProbes(cSphere(glm::vec3(0, 130, 0), 600.f), 50.f, envMapResolution);
 
-/*
-			EnvironmentCaptureManager::AddCaptureProbes(cSphere(glm::vec3(225, 290, 0), 600.f), 50.f, envMapResolution);
-			EnvironmentCaptureManager::AddCaptureProbes(cSphere(glm::vec3(450, 290, 0), 600.f), 50.f, envMapResolution);
-			EnvironmentCaptureManager::AddCaptureProbes(cSphere(glm::vec3(225, 10, 0), 600.f), 50.f, envMapResolution);
-			EnvironmentCaptureManager::AddCaptureProbes(cSphere(glm::vec3(450, 10, 0), 600.f), 50.f, envMapResolution);*/
+			/*
+						EnvironmentCaptureManager::AddCaptureProbes(cSphere(glm::vec3(225, 290, 0), 600.f), 50.f, envMapResolution);
+						EnvironmentCaptureManager::AddCaptureProbes(cSphere(glm::vec3(450, 290, 0), 600.f), 50.f, envMapResolution);
+						EnvironmentCaptureManager::AddCaptureProbes(cSphere(glm::vec3(225, 10, 0), 600.f), 50.f, envMapResolution);
+						EnvironmentCaptureManager::AddCaptureProbes(cSphere(glm::vec3(450, 10, 0), 600.f), 50.f, envMapResolution);*/
 			EnvironmentCaptureManager::BuildAccelerationStructure();
 
 		}
@@ -444,7 +445,7 @@ namespace Graphics {
 
 		/** 2. Convert all equirectangular HDR maps to cubemap */
 		{
-			s_currentEffect = Graphics::GetEffectByKey("RectToCubemap");
+			s_currentEffect = Graphics::GetEffectByKey(ETT_HDRToCubemap);
 			s_currentEffect->UseEffect();
 
 			s_currentEffect->SetInteger("rectangularHDRMap", 0);
@@ -478,7 +479,7 @@ namespace Graphics {
 		}
 		/** 3. start generate BRDF LUTTexture */
 		{
-			s_currentEffect = Graphics::GetEffectByKey("BrdfIntegration");
+			s_currentEffect = Graphics::GetEffectByKey(ETT_BrdfIntegration);
 			s_currentEffect->UseEffect();
 			s_brdfLUTTexture.Write();
 
@@ -539,7 +540,7 @@ namespace Graphics {
 	void DirectionalShadowMap_Pass()
 	{
 		glDisable(GL_CULL_FACE);
-		s_currentEffect = GetEffectByKey("ShadowMap");
+		s_currentEffect = GetEffectByKey(ETT_ShadowMap);
 		s_currentEffect->UseEffect();
 		cDirectionalLight* _directionalLight = &s_dataRenderingByGraphicThread->s_directionalLight;
 
@@ -573,7 +574,7 @@ namespace Graphics {
 	{
 		if (s_dataRenderingByGraphicThread->s_pointLights.size() <= 0) return;
 		glDisable(GL_CULL_FACE);
-		s_currentEffect = GetEffectByKey("OmniShadowMap");
+		s_currentEffect = GetEffectByKey(ETT_OmniShadowMap);
 		s_currentEffect->UseEffect();
 
 		s_currentEffect->SetInteger("displacementMap", 24);
@@ -616,7 +617,7 @@ namespace Graphics {
 	{
 		if (s_dataRenderingByGraphicThread->s_spotLights.size() <= 0) return;
 		glDisable(GL_CULL_FACE);
-		s_currentEffect = GetEffectByKey("ShadowMap");
+		s_currentEffect = GetEffectByKey(ETT_ShadowMap);
 		s_currentEffect->UseEffect();
 
 		for (auto i = 0; i < s_dataRenderingByGraphicThread->s_spotLights.size(); ++i)
@@ -637,7 +638,6 @@ namespace Graphics {
 				glClearColor(0, 0, 0, 1.f);
 				glClear(GL_DEPTH_BUFFER_BIT);
 
-				s_currentEffect->ValidateProgram();
 				// Draw scenes
 				RenderSceneWithoutMaterial();
 
@@ -649,44 +649,6 @@ namespace Graphics {
 		s_currentEffect->UnUseEffect();
 		glEnable(GL_CULL_FACE);
 		glCullFace(GL_BACK);
-	}
-
-	void Reflection_Pass()
-	{
-		// Enable clip plane0
-		{
-			glEnable(GL_CLIP_PLANE0);
-		}
-		// Bind effect
-		{
-			s_currentEffect = GetEffectByKey(Constants::CONST_DEFAULT_EFFECT_KEY);
-			s_currentEffect->UseEffect();
-		}
-		s_cameraCapture.Write();
-
-		// Clear color and buffers
-		{
-			// clear window
-			glClearColor(0, 0, 0, 1.f);
-			// A lot of things can be cleaned like color buffer, depth buffer, so we need to specify what to clear
-			glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-		}
-
-		// Update lighting data
-		UpdateLightingData();
-		s_currentEffect->ValidateProgram();
-		// Start a draw call loop
-		RenderScene();
-
-		s_cameraCapture.UnWrite();
-		// clear program
-		{
-			s_currentEffect->UnUseEffect();
-		}
-		// Enable clip plane0
-		{
-			glDisable(GL_CLIP_PLANE0);
-		}
 	}
 
 	void SubmitClipPlaneData(const glm::vec4& i_plane0, const glm::vec4& i_plane1 /*= glm::vec4(0,0,0,0)*/, const glm::vec4& i_plane2 /*= glm::vec4(0, 0, 0, 0)*/, const glm::vec4& i_plane3 /*= glm::vec4(0, 0, 0, 0)*/)
@@ -717,7 +679,6 @@ namespace Graphics {
 		s_dataSubmittedByApplicationThread->s_renderPasses.clear();
 		s_dataSubmittedByApplicationThread->s_pointLights.clear();
 		s_dataSubmittedByApplicationThread->s_spotLights.clear();
-
 	}
 
 	void SetCurrentPass(int i_currentPass)
@@ -725,12 +686,12 @@ namespace Graphics {
 		s_currentRenderPass = i_currentPass;
 	}
 
-	void Render_Pass()
+	void BlinnPhong_Pass()
 	{
 
 		// Bind effect
 		{
-			s_currentEffect = GetEffectByKey(Constants::CONST_DEFAULT_EFFECT_KEY);
+			s_currentEffect = GetEffectByKey(ETT_BlinnPhong);
 			s_currentEffect->UseEffect();
 
 		}
@@ -745,7 +706,7 @@ namespace Graphics {
 
 		// Update Lighting Data
 		UpdateLightingData();
-		s_currentEffect->ValidateProgram();
+
 		// Start a draw call loop
 		RenderScene();
 		// clear program
@@ -810,7 +771,7 @@ namespace Graphics {
 
 	void PBR_Pass()
 	{
-		s_currentEffect = GetEffectByKey("PBR_MR");
+		s_currentEffect = GetEffectByKey(ETT_PBR_MR);
 		s_currentEffect->UseEffect();
 
 		glClearColor(s_clearColor.r, s_clearColor.g, s_clearColor.b, 0.f);
@@ -860,10 +821,9 @@ namespace Graphics {
 		// change depth function so depth test passes when values are equal to depth buffer's content
 		glDisable(GL_CULL_FACE);
 
-		s_currentEffect = GetEffectByKey("CubemapEffect");
+		s_currentEffect = GetEffectByKey(ETT_Cubemap);
 		s_currentEffect->UseEffect();
 
-		s_currentEffect->ValidateProgram();
 		for (auto it = s_dataRenderingByGraphicThread->s_renderPasses[s_currentRenderPass].ModelToTransform_map.begin();
 			it != s_dataRenderingByGraphicThread->s_renderPasses[s_currentRenderPass].ModelToTransform_map.end(); ++it)
 		{
@@ -883,7 +843,7 @@ namespace Graphics {
 
 	void Tessellation_Pass()
 	{
-		s_currentEffect = GetEffectByKey("TessQuad");
+		s_currentEffect = GetEffectByKey(ETT_TessQuad);
 		s_currentEffect->UseEffect();
 
 		UpdateInfoForPBR();
@@ -896,7 +856,7 @@ namespace Graphics {
 		_dispalcementMap->UseTexture(GL_TEXTURE24);
 
 		auto& renderList = s_dataRenderingByGraphicThread->s_renderPasses[s_currentRenderPass].ModelToTransform_map;
-		auto& _pair = renderList[renderList.size() -1];
+		auto& _pair = renderList[renderList.size() - 1];
 		{
 			// 1. Update draw call data
 			s_uniformBuffer_drawcall.Update(&UniformBufferFormats::sDrawCall(_pair.second.M(), _pair.second.TranspostInverse()));
@@ -913,7 +873,7 @@ namespace Graphics {
 
 	void Gizmo_RenderTransform()
 	{
-		s_currentEffect = GetEffectByKey("UnlitEffect");
+		s_currentEffect = GetEffectByKey(ETT_Unlit);
 		s_currentEffect->UseEffect();
 
 		for (auto it = s_dataRenderingByGraphicThread->s_renderPasses[s_currentRenderPass].ModelToTransform_map.begin();
@@ -929,8 +889,6 @@ namespace Graphics {
 				// Up											
 				arrowTransform[2].SetRotation(it->second.Rotation() * glm::quat(glm::vec3(0, glm::radians(90.f), 0)));
 			}
-
-			s_currentEffect->ValidateProgram();
 
 			cModel* _model = cModel::s_manager.Get(s_arrowHandle);
 			cMatUnlit* _arrowMat = dynamic_cast<cMatUnlit*>(_model->GetMaterialAt());
@@ -956,7 +914,7 @@ namespace Graphics {
 
 	void Gizmo_DrawDebugCaptureVolume() {
 
-		s_currentEffect = GetEffectByKey("DrawDebugCircles");
+		s_currentEffect = GetEffectByKey(ETT_DrawDebugCircles);
 		s_currentEffect->UseEffect();
 		auto _capturesRef = EnvironmentCaptureManager::GetCapturesReferences();
 		for (int i = 0; i < _capturesRef.size(); ++i)
@@ -987,11 +945,11 @@ namespace Graphics {
 
 	void Gizmo_RenderVertexNormal()
 	{
-		s_currentEffect = GetEffectByKey("NormalDisplay");
+		s_currentEffect = GetEffectByKey(ETT_NormalDisplay);
 		s_currentEffect->UseEffect();
 
 		glClear(GL_DEPTH_BUFFER_BIT);
-		
+
 		RenderSceneWithoutMaterial();
 
 		s_currentEffect->UnUseEffect();
@@ -1001,11 +959,11 @@ namespace Graphics {
 		sWindowInput* _input = Application::GetCurrentApplication()->GetCurrentWindow()->GetWindowInput();
 		if (!_input->IsKeyDown(GLFW_KEY_T)) return;
 
-		s_currentEffect = GetEffectByKey("TriangulationDisplay");
+		s_currentEffect = GetEffectByKey(ETT_TriangulationDisplay);
 		s_currentEffect->UseEffect();
 
 		glClear(GL_DEPTH_BUFFER_BIT);
-		
+
 		s_currentEffect->SetFloat("tessLevel", 100);
 		s_currentEffect->SetInteger("displacementMap", 24);
 		s_currentEffect->SetFloat("displaceIntensity", 20.0f);
@@ -1032,7 +990,7 @@ namespace Graphics {
 				_model->RenderWithoutMaterial(GL_PATCHES);
 				_normal->UnBindTexture(GL_TEXTURE3, ETT_FILE);
 			}
-			
+
 		}
 
 		_dispalcementMap->UnBindTexture(GL_TEXTURE24, ETT_FILE);
@@ -1041,16 +999,14 @@ namespace Graphics {
 	void RenderSceneWithoutMaterial()
 	{
 		// loop through every single model
-		for (auto it = s_dataRenderingByGraphicThread->s_renderPasses[s_currentRenderPass].ModelToTransform_map.begin();
-			it != s_dataRenderingByGraphicThread->s_renderPasses[s_currentRenderPass].ModelToTransform_map.end(); ++it)
+		auto& renderMap = s_dataRenderingByGraphicThread->s_renderPasses[s_currentRenderPass].ModelToTransform_map;
+		for (auto it = renderMap.begin(); it != renderMap.end(); ++it)
 		{
 			// 1. Update draw call data
 			s_uniformBuffer_drawcall.Update(&UniformBufferFormats::sDrawCall(it->second.M(), it->second.TranspostInverse()));
 			// 2. Draw
 			cModel* _model = cModel::s_manager.Get(it->first);
-			if (_model) {
-				_model->RenderWithoutMaterial();
-			}
+			if (_model) { _model->RenderWithoutMaterial(); }
 		}
 
 	}
@@ -1058,9 +1014,9 @@ namespace Graphics {
 	void RenderScene(GLenum i_drawMode /*= GL_TRIANGLES*/)
 	{
 		// loop through every single model
-		for (auto it = s_dataRenderingByGraphicThread->s_renderPasses[s_currentRenderPass].ModelToTransform_map.begin();
-			it != s_dataRenderingByGraphicThread->s_renderPasses[s_currentRenderPass].ModelToTransform_map.end();
-			++it)
+		auto& renderMap = s_dataRenderingByGraphicThread->s_renderPasses[s_currentRenderPass].ModelToTransform_map;
+
+		for (auto it = renderMap.begin(); it != renderMap.end(); ++it)
 		{
 			// 1. Update draw call data
 			s_uniformBuffer_drawcall.Update(&UniformBufferFormats::sDrawCall(it->second.M(), it->second.TranspostInverse()));
@@ -1198,7 +1154,7 @@ namespace Graphics {
 	/** Effect related */
 	//----------------------------------------------------------------------------------
 
-	bool CreateEffect(const char* i_key, const char* i_vertexShaderPath, const char* i_fragmentShaderPath, const char* i_geometryShaderPath/* = ""*/, const char* const i_TCSPath /*= ""*/, const char* const i_TESPath/* = ""*/)
+	bool CreateEffect(const eEffectType& i_key, const char* i_vertexShaderPath, const char* i_fragmentShaderPath, const char* i_geometryShaderPath/* = ""*/, const char* const i_TCSPath /*= ""*/, const char* const i_TESPath/* = ""*/)
 	{
 		auto result = true;
 
@@ -1214,7 +1170,7 @@ namespace Graphics {
 		return result;
 	}
 
-	cEffect* GetEffectByKey(const char* i_key)
+	cEffect* GetEffectByKey(const eEffectType& i_key)
 	{
 		if (s_KeyToEffect_map.find(i_key) != s_KeyToEffect_map.end()) {
 			return s_KeyToEffect_map.at(i_key);

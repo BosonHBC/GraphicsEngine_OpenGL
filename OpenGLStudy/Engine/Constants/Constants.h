@@ -4,8 +4,6 @@
 #ifndef BH_CONSTANTS_H
 #define BH_CONSTANTS_H
 namespace Constants {
-	char const* const CONST_DEFAULT_EFFECT_KEY = "DefaultEffect";
-	char const* const CONST_SHADOWMAP_EFFECT_KEY = "ShadowMapEffect";
 	char const * const CONST_PATH_DEFAULT_COLOR = "Contents/textures/whiteBoard.png";
 	char const * const CONST_PATH_DEFAULT_NORMAL = "Contents/textures/DefaultNormal.png";
 	char const * const CONST_PATH_SHADER_ROOT = "Contents/shaders/";

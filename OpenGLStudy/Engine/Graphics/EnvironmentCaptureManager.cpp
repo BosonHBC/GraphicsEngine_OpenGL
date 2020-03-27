@@ -178,7 +178,7 @@ namespace Graphics
 				// iii. start to capture the irradiance map
 				{
 					glFrontFace(GL_CW);
-					_currentEffct = Graphics::GetEffectByKey("IrradConvolution");
+					_currentEffct = Graphics::GetEffectByKey(ETT_IrradConvolution);
 					_currentEffct->UseEffect();
 
 					_currentEffct->SetInteger("cubemapTex", 0);
@@ -208,7 +208,7 @@ namespace Graphics
 
 				// iv. start to capture the pre-filter cube map
 				{
-					_currentEffct = Graphics::GetEffectByKey("CubemapPrefilter");
+					_currentEffct = Graphics::GetEffectByKey(ETT_CubemapPrefilter);
 					_currentEffct->UseEffect();
 
 					_currentEffct->SetInteger("cubemapTex", 0);

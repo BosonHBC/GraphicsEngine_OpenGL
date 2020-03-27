@@ -60,15 +60,15 @@ void Assignment::CreateActor()
 {
 	m_teapot = new cActor();
 	m_teapot->Initialize();
-	m_teapot->Transform()->SetTransform(glm::vec3(0, 0, 190), glm::quat(glm::vec3(-glm::radians(90.f), 0, 0)), glm::vec3(5, 5, 5));
+	m_teapot->Transform()->SetTransform(glm::vec3(0, 0, 100), glm::quat(glm::vec3(-glm::radians(90.f), 0, 0)), glm::vec3(5, 5, 5));
 	m_teapot->SetModel("Contents/models/pbrTeapot.model");
-	m_teapot->UpdateUniformVariables(Graphics::GetEffectByKey("PBR_MR"));
+	m_teapot->UpdateUniformVariables(Graphics::GetEffectByKey(Graphics::ETT_PBR_MR));
 
 	m_teapot2 = new cActor();
 	m_teapot2->Initialize();
 	m_teapot2->Transform()->SetTransform(glm::vec3(150, 0, 100), glm::quat(glm::vec3(-glm::radians(90.f), 0, 0)), glm::vec3(3, 3, 3));
 	m_teapot2->SetModel("Contents/models/pbrTeapot.model");
-	m_teapot2->UpdateUniformVariables(Graphics::GetEffectByKey("PBR_MR"));
+	m_teapot2->UpdateUniformVariables(Graphics::GetEffectByKey(Graphics::ETT_PBR_MR));
 
 	m_mirror = new cActor();
 	m_mirror->Initialize();
@@ -79,7 +79,7 @@ void Assignment::CreateActor()
 	m_cubemap = new cActor();
 	m_cubemap->Initialize();
 	m_cubemap->SetModel("Contents/models/cubemap.model");
-	m_cubemap->UpdateUniformVariables(Graphics::GetEffectByKey("CubemapEffect"));
+	m_cubemap->UpdateUniformVariables(Graphics::GetEffectByKey(Graphics::ETT_Cubemap));
 
 	Graphics::cModel* _cubeMap = Graphics::cModel::s_manager.Get(m_cubemap->GetModelHandle());
 	Graphics::cMatCubemap* _matCubemap = dynamic_cast<Graphics::cMatCubemap*>(_cubeMap->GetMaterialAt());
@@ -91,13 +91,13 @@ void Assignment::CreateActor()
 	m_spaceHolder->Initialize();
 	m_spaceHolder->Transform()->SetTransform(glm::vec3(0, 150.f, 0), glm::quat(1, 0, 0, 0), glm::vec3(5, 5, 5));
 	m_spaceHolder->SetModel("Contents/models/spaceHolder.model");
-	m_spaceHolder->UpdateUniformVariables(Graphics::GetEffectByKey("PBR_MR"));
+	m_spaceHolder->UpdateUniformVariables(Graphics::GetEffectByKey(Graphics::ETT_PBR_MR));
 
 	m_gun = new cActor();
 	m_gun->Initialize();
 	m_gun->Transform()->SetTransform(glm::vec3(300, 50, 100), glm::quat(glm::vec3(0, glm::radians(90.f), 0)), glm::vec3(1, 1, 1));
 	m_gun->SetModel("Contents/models/Cerberus.model");
-	m_gun->UpdateUniformVariables(Graphics::GetEffectByKey("PBR_MR"));
+	m_gun->UpdateUniformVariables(Graphics::GetEffectByKey(Graphics::ETT_PBR_MR));
 
 	m_sphereList.reserve(25);
 	for (int i = 0; i < 5; ++i)
@@ -108,7 +108,7 @@ void Assignment::CreateActor()
 			_sphere->Initialize();
 			_sphere->Transform()->SetTransform(glm::vec3(-200.f + i * 100, 25.f + j * 50, -200), glm::quat(1, 0, 0, 0), glm::vec3(2.5f, 2.5f, 2.5f));
 			_sphere->SetModel("Contents/models/pbrSphere.model");
-			_sphere->UpdateUniformVariables(Graphics::GetEffectByKey("PBR_MR"));
+			_sphere->UpdateUniformVariables(Graphics::GetEffectByKey(Graphics::ETT_PBR_MR));
 			_sphere->Transform()->Update();
 			m_sphereList.push_back(_sphere);
 		}
@@ -117,7 +117,7 @@ void Assignment::CreateActor()
 
 void Assignment::CreateCamera()
 {
-	m_editorCamera = new  cEditorCamera(glm::vec3(0, 150, 10), 89, 0, 300, 10.f);
+	m_editorCamera = new  cEditorCamera(glm::vec3(0, 150, 250), 10, 0, 300, 10.f);
 	float _aspect = (float)(GetCurrentWindow()->GetBufferWidth()) / (float)(GetCurrentWindow()->GetBufferHeight());
 	m_editorCamera->CreateProjectionMatrix(glm::radians(60.f), _aspect, 1.f, 6000.0f);
 	m_editorCamera->Transform()->Update();
@@ -179,10 +179,7 @@ void Assignment::Tick(float second_since_lastFrame)
 
 		m_editorCamera->MouseControl(_windowInput, 0.01667f);
 	}
-	// for recompile shader
-	if (m_window->GetWindowInput()->IsKeyDown(GLFW_KEY_F6)) {
-		Graphics::GetEffectByKey(Constants::CONST_DEFAULT_EFFECT_KEY)->RecompileShader(Constants::CONST_PATH_BLINNPHONG_FRAGMENTSHADER, GL_FRAGMENT_SHADER);
-	}
+
 	//dLight->Transform()->Rotate(-cTransform::WorldUp, 0.01677f);
 	if (m_teapot) {
 		m_teapot->Transform()->gRotate(glm::vec3(0, 1.f, 0), second_since_lastFrame);

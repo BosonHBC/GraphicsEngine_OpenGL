@@ -27,12 +27,12 @@ namespace Graphics {
 	void DirectionalShadowMap_Pass();
 	void SpotLightShadowMap_Pass();
 	void PointLightShadowMap_Pass();
-	void Reflection_Pass();
 
-	void Render_Pass();
+	void BlinnPhong_Pass();
 	void PBR_Pass();
 	void CubeMap_Pass();
 	void Tessellation_Pass();
+
 	void Gizmo_RenderTransform();
 	void Gizmo_RenderVertexNormal();
 	void Gizmo_RenderTriangulation();
@@ -46,8 +46,8 @@ namespace Graphics {
 
 
 	/** Usage function*/
-	bool CreateEffect(const char* i_key, const char* i_vertexShaderPath, const char* i_fragmentShaderPath, const char* i_geometryShaderPath = "", const char* const i_TCSPath = "", const char* const i_TESPath = "");
-	cEffect* GetEffectByKey(const char* i_key);
+	bool CreateEffect(const eEffectType& i_key, const char* i_vertexShaderPath, const char* i_fragmentShaderPath, const char* i_geometryShaderPath = "", const char* const i_TCSPath = "", const char* const i_TESPath = "");
+	cEffect* GetEffectByKey(const eEffectType& i_key);
 	cEffect* GetCurrentEffect();
 
 	/** Lighting related*/
