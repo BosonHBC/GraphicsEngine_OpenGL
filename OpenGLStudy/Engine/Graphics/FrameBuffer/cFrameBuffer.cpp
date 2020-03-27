@@ -19,6 +19,7 @@ namespace Graphics {
 		// Generate another frame buffer
 		glGenFramebuffers(1, &m_fbo);
 		std::string key = "FB_" + std::to_string(m_fbo) + "_ETT_" + std::to_string(i_textureType);
+		assert(GL_NO_ERROR == glGetError());
 
 		// Generate render_to_texture texture
 		cTexture::s_manager.Load(key, m_renderToTexture, i_textureType, m_width, m_height);

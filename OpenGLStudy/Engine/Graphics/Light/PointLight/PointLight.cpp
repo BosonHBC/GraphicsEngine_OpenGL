@@ -30,6 +30,8 @@ namespace Graphics {
 		char _charBuffer[64] = { '\0' };
 		snprintf(_charBuffer, sizeof(_charBuffer), "pointLightShadowMap[%d]", m_lightIndex);
 		m_lightShadowMapID = glGetUniformLocation(i_programID, _charBuffer);
+
+		assert(GL_NO_ERROR == glGetError());
 	}
 
 	void cPointLight::CreateShadowMap(GLuint i_width, GLuint i_height)

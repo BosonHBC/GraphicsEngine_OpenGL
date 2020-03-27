@@ -282,9 +282,8 @@ void Assignment::Tick(float second_since_lastFrame)
 				// Triangulation Gizmo
 				_renderingMap.clear();
 				_renderingMap.reserve(1);
-				//_renderingMap.push_back({ m_teapotQuad->GetModelHandle(), *m_teapotQuad->Transform() });
-				//_renderingMap.push_back({ m_teapotQuad->GetModelHandle(), *m_teapotQuad->Transform() });
-				//Graphics::SubmitDataToBeRendered(_frameData_Camera, _renderingMap, &Graphics::Gizmo_RenderTriangulation);
+				_renderingMap.push_back({ m_teapot->GetModelHandle(), *m_teapot->Transform() });
+				Graphics::SubmitDataToBeRendered(_frameData_Camera, _renderingMap, &Graphics::Gizmo_RenderTriangulation);
 			}
 		}
 	}

@@ -49,6 +49,7 @@
     <ClCompile Include="Material\Unlit\MatUnlit.cpp" />
     <ClCompile Include="Mesh\Mesh.cpp" />
     <ClCompile Include="Model\Model.cpp" />
+    <ClCompile Include="RenderPasses.cpp" />
     <ClCompile Include="Texture\Texture.cpp" />
     <ClCompile Include="UniformBuffer\UniformBuffer.cpp" />
   </ItemGroup>
