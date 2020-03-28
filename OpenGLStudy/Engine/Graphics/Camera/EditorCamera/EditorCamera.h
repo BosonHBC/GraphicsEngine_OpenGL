@@ -11,10 +11,10 @@ public:
 	cEditorCamera() :cCamera() {}
 	cEditorCamera(glm::vec3 i_initialPos, GLfloat i_initialPitch = 0.0, GLfloat i_initialYaw = 0.0, GLfloat i_moveSpeed = 1.0, GLfloat i_turnSpeed = 1.0f) :
 		cCamera(i_initialPos, i_initialPitch, i_initialYaw, i_moveSpeed, i_turnSpeed) {
-		m_transform->SetPosition(i_initialPos);
-		Update();
+
 	}
 	cEditorCamera(const cEditorCamera& i_other);
+	cEditorCamera& operator = (const cEditorCamera& i_other);
 	~cEditorCamera() 
 	{
 	};
