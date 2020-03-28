@@ -36,6 +36,7 @@ private:
 	void CreateCamera();
 	void CreateLight();
 
+	void SubmitDataToBeRender(const float i_seconds_elapsedSinceLastLoop) override;
 	void SubmitLightingData();
 	void SubmitSceneData(Graphics::UniformBufferFormats::sFrame* const i_frameData);
 	void SubmitSceneDataForEnvironmentCapture(Graphics::UniformBufferFormats::sFrame* const i_frameData);

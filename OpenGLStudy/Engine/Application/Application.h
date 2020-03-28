@@ -27,7 +27,9 @@ namespace Application {
 		virtual void Tick(float second_since_lastFrame) {}
 		// Simulation time update, call in fixed rate, set by m_simulationUpdateRate_InSeconds
 		virtual void FixedTick(){}
-		
+		// Override this function for submitting data to the rendering thread
+		virtual void SubmitDataToBeRender(const float i_seconds_elapsedSinceLastLoop) {}
+
 		// Invoke once right before the application thread enters application loop
 		virtual void BeforeUpdate() {}; 
 		void UpdateUntilExit();
@@ -53,7 +55,6 @@ namespace Application {
 		std::thread* m_applicationThread;
 		// Start an application thread
 		void ApplicationLoopThread(void* const io_application);
-
 		/** protected variables */
 		//---------------------------------------------------
 		//Current window 

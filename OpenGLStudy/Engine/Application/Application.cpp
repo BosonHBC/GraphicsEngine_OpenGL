@@ -69,6 +69,7 @@ namespace Application {
 		// Update until application thread exits
 		while (!m_shouldApplicationLoopExit)
 		{
+
 			// Calculate how much time has elapsed since the last loop
 			uint64_t tickCount_systemTime_elapsedSinceLastLoop;
 			// Update based on time
@@ -101,10 +102,18 @@ namespace Application {
 				}
 			}
 
-			m_shouldApplicationLoopExit = m_window->GetShouldClose();
+			// Submit data
+			{
+				/** 1. Wait until render thread is ready for receiving new graphic data */
+				Graphics::MakeApplicationThreadWaitForSwapingData(m_applicationMutex);
+				/** 2. Clear the application thread data and submit new one */
+				Graphics::ClearApplicationThreadData();
+				SubmitDataToBeRender(static_cast<float>(Time::ConvertFromTickToSeconds(tickCount_systemTime_elapsedSinceLastLoop)));
+				/** 3. Let the graphic thread know that all data has been submitted */
+				Graphics::Notify_DataHasBeenSubmited();
+			}
 
-			/** Let the graphic thread know that all data has been submitted */
-			Graphics::Notify_DataHasBeenSubmited();
+			m_shouldApplicationLoopExit = m_window->GetShouldClose();
 		}
 
 	}

@@ -21,18 +21,18 @@ namespace Graphics {
 		struct sFrame
 		{
 			// PVMatrix stands for projection * view matrix
-			glm::f32 PVMatrix[16];
+			glm::mat4 PVMatrix;
 			glm::vec3 ViewPosition = glm::vec3(0,0,0);
 			V1Padding;
 			sFrame() {}
 
 			sFrame(const glm::mat4& i_projectionMatrix, const glm::mat4& i_viewMatrix)
 			{
-				memcpy(PVMatrix, glm::value_ptr(i_projectionMatrix * i_viewMatrix), sizeof(PVMatrix));
+				PVMatrix = i_projectionMatrix * i_viewMatrix;
 			}
 			sFrame(const glm::mat4& i_PVMatrix)
 			{
-				memcpy(PVMatrix, glm::value_ptr(i_PVMatrix), sizeof(PVMatrix));
+				PVMatrix = i_PVMatrix;
 			}
 		};
 
@@ -40,13 +40,12 @@ namespace Graphics {
 		// --------------------------------------------------------------------------------------------------------------------------------------------
 		struct sDrawCall
 		{
-			glm::f32 ModelMatrix[16];
-			glm::f32 NormalMatrix[16];
+			glm::mat4 ModelMatrix;
+			glm::mat4 NormalMatrix;
 
 			sDrawCall(const glm::mat4& i_model, const glm::mat4& i_normal)
 			{
-				memcpy(ModelMatrix, glm::value_ptr(i_model), sizeof(ModelMatrix));
-				memcpy(NormalMatrix, glm::value_ptr(i_normal), sizeof(NormalMatrix));
+				ModelMatrix = i_model; NormalMatrix = i_normal;
 			}
 		};
 

@@ -16,7 +16,7 @@ namespace Graphics
 			cSphere BV;								// The bounding volume of this probe, should not change after initialization; 
 			cSphere InnerBV;						// If a sphere is inside the inner sphere, this weight should be 1
 			float Influence;								// 1 at the inner boundary; 0 at the outer boundary; > 1 inside the inner boundary. < 0, outside the outer boundary
-			float Resolution;							// Resolution of Environment cubemap(each size)
+			GLuint Resolution;							// Resolution of Environment cubemap(each size)
 
 			sCaptureProbes() {}
 			sCaptureProbes(const cSphere& i_sphere, const cSphere& i_innerSphere, float i_influence, float i_resolution) : BV(i_sphere), InnerBV(i_innerSphere), Influence(i_influence), Resolution(i_resolution) { }

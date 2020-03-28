@@ -10,7 +10,7 @@ namespace Graphics {
 		m_edge = glm::clamp(i_edge, 1.f, 150.f);
 		m_procEdge = cosf(glm::radians(m_edge/2.f));
 		glm::quat rot(glm::quatLookAt(i_direction, cTransform::WorldUp));
-		m_transform.SetTransform(i_position, rot, glm::vec3(1, 1, 1));
+		Transform.SetTransform(i_position, rot, glm::vec3(1, 1, 1));
 	}
 
 	void cSpotLight::Illuminate()
@@ -18,9 +18,9 @@ namespace Graphics {
 		auto& gLighting = Graphics::GetGlobalLightingData();
 		gLighting.spotLights[m_lightIndex].base.base.color = m_color;
 		gLighting.spotLights[m_lightIndex].base.base.enableShadow = m_enableShadow;
-		gLighting.spotLights[m_lightIndex].base.position = m_transform.Position();
+		gLighting.spotLights[m_lightIndex].base.position = Transform.Position();
 		gLighting.spotLights[m_lightIndex].base.radius = m_range;
-		gLighting.spotLights[m_lightIndex].direction = m_transform.Forward();
+		gLighting.spotLights[m_lightIndex].direction = Transform.Forward();
 		gLighting.spotLights[m_lightIndex].edge = m_procEdge;
 	}
 
@@ -50,7 +50,7 @@ namespace Graphics {
 
 	glm::mat4 cSpotLight::CalculateLightTransform() const
 	{
-		glm::mat4 view = glm::lookAt(m_transform.Position(), m_transform.Position() + m_transform.Forward(), cTransform::WorldUp);
+		glm::mat4 view = glm::lookAt(Transform.Position(), Transform.Position() + Transform.Forward(), cTransform::WorldUp);
 		return m_lightPrjectionMatrix * view;
 	}
 

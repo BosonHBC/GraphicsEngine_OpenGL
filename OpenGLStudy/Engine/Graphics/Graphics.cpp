@@ -501,7 +501,6 @@ namespace Graphics {
 			s_dataRenderingByGraphicThread->s_renderPasses[i].RenderPassFunction();
 		}
 
-		Application::GetCurrentApplication()->GetCurrentWindow()->SwapBuffers();
 		//Gizmo_DrawDebugCaptureVolume();
 	}
 

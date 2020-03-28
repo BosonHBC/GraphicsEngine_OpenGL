@@ -31,7 +31,7 @@ namespace Graphics
 	{
 		s_dataRenderingByGraphicThread->s_ambientLight.Illuminate();
 
-		for (int i = 0; i < s_dataRenderingByGraphicThread->s_spotLights.size(); ++i)
+		for (size_t i = 0; i < s_dataRenderingByGraphicThread->s_spotLights.size(); ++i)
 		{
 			auto* it = &s_dataRenderingByGraphicThread->s_spotLights[i];
 
@@ -45,7 +45,7 @@ namespace Graphics
 			}
 		}
 
-		for (int i = 0; i < s_dataRenderingByGraphicThread->s_pointLights.size(); ++i)
+		for (size_t i = 0; i < s_dataRenderingByGraphicThread->s_pointLights.size(); ++i)
 		{
 			auto* it = &s_dataRenderingByGraphicThread->s_pointLights[i];
 			it->SetupLight(s_currentEffect->GetProgramID(), i);
@@ -119,7 +119,7 @@ namespace Graphics
 		s_currentEffect->SetInteger("displacementMap", 24);
 		s_currentEffect->SetFloat("displaceIntensity", 20.0f);
 
-		for (auto i = 0; i < s_dataRenderingByGraphicThread->s_pointLights.size(); ++i)
+		for (size_t i = 0; i < s_dataRenderingByGraphicThread->s_pointLights.size(); ++i)
 		{
 			auto* it = &s_dataRenderingByGraphicThread->s_pointLights[i];
 			cFrameBuffer* _pointLightFBO = it->GetShadowMap();
@@ -127,7 +127,7 @@ namespace Graphics
 
 				// for each light, needs to update the frame data
 				Graphics::UniformBufferFormats::sFrame _frameData_PointLightShadow;
-				_frameData_PointLightShadow.ViewPosition = it->Transform()->Position();
+				_frameData_PointLightShadow.ViewPosition = it->Transform.Position();
 				s_uniformBuffer_frame.Update(&_frameData_PointLightShadow);
 
 				// point need extra uniform variables to be passed in to shader
@@ -159,7 +159,7 @@ namespace Graphics
 		s_currentEffect = GetEffectByKey(EET_ShadowMap);
 		s_currentEffect->UseEffect();
 
-		for (auto i = 0; i < s_dataRenderingByGraphicThread->s_spotLights.size(); ++i)
+		for (size_t i = 0; i < s_dataRenderingByGraphicThread->s_spotLights.size(); ++i)
 		{
 			auto* it = &s_dataRenderingByGraphicThread->s_spotLights[i];
 
@@ -168,7 +168,7 @@ namespace Graphics
 
 				// for each light, needs to update the frame data
 				Graphics::UniformBufferFormats::sFrame _frameData_SpotLightShadow(it->CalculateLightTransform());
-				_frameData_SpotLightShadow.ViewPosition = it->Transform()->Position();
+				_frameData_SpotLightShadow.ViewPosition = it->Transform.Position();
 				s_uniformBuffer_frame.Update(&_frameData_SpotLightShadow);
 
 				// write buffer to the texture
@@ -241,7 +241,7 @@ namespace Graphics
 			}
 		}
 		// Unbind last frame's textures
-		for (int i = currentReadyCapturesCount; i < maxCubemapMixing; ++i)
+		for (size_t i = currentReadyCapturesCount; i < maxCubemapMixing; ++i)
 		{
 			cTexture::UnBindTexture(GL_TEXTURE0 + cubemapStartUnit + i, ETT_FRAMEBUFFER_HDR_CUBEMAP);
 			cTexture::UnBindTexture(GL_TEXTURE0 + cubemapStartUnit + maxCubemapMixing + i, ETT_FRAMEBUFFER_HDR_MIPMAP_CUBEMAP);
@@ -264,7 +264,7 @@ namespace Graphics
 		auto& renderList = s_dataRenderingByGraphicThread->s_renderPasses[s_currentRenderPass].ModelToTransform_map;
 		const auto sphereOffset = renderList.size() - 25;
 		// draw the space first
-		for (int i = 0; i < sphereOffset; ++i)
+		for (size_t i = 0; i < sphereOffset; ++i)
 		{
 			// 1. Update draw call data
 			s_uniformBuffer_drawcall.Update(&UniformBufferFormats::sDrawCall(renderList[i].second.M(), renderList[i].second.TranspostInverse()));
@@ -356,7 +356,7 @@ namespace Graphics
 		s_currentEffect = GetEffectByKey(EET_DrawDebugCircles);
 		s_currentEffect->UseEffect();
 		auto _capturesRef = EnvironmentCaptureManager::GetCapturesReferences();
-		for (int i = 0; i < _capturesRef.size(); ++i)
+		for (size_t i = 0; i < _capturesRef.size(); ++i)
 		{
 			cMesh* _Point = cMesh::s_manager.Get(s_point);
 			const cSphere& _outerBV = _capturesRef[i]->BV;

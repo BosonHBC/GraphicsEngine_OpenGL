@@ -110,6 +110,7 @@ namespace Graphics
 			}
 
 			g_CaptureProbesReferences.push_back(&g_CaptureProbesList[_lastIdx]);
+			return result;
 		}
 
 		void BuildAccelerationStructure()
@@ -148,7 +149,7 @@ namespace Graphics
 				{
 					g_CaptureProbesList[k].EnvironmentProbe.StartCapture();
 
-					GLuint passesPerFace = (i_renderThreadData->s_renderPasses.size() - shadowmapPassesCount) / 6.f;
+					GLuint passesPerFace = static_cast<GLuint>((i_renderThreadData->s_renderPasses.size() - shadowmapPassesCount) / 6.f);
 					for (size_t i = 0; i < 6; ++i)
 					{
 						glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_CUBE_MAP_POSITIVE_X + i, g_CaptureProbesList[k].EnvironmentProbe.GetCubemapTextureID(), 0);
@@ -225,8 +226,8 @@ namespace Graphics
 					{
 						GLuint mip = i - 1;
 						// resize frame buffer according to mip-level size.
-						GLuint mipWidth = g_CaptureProbesList[k].PrefilterProbe.GetWidth() * glm::pow(0.5f, mip);
-						GLuint mipHeight = g_CaptureProbesList[k].PrefilterProbe.GetHeight() * glm::pow(0.5f, mip);
+						GLuint mipWidth = static_cast<GLuint>(g_CaptureProbesList[k].PrefilterProbe.GetWidth() * glm::pow(0.5f, mip));
+						GLuint mipHeight = static_cast<GLuint>(g_CaptureProbesList[k].PrefilterProbe.GetHeight() * glm::pow(0.5f, mip));
 
 						glRenderbufferStorage(GL_RENDERBUFFER, GL_DEPTH_COMPONENT24, mipWidth, mipHeight); // resize render buffer too
 						Application::cApplication* _app = Application::GetCurrentApplication();

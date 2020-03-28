@@ -9,39 +9,12 @@
 
 void cActor::Initialize()
 {
-	m_transform = new cTransform();
+
 }
 
-void cActor::UpdateUniformVariables(Graphics::cEffect* const i_effect)
-{
-	Graphics::cModel* _modelInst = Graphics::cModel::s_manager.Get(m_modelHandle);
-	if (_modelInst) {
-		_modelInst->UpdateUniformVariables(i_effect->GetProgramID());
-	}
-}
-
-void cActor::Update(Graphics::cEffect* const i_effect)
-{
-	// TransformUpdate
-	//---------------------------------
-	//m_transform->Update();
-	//glUniformMatrix4fv(i_effect->GetModelMatrixUniformID(), 1, GL_FALSE, glm::value_ptr(m_transform->M()));
-	// fix non-uniform scale
-	//glUniformMatrix4fv(i_effect->GetNormalMatrixUniformID(), 1, GL_FALSE, glm::value_ptr(glm::transpose(m_transform->MInv())));
-
-	// Rendering Update
-	//---------------------------------
-
-	Graphics::cModel* _model = Graphics::cModel::s_manager.Get(m_modelHandle);
-	if (_model) {
-		_model->Render();
-	}
-}
 
 void cActor::CleanUp()
 {
-	safe_delete(m_transform);
-
 	// Release the handle
 	Graphics::cModel::s_manager.Release(m_modelHandle);
 

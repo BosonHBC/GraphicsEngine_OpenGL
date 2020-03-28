@@ -13,7 +13,7 @@
 #include <string>
 #include <vector>
 #include <map>
-
+#include <mutex>
 #include "Handle.h"
 namespace Assets {
 	template< class tAsset , class tKey = std::string>
@@ -60,7 +60,7 @@ namespace Assets {
 		// every time the user wants to load a asset that has already been loaded,
 		// It will return the existing one from this map.
 		std::map<tKey, cHandle<tAsset>> m_keyToAssetHandle_Map;
-
+		std::mutex m_mutex;
 	};
 
 }

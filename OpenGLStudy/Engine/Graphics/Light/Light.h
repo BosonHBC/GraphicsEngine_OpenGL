@@ -24,7 +24,6 @@ namespace Graphics {
 		/**Usage function*/
 		virtual void SetupLight(const GLuint& i_programID, GLuint i_lightIndex = 0);
 		void UpdateLightIndex(GLuint i_lightIndex);
-		cTransform* Transform() { return &m_transform; }
 		virtual void CleanUp();
 		/** Pure virtual functions*/
 		virtual void Illuminate() {};
@@ -41,13 +40,15 @@ namespace Graphics {
 		bool IsShadowMapValid() const;
 		bool IsShadowEnabled() const { return m_enableShadow && IsShadowMapValid(); }
 		void CleanUpShadowMap();
+
+		cTransform Transform;
 	protected:
 		Color m_color;
 		// record the index of this light
 		GLuint m_lightIndex;
 		bool m_enableShadow;
 
-		cTransform m_transform;
+
 		// this determine which kind of projection the shadow map wants
 		// it should be type variant
 		glm::mat4 m_lightPrjectionMatrix;
