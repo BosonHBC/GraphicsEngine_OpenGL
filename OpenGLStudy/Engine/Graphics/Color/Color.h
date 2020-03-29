@@ -7,7 +7,7 @@ namespace Graphics {
 	{
 	public:
 		/** public variable */
-		float r, g, b;
+		float r = 0.0f, g = 0.0f, b = 0.0f;
 		/** Constructors and destructor */
 		cColor() { r = g = b = 0; };
 		cColor(const cColor  &c) : r(c.r), g(c.g), b(c.b) {}
