@@ -43,16 +43,15 @@ namespace Graphics {
 
 		cTransform Transform;
 	protected:
-		Color m_color;
+		Color m_color = Color(0,0,0);
 		// record the index of this light
-		GLuint m_lightIndex;
-		bool m_enableShadow;
-
+		GLuint m_lightIndex = 0;
+		bool m_enableShadow = false;
 
 		// this determine which kind of projection the shadow map wants
 		// it should be type variant
-		glm::mat4 m_lightPrjectionMatrix;
-		cFrameBuffer* m_shadowMap;
+		glm::mat4 m_lightPrjectionMatrix = glm::mat4(1.0f);
+		cFrameBuffer* m_shadowMap = nullptr;
 	};
 
 }

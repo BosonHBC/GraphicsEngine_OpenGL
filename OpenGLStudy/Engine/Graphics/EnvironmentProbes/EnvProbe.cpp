@@ -53,6 +53,7 @@ namespace Graphics
 		{
 			return _cubemapTex->GetTextureID();
 		}
+		return static_cast<GLuint>(-1);
 	}
 
 	glm::mat4 cEnvProbe::GetViewMat4(GLuint i_face) const

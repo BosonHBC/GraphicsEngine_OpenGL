@@ -29,11 +29,11 @@ namespace Graphics
 		Assets::cHandle<cTexture> m_roughnessMapHandle;
 		Assets::cHandle<cTexture> m_normalMapHandle;
 
-		Color m_diffuseIntensity;
-		float m_metallicIntensity, m_roughnessIntensity;
-		glm::vec3 m_ior;
+		Color m_diffuseIntensity = Color(1,1,1);
+		float m_metallicIntensity = 1.0f, m_roughnessIntensity = 1.0f;
+		glm::vec3 m_ior = glm::vec3(1.0f, 1.0f, 1.0f);
 
-		GLuint m_albedoID, m_metallicID, m_roughnessID, m_normalID;
+		GLuint m_albedoID = static_cast<GLuint>(-1), m_metallicID = static_cast<GLuint>(-1), m_roughnessID = static_cast<GLuint>(-1), m_normalID = static_cast<GLuint>(-1);
 
 		/* private functions */
 		cMatPBRMR()

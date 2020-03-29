@@ -37,12 +37,12 @@ bool Assignment::Initialize(GLuint i_width, GLuint i_height, const char* i_windo
 	CreateCamera();
 	CreateLight();
 
-	Graphics::cMatCubemap* _cubemapMat = dynamic_cast<Graphics::cMatCubemap*>(Graphics::cModel::s_manager.Get(m_cubemap->GetModelHandle())->GetMaterialAt());
+	//Graphics::cMatCubemap* _cubemapMat = dynamic_cast<Graphics::cMatCubemap*>(Graphics::cModel::s_manager.Get(m_cubemap->GetModelHandle())->GetMaterialAt());
 
-	Graphics::cMatBlinn* _teapot2Mat = dynamic_cast<Graphics::cMatBlinn*>(Graphics::cModel::s_manager.Get(m_teapot2->GetModelHandle())->GetMaterialAt());
+	//Graphics::cMatBlinn* _teapot2Mat = dynamic_cast<Graphics::cMatBlinn*>(Graphics::cModel::s_manager.Get(m_teapot2->GetModelHandle())->GetMaterialAt());
 	//_teapot2Mat->UpdateCubemapTexture(_cubemapMat->GetCubemapHandle());
 
-	Graphics::cMatPBRMR* _spaceHolderMat = dynamic_cast<Graphics::cMatPBRMR*>(Graphics::cModel::s_manager.Get(m_spaceHolder->GetModelHandle())->GetMaterialAt());
+	//Graphics::cMatPBRMR* _spaceHolderMat = dynamic_cast<Graphics::cMatPBRMR*>(Graphics::cModel::s_manager.Get(m_spaceHolder->GetModelHandle())->GetMaterialAt());
 
 
 	printf("---------------------------------Game initialization done.---------------------------------\n");
@@ -175,7 +175,8 @@ void Assignment::BeforeUpdate()
 	// submit render requests
 	for (int i = 0; i < 6; ++i)
 	{
-		SubmitSceneDataForEnvironmentCapture(&Graphics::UniformBufferFormats::sFrame());
+		Graphics::UniformBufferFormats::sFrame _frame;
+		SubmitSceneDataForEnvironmentCapture(&_frame);
 	}
 	// Let the graphic thread know that the pre-render pass is ready to go
 	Graphics::Notify_DataHasBeenSubmited();

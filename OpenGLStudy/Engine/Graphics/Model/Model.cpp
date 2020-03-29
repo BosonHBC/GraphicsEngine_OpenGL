@@ -144,6 +144,7 @@ namespace Graphics {
 		if (i_idx < m_materialList.size()) {
 			return m_materialList[i_idx];
 		}
+		return nullptr;
 	}
 
 	bool cModel::LoadFileFromLua(const char* i_path, std::string& o_modelPath, std::string& o_materialPath)
@@ -248,7 +249,7 @@ namespace Graphics {
 		}
 		else
 		{
-			printf("Loading Model fail: Fail to create mesh%s\n", meshKey);
+			printf("Loading Model fail: Fail to create mesh%s\n", meshKey.c_str());
 		}
 	}
 

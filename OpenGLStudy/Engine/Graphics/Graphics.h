@@ -66,5 +66,5 @@ namespace Graphics {
 	cUniformBuffer* GetUniformBuffer(const eUniformBufferType& i_uniformBufferType);
 
 	/** Predefined model and textures*/
-	const cModel::HANDLE& GetPrimitive(const EPrimitiveType& i_primitiveType);
+	 cModel::HANDLE GetPrimitive(const EPrimitiveType& i_primitiveType);
 }

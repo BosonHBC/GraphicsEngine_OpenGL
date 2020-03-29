@@ -32,10 +32,10 @@ namespace Graphics {
 		void UseShadowMap(GLuint i_textureUnit) override;
 	protected:
 		// use inverse squared fall off
-		GLfloat m_range;
-		GLuint m_lightTransformID, m_lightShadowMapID;
+		GLfloat m_range = 100.f;
+		GLuint m_lightTransformID = static_cast<GLuint>(-1), m_lightShadowMapID = static_cast<GLuint>(-1);
 	private:
-		GLuint m_farPlaneID;
+		GLuint m_farPlaneID = static_cast<GLuint>(-1);
 	};
 
 }

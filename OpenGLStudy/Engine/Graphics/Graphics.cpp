@@ -631,8 +631,9 @@ namespace Graphics {
 
 	}
 
-	const Graphics::cModel::HANDLE& GetPrimitive(const EPrimitiveType& i_primitiveType)
+	Graphics::cModel::HANDLE GetPrimitive(const EPrimitiveType& i_primitiveType)
 	{
+		cModel::HANDLE _invalidHandle;
 		switch (i_primitiveType)
 		{
 		case EPT_Cube:
@@ -645,7 +646,7 @@ namespace Graphics {
 			return s_quadHandle;
 			break;
 		default:
-			return cModel::HANDLE();
+			return _invalidHandle;
 			break;
 		}
 	}

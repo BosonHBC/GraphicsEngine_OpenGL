@@ -37,12 +37,12 @@ namespace Graphics {
 		GLuint rbo() const { return m_rbo; }
 	protected:
 		// fbo: frame buffer object
-		GLuint m_fbo; // this is necessary
-		GLuint m_rbo; // alternative render buffer object if needed.
-		GLint m_prevFbo; // stores the previous frame buffer object.
+		GLuint m_fbo = static_cast<GLuint>(-1); // this is necessary
+		GLuint m_rbo = static_cast<GLuint>(-1); // alternative render buffer object if needed.
+		GLint m_prevFbo = static_cast<GLuint>(-1); // stores the previous frame buffer object.
 		cTexture::HANDLE m_renderToTexture;
 
 		// generated map should has same size as the window
-		GLuint m_width, m_height;
+		GLuint m_width = 0, m_height = 0;
 	};
 }

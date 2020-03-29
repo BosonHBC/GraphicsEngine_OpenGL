@@ -7,7 +7,7 @@ class cSphere;
 class cBox : public cShape
 {
 public:
-	cBox() : b(glm::vec3(-1e30)), t(glm::vec3(1e30)) {};
+	cBox() : b(glm::vec3(-4096)), t(glm::vec3(4096)) {};
 	cBox(const glm::vec3& i_b, const glm::vec3& i_t) { b = i_b; t = i_t; }
 	
 	cBox(const cBox& i_ohter) : b(i_ohter.b), t(i_ohter.t) {}

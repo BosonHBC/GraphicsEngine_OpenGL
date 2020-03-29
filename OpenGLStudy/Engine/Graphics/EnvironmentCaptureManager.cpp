@@ -328,7 +328,7 @@ namespace Graphics
 							sumBlendWeight += blendWeights[i];
 						}
 						assert(sumBlendWeight > 0);
-						const float normlizedValue = 1.0 / sumBlendWeight;
+						const float normlizedValue = 1.0f / sumBlendWeight;
 						for (size_t i = 0; i < numOfShape; ++i) {
 							blendWeights[i] *= normlizedValue;
 							captureWeights.Weights[i] = blendWeights[i];

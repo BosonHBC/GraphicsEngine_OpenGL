@@ -46,10 +46,10 @@ namespace Graphics {
 	private:
 		// default is invalid
 		eUniformBufferType m_type = UBT_Invalid;
-		uint32_t m_size;
-		GLuint m_bufferID;
+		uint32_t m_size = 0;
+		GLuint m_bufferID = static_cast<GLuint>(-1);
 		// prevent repeated initialization
-		bool m_initialized;
+		bool m_initialized = false;
 
 		// Remove all default constructors
 		cUniformBuffer() = delete;

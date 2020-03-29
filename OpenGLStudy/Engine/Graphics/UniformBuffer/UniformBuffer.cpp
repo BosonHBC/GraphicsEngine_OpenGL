@@ -140,7 +140,7 @@ namespace Graphics {
 			printf("Error: Invalid buffer id. Should not bind it to shader.");
 			return;
 		}
-		if (i_offset >= m_size || i_size > m_size) 
+ 		if (static_cast<uint32_t>(i_offset) >= m_size || static_cast<uint32_t>(i_size) > m_size)
 		{
 			printf("Error: Invalid data size of update request with id: %d.", m_bufferID);
 			return;

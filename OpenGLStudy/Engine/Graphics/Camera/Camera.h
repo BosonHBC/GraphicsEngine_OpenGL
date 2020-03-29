@@ -48,16 +48,16 @@ public:
 protected:
 	/** private member variables*/
 
-	GLfloat m_translationSpeed;
-	GLfloat m_turnSpeed;
+	GLfloat m_translationSpeed = 1.0f;
+	GLfloat m_turnSpeed = 1.0f;
 
-	glm::mat4 m_viewMatrix;
-	glm::mat4 m_projectionMatrix;
+	glm::mat4 m_viewMatrix = glm::mat4(1.0f);
+	glm::mat4 m_projectionMatrix = glm::mat4(1.0f);
 
-	GLfloat m_pitch;
-	GLfloat m_yaw;
+	GLfloat m_pitch = 0.0f;
+	GLfloat m_yaw = 0.0f;
 
-	glm::vec3 m_worldUp;
+	glm::vec3 m_worldUp = glm::vec3(0, 1.f, 0);
 
 	/** private helper functions*/
 	virtual void Update();
