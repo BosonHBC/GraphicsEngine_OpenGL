@@ -464,7 +464,7 @@ namespace Graphics {
 		/** 4. Start to render pass one by one */
 		EnvironmentCaptureManager::CaptureEnvironment(s_dataRenderingByGraphicThread);
 		//printf("Finish capture environment.\n");
-		s_whenPreRenderFinish.notify_all();
+		s_whenPreRenderFinish.notify_one();
 		printf("---------------------------------Pre-Rendering stage done.---------------------------------\n");
 	}
 	int renderCount = 0;
@@ -479,7 +479,7 @@ namespace Graphics {
 		// After data has been submitted, swap the data
 		std::swap(s_dataSubmittedByApplicationThread, s_dataRenderingByGraphicThread);
 		// Notify the application thread that data is swapped and it is ready for receiving new data
-		s_whenDataHasBeenSwappedInRenderThread.notify_all();
+		s_whenDataHasBeenSwappedInRenderThread.notify_one();
 
 		// Update cubemap weights before rendering, actually, this step should be done at the application thread
 		EnvironmentCaptureManager::UpdatePointOfInterest(s_dataRenderingByGraphicThread->s_renderPasses[3].FrameData.ViewPosition);
@@ -740,7 +740,7 @@ namespace Graphics {
 	//----------------------------------------------------------------------------------
 	void Notify_DataHasBeenSubmited()
 	{
-		s_whenAllDataHasBeenSubmittedFromApplicationThread.notify_all();
+		s_whenAllDataHasBeenSubmittedFromApplicationThread.notify_one();
 	}
 
 	void MakeApplicationThreadWaitForSwapingData(std::mutex& i_applicationMutex)
