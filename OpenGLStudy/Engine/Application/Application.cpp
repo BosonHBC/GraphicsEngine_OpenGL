@@ -53,11 +53,9 @@ namespace Application {
 		assert(application);
 		return application->UpdateUntilExit();
 	}
-
+	int appCount = 0;
 	void cApplication::UpdateUntilExit()
 	{
-		BeforeUpdate();
-		
 		auto tickCount_systemTime_currentLoop = Time::GetCurrentSystemTimeTickCount();
 		m_tickCount_systemTime_Current = tickCount_systemTime_currentLoop;
 		const auto tickCount_per_simulationUpdate = Time::ConvertFromSecondsToTick(m_simulationUpdateRate_InSeconds);
@@ -65,6 +63,8 @@ namespace Application {
 		// In debug mode, application may freeze but the tick will not.
 		// To prevent the second_since_last_update from being too large, need to add a max limitation for it. 
 		const auto tickCount_maxAllowable_time_per_Iteration = Time::ConvertFromSecondsToTick(0.5);
+		
+		BeforeUpdate();
 
 		// Update until application thread exits
 		while (!m_shouldApplicationLoopExit)
@@ -114,6 +114,8 @@ namespace Application {
 			}
 
 			m_shouldApplicationLoopExit = m_window->GetShouldClose();
+			appCount++;
+			printf("Application thread count: %d\n", appCount);
 		}
 
 	}

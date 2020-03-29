@@ -99,7 +99,7 @@ void Assignment::CreateCamera()
 {
 	m_editorCamera = new  cEditorCamera(glm::vec3(0, 150, 250), 10, 0, 300, 10.f);
 	float _aspect = (float)(GetCurrentWindow()->GetBufferWidth()) / (float)(GetCurrentWindow()->GetBufferHeight());
-	m_editorCamera->CreateProjectionMatrix(glm::radians(60.f), _aspect, 1.f, 6000.0f);
+	m_editorCamera->CreateProjectionMatrix(glm::radians(60.f), _aspect, 1.f, 3000.0f);
 }
 
 void Assignment::CreateLight()
@@ -115,6 +115,8 @@ void Assignment::CreateLight()
 
 void Assignment::SubmitDataToBeRender(const float i_seconds_elapsedSinceLastLoop)
 {
+	std::vector<std::pair<Graphics::cModel::HANDLE, cTransform>> _renderingMap = std::vector<std::pair<Graphics::cModel::HANDLE, cTransform>>();
+
 	// Submit lighting data
 	SubmitLightingData();
 	// Submit geometry data for shadow map
@@ -128,9 +130,9 @@ void Assignment::SubmitDataToBeRender(const float i_seconds_elapsedSinceLastLoop
 
 	// Gizmos
 	{
-		std::vector<std::pair<Graphics::cModel::HANDLE, cTransform>> _renderingMap;
 		// Transform Gizmo
 		{
+			_renderingMap.clear();
 			_renderingMap.reserve(8);
 			Assets::cHandle<Graphics::cModel> unneccessaryHandle;
 			//cTransform _worldTransform;
@@ -166,6 +168,11 @@ void Assignment::SubmitDataToBeRender(const float i_seconds_elapsedSinceLastLoop
 
 void Assignment::BeforeUpdate()
 {
+	Graphics::MakeApplicationThreadWaitUntilPreRenderFrameDone(m_applicationMutex);
+}
+
+void Assignment::Run()
+{
 	// Clear application thread data
 	Graphics::ClearApplicationThreadData();
 	// Submit lighting data
@@ -178,12 +185,7 @@ void Assignment::BeforeUpdate()
 		Graphics::UniformBufferFormats::sFrame _frame;
 		SubmitSceneDataForEnvironmentCapture(&_frame);
 	}
-	// Let the graphic thread know that the pre-render pass is ready to go
-	Graphics::Notify_DataHasBeenSubmited();
-}
 
-void Assignment::Run()
-{
 	Graphics::PreRenderFrame();
 
 	// loop until window closed

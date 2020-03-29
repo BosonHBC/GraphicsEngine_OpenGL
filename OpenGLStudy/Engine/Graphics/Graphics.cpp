@@ -32,6 +32,7 @@ namespace Graphics {
 	// Threading
 	std::condition_variable s_whenAllDataHasBeenSubmittedFromApplicationThread;
 	std::condition_variable s_whenDataHasBeenSwappedInRenderThread;
+	std::condition_variable s_whenPreRenderFinish;
 	std::mutex s_graphicMutex;
 
 	// Global data
@@ -397,16 +398,8 @@ namespace Graphics {
 
 	void PreRenderFrame()
 	{
-		/** 1. Wait for data being submitted here */
-		// Acquire the lock
-		std::unique_lock<std::mutex> _mlock(s_graphicMutex);
-		// Wait until the conditional variable is signaled
-		s_whenAllDataHasBeenSubmittedFromApplicationThread.wait(_mlock);
-
 		// After data has been submitted, swap the data
 		std::swap(s_dataSubmittedByApplicationThread, s_dataRenderingByGraphicThread);
-		// Notify the application thread that data is swapped and it is ready for receiving new data
-		s_whenDataHasBeenSwappedInRenderThread.notify_all();
 
 		s_uniformBuffer_ClipPlane.Update(&s_dataRenderingByGraphicThread->s_ClipPlane);
 
@@ -444,6 +437,7 @@ namespace Graphics {
 			glGenerateMipmap(GL_TEXTURE_CUBE_MAP);
 			glBindTexture(GL_TEXTURE_CUBE_MAP, 0);
 		}
+	//	printf("Finish generate equirectangular HDR maps to cubemap.\n");
 		/** 3. start generate BRDF LUTTexture */
 		{
 			s_currentEffect = Graphics::GetEffectByKey(EET_BrdfIntegration);
@@ -466,13 +460,14 @@ namespace Graphics {
 			s_brdfLUTTexture.UnWrite();
 			s_currentEffect->UnUseEffect();
 		}
-
+		//printf("Finish generate BRDF LUT texture.\n");
 		/** 4. Start to render pass one by one */
 		EnvironmentCaptureManager::CaptureEnvironment(s_dataRenderingByGraphicThread);
-
+		//printf("Finish capture environment.\n");
+		s_whenPreRenderFinish.notify_all();
 		printf("---------------------------------Pre-Rendering stage done.---------------------------------\n");
 	}
-
+	int renderCount = 0;
 	void RenderFrame()
 	{
 		/** 1. Wait for data being submitted here */
@@ -500,7 +495,8 @@ namespace Graphics {
 			// Execute pass function
 			s_dataRenderingByGraphicThread->s_renderPasses[i].RenderPassFunction();
 		}
-
+		renderCount++;
+		printf("Render thread count: %d\n", renderCount);
 		//Gizmo_DrawDebugCaptureVolume();
 	}
 
@@ -673,6 +669,7 @@ namespace Graphics {
 
 	cEffect* GetEffectByKey(const eEffectType& i_key)
 	{
+		//std::lock_guard<std::mutex> autoLock(s_graphicMutex);
 		if (s_KeyToEffect_map.find(i_key) != s_KeyToEffect_map.end()) {
 			return s_KeyToEffect_map.at(i_key);
 		}
@@ -751,6 +748,14 @@ namespace Graphics {
 		std::unique_lock<std::mutex> lck(i_applicationMutex);
 		constexpr unsigned int timeToWait_inMilliseconds = 10;
 		s_whenDataHasBeenSwappedInRenderThread.wait_for(lck, std::chrono::milliseconds(timeToWait_inMilliseconds));
+	}
+
+	void MakeApplicationThreadWaitUntilPreRenderFrameDone(std::mutex& i_applicationMutex)
+	{
+		std::unique_lock<std::mutex> lck(i_applicationMutex);
+		constexpr unsigned int timeToWait_inMilliseconds = 5000;
+		//s_whenPreRenderFinish.wait_for(lck, std::chrono::milliseconds(timeToWait_inMilliseconds));
+		s_whenPreRenderFinish.wait(lck);
 	}
 
 	void ClearApplicationThreadData()

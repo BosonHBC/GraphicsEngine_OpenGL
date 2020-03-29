@@ -42,7 +42,7 @@ private:
 	void SubmitSceneDataForEnvironmentCapture(Graphics::UniformBufferFormats::sFrame* const i_frameData);
 	void SubmitShadowData();
 
-	Color m_clearColor;
+	Color m_clearColor = Color(0,0,0);
 	cEditorCamera* m_editorCamera;
 
 	Graphics::cPointLight* pLight1;

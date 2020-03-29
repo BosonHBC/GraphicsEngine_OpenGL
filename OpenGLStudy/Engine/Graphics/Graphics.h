@@ -60,7 +60,7 @@ namespace Graphics {
 	void Notify_DataHasBeenSubmited();
 	// When the data is swapped, application data can be cleared and it is ready for next submission
 	void MakeApplicationThreadWaitForSwapingData(std::mutex& i_applicationMutex);
-
+	void MakeApplicationThreadWaitUntilPreRenderFrameDone(std::mutex& i_applicationMutex);
 	/** Others */
 	cEnvProbe* GetHDRtoCubemap();
 	cUniformBuffer* GetUniformBuffer(const eUniformBufferType& i_uniformBufferType);
