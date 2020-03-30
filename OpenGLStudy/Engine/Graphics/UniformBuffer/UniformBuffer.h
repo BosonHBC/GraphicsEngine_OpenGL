@@ -16,6 +16,7 @@ namespace Graphics {
 		UBT_ClipPlane = 4,
 		UBT_PBRMR = 5,
 		UBT_EnvCaptureWeight = 6,
+		UBT_PostProcessing = 7,
 		UBT_Invalid = 0xff,
 	};
 

@@ -1,4 +1,5 @@
 #pragma once
+#pragma once
 #include "Graphics/EnvironmentCaptureManager.h"
 #include "UniformBuffer/UniformBuffer.h"
 #include "RenderStructs.h"

@@ -20,6 +20,7 @@ namespace Graphics{
 	struct sDataRequiredToRenderAFrame
 	{
 		UniformBufferFormats::sClipPlane s_ClipPlane;
+		UniformBufferFormats::sPostProcessing s_PostProcessing;
 		std::vector<sPass> s_renderPasses;
 		// Lighting data
 		std::vector<cPointLight> s_pointLights;
@@ -34,5 +35,12 @@ namespace Graphics{
 		EPT_Cube = 0,
 		EPT_Arrow = 1,
 		EPT_Quad = 2
+	};
+
+	// render mode
+	enum ERenderMode : uint8_t
+	{
+		ERM_ForwardShading,
+		ERM_DeferredShading
 	};
 }

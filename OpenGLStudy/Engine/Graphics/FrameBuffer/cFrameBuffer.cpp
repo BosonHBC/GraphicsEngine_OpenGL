@@ -10,7 +10,7 @@ namespace Graphics {
 	bool cFrameBuffer::Initialize(GLuint i_width, GLuint i_height, ETextureType i_textureType)
 	{
 		auto result = true;
-		m_width = i_height; m_height = i_height;
+		m_width = i_width; m_height = i_height;
 		// record the previous frame buffer object
 		glGetIntegerv(GL_FRAMEBUFFER_BINDING, &m_prevFbo);
 
@@ -25,7 +25,6 @@ namespace Graphics {
 		cTexture::s_manager.Load(key, m_renderToTexture, i_textureType, m_width, m_height);
 		cTexture* _texture = cTexture::s_manager.Get(m_renderToTexture);
 		if (_texture) {
-
 			// bind the frame buffer, it can be read / draw. GL_DRAW_FRAMEBUFFER / GL_READ_FRAMEBUFFER
 			glBindFramebuffer(GL_FRAMEBUFFER, m_fbo);
 
@@ -73,16 +72,24 @@ namespace Graphics {
 				glRenderbufferStorage(GL_RENDERBUFFER, GL_DEPTH_COMPONENT24, m_width, m_height);
 				glFramebufferRenderbuffer(GL_FRAMEBUFFER, GL_DEPTH_ATTACHMENT, GL_RENDERBUFFER, m_rbo);
 
-
 				assert(GL_NO_ERROR == glGetError());
 				break;
 
-			case ETT_FRAMEBUFFER_HDR_RG:
+			case ETT_FRAMEBUFFER_RG16:
 				glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, _texture->GetTextureID(), 0);
 				/*glGenRenderbuffers(1, &m_rbo);
 				glBindRenderbuffer(GL_RENDERBUFFER, m_rbo);
 				glRenderbufferStorage(GL_RENDERBUFFER, GL_DEPTH_COMPONENT24, m_width, m_height);*/
 
+				assert(GL_NO_ERROR == glGetError());
+				break;
+			case ETT_FRAMEBUFFER_RGBA16:
+				glGenRenderbuffers(1, &m_rbo);
+				glBindRenderbuffer(GL_RENDERBUFFER, m_rbo);
+				glRenderbufferStorage(GL_RENDERBUFFER, GL_DEPTH_COMPONENT, m_width, m_height);
+
+				glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, _texture->GetTextureID(), 0);
+				glFramebufferRenderbuffer(GL_FRAMEBUFFER, GL_DEPTH_ATTACHMENT, GL_RENDERBUFFER, m_rbo);
 				assert(GL_NO_ERROR == glGetError());
 				break;
 			default:

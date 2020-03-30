@@ -402,10 +402,6 @@ void main(){
 	vec3 directionLightColor = CalcDirectionalLight(g_directionalLight,albedoColor, metalness,roughness,F0, normalized_normal, normalized_view);
 
 	vec3 allColor = ambientLightColor + pointLightColor + directionLightColor;
-	// Reinhard operator tone mapping
-	allColor = allColor / (allColor + vec3(1.0));
-	// gama correction
-	allColor = pow(allColor, vec3(1.0/2.2)); 
 
 	color =  vec4(allColor, 1.0);
 }

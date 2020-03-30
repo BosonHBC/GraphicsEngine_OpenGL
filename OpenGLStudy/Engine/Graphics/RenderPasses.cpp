@@ -17,6 +17,7 @@ namespace Graphics
 	extern cUniformBuffer s_uniformBuffer_ClipPlane;
 	extern UniformBufferFormats::sLighting s_globalLightingData;
 	extern cFrameBuffer s_brdfLUTTexture;
+	extern 	cFrameBuffer g_hdrBuffer;
 	extern cModel::HANDLE s_cubeHandle;
 	extern cModel::HANDLE s_arrowHandle;
 	extern cModel::HANDLE s_quadHandle;
@@ -26,6 +27,21 @@ namespace Graphics
 	Color s_clearColor;
 	// arrow colors
 	Color s_arrowColor[3] = { Color(0, 0, 0.8f), Color(0.8f, 0, 0),Color(0, 0.8f, 0) };
+
+	void RenderQuad()
+	{
+		UniformBufferFormats::sFrame defaultFrameData;
+		s_uniformBuffer_frame.Update(&defaultFrameData);
+		
+		UniformBufferFormats::sDrawCall defaultDrawcallData;
+		s_uniformBuffer_drawcall.Update(&defaultDrawcallData);
+
+		// Render quad
+		cModel* _quad = cModel::s_manager.Get(s_quadHandle);
+		if (_quad) {
+			_quad->RenderWithoutMaterial();
+		}
+	}
 
 	void UpdateLightingData()
 	{
@@ -186,6 +202,7 @@ namespace Graphics
 		glEnable(GL_CULL_FACE);
 		glCullFace(GL_BACK);
 	}
+
 	void BlinnPhong_Pass()
 	{
 		s_currentEffect = GetEffectByKey(EET_BlinnPhong);
@@ -212,7 +229,7 @@ namespace Graphics
 				_lutTexture->UseTexture(GL_TEXTURE4);
 			}
 			else
-				cTexture::UnBindTexture(GL_TEXTURE4, ETT_FRAMEBUFFER_HDR_RG);
+				cTexture::UnBindTexture(GL_TEXTURE4, ETT_FRAMEBUFFER_RG16);
 		}
 
 		const auto currentReadyCapturesCount = EnvironmentCaptureManager::GetReadyCapturesCount();
@@ -286,8 +303,8 @@ namespace Graphics
 				cModel* _model = cModel::s_manager.Get(renderList[i * 5 + j + sphereOffset].first);
 				if (_model) {
 					Graphics::cMatPBRMR* _sphereMat = dynamic_cast<Graphics::cMatPBRMR*>(_model->GetMaterialAt());
-					_sphereMat->UpdateMetalnessIntensity(1.f / 5.f * j + 0.1f);
-					_sphereMat->UpdateRoughnessIntensity(0.9f - 1.f / 5.f *i);
+					_sphereMat->UpdateMetalnessIntensity(1.f / 4.f * j );
+					_sphereMat->UpdateRoughnessIntensity(1.05f - 1.f / 4.f *i);
 					_model->UpdateUniformVariables(s_currentEffect->GetProgramID());
 					_model->Render();
 				}
@@ -308,6 +325,17 @@ namespace Graphics
 
 		// set depth function back to default
 		glEnable(GL_CULL_FACE);
+	}
+
+	void HDR_Pass()
+	{
+		glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+		s_currentEffect = GetEffectByKey(EET_HDREffect);
+		s_currentEffect->UseEffect();
+
+		g_hdrBuffer.Read(GL_TEXTURE0);
+		RenderQuad();
+		s_currentEffect->UnUseEffect();
 	}
 
 	void Gizmo_RenderTransform()
@@ -391,6 +419,7 @@ namespace Graphics
 		RenderScene(nullptr);
 		s_currentEffect->UnUseEffect();
 	}
+
 	void Gizmo_RenderTriangulation()
 	{
 		sWindowInput* _input = Application::GetCurrentApplication()->GetCurrentWindow()->GetWindowInput();

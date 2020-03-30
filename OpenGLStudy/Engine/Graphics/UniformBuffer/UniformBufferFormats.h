@@ -158,5 +158,14 @@ namespace Graphics {
 			sEnvCaptureWeight() : Weights(0) {}
 			sEnvCaptureWeight(float w1, float w2, float w3, float w4) : Weights(w1, w2, w3, w4) {}
 		};
+
+		// Post processing values
+		// --------------------------------------------------------------------------------------------------------------------------------------------
+		struct sPostProcessing
+		{
+			float Exposure;
+
+			sPostProcessing() : Exposure(1.0f) {}
+		};
 	}
 }

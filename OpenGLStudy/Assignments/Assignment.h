@@ -60,6 +60,6 @@ private:
 
 	std::vector<cActor*> m_sphereList;
 
-
+	float m_exposureOffset = 3.0f;
 };
 

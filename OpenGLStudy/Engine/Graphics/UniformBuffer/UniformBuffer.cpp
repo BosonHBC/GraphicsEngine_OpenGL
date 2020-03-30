@@ -36,6 +36,9 @@ namespace Graphics {
 		case UBT_EnvCaptureWeight:
 			m_size = sizeof(UniformBufferFormats::sEnvCaptureWeight);
 			break;
+		case UBT_PostProcessing:
+			m_size = sizeof(UniformBufferFormats::sPostProcessing);
+			break;
 		case UBT_Invalid:
 			result = false;
 			return result;

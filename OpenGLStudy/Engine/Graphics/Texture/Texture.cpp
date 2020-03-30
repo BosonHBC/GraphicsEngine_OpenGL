@@ -51,8 +51,11 @@ namespace Graphics {
 			case ETT_FRAMEBUFFER_HDR_MIPMAP_CUBEMAP:
 				result = _texture->LoadHDRMipMapCubemapTexture(i_path, i_override_width, i_override_height);
 				break;
-			case ETT_FRAMEBUFFER_HDR_RG:
+			case ETT_FRAMEBUFFER_RG16:
 				result = _texture->LoadHDRRG16Texture(i_path, i_override_width, i_override_height);
+				break;
+			case ETT_FRAMEBUFFER_RGBA16:
+				result = _texture->LoadRGBA16Texture(i_path, i_override_width, i_override_height);
 				break;
 			case ETT_FILE_HDR_IMAGE:
 				result = _texture->LoadHDRImageFromFile(i_path);
@@ -443,6 +446,25 @@ namespace Graphics {
 		
 		assert(GL_NO_ERROR == glGetError());
 		
+		// unbind texture
+		glBindTexture(GL_TEXTURE_2D, 0);
+		return result;
+	}
+
+	bool cTexture::LoadRGBA16Texture(const std::string& i_type_id, const GLuint& i_width, const GLuint& i_height)
+	{
+		auto result = true;
+		m_width = i_width;
+		m_height = i_height;
+
+		glGenTextures(1, &m_textureID);
+		glBindTexture(GL_TEXTURE_2D, m_textureID);
+		glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA16F, i_width, i_height, 0, GL_RGBA, GL_FLOAT, nullptr);
+
+		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+		assert(GL_NO_ERROR == glGetError());
+
 		// unbind texture
 		glBindTexture(GL_TEXTURE_2D, 0);
 		return result;

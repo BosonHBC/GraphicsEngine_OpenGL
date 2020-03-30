@@ -107,7 +107,7 @@ void Assignment::CreateLight()
 	Graphics::CreateAmbientLight(Color(0.1f, 0.1f, 0.1f), aLight);
 	Graphics::CreatePointLight(glm::vec3(-100, 150.f, 100.f), Color(1, 1, 1), 300.f, true, pLight1);
 	//Graphics::CreatePointLight(glm::vec3(100, 150.f, 100.f), Color(1, 1, 1), 1.f, 0.7f, 1.8f, true, pLight2);
-	Graphics::CreateDirectionalLight(Color(0.6f, 0.6f, 0.5f), glm::vec3(-1, -0.5f, -0.5f), true, dLight);
+	Graphics::CreateDirectionalLight(Color(0.6f, 0.6f, 0.6f), glm::vec3(-1, -0.5f, -0.5f), true, dLight);
 	//Graphics::CreateSpotLight(glm::vec3(0, 150, 0), glm::vec3(0, 1, 1), Color(1), 65.f, 1.5f, 0.3f, 5.f, true, spLight);
 	//Graphics::CreateSpotLight(glm::vec3(100, 150, 0), glm::vec3(1, 1, 0), Color(1), 65.f, 1.f, 0.7f, 
 
@@ -121,8 +121,10 @@ void Assignment::SubmitDataToBeRender(const float i_seconds_elapsedSinceLastLoop
 	SubmitLightingData();
 	// Submit geometry data for shadow map
 	SubmitShadowData();
-	// Frame data from camera
+	// Submit post processing data
+	Graphics::SubmitPostProcessingData(m_exposureOffset);
 
+	// Frame data from camera
 	Graphics::UniformBufferFormats::sFrame _frameData_Camera(m_editorCamera->GetProjectionMatrix(), m_editorCamera->GetViewMatrix());
 	_frameData_Camera.ViewPosition = m_editorCamera->CamLocation();
 	// Submit geometry data
@@ -216,6 +218,19 @@ void Assignment::Tick(float second_since_lastFrame)
 	//dLight->Transform()->Rotate(-cTransform::WorldUp, 0.01677f);
 	if (m_teapot) {
 		m_teapot->Transform.gRotate(glm::vec3(0, 1.f, 0), second_since_lastFrame);
+	}
+	// Changing exposure
+	{
+		const float exposureChangeSpeed = 10.f;
+		if (_windowInput->IsKeyDown(GLFW_KEY_EQUAL))
+		{
+			m_exposureOffset += second_since_lastFrame * exposureChangeSpeed;
+		}
+		if (_windowInput->IsKeyDown(GLFW_KEY_MINUS))
+		{
+			m_exposureOffset -= second_since_lastFrame * exposureChangeSpeed;
+			m_exposureOffset = m_exposureOffset <0.0001f ? 0.0001f : m_exposureOffset;
+		}
 	}
 
 	cTransform* controledActor = nullptr;
@@ -376,7 +391,7 @@ void Assignment::SubmitShadowData()
 	_renderingMap.push_back({ m_teapot->GetModelHandle(), m_teapot->Transform });
 	_renderingMap.push_back({ m_teapot2->GetModelHandle(), m_teapot2->Transform });
 	_renderingMap.push_back({ m_spaceHolder->GetModelHandle(), m_spaceHolder->Transform });
-	
+
 
 	for (size_t i = 0; i < m_sphereList.size(); ++i)
 	{
