@@ -495,8 +495,8 @@ namespace Graphics {
 			// Execute pass function
 			s_dataRenderingByGraphicThread->s_renderPasses[i].RenderPassFunction();
 		}
-		renderCount++;
-		printf("Render thread count: %d\n", renderCount);
+		//renderCount++;
+		//printf("Render thread count: %d\n", renderCount);
 		//Gizmo_DrawDebugCaptureVolume();
 	}
 
