@@ -9,8 +9,8 @@ namespace Graphics {
 	namespace UniformBufferFormats {
 #ifndef _BufferPaddingDefined
 #define _BufferPaddingDefined
-#define V1Padding float v1Padding = 0
-#define V1Padding2 float v1Padding2 = 0
+#define V1Padding float v1Padding = 0.0f
+#define V1Padding2 float v1Padding2 = 0.0f
 #define V2Padding glm::vec2 v2Padding = glm::vec2(0,0)
 #define V3Padding glm::vec3 v3Padding= glm::vec2(0,0,0)
 #endif
@@ -21,18 +21,19 @@ namespace Graphics {
 		struct sFrame
 		{
 			// PVMatrix stands for projection * view matrix
-			glm::f32 PVMatrix[16];
-			glm::vec3 ViewPosition = glm::vec3(0,0,0);
+			glm::mat4 PVMatrix = glm::mat4(1.0f);
+			glm::vec3 ViewPosition = glm::vec3(0, 0, 0);
 			V1Padding;
-			sFrame() {}
+			sFrame(): PVMatrix(glm::mat4(1.0f)), ViewPosition(glm::vec3(0,0,0))
+			{}
 
 			sFrame(const glm::mat4& i_projectionMatrix, const glm::mat4& i_viewMatrix)
 			{
-				memcpy(PVMatrix, glm::value_ptr(i_projectionMatrix * i_viewMatrix), sizeof(PVMatrix));
+				PVMatrix = i_projectionMatrix * i_viewMatrix;
 			}
 			sFrame(const glm::mat4& i_PVMatrix)
 			{
-				memcpy(PVMatrix, glm::value_ptr(i_PVMatrix), sizeof(PVMatrix));
+				PVMatrix = i_PVMatrix;
 			}
 		};
 
@@ -40,13 +41,12 @@ namespace Graphics {
 		// --------------------------------------------------------------------------------------------------------------------------------------------
 		struct sDrawCall
 		{
-			glm::f32 ModelMatrix[16];
-			glm::f32 NormalMatrix[16];
-
+			glm::mat4 ModelMatrix = glm::mat4(1.0f);
+			glm::mat4 NormalMatrix = glm::mat4(1.0f);
+			sDrawCall() : ModelMatrix(glm::mat4(1.0f)), NormalMatrix(glm::mat4(1.0f)) {}
 			sDrawCall(const glm::mat4& i_model, const glm::mat4& i_normal)
 			{
-				memcpy(ModelMatrix, glm::value_ptr(i_model), sizeof(ModelMatrix));
-				memcpy(NormalMatrix, glm::value_ptr(i_normal), sizeof(NormalMatrix));
+				ModelMatrix = i_model; NormalMatrix = i_normal;
 			}
 		};
 
@@ -54,11 +54,11 @@ namespace Graphics {
 		// --------------------------------------------------------------------------------------------------------------------------------------------
 		struct sBlinnPhongMaterial
 		{
-			Color kd;
+			Color kd = Color(1,1,1);
 			V1Padding;
-			Color ks;
-			float shininess;
-			Color ke;
+			Color ks = Color(1, 1, 1);
+			float shininess = 2.f;
+			Color ke = Color(1, 1, 1);
 			V1Padding2;
 
 			sBlinnPhongMaterial() { }
@@ -71,10 +71,10 @@ namespace Graphics {
 		// --------------------------------------------------------------------------------------------------------------------------------------------
 		struct sPBRMRMaterial
 		{
-			Color diffuseIntensity;
-			float roughnessIntensity;
-			glm::vec3 ior;
-			float metalnessIntensity;
+			Color diffuseIntensity = Color(1,1,1);
+			float roughnessIntensity = 1.f;
+			glm::vec3 ior = glm::vec3(1,1,1);
+			float metalnessIntensity = 1;
 
 			sPBRMRMaterial() : diffuseIntensity(Color::White()), roughnessIntensity(1), ior(glm::vec3(1)) {}
 			sPBRMRMaterial(const Color& i_diffuseIntensity, const float& i_roughnessIntensity, const glm::vec3& i_ior, const float& i_metalnessIntensity) : diffuseIntensity(i_diffuseIntensity), roughnessIntensity(i_roughnessIntensity), ior(i_ior), metalnessIntensity(i_metalnessIntensity) {}
@@ -87,7 +87,7 @@ namespace Graphics {
 			// Lighting data
 			struct Light16 {
 				Color color; // 12 bytes
-				bool enableShadow; // 4 bytes
+				bool enableShadow = false; // 4 bytes
 
 				Light16() : color(Color::Black()), enableShadow(false)
 				{}
@@ -99,22 +99,22 @@ namespace Graphics {
 			};
 			struct DirectionalLight32 {
 				Light16 base; // 16 bytes
-				glm::vec3 direction; // 12 bytes
+				glm::vec3 direction = glm::vec3(0, 1, 0); // 12 bytes
 				V1Padding; // 4 bytes
 
 				DirectionalLight32() : direction(glm::vec3(0, 1, 0)) {}
 			};
 			struct PointLight32 {
 				Light16 base; // 16 bytes
-				glm::vec3 position; // 12 bytes
-				float radius; // 4 bytes
-				PointLight32() : position(glm::vec3(0,0,0)), radius(300)
+				glm::vec3 position = glm::vec3(0, 0, 0); // 12 bytes
+				float radius = 100.f; // 4 bytes
+				PointLight32() : position(glm::vec3(0, 0, 0)), radius(100.f)
 				{}
 			};
 			struct SpotLight48 {
 				PointLight32 base; // 32 bytes
-				glm::vec3 direction; // 12 bytes
-				float edge; // 4 bytes
+				glm::vec3 direction = glm::vec3(0, 1, 0); // 12 bytes
+				float edge = 1.f; // 4 bytes
 				SpotLight48() : direction(glm::vec3(0, 1, 0)), edge(1)
 				{}
 			};
@@ -126,8 +126,8 @@ namespace Graphics {
 			SupportingData::PointLight32 pointLights[MAX_COUNT_PER_LIGHT]; // 32 * MAX_COUNT_PER_LIGHT = 160 bytes
 			SupportingData::DirectionalLight32 directionalLight; // 32 bytes
 			SupportingData::AmbientLight16 ambientLight; // 16 bytes
-			int pointLightCount; // 4 bytes
-			int spotLightCount; // 4 bytes
+			int pointLightCount = 0; // 4 bytes
+			int spotLightCount = 0; // 4 bytes
 		}; // 456 bytes in total
 
 		// Clipping plane data
@@ -153,8 +153,8 @@ namespace Graphics {
 		// --------------------------------------------------------------------------------------------------------------------------------------------
 		struct sEnvCaptureWeight
 		{
-			glm::vec4 Weights; // Maximum 4 textures
-			
+			glm::vec4 Weights = glm::vec4(0.0f, 0.0f, 0.0f, 0.0f); // Maximum 4 textures
+
 			sEnvCaptureWeight() : Weights(0) {}
 			sEnvCaptureWeight(float w1, float w2, float w3, float w4) : Weights(w1, w2, w3, w4) {}
 		};

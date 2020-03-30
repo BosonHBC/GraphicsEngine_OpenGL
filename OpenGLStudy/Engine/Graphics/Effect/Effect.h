@@ -4,6 +4,25 @@
 #include <map>
 #include "glm/gtc/matrix_transform.hpp"
 namespace Graphics {
+	/** Effect type*/
+	enum eEffectType : uint16_t
+	{
+		EET_BlinnPhong,
+		EET_ShadowMap,
+		EET_OmniShadowMap,
+		EET_Cubemap,
+		EET_Unlit,
+		EET_NormalDisplay,
+		EET_PBR_MR,
+		EET_HDRToCubemap,
+		EET_IrradConvolution,
+		EET_CubemapPrefilter,
+		EET_BrdfIntegration,
+		EET_DrawDebugCircles,
+		EET_TessQuad,
+		EET_TriangulationDisplay,
+		EET_Invalid = static_cast<uint16_t>(-1),
+	};
 	/** Forward declaration*/
 	struct sGLShader;
 	// cEffect represent the openGL program, contains aggregation of shaders

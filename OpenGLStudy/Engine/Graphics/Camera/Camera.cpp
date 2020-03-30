@@ -10,8 +10,8 @@ void cCamera::Update()
 	glm::vec3 _right = glm::normalize(glm::cross(_forward, m_worldUp));
 	glm::vec3 _up = glm::normalize(glm::cross(_right, _forward));
 
-	m_transform->SetRotation(glm::quatLookAt(_forward, _up));
-	m_transform->Update();
+	Transform.SetRotation(glm::quatLookAt(_forward, _up));
+	Transform.Update();
 
 }
 
@@ -22,33 +22,39 @@ void cCamera::UpdateUniformLocation(GLuint i_programID)
 
 cCamera::cCamera(const cCamera& i_other):
 	m_translationSpeed(i_other.m_translationSpeed), m_turnSpeed(i_other.m_turnSpeed), m_viewMatrix(i_other.m_viewMatrix), m_projectionMatrix(i_other.m_projectionMatrix),
-	m_pitch(i_other.m_pitch), m_yaw(i_other.m_yaw), m_worldUp(i_other.m_worldUp)
+	m_pitch(i_other.m_pitch), m_yaw(i_other.m_yaw), m_worldUp(i_other.m_worldUp), Transform(i_other.Transform)
 {
-	m_transform = new cTransform(*i_other.m_transform);
+}
+
+cCamera& cCamera::operator=(const cCamera& i_other)
+{
+	m_translationSpeed = i_other.m_translationSpeed; m_turnSpeed = i_other.m_turnSpeed; m_viewMatrix = i_other.m_viewMatrix; m_projectionMatrix = i_other.m_projectionMatrix;
+	m_pitch = i_other.m_pitch; m_yaw = i_other.m_yaw; m_worldUp = i_other.m_worldUp; Transform = i_other.Transform;
+	return *this;
 }
 
 cCamera::~cCamera()
 {
-	safe_delete(m_transform);
+
 }
 
 void cCamera::CameraControl(sWindowInput* const i_windowInput, float i_dt)
 {
 	if (i_windowInput->IsKeyDown(GLFW_KEY_W))
 	{
-		m_transform->Translate(m_transform->Forward() * m_translationSpeed * i_dt);
+		Transform.Translate(Transform.Forward() * m_translationSpeed * i_dt);
 	}
 	if (i_windowInput->IsKeyDown(GLFW_KEY_S))
 	{
-		m_transform->Translate(-m_transform->Forward() * m_translationSpeed * i_dt);
+		Transform.Translate(-Transform.Forward() * m_translationSpeed * i_dt);
 	}
 	if (i_windowInput->IsKeyDown(GLFW_KEY_A))
 	{
-		m_transform->Translate(m_transform->Right() * m_translationSpeed * i_dt);
+		Transform.Translate(Transform.Right() * m_translationSpeed * i_dt);
 	}
 	if (i_windowInput->IsKeyDown(GLFW_KEY_D))
 	{
-		m_transform->Translate(-m_transform->Right() * m_translationSpeed * i_dt);
+		Transform.Translate(-Transform.Right() * m_translationSpeed * i_dt);
 	}
 	Update();
 }
@@ -61,8 +67,8 @@ void cCamera::MouseControl(sWindowInput* const i_windowInput, float i_dt)
 
 glm::mat4 cCamera::GetViewMatrix()
 {
-	glm::vec3 _targetLoc = m_transform->Position() + m_transform->Forward();
-	m_viewMatrix = glm::lookAt(m_transform->Position(), _targetLoc, m_worldUp);
+	glm::vec3 _targetLoc = Transform.Position() + Transform.Forward();
+	m_viewMatrix = glm::lookAt(Transform.Position(), _targetLoc, m_worldUp);
 	return m_viewMatrix;
 }
 
@@ -74,8 +80,8 @@ void cCamera::CreateProjectionMatrix(GLfloat i_fov, GLfloat i_aspect, GLfloat i_
 void cCamera::MirrorAlongPlane(const cTransform & i_plane)
 {
 	// mirror the transform;
-	float deltaY = (m_transform->Position() - i_plane.Position()).y;
-	m_transform->Translate(glm::vec3(0, -2.f*deltaY, 0));
+	float deltaY = (Transform.Position() - i_plane.Position()).y;
+	Transform.Translate(glm::vec3(0, -2.f*deltaY, 0));
 	m_worldUp = -m_worldUp;
 	Update();
 }

@@ -3,6 +3,7 @@
 #include "Graphics/UniformBuffer/UniformBufferFormats.h"
 #include "Assets/PathProcessor.h"
 #include "Constants/Constants.h"
+#include "Graphics/Graphics.h"
 
 namespace Graphics {
 	// Definition of static blinnPhongUniformBlock
@@ -28,6 +29,12 @@ namespace Graphics {
 		}
 		else {
 			s_BlinnPhongUniformBlock.Bind();
+		}
+		// After loading data from lua, set up uniform variables
+		if (!(result = UpdateUniformVariables(Graphics::GetEffectByKey(EET_PBR_MR)->GetProgramID())))
+		{
+			printf("Fail to Update uniform ID\n");
+			return result;
 		}
 		return result;
 	}

@@ -25,7 +25,7 @@ namespace Graphics {
 		Assets::cHandle<cTexture> m_cubeMapHandle;
 		bool LoadFileFromLua(const std::string& i_path, std::vector<std::string>& o_textures);
 
-		GLuint m_cubemapTexID;
+		GLuint m_cubemapTexID = static_cast<GLuint>(-1);
 
 		friend class cMaterial;
 	};

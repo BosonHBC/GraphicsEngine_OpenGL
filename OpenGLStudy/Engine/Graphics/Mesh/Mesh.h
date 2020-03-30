@@ -34,8 +34,8 @@ namespace Graphics {
 
 	private:
 		/** private variables*/
-		GLuint m_vao, m_vbo, m_ibo;
-		GLuint m_indexCount;
-		EMeshType m_meshType;
+		GLuint m_vao = static_cast<GLuint>(-1), m_vbo = static_cast<GLuint>(-1), m_ibo = static_cast<GLuint>(-1);
+		GLuint m_indexCount = 0;
+		EMeshType m_meshType = EMT_Mesh;
 	};
 }

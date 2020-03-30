@@ -146,17 +146,17 @@ void cWindow::HandleMouse(GLFWwindow* i_window, double i_xPos, double i_yPos)
 
 	
 	if (_input->isFirstMove) {
-		_input->lastX = i_xPos;
-		_input->lastY = i_yPos;
+		_input->lastX = static_cast<GLfloat>(i_xPos);
+		_input->lastY = static_cast<GLfloat>(i_yPos);
 		_input->isFirstMove = false;
 	}
 
-	_input->dx = i_xPos - _input->lastX;
+	_input->dx = static_cast<GLfloat>(i_xPos - _input->lastX);
 	// prevent inverted control in Y axis
-	_input->dy = _input->lastY - i_yPos;
+	_input->dy = static_cast<GLfloat>(_input->lastY - i_yPos);
 
-	_input->lastX = i_xPos;
-	_input->lastY = i_yPos;
+	_input->lastX = static_cast<GLfloat>(i_xPos);
+	_input->lastY = static_cast<GLfloat>(i_yPos);
 }
 
 void cWindow::HandleMouseButton(GLFWwindow* i_window, int i_button, int i_action, int i_mods)

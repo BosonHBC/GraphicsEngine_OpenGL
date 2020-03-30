@@ -44,7 +44,7 @@ namespace Graphics {
 		void SetLightUniformTransform() override;
 		void UseShadowMap(GLuint i_textureUnit) override;
 	private:
-		GLuint m_directionalLightTransformID, m_directionalShadowMapID;
+		GLuint m_directionalLightTransformID = static_cast<GLuint>(-1), m_directionalShadowMapID = static_cast<GLuint>(-1);
 	};
 
 }

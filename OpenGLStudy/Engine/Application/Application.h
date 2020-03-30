@@ -16,7 +16,7 @@ namespace Application {
 	{
 	public:
 		cApplication() {}
-		~cApplication() { CleanUp(); };
+		virtual ~cApplication() { CleanUp(); }
 
 		virtual bool Initialize(GLuint i_width, GLuint i_height, const char* i_windowName = "Default Window");
 		virtual bool PostInitialization();
@@ -27,7 +27,9 @@ namespace Application {
 		virtual void Tick(float second_since_lastFrame) {}
 		// Simulation time update, call in fixed rate, set by m_simulationUpdateRate_InSeconds
 		virtual void FixedTick(){}
-		
+		// Override this function for submitting data to the rendering thread
+		virtual void SubmitDataToBeRender(const float i_seconds_elapsedSinceLastLoop) {}
+
 		// Invoke once right before the application thread enters application loop
 		virtual void BeforeUpdate() {}; 
 		void UpdateUntilExit();
@@ -40,12 +42,12 @@ namespace Application {
 
 		/** Handle timing*/
 		//---------------------------------------------------
-		bool m_shouldApplicationLoopExit = false;
 		uint64_t m_tickCount_systemTime_WhenApplicationStart = false;
 		uint64_t m_tickCount_systemTime_Current = 0;
 		uint64_t m_tickCountt_systemTime_Elapsed = 0;
 		// Fixed update rate, in default case: function should be called every 0.016667f seconds, which is every 1/0.016667f = 60 ticks
 		float m_simulationUpdateRate_InSeconds = 0.016667f;
+		bool m_shouldApplicationLoopExit = false;
 
 		/** Handle threading*/
 		//---------------------------------------------------
@@ -53,7 +55,6 @@ namespace Application {
 		std::thread* m_applicationThread;
 		// Start an application thread
 		void ApplicationLoopThread(void* const io_application);
-
 		/** protected variables */
 		//---------------------------------------------------
 		//Current window 

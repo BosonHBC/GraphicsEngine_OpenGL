@@ -21,7 +21,7 @@ namespace Assets {
 	{
 	public:
 		// All default handles are invalid handle.
-		cHandle() { m_index = s_InvalidIndex; }
+		cHandle(): m_index(s_InvalidIndex){}
 		// rule of three
 		~cHandle() { m_index = s_InvalidIndex; };
 		cHandle(const cHandle& i_other) { m_index = i_other.m_index; }
@@ -35,8 +35,9 @@ namespace Assets {
 
 	private:
 		// The index in the m_assetList in cAssetManager<tAsset>
-		uint16_t m_index = s_InvalidIndex;
 		static const uint16_t s_InvalidIndex = 0xffff;
+		uint16_t m_index = s_InvalidIndex;
+
 
 		// constructor with index
 		cHandle(const uint16_t i_index) : m_index(i_index){}

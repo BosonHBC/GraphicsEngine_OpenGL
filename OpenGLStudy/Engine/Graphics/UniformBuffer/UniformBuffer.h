@@ -1,6 +1,7 @@
 #pragma once
 #include "stdint.h"
 #include "GL/glew.h"
+#include <mutex>
 namespace Graphics {
 	// ---------------------------------
 	// UniformBufferType defined all available buffer types 
@@ -44,12 +45,14 @@ namespace Graphics {
 		bool IsValid() const { return m_type == UBT_Invalid; }
 
 	private:
-		// default is invalid
-		eUniformBufferType m_type = UBT_Invalid;
-		uint32_t m_size;
-		GLuint m_bufferID;
+
+		uint32_t m_size = 0;
+		GLuint m_bufferID = static_cast<GLuint>(-1);
 		// prevent repeated initialization
-		bool m_initialized;
+		bool m_initialized = false;
+		eUniformBufferType m_type = UBT_Invalid; // default is invalid
+
+		std::mutex m_mutex;
 
 		// Remove all default constructors
 		cUniformBuffer() = delete;

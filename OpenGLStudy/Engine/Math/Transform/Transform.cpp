@@ -1,5 +1,4 @@
 #include "Transform.h"
-#include "Transform.h"
 
 cTransform& cTransform::operator=(const cTransform& i_other)
 {
@@ -44,10 +43,10 @@ glm::quat cTransform::ToQuaternian(const double yaw, const double pitch, const d
 	double sr = sin(roll * 0.5);
 
 	glm::quat q;
-	q.w = cy * cp * cr + sy * sp * sr;
-	q.x = cy * cp * sr - sy * sp * cr;
-	q.y = sy * cp * sr + cy * sp * cr;
-	q.z = sy * cp * cr - cy * sp * sr;
+	q.w = static_cast<float>(cy * cp * cr + sy * sp * sr);
+	q.x = static_cast<float>(cy * cp * sr - sy * sp * cr);
+	q.y = static_cast<float>(sy * cp * sr + cy * sp * cr);
+	q.z = static_cast<float>(sy * cp * cr - cy * sp * sr);
 
 	return q;
 }

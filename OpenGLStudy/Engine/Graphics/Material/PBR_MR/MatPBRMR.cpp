@@ -4,6 +4,7 @@
 #include "Constants/Constants.h"
 #include "Graphics/Graphics.h"
 #include "Graphics/EnvironmentCaptureManager.h"
+
 namespace Graphics
 {
 	Graphics::cUniformBuffer cMatPBRMR::s_PBRMRUniformBlock(eUniformBufferType::UBT_PBRMR);
@@ -30,6 +31,12 @@ namespace Graphics
 		else {
 			s_PBRMRUniformBlock.Bind();
 		}
+		// After loading data from lua, set up uniform variables
+		if (!(result = UpdateUniformVariables(Graphics::GetEffectByKey(EET_PBR_MR)->GetProgramID())))
+		{
+			printf("Fail to Update uniform ID\n");
+			return result;
+		}
 		return result;
 	}
 
@@ -40,7 +47,7 @@ namespace Graphics
 		m_albedoID = glGetUniformLocation(i_programID, "AlbedoMap");
 		m_metallicID = glGetUniformLocation(i_programID, "MetallicMap");
 		m_roughnessID = glGetUniformLocation(i_programID, "RoughnessMap");
-		m_normalD = glGetUniformLocation(i_programID, "NormalMap");
+		m_normalID = glGetUniformLocation(i_programID, "NormalMap");
 		assert(GL_NO_ERROR == glGetError());
 		return result;
 	}
@@ -68,7 +75,7 @@ namespace Graphics
 		else
 			cTexture::UnBindTexture(GL_TEXTURE2, ETT_FILE_GRAY);
 
-		glUniform1i(m_normalD, 3);
+		glUniform1i(m_normalID, 3);
 		cTexture* _normalTex = cTexture::s_manager.Get(m_normalMapHandle);
 		if (_normalTex)
 			_normalTex->UseTexture(GL_TEXTURE3);

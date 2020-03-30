@@ -37,19 +37,12 @@ bool Assignment::Initialize(GLuint i_width, GLuint i_height, const char* i_windo
 	CreateCamera();
 	CreateLight();
 
-	Graphics::cMatCubemap* _cubemapMat = dynamic_cast<Graphics::cMatCubemap*>(Graphics::cModel::s_manager.Get(m_cubemap->GetModelHandle())->GetMaterialAt());
+	//Graphics::cMatCubemap* _cubemapMat = dynamic_cast<Graphics::cMatCubemap*>(Graphics::cModel::s_manager.Get(m_cubemap->GetModelHandle())->GetMaterialAt());
 
-	Graphics::cMatBlinn* _floorMat = dynamic_cast<Graphics::cMatBlinn*>(Graphics::cModel::s_manager.Get(m_mirror->GetModelHandle())->GetMaterialAt());
-	auto cameraViewTextureHandle = Graphics::GetCameraCaptureFrameBuffer()->GetTextureHandle();
-	//_floorMat->UpdateDiffuseTexture(cameraViewTextureHandle);
-	//_floorMat->UpdateSpecularTexture(cameraViewTextureHandle);
-	//_floorMat->UpdateReflectionTexture(cameraViewTextureHandle);
-	//_floorMat->UpdateCubemapTexture(_cubemapMat->GetCubemapHandle());
-
-	Graphics::cMatBlinn* _teapot2Mat = dynamic_cast<Graphics::cMatBlinn*>(Graphics::cModel::s_manager.Get(m_teapot2->GetModelHandle())->GetMaterialAt());
+	//Graphics::cMatBlinn* _teapot2Mat = dynamic_cast<Graphics::cMatBlinn*>(Graphics::cModel::s_manager.Get(m_teapot2->GetModelHandle())->GetMaterialAt());
 	//_teapot2Mat->UpdateCubemapTexture(_cubemapMat->GetCubemapHandle());
 
-	Graphics::cMatPBRMR* _spaceHolderMat = dynamic_cast<Graphics::cMatPBRMR*>(Graphics::cModel::s_manager.Get(m_spaceHolder->GetModelHandle())->GetMaterialAt());
+	//Graphics::cMatPBRMR* _spaceHolderMat = dynamic_cast<Graphics::cMatPBRMR*>(Graphics::cModel::s_manager.Get(m_spaceHolder->GetModelHandle())->GetMaterialAt());
 
 
 	printf("---------------------------------Game initialization done.---------------------------------\n");
@@ -60,26 +53,17 @@ void Assignment::CreateActor()
 {
 	m_teapot = new cActor();
 	m_teapot->Initialize();
-	m_teapot->Transform()->SetTransform(glm::vec3(0, 0, 190), glm::quat(glm::vec3(-glm::radians(90.f), 0, 0)), glm::vec3(5, 5, 5));
+	m_teapot->Transform.SetTransform(glm::vec3(0, 0, 100), glm::quat(glm::vec3(-glm::radians(90.f), 0, 0)), glm::vec3(5, 5, 5));
 	m_teapot->SetModel("Contents/models/pbrTeapot.model");
-	m_teapot->UpdateUniformVariables(Graphics::GetEffectByKey("PBR_MR"));
 
 	m_teapot2 = new cActor();
 	m_teapot2->Initialize();
-	m_teapot2->Transform()->SetTransform(glm::vec3(150, 0, 100), glm::quat(glm::vec3(-glm::radians(90.f), 0, 0)), glm::vec3(3, 3, 3));
+	m_teapot2->Transform.SetTransform(glm::vec3(150, 0, 100), glm::quat(glm::vec3(-glm::radians(90.f), 0, 0)), glm::vec3(3, 3, 3));
 	m_teapot2->SetModel("Contents/models/pbrTeapot.model");
-	m_teapot2->UpdateUniformVariables(Graphics::GetEffectByKey("PBR_MR"));
-
-	m_mirror = new cActor();
-	m_mirror->Initialize();
-	m_mirror->Transform()->SetTransform(glm::vec3(0, 0, 0), glm::quat(1, 0, 0, 0), glm::vec3(800, 1, 800));
-	m_mirror->SetModel("Contents/models/wall.model");
-	m_mirror->UpdateUniformVariables(Graphics::GetCurrentEffect());
 
 	m_cubemap = new cActor();
 	m_cubemap->Initialize();
 	m_cubemap->SetModel("Contents/models/cubemap.model");
-	m_cubemap->UpdateUniformVariables(Graphics::GetEffectByKey("CubemapEffect"));
 
 	Graphics::cModel* _cubeMap = Graphics::cModel::s_manager.Get(m_cubemap->GetModelHandle());
 	Graphics::cMatCubemap* _matCubemap = dynamic_cast<Graphics::cMatCubemap*>(_cubeMap->GetMaterialAt());
@@ -89,15 +73,13 @@ void Assignment::CreateActor()
 
 	m_spaceHolder = new cActor();
 	m_spaceHolder->Initialize();
-	m_spaceHolder->Transform()->SetTransform(glm::vec3(0, 150.f, 0), glm::quat(1, 0, 0, 0), glm::vec3(5, 5, 5));
+	m_spaceHolder->Transform.SetTransform(glm::vec3(0, 150.f, 0), glm::quat(1, 0, 0, 0), glm::vec3(5, 5, 5));
 	m_spaceHolder->SetModel("Contents/models/spaceHolder.model");
-	m_spaceHolder->UpdateUniformVariables(Graphics::GetEffectByKey("PBR_MR"));
 
 	m_gun = new cActor();
 	m_gun->Initialize();
-	m_gun->Transform()->SetTransform(glm::vec3(300, 50, 100), glm::quat(glm::vec3(0, glm::radians(90.f), 0)), glm::vec3(1, 1, 1));
+	m_gun->Transform.SetTransform(glm::vec3(300, 50, 100), glm::quat(glm::vec3(0, glm::radians(90.f), 0)), glm::vec3(1, 1, 1));
 	m_gun->SetModel("Contents/models/Cerberus.model");
-	m_gun->UpdateUniformVariables(Graphics::GetEffectByKey("PBR_MR"));
 
 	m_sphereList.reserve(25);
 	for (int i = 0; i < 5; ++i)
@@ -106,10 +88,8 @@ void Assignment::CreateActor()
 		{
 			cActor * _sphere = new cActor();
 			_sphere->Initialize();
-			_sphere->Transform()->SetTransform(glm::vec3(-200.f + i * 100, 25.f + j * 50, -200), glm::quat(1, 0, 0, 0), glm::vec3(2.5f, 2.5f, 2.5f));
+			_sphere->Transform.SetTransform(glm::vec3(-200.f + i * 100, 25.f + j * 50, -200), glm::quat(1, 0, 0, 0), glm::vec3(2.5f, 2.5f, 2.5f));
 			_sphere->SetModel("Contents/models/pbrSphere.model");
-			_sphere->UpdateUniformVariables(Graphics::GetEffectByKey("PBR_MR"));
-			_sphere->Transform()->Update();
 			m_sphereList.push_back(_sphere);
 		}
 	}
@@ -117,10 +97,9 @@ void Assignment::CreateActor()
 
 void Assignment::CreateCamera()
 {
-	m_editorCamera = new  cEditorCamera(glm::vec3(0, 150, 10), 89, 0, 300, 10.f);
+	m_editorCamera = new  cEditorCamera(glm::vec3(0, 150, 250), 10, 0, 300, 10.f);
 	float _aspect = (float)(GetCurrentWindow()->GetBufferWidth()) / (float)(GetCurrentWindow()->GetBufferHeight());
-	m_editorCamera->CreateProjectionMatrix(glm::radians(60.f), _aspect, 1.f, 6000.0f);
-	m_editorCamera->Transform()->Update();
+	m_editorCamera->CreateProjectionMatrix(glm::radians(60.f), _aspect, 1.f, 3000.0f);
 }
 
 void Assignment::CreateLight()
@@ -128,13 +107,71 @@ void Assignment::CreateLight()
 	Graphics::CreateAmbientLight(Color(0.1f, 0.1f, 0.1f), aLight);
 	Graphics::CreatePointLight(glm::vec3(-100, 150.f, 100.f), Color(1, 1, 1), 300.f, true, pLight1);
 	//Graphics::CreatePointLight(glm::vec3(100, 150.f, 100.f), Color(1, 1, 1), 1.f, 0.7f, 1.8f, true, pLight2);
-	Graphics::CreateDirectionalLight(Color(0.6, 0.6, 0.5), glm::vec3(-1, -0.5f, -0.5f), true, dLight);
+	Graphics::CreateDirectionalLight(Color(0.6f, 0.6f, 0.5f), glm::vec3(-1, -0.5f, -0.5f), true, dLight);
 	//Graphics::CreateSpotLight(glm::vec3(0, 150, 0), glm::vec3(0, 1, 1), Color(1), 65.f, 1.5f, 0.3f, 5.f, true, spLight);
-	//Graphics::CreateSpotLight(glm::vec3(100, 150, 0), glm::vec3(1, 1, 0), Color(1), 65.f, 1.f, 0.7f, 1.8f, true, spLight2);
+	//Graphics::CreateSpotLight(glm::vec3(100, 150, 0), glm::vec3(1, 1, 0), Color(1), 65.f, 1.f, 0.7f, 
 
 }
 
+void Assignment::SubmitDataToBeRender(const float i_seconds_elapsedSinceLastLoop)
+{
+	std::vector<std::pair<Graphics::cModel::HANDLE, cTransform>> _renderingMap = std::vector<std::pair<Graphics::cModel::HANDLE, cTransform>>();
+
+	// Submit lighting data
+	SubmitLightingData();
+	// Submit geometry data for shadow map
+	SubmitShadowData();
+	// Frame data from camera
+
+	Graphics::UniformBufferFormats::sFrame _frameData_Camera(m_editorCamera->GetProjectionMatrix(), m_editorCamera->GetViewMatrix());
+	_frameData_Camera.ViewPosition = m_editorCamera->CamLocation();
+	// Submit geometry data
+	SubmitSceneData(&_frameData_Camera);
+
+	// Gizmos
+	{
+		// Transform Gizmo
+		{
+			_renderingMap.clear();
+			_renderingMap.reserve(8);
+			Assets::cHandle<Graphics::cModel> unneccessaryHandle;
+			//cTransform _worldTransform;
+			//_renderingMap.push_back({ unneccessaryHandle, _worldTransform });
+			//_renderingMap.push_back({ unneccessaryHandle, *m_teapot->Transform() });
+
+			if (pLight1)
+				_renderingMap.push_back({ unneccessaryHandle, pLight1->Transform });
+			if (pLight2)
+				_renderingMap.push_back({ unneccessaryHandle, pLight2->Transform });
+			if (spLight)
+				_renderingMap.push_back({ unneccessaryHandle, spLight->Transform });
+			if (spLight2)
+				_renderingMap.push_back({ unneccessaryHandle, spLight2->Transform });
+			Graphics::SubmitDataToBeRendered(_frameData_Camera, _renderingMap, &Graphics::Gizmo_RenderTransform);
+		}
+
+		// Normal Gizmo
+		if (false)
+		{
+			_renderingMap.clear();
+			_renderingMap.reserve(1);
+			_renderingMap.push_back({ m_teapot2->GetModelHandle(), m_teapot2->Transform });
+			Graphics::SubmitDataToBeRendered(_frameData_Camera, _renderingMap, &Graphics::Gizmo_RenderVertexNormal);
+		}
+		// Triangulation Gizmo
+		_renderingMap.clear();
+		_renderingMap.reserve(1);
+		_renderingMap.push_back({ m_teapot->GetModelHandle(), m_teapot->Transform });
+		Graphics::SubmitDataToBeRendered(_frameData_Camera, _renderingMap, &Graphics::Gizmo_RenderTriangulation);
+	}
+}
+
 void Assignment::BeforeUpdate()
+{
+	Graphics::MakeApplicationThreadWaitUntilPreRenderFrameDone(m_applicationMutex);
+}
+
+void Assignment::Run()
 {
 	// Clear application thread data
 	Graphics::ClearApplicationThreadData();
@@ -145,14 +182,10 @@ void Assignment::BeforeUpdate()
 	// submit render requests
 	for (int i = 0; i < 6; ++i)
 	{
-		SubmitSceneDataForEnvironmentCapture(&Graphics::UniformBufferFormats::sFrame());
+		Graphics::UniformBufferFormats::sFrame _frame;
+		SubmitSceneDataForEnvironmentCapture(&_frame);
 	}
-	// Let the graphic thread know that the pre-render pass is ready to go
-	Graphics::Notify_DataHasBeenSubmited();
-}
 
-void Assignment::Run()
-{
 	Graphics::PreRenderFrame();
 
 	// loop until window closed
@@ -179,17 +212,14 @@ void Assignment::Tick(float second_since_lastFrame)
 
 		m_editorCamera->MouseControl(_windowInput, 0.01667f);
 	}
-	// for recompile shader
-	if (m_window->GetWindowInput()->IsKeyDown(GLFW_KEY_F6)) {
-		Graphics::GetEffectByKey(Constants::CONST_DEFAULT_EFFECT_KEY)->RecompileShader(Constants::CONST_PATH_BLINNPHONG_FRAGMENTSHADER, GL_FRAGMENT_SHADER);
-	}
+
 	//dLight->Transform()->Rotate(-cTransform::WorldUp, 0.01677f);
 	if (m_teapot) {
-		m_teapot->Transform()->gRotate(glm::vec3(0, 1.f, 0), second_since_lastFrame);
+		m_teapot->Transform.gRotate(glm::vec3(0, 1.f, 0), second_since_lastFrame);
 	}
 
 	cTransform* controledActor = nullptr;
-	controledActor = pLight1->Transform();
+	controledActor = &pLight1->Transform;
 	//controledActor = m_sphere->Transform();
 	if (controledActor) {
 		if (_windowInput->IsKeyDown(GLFW_KEY_J)) {
@@ -215,7 +245,7 @@ void Assignment::Tick(float second_since_lastFrame)
 
 	cTransform* rotateControl = nullptr;
 	if (spLight)
-		rotateControl = spLight->Transform();
+		rotateControl = &spLight->Transform;
 	//if (dLight)
 		//rotateControl = dLight->Transform();
 	if (rotateControl)
@@ -234,83 +264,23 @@ void Assignment::Tick(float second_since_lastFrame)
 		}
 	}
 
-	m_teapot->Transform()->Update();
-	m_teapot2->Transform()->Update();
-	m_mirror->Transform()->Update();
+	m_teapot->Transform.Update();
+	m_teapot2->Transform.Update();
 
 	if (pLight1)
-		pLight1->Transform()->Update();
+		pLight1->Transform.Update();
 	if (pLight2)
 	{
-		pLight2->Transform()->Update();
+		pLight2->Transform.Update();
 	}
 
 	if (dLight)
-		dLight->Transform()->Update();
+		dLight->Transform.Update();
 	if (spLight)
-		spLight->Transform()->Update();
+		spLight->Transform.Update();
 	if (spLight2)
-		spLight2->Transform()->Update();
+		spLight2->Transform.Update();
 
-	// Submit data
-	{
-
-		/** 1. Wait until render thread is ready for receiving new graphic data */
-		Graphics::MakeApplicationThreadWaitForSwapingData(m_applicationMutex);
-
-		/** 2. Clear the application thread data and submit new one */
-		{
-			Graphics::ClearApplicationThreadData();
-			// Submit lighting data
-			SubmitLightingData();
-			// Submit geometry data for shadow map
-			SubmitShadowData();
-			// Frame data from camera
-
-			Graphics::UniformBufferFormats::sFrame _frameData_Camera(m_editorCamera->GetProjectionMatrix(), m_editorCamera->GetViewMatrix());
-			_frameData_Camera.ViewPosition = m_editorCamera->CamLocation();
-			// Submit geometry data
-			SubmitSceneData(&_frameData_Camera);
-
-			// Gizmos
-			{
-				std::vector<std::pair<Graphics::cModel::HANDLE, cTransform>> _renderingMap;
-				// Transform Gizmo
-				{
-					_renderingMap.reserve(8);
-					Assets::cHandle<Graphics::cModel> unneccessaryHandle;
-					//cTransform _worldTransform;
-					//_renderingMap.push_back({ unneccessaryHandle, _worldTransform });
-					//_renderingMap.push_back({ unneccessaryHandle, *m_teapot->Transform() });
-
-					if (pLight1)
-						_renderingMap.push_back({ unneccessaryHandle, *pLight1->Transform() });
-					if (pLight2)
-						_renderingMap.push_back({ unneccessaryHandle, *pLight2->Transform() });
-					if (spLight)
-						_renderingMap.push_back({ unneccessaryHandle, *spLight->Transform() });
-					if (spLight2)
-						_renderingMap.push_back({ unneccessaryHandle, *spLight2->Transform() });
-					Graphics::SubmitDataToBeRendered(_frameData_Camera, _renderingMap, &Graphics::Gizmo_RenderTransform);
-				}
-
-				// Normal Gizmo
-				if (false)
-				{
-					_renderingMap.clear();
-					_renderingMap.reserve(1);
-					_renderingMap.push_back({ m_teapot2->GetModelHandle(), *m_teapot2->Transform() });
-					Graphics::SubmitDataToBeRendered(_frameData_Camera, _renderingMap, &Graphics::Gizmo_RenderVertexNormal);
-				}
-				// Triangulation Gizmo
-				_renderingMap.clear();
-				_renderingMap.reserve(1);
-				//_renderingMap.push_back({ m_teapotQuad->GetModelHandle(), *m_teapotQuad->Transform() });
-				//_renderingMap.push_back({ m_teapotQuad->GetModelHandle(), *m_teapotQuad->Transform() });
-				//Graphics::SubmitDataToBeRendered(_frameData_Camera, _renderingMap, &Graphics::Gizmo_RenderTriangulation);
-			}
-		}
-	}
 }
 
 void Assignment::SubmitLightingData()
@@ -350,13 +320,13 @@ void Assignment::SubmitSceneData(Graphics::UniformBufferFormats::sFrame* const i
 	{
 		_renderingMap.clear();
 		_renderingMap.reserve(m_sphereList.size() + 2);
-		_renderingMap.push_back({ m_spaceHolder->GetModelHandle(), *m_spaceHolder->Transform() });
-		_renderingMap.push_back({ m_teapot->GetModelHandle(), *m_teapot->Transform() });
-		_renderingMap.push_back({ m_teapot2->GetModelHandle(), *m_teapot2->Transform() });
+		_renderingMap.push_back({ m_spaceHolder->GetModelHandle(), m_spaceHolder->Transform });
+		_renderingMap.push_back({ m_teapot->GetModelHandle(), m_teapot->Transform });
+		_renderingMap.push_back({ m_teapot2->GetModelHandle(), m_teapot2->Transform });
 		//_renderingMap.push_back({ m_gun->GetModelHandle(), *m_gun->Transform() });
-		for (int i = 0; i < m_sphereList.size(); ++i)
+		for (size_t i = 0; i < m_sphereList.size(); ++i)
 		{
-			_renderingMap.push_back({ m_sphereList[i]->GetModelHandle(), *m_sphereList[i]->Transform() });
+			_renderingMap.push_back({ m_sphereList[i]->GetModelHandle(), m_sphereList[i]->Transform });
 		}
 		Graphics::SubmitDataToBeRendered(*i_frameData, _renderingMap, &Graphics::PBR_Pass);
 	}
@@ -364,7 +334,7 @@ void Assignment::SubmitSceneData(Graphics::UniformBufferFormats::sFrame* const i
 	// Cube map
 	{
 		_renderingMap.clear();
-		_renderingMap.push_back({ m_cubemap->GetModelHandle(), *m_cubemap->Transform() });
+		_renderingMap.push_back({ m_cubemap->GetModelHandle(), m_cubemap->Transform });
 		Graphics::UniformBufferFormats::sFrame _frameData_Cubemap(m_editorCamera->GetProjectionMatrix(), glm::mat4(glm::mat3(m_editorCamera->GetViewMatrix())));
 		Graphics::SubmitDataToBeRendered(*i_frameData, _renderingMap, &Graphics::CubeMap_Pass);
 	}
@@ -377,13 +347,13 @@ void Assignment::SubmitSceneDataForEnvironmentCapture(Graphics::UniformBufferFor
 	{
 		_renderingMap.clear();
 		_renderingMap.reserve(m_sphereList.size() + 2);
-		_renderingMap.push_back({ m_spaceHolder->GetModelHandle(), *m_spaceHolder->Transform() });
-		_renderingMap.push_back({ m_teapot->GetModelHandle(), *m_teapot->Transform() });
-		_renderingMap.push_back({ m_teapot2->GetModelHandle(), *m_teapot2->Transform() });
+		_renderingMap.push_back({ m_spaceHolder->GetModelHandle(), m_spaceHolder->Transform });
+		_renderingMap.push_back({ m_teapot->GetModelHandle(), m_teapot->Transform });
+		_renderingMap.push_back({ m_teapot2->GetModelHandle(), m_teapot2->Transform });
 		//_renderingMap.push_back({ m_gun->GetModelHandle(), *m_gun->Transform() });
-		for (int i = 0; i < m_sphereList.size(); ++i)
+		for (size_t i = 0; i < m_sphereList.size(); ++i)
 		{
-			_renderingMap.push_back({ m_sphereList[i]->GetModelHandle(), *m_sphereList[i]->Transform() });
+			_renderingMap.push_back({ m_sphereList[i]->GetModelHandle(), m_sphereList[i]->Transform });
 		}
 
 		Graphics::SubmitDataToBeRendered(*i_frameData, _renderingMap, &Graphics::PBR_Pass);
@@ -392,7 +362,7 @@ void Assignment::SubmitSceneDataForEnvironmentCapture(Graphics::UniformBufferFor
 	// Cube map
 	{
 		_renderingMap.clear();
-		_renderingMap.push_back({ m_cubemap->GetModelHandle(), *m_cubemap->Transform() });
+		_renderingMap.push_back({ m_cubemap->GetModelHandle(),m_cubemap->Transform });
 		Graphics::UniformBufferFormats::sFrame _frameData_Cubemap(m_editorCamera->GetProjectionMatrix(), glm::mat4(glm::mat3(m_editorCamera->GetViewMatrix())));
 		Graphics::SubmitDataToBeRendered(*i_frameData, _renderingMap, &Graphics::CubeMap_Pass);
 	}
@@ -403,14 +373,14 @@ void Assignment::SubmitShadowData()
 	std::vector<std::pair<Graphics::cModel::HANDLE, cTransform>> _renderingMap;
 
 	_renderingMap.reserve(32);
-	_renderingMap.push_back({ m_teapot->GetModelHandle(), *m_teapot->Transform() });
-	_renderingMap.push_back({ m_teapot2->GetModelHandle(), *m_teapot2->Transform() });
-	_renderingMap.push_back({ m_spaceHolder->GetModelHandle(), *m_spaceHolder->Transform() });
+	_renderingMap.push_back({ m_teapot->GetModelHandle(), m_teapot->Transform });
+	_renderingMap.push_back({ m_teapot2->GetModelHandle(), m_teapot2->Transform });
+	_renderingMap.push_back({ m_spaceHolder->GetModelHandle(), m_spaceHolder->Transform });
 	
 
-	for (int i = 0; i < m_sphereList.size(); ++i)
+	for (size_t i = 0; i < m_sphereList.size(); ++i)
 	{
-		_renderingMap.push_back({ m_sphereList[i]->GetModelHandle(), *m_sphereList[i]->Transform() });
+		_renderingMap.push_back({ m_sphereList[i]->GetModelHandle(), m_sphereList[i]->Transform });
 	}
 	//_renderingMap.push_back({ m_gun->GetModelHandle(), *m_gun->Transform() });
 
@@ -441,11 +411,10 @@ void Assignment::CleanUp()
 	safe_delete(m_editorCamera);
 	safe_delete(m_teapot);
 	safe_delete(m_teapot2);
-	safe_delete(m_mirror);
 	safe_delete(m_cubemap);
 	safe_delete(m_spaceHolder);
 	safe_delete(m_gun);
-	for (auto i = 0; i < m_sphereList.size(); ++i)
+	for (size_t i = 0; i < m_sphereList.size(); ++i)
 	{
 		safe_delete(m_sphereList[i]);
 	}

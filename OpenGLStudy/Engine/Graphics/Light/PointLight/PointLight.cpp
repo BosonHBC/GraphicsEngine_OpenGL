@@ -7,14 +7,14 @@ namespace Graphics {
 	cPointLight::cPointLight(Color i_color, const glm::vec3 & i_position, GLfloat i_range) :
 		m_range(i_range), cGenLight(i_color)
 	{
-		m_transform.SetTransform(i_position, glm::quat(1, 0, 0, 0), glm::vec3(1, 1, 1));
+		Transform.SetTransform(i_position, glm::quat(1, 0, 0, 0), glm::vec3(1, 1, 1));
 	}
 	void cPointLight::Illuminate()
 	{
 		auto& gLighting = Graphics::GetGlobalLightingData();
 		gLighting.pointLights[m_lightIndex].base.color = m_color;
 		gLighting.pointLights[m_lightIndex].base.enableShadow = m_enableShadow;
-		gLighting.pointLights[m_lightIndex].position = m_transform.Position();
+		gLighting.pointLights[m_lightIndex].position = Transform.Position();
 		gLighting.pointLights[m_lightIndex].radius = m_range;
 	}
 
@@ -30,6 +30,8 @@ namespace Graphics {
 		char _charBuffer[64] = { '\0' };
 		snprintf(_charBuffer, sizeof(_charBuffer), "pointLightShadowMap[%d]", m_lightIndex);
 		m_lightShadowMapID = glGetUniformLocation(i_programID, _charBuffer);
+
+		assert(GL_NO_ERROR == glGetError());
 	}
 
 	void cPointLight::CreateShadowMap(GLuint i_width, GLuint i_height)
@@ -45,12 +47,12 @@ namespace Graphics {
 		// order: px, nx, py, ny, pz, nz
 		glm::mat4 lightMatrices[6] =
 		{
-			m_lightPrjectionMatrix * glm::lookAt(m_transform.Position(), m_transform.Position() + m_transform.Right(), -cTransform::WorldUp),
-			m_lightPrjectionMatrix * glm::lookAt(m_transform.Position(), m_transform.Position() - m_transform.Right(), -cTransform::WorldUp),
-			m_lightPrjectionMatrix * glm::lookAt(m_transform.Position(), m_transform.Position() + m_transform.Up(), cTransform::WorldForward),
-			m_lightPrjectionMatrix * glm::lookAt(m_transform.Position(), m_transform.Position() - m_transform.Up(), -cTransform::WorldForward),
-			m_lightPrjectionMatrix * glm::lookAt(m_transform.Position(), m_transform.Position() + m_transform.Forward(), -cTransform::WorldUp),
-			m_lightPrjectionMatrix * glm::lookAt(m_transform.Position(), m_transform.Position() - m_transform.Forward(), -cTransform::WorldUp),
+			m_lightPrjectionMatrix * glm::lookAt(Transform.Position(), Transform.Position() + Transform.Right(), -cTransform::WorldUp),
+			m_lightPrjectionMatrix * glm::lookAt(Transform.Position(), Transform.Position() - Transform.Right(), -cTransform::WorldUp),
+			m_lightPrjectionMatrix * glm::lookAt(Transform.Position(), Transform.Position() + Transform.Up(), cTransform::WorldForward),
+			m_lightPrjectionMatrix * glm::lookAt(Transform.Position(), Transform.Position() - Transform.Up(), -cTransform::WorldForward),
+			m_lightPrjectionMatrix * glm::lookAt(Transform.Position(), Transform.Position() + Transform.Forward(), -cTransform::WorldUp),
+			m_lightPrjectionMatrix * glm::lookAt(Transform.Position(), Transform.Position() - Transform.Forward(), -cTransform::WorldUp),
 		};
 
 		glUniformMatrix4fv(m_lightTransformID, 6, GL_FALSE, glm::value_ptr(lightMatrices[0]));

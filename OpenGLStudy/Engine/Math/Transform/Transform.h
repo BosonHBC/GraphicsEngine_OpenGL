@@ -80,10 +80,10 @@ public:
 private:
 	/** private data*/
 	// for simplicity, m is the abbr of m_m, and so is mInv for m_mInv;
-	glm::mat4 m, mInv;
+	glm::mat4 m = glm::mat4(1.0f), mInv = glm::mat4(1.0f);
 
-	glm::vec3 m_position;
-	glm::quat m_rotation;
-	glm::vec3 m_scale;
+	glm::vec3 m_position = glm::vec3(0.0f, 0.0f, 0.0f);
+	glm::quat m_rotation = glm::quat(1.0f, 0.0f, 0.0f, 0.0f);
+	glm::vec3 m_scale = glm::vec3(1.0f, 1.0f, 1.0f);
 };
 

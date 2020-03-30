@@ -16,23 +16,24 @@
 
 // Graphics stores, initializes, cleans up all data that needs to be rendered
 namespace Graphics {
-
+#define SHADOWMAP_START_TEXTURE_UNIT 13
 
 	/** Initialization and clean up function*/
 	bool Initialize();
 	void PreRenderFrame(); // Render frames before rendering the actual scene, like rendering the irradiance cube map, baking static light stuffs
 	void RenderFrame();
 	bool CleanUp();
+	
+	void RenderScene(cEffect* const i_effect, GLenum i_drawMode = GL_TRIANGLES);
 
 	void DirectionalShadowMap_Pass();
 	void SpotLightShadowMap_Pass();
 	void PointLightShadowMap_Pass();
-	void Reflection_Pass();
 
-	void Render_Pass();
+	void BlinnPhong_Pass();
 	void PBR_Pass();
 	void CubeMap_Pass();
-	void Tessellation_Pass();
+
 	void Gizmo_RenderTransform();
 	void Gizmo_RenderVertexNormal();
 	void Gizmo_RenderTriangulation();
@@ -44,11 +45,9 @@ namespace Graphics {
 	void ClearApplicationThreadData();
 	void SetCurrentPass(int i_currentPass);
 
-
 	/** Usage function*/
-	bool CreateEffect(const char* i_key, const char* i_vertexShaderPath, const char* i_fragmentShaderPath, const char* i_geometryShaderPath = "", const char* const i_TCSPath = "", const char* const i_TESPath = "");
-	cEffect* GetEffectByKey(const char* i_key);
-	cEffect* GetCurrentEffect();
+	bool CreateEffect(const eEffectType& i_key, const char* i_vertexShaderPath, const char* i_fragmentShaderPath, const char* i_geometryShaderPath = "", const char* const i_TCSPath = "", const char* const i_TESPath = "");
+	cEffect* GetEffectByKey(const eEffectType& i_key);
 
 	/** Lighting related*/
 	UniformBufferFormats::sLighting& GetGlobalLightingData();
@@ -61,13 +60,11 @@ namespace Graphics {
 	void Notify_DataHasBeenSubmited();
 	// When the data is swapped, application data can be cleared and it is ready for next submission
 	void MakeApplicationThreadWaitForSwapingData(std::mutex& i_applicationMutex);
-
+	void MakeApplicationThreadWaitUntilPreRenderFrameDone(std::mutex& i_applicationMutex);
 	/** Others */
-	cFrameBuffer* GetCameraCaptureFrameBuffer();
 	cEnvProbe* GetHDRtoCubemap();
-	cFrameBuffer* GetBRDFLutFrameBuffer();
 	cUniformBuffer* GetUniformBuffer(const eUniformBufferType& i_uniformBufferType);
 
 	/** Predefined model and textures*/
-	const cModel::HANDLE& GetPrimitive(const EPrimitiveType& i_primitiveType);
+	 cModel::HANDLE GetPrimitive(const EPrimitiveType& i_primitiveType);
 }

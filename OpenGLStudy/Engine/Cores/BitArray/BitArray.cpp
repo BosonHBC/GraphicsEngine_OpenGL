@@ -74,7 +74,7 @@ namespace Core {
 
 	bool cBitArray::AreAllClear() const
 	{
-		unsigned char isNonzero = false;
+		bool isNonzero = false;
 		size_t index = m_arraySize;
 		unsigned long i_firstAvaliable = 0;
 		while (!isNonzero && index > 0)
@@ -91,7 +91,7 @@ namespace Core {
 	bool cBitArray::AreAllSet() const
 	{
 		size_t bitsPerItem = BITS_PER_ITEM;
-		unsigned char hasZero = false;
+		bool hasZero = false;
 		size_t index = m_arraySize;
 		size_t offset = 0;
 		while (!hasZero && index > 0)

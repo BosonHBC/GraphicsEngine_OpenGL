@@ -36,12 +36,13 @@ private:
 	void CreateCamera();
 	void CreateLight();
 
+	void SubmitDataToBeRender(const float i_seconds_elapsedSinceLastLoop) override;
 	void SubmitLightingData();
 	void SubmitSceneData(Graphics::UniformBufferFormats::sFrame* const i_frameData);
 	void SubmitSceneDataForEnvironmentCapture(Graphics::UniformBufferFormats::sFrame* const i_frameData);
 	void SubmitShadowData();
 
-	Color m_clearColor;
+	Color m_clearColor = Color(0,0,0);
 	cEditorCamera* m_editorCamera;
 
 	Graphics::cPointLight* pLight1;
@@ -53,7 +54,6 @@ private:
 
 	cActor* m_teapot;
 	cActor* m_teapot2;
-	cActor* m_mirror;
 	cActor* m_cubemap;
 	cActor* m_spaceHolder;
 	cActor* m_gun;

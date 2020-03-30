@@ -1,5 +1,6 @@
 #include "MatCubemap.h"
 #include "Assets/LoadTableFromLuaFile.h"
+#include "Graphics/Graphics.h"
 
 namespace Graphics {
 	
@@ -27,6 +28,13 @@ namespace Graphics {
 			printf("Fail to create cube map textures.\n");
 			return result;
 		}
+		// After loading data from lua, set up uniform variables
+		if (!(result = UpdateUniformVariables(Graphics::GetEffectByKey(EET_Cubemap)->GetProgramID())))
+		{
+			printf("Fail to Update uniform ID\n");
+			return result;
+		}
+		return result;
 	}
 
 	bool cMatCubemap::UpdateUniformVariables(GLuint i_programID)

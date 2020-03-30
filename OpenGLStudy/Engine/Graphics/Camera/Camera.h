@@ -14,18 +14,18 @@ public:
 	/** Constructors and destructor */
 	cCamera() : m_translationSpeed(1), m_turnSpeed(0.1f)
 	{
-		m_transform = new cTransform();
+
 	}
 	cCamera(glm::vec3 i_initialPos, GLfloat i_initialPitch = 0.0, GLfloat i_initialYaw = 0.0, GLfloat i_moveSpeed = 1.0, GLfloat i_turnSpeed = 1.0f):
 		m_yaw(i_initialYaw), m_pitch(i_initialPitch), m_worldUp(glm::vec3(0,1.f,0)),
 		m_translationSpeed(i_moveSpeed), m_turnSpeed(i_turnSpeed)
 	{
-		m_transform = new cTransform();
 		glm::quat _pitch(glm::vec3(i_initialPitch, 0, 0));
 		glm::quat _yaw(glm::vec3(0, i_initialYaw, 0));
-		m_transform->SetTransform(i_initialPos, _pitch * _yaw, glm::vec3(1, 1, 1));
+		Transform.SetTransform(i_initialPos, _pitch * _yaw, glm::vec3(1, 1, 1));
 	}
 	cCamera(const cCamera& i_other);
+	cCamera& operator = (const cCamera& i_other);
 	virtual ~cCamera();
 
 	/** Usage functions*/
@@ -41,22 +41,23 @@ public:
 
 	/** Getters*/
 	glm::mat4 GetViewMatrix();
-	glm::vec3 CamLocation() const { return m_transform->Position(); }
-	cTransform* Transform() const { return m_transform; }
+	glm::vec3 CamLocation() const { return Transform.Position(); }
 	const glm::mat4& GetProjectionMatrix() const { return m_projectionMatrix; }
+
+	cTransform Transform;
 protected:
 	/** private member variables*/
-	cTransform* m_transform;
-	GLfloat m_translationSpeed;
-	GLfloat m_turnSpeed;
 
-	glm::mat4 m_viewMatrix;
-	glm::mat4 m_projectionMatrix;
+	GLfloat m_translationSpeed = 1.0f;
+	GLfloat m_turnSpeed = 1.0f;
 
-	GLfloat m_pitch;
-	GLfloat m_yaw;
+	glm::mat4 m_viewMatrix = glm::mat4(1.0f);
+	glm::mat4 m_projectionMatrix = glm::mat4(1.0f);
 
-	glm::vec3 m_worldUp;
+	GLfloat m_pitch = 0.0f;
+	GLfloat m_yaw = 0.0f;
+
+	glm::vec3 m_worldUp = glm::vec3(0, 1.f, 0);
 
 	/** private helper functions*/
 	virtual void Update();

@@ -5,7 +5,7 @@ namespace Graphics {
 
 	cGenLight::cGenLight() : m_color(Color::Black()),
 		m_lightIndex(0), m_enableShadow(false),
-		m_transform(cTransform()), m_lightPrjectionMatrix(glm::mat4(1)), m_shadowMap(nullptr)
+		 m_lightPrjectionMatrix(glm::mat4(1)), m_shadowMap(nullptr)
 	{
 	}
 
@@ -16,7 +16,7 @@ namespace Graphics {
 
 	cGenLight::cGenLight(const cGenLight& i_other) :
 		m_color(i_other.m_color), m_lightIndex(i_other.m_lightIndex), m_enableShadow(i_other.m_enableShadow),
-		m_transform(i_other.m_transform), m_lightPrjectionMatrix(i_other.m_lightPrjectionMatrix)
+		Transform(i_other.Transform), m_lightPrjectionMatrix(i_other.m_lightPrjectionMatrix)
 	{
 		// Let the light point to the same shadow map
 		m_shadowMap = i_other.m_shadowMap;
@@ -28,7 +28,7 @@ namespace Graphics {
 			m_color = i_other.m_color;
 			m_lightIndex = i_other.m_lightIndex;
 			m_enableShadow = i_other.m_enableShadow;
-			m_transform = i_other.m_transform;
+			Transform = i_other.Transform;
 			m_lightPrjectionMatrix = i_other.m_lightPrjectionMatrix;
 			m_shadowMap = i_other.m_shadowMap;
 			return *this;
@@ -53,7 +53,7 @@ namespace Graphics {
 
 	void cGenLight::CleanUp()
 	{
-		m_transform.~cTransform();
+
 	}
 
 	void cGenLight::CreateShadowMap(GLuint i_width, GLuint i_height)

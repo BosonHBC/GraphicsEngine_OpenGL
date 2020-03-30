@@ -1,5 +1,6 @@
 #include "MatUnlit.h"
 #include "Assets/LoadTableFromLuaFile.h"
+#include "Graphics/Graphics.h"
 
 namespace Graphics {
 
@@ -11,7 +12,12 @@ namespace Graphics {
 			printf("Fail to load material[%s] from LUA.\n", i_path.c_str());
 			return result;
 		}
-
+		// After loading data from lua, set up uniform variables
+		if (!(result = UpdateUniformVariables(Graphics::GetEffectByKey(EET_Unlit)->GetProgramID())))
+		{
+			printf("Fail to Update uniform ID\n");
+			return result;
+		}
 		return result;
 	}
 
