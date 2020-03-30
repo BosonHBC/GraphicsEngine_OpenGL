@@ -745,16 +745,14 @@ namespace Graphics {
 
 	void MakeApplicationThreadWaitForSwapingData(std::mutex& i_applicationMutex)
 	{
-		std::unique_lock<std::mutex> lck(i_applicationMutex);
-		constexpr unsigned int timeToWait_inMilliseconds = 10;
+		std::unique_lock<std::mutex> lck(s_graphicMutex);
+		constexpr unsigned int timeToWait_inMilliseconds = 1;
 		s_whenDataHasBeenSwappedInRenderThread.wait_for(lck, std::chrono::milliseconds(timeToWait_inMilliseconds));
 	}
 
 	void MakeApplicationThreadWaitUntilPreRenderFrameDone(std::mutex& i_applicationMutex)
 	{
 		std::unique_lock<std::mutex> lck(i_applicationMutex);
-		constexpr unsigned int timeToWait_inMilliseconds = 5000;
-		//s_whenPreRenderFinish.wait_for(lck, std::chrono::milliseconds(timeToWait_inMilliseconds));
 		s_whenPreRenderFinish.wait(lck);
 	}
 

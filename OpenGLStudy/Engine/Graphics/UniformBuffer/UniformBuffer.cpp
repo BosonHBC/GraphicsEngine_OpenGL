@@ -10,6 +10,7 @@ namespace Graphics {
 
 	bool cUniformBuffer::Initialize(const void* const i_data)
 	{
+		std::lock_guard<std::mutex> autoLock(m_mutex);
 		bool result = true;
 		if (m_initialized) return result;
 		switch (m_type)
@@ -90,6 +91,7 @@ namespace Graphics {
 
 	void cUniformBuffer::Bind()
 	{
+		std::lock_guard<std::mutex> autoLock(m_mutex);
 		if (m_initialized) return;
 
 		if (m_bufferID == 0) {
@@ -111,7 +113,8 @@ namespace Graphics {
 
 	void cUniformBuffer::Update(const void* const i_data)
 	{
-		if (m_bufferID == 0) {
+		std::lock_guard<std::mutex> autoLock(m_mutex);
+		if (m_bufferID == static_cast<GLuint>(-1)) {
 			printf("Error: Invalid buffer id. Should not bind it to shader.");
 			return;
 		}
@@ -136,6 +139,7 @@ namespace Graphics {
 
 	void cUniformBuffer::UpdatePartially(const void* const i_data, GLintptr i_offset, GLintptr i_size)
 	{
+		std::lock_guard<std::mutex> autoLock(m_mutex);
 		if (m_bufferID == 0) {
 			printf("Error: Invalid buffer id. Should not bind it to shader.");
 			return;
@@ -168,7 +172,6 @@ namespace Graphics {
 
 	bool cUniformBuffer::CleanUp()
 	{
-
 		if (m_bufferID != 0)
 		{
 			glDeleteBuffers(1, &m_bufferID);

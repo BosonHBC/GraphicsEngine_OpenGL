@@ -113,8 +113,8 @@ namespace Application {
 				Graphics::Notify_DataHasBeenSubmited();
 			}
 
-			m_shouldApplicationLoopExit = m_window->GetShouldClose();
-			appCount++;
+		//	m_shouldApplicationLoopExit = m_window->GetShouldClose();
+		//	appCount++;
 			printf("Application thread count: %d\n", appCount);
 		}
 

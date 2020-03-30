@@ -16,7 +16,7 @@ namespace Application {
 	{
 	public:
 		cApplication() {}
-		~cApplication() { CleanUp(); };
+		virtual ~cApplication() { CleanUp(); }
 
 		virtual bool Initialize(GLuint i_width, GLuint i_height, const char* i_windowName = "Default Window");
 		virtual bool PostInitialization();
@@ -42,12 +42,12 @@ namespace Application {
 
 		/** Handle timing*/
 		//---------------------------------------------------
-		bool m_shouldApplicationLoopExit = false;
 		uint64_t m_tickCount_systemTime_WhenApplicationStart = false;
 		uint64_t m_tickCount_systemTime_Current = 0;
 		uint64_t m_tickCountt_systemTime_Elapsed = 0;
 		// Fixed update rate, in default case: function should be called every 0.016667f seconds, which is every 1/0.016667f = 60 ticks
 		float m_simulationUpdateRate_InSeconds = 0.016667f;
+		bool m_shouldApplicationLoopExit = false;
 
 		/** Handle threading*/
 		//---------------------------------------------------
