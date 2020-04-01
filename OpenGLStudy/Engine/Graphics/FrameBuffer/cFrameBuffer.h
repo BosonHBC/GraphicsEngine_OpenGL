@@ -23,7 +23,7 @@ namespace Graphics {
 		// Use the texture loaded from the frame buffer
 		void Read(GLenum i_textureID);
 
-		~cFrameBuffer();
+		 ~cFrameBuffer() {}
 
 		// Frame buffer must to clean up by the user
 		void CleanUp();

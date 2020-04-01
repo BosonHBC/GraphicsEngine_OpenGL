@@ -21,6 +21,7 @@ namespace Graphics {
 		ETT_FRAMEBUFFER_RG16 = 9,
 		ETT_FILE_HDR_IMAGE = 10,
 		ETT_FRAMEBUFFER_RGBA16 = 11,
+		ETT_FRAMEBUFFER_RGBA8 = 12,
 		ETT_INVALID = 0xff
 	};
 
@@ -66,7 +67,7 @@ namespace Graphics {
 		bool LoadHDRMipMapCubemapTexture(const std::string& i_type_id, const GLuint& i_baseWidth, const GLuint& i_baseHeight);
 		bool LoadHDRRG16Texture(const std::string& i_type_id, const GLuint& i_width, const GLuint& i_height);
 		bool LoadRGBA16Texture(const std::string& i_type_id, const GLuint& i_width, const GLuint& i_height);
-
+		bool LoadRGBA8Texture(const std::string& i_type_id, const GLuint& i_width, const GLuint& i_height);
 		// Load color format texture from frame buffer
 		bool LoadPlannerReflectionTexture(const std::string& i_type_id, const GLuint& i_width, const GLuint& i_height);
 

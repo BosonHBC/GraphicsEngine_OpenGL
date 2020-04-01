@@ -169,12 +169,6 @@ namespace Graphics {
 		}
 	}
 
-	cFrameBuffer::~cFrameBuffer()
-	{
-
-
-	}
-
 	void cFrameBuffer::CleanUp()
 	{
 		if (m_fbo) {

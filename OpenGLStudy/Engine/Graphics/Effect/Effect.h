@@ -22,6 +22,7 @@ namespace Graphics {
 		EET_TessQuad,
 		EET_TriangulationDisplay,
 		EET_HDREffect,
+		EET_GBuffer,
 		EET_Invalid = static_cast<uint16_t>(-1),
 	};
 	/** Forward declaration*/

@@ -284,6 +284,18 @@ namespace Graphics {
 				hdrEffect->SetInteger("enableHDR", true);
 				hdrEffect->UnUseEffect();
 			}
+
+			// Create G-Buffer
+			{
+				if (!(result = CreateEffect(EET_GBuffer,
+					"deferredShading/GBuffer_vert.glsl",
+					"deferredShading/GBuffer_frag.glsl"
+				))) {
+					printf("Fail to create GBuffer effect.\n");
+					return result;
+				}
+			}
+
 			// validate all programs
 			for (auto it : s_KeyToEffect_map)
 			{
