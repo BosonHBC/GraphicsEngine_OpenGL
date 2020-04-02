@@ -19,6 +19,7 @@
 #include "Time/Time.h"
 #include "Assets/PathProcessor.h"
 #include "EnvironmentCaptureManager.h" 
+#include "Graphics/FrameBuffer/GeometryBuffer.h"
 
 #include "Application/Window/WindowInput.h"
 
@@ -60,12 +61,13 @@ namespace Graphics {
 	cFrameBuffer s_brdfLUTTexture;
 	// the frame buffer for capture HDR image
 	cFrameBuffer g_hdrBuffer;
+	// G-Buffer for deferred shading
+	cGBuffer g_GBuffer;
 
 	// Effect
 	// ------------------------------------------------------------------------------------------------------------------------------------
 	std::map<eEffectType, cEffect*> s_KeyToEffect_map;
 	cEffect* s_currentEffect;
-	ERenderMode g_renderMode = ERM_ForwardShading;
 
 	// Lighting
 	// ------------------------------------------------------------------------------------------------------------------------------------
@@ -82,6 +84,9 @@ namespace Graphics {
 	void Gizmo_DrawDebugCaptureVolume();
 	void RenderQuad();
 	void HDR_Pass();
+	void GBuffer_Pass();
+	void Deferred_Lighting_Pass();
+	void DisplayGBuffer_Pass();
 
 	void FixSamplerProblem(const eEffectType& i_effectKey)
 	{
@@ -295,7 +300,22 @@ namespace Graphics {
 					return result;
 				}
 			}
-
+			// Create G-Buffer Display
+			{
+				if (!(result = CreateEffect(ETT_GBufferDisplay,
+					"hdrShader/hdr_shader_vert.glsl",
+					"deferredShading/GBufferDisplay_frag.glsl"
+				))) {
+					printf("Fail to create GBuffer effect.\n");
+					return result;
+				}
+				cEffect* hdrEffect = GetEffectByKey(ETT_GBufferDisplay);
+				hdrEffect->UseEffect();
+				hdrEffect->SetInteger("gAlbedoMetallic", 0);
+				hdrEffect->SetInteger("gNormalRoughness", 1);
+				hdrEffect->SetInteger("gIOR", 2);
+				hdrEffect->UnUseEffect();
+			}
 			// validate all programs
 			for (auto it : s_KeyToEffect_map)
 			{
@@ -344,7 +364,7 @@ namespace Graphics {
 			printf("Fail to initialize uniformBuffer_PostProcessing\n");
 			return result;
 		}
-		assert(GL_NO_ERROR == glGetError());
+
 		// Initialize environment probes
 		{
 			// This is for changing rect hdr map to cubemap
@@ -359,10 +379,14 @@ namespace Graphics {
 				return result;
 			}
 			cWindow* _window = Application::GetCurrentApplication()->GetCurrentWindow();
-			//_window->GetBufferWidth(), _window->GetBufferHeight()
 			if (!(result = g_hdrBuffer.Initialize(_window->GetBufferWidth(), _window->GetBufferHeight(), ETT_FRAMEBUFFER_RGBA16)))
 			{
 				printf("Fail to create g_hdrBuffer.\n");
+				return result;
+			}
+			if (!(result = g_GBuffer.Initialize(_window->GetBufferWidth(), _window->GetBufferHeight())))
+			{
+				printf("Fail to create G-Buffer.\n");
 				return result;
 			}
 
@@ -522,9 +546,10 @@ namespace Graphics {
 		s_uniformBuffer_ClipPlane.Update(&s_dataRenderingByGraphicThread->s_ClipPlane);
 		s_uniformBuffer_PostProcessing.Update(&s_dataRenderingByGraphicThread->s_PostProcessing);
 		/** 2. Start to render pass one by one */
-		if (g_renderMode == ERM_ForwardShading)
+		if (s_dataRenderingByGraphicThread->g_renderMode == ERM_ForwardShading)
 		{
 			g_hdrBuffer.Write();
+			// 3 shadow map pass, 1 pbr pass, 1 cubemap pass
 			for (size_t i = 0; i < s_dataRenderingByGraphicThread->s_renderPasses.size(); ++i)
 			{
 				// Update current render pass
@@ -536,6 +561,34 @@ namespace Graphics {
 			}
 			g_hdrBuffer.UnWrite();
 			HDR_Pass();
+		}
+		else // if not forward shading, it is deferred shading
+		{
+			/** 1. Capture the whole scene with PBR material*/
+			g_GBuffer.Write();
+			s_currentRenderPass = 3; // PBR pass
+			s_uniformBuffer_frame.Update(&s_dataRenderingByGraphicThread->s_renderPasses[s_currentRenderPass].FrameData);
+			GBuffer_Pass();
+			g_GBuffer.UnWrite();
+			
+			/** 2. Display GBuffer alternatively */
+			if (s_dataRenderingByGraphicThread->g_renderMode != ERM_DeferredShading)
+				DisplayGBuffer_Pass();
+			else
+				Deferred_Lighting_Pass();
+
+			/** 3. Display cubemap at the end */
+			{
+				glBindFramebuffer(GL_READ_FRAMEBUFFER, g_GBuffer.fbo());
+				glBindFramebuffer(GL_DRAW_FRAMEBUFFER, 0); // write to default frame buffer
+				glBlitFramebuffer(
+					0, 0, g_GBuffer.GetWidth(), g_GBuffer.GetHeight(), 0, 0, g_GBuffer.GetWidth(), g_GBuffer.GetHeight(), GL_DEPTH_BUFFER_BIT, GL_NEAREST
+				);
+				glBindFramebuffer(GL_FRAMEBUFFER, 0);
+				s_currentRenderPass = 4; // Cubemap pass
+				s_uniformBuffer_frame.Update(&s_dataRenderingByGraphicThread->s_renderPasses[s_currentRenderPass].FrameData);
+				CubeMap_Pass();
+			}
 		}
 		//renderCount++;
 		//printf("Render thread count: %d\n", renderCount);
@@ -559,6 +612,11 @@ namespace Graphics {
 		s_dataSubmittedByApplicationThread->s_directionalLight = i_directionalLight;
 		s_dataSubmittedByApplicationThread->s_ambientLight = i_ambientLight;
 
+	}
+
+	void SubmitGraphicSettings(const ERenderMode& i_renderMode)
+	{
+		s_dataSubmittedByApplicationThread->g_renderMode = i_renderMode;
 	}
 
 	void SubmitDataToBeRendered(const UniformBufferFormats::sFrame& i_frameData, const std::vector<std::pair<Graphics::cModel::HANDLE, cTransform>>& i_modelToTransform_map, void(*func_ptr)())
@@ -647,6 +705,7 @@ namespace Graphics {
 		s_cubemapProbe.CleanUp();
 		s_brdfLUTTexture.CleanUp();
 		g_hdrBuffer.CleanUp();
+		g_GBuffer.CleanUp();
 		if (!(result = EnvironmentCaptureManager::CleanUp()))
 			printf("Fail to clean up Environment Capture Manager.\n");
 

@@ -22,6 +22,7 @@
 #include "Assets/Handle.h"
 #include "Graphics/EnvironmentCaptureManager.h"
 #include <map>
+Graphics::ERenderMode g_renderMode = Graphics::ERenderMode::ERM_ForwardShading;
 
 bool Assignment::Initialize(GLuint i_width, GLuint i_height, const char* i_windowName /*= "Default Window"*/)
 {
@@ -116,7 +117,8 @@ void Assignment::CreateLight()
 void Assignment::SubmitDataToBeRender(const float i_seconds_elapsedSinceLastLoop)
 {
 	std::vector<std::pair<Graphics::cModel::HANDLE, cTransform>> _renderingMap = std::vector<std::pair<Graphics::cModel::HANDLE, cTransform>>();
-
+	// Submit render setting
+	Graphics::SubmitGraphicSettings(g_renderMode);
 	// Submit lighting data
 	SubmitLightingData();
 	// Submit geometry data for shadow map
@@ -133,6 +135,7 @@ void Assignment::SubmitDataToBeRender(const float i_seconds_elapsedSinceLastLoop
 	// Gizmos
 	{
 		// Transform Gizmo
+		if (false)
 		{
 			_renderingMap.clear();
 			_renderingMap.reserve(8);
@@ -151,7 +154,6 @@ void Assignment::SubmitDataToBeRender(const float i_seconds_elapsedSinceLastLoop
 				_renderingMap.push_back({ unneccessaryHandle, spLight2->Transform });
 			Graphics::SubmitDataToBeRendered(_frameData_Camera, _renderingMap, &Graphics::Gizmo_RenderTransform);
 		}
-
 		// Normal Gizmo
 		if (false)
 		{
@@ -161,10 +163,13 @@ void Assignment::SubmitDataToBeRender(const float i_seconds_elapsedSinceLastLoop
 			Graphics::SubmitDataToBeRendered(_frameData_Camera, _renderingMap, &Graphics::Gizmo_RenderVertexNormal);
 		}
 		// Triangulation Gizmo
-		_renderingMap.clear();
-		_renderingMap.reserve(1);
-		_renderingMap.push_back({ m_teapot->GetModelHandle(), m_teapot->Transform });
-		Graphics::SubmitDataToBeRendered(_frameData_Camera, _renderingMap, &Graphics::Gizmo_RenderTriangulation);
+		if (false)
+		{
+			_renderingMap.clear();
+			_renderingMap.reserve(1);
+			_renderingMap.push_back({ m_teapot->GetModelHandle(), m_teapot->Transform });
+			Graphics::SubmitDataToBeRendered(_frameData_Camera, _renderingMap, &Graphics::Gizmo_RenderTriangulation);
+		}
 	}
 }
 
@@ -229,7 +234,38 @@ void Assignment::Tick(float second_since_lastFrame)
 		if (_windowInput->IsKeyDown(GLFW_KEY_MINUS))
 		{
 			m_exposureOffset -= second_since_lastFrame * exposureChangeSpeed;
-			m_exposureOffset = m_exposureOffset <0.0001f ? 0.0001f : m_exposureOffset;
+			m_exposureOffset = m_exposureOffset < 0.0001f ? 0.0001f : m_exposureOffset;
+		}
+	}
+	// Changing render mode
+	{
+		if (_windowInput->IsKeyDown(GLFW_KEY_1))
+		{
+			g_renderMode = Graphics::ERM_ForwardShading;
+		}
+		if (_windowInput->IsKeyDown(GLFW_KEY_2))
+		{
+			g_renderMode = Graphics::ERM_DeferredShading;
+		}
+		if (_windowInput->IsKeyDown(GLFW_KEY_3))
+		{
+			g_renderMode = Graphics::ERM_Deferred_Albede;
+		}
+		if (_windowInput->IsKeyDown(GLFW_KEY_4))
+		{
+			g_renderMode = Graphics::ERM_Deferred_Metallic;
+		}
+		if (_windowInput->IsKeyDown(GLFW_KEY_5))
+		{
+			g_renderMode = Graphics::ERM_Deferred_Roughness;
+		}
+		if (_windowInput->IsKeyDown(GLFW_KEY_6))
+		{
+			g_renderMode = Graphics::ERM_Deferred_Normal;
+		}
+		if (_windowInput->IsKeyDown(GLFW_KEY_7))
+		{
+			g_renderMode = Graphics::ERM_Deferred_IOR;
 		}
 	}
 

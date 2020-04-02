@@ -11,6 +11,8 @@ namespace Graphics
 		glGetIntegerv(GL_FRAMEBUFFER_BINDING, &m_prevFbo);
 		// Generate another frame buffer
 		glGenFramebuffers(1, &m_fbo);
+		glBindFramebuffer(GL_FRAMEBUFFER, m_fbo);
+		assert(GL_NO_ERROR == glGetError());
 		// Bind color_attachment_0 to with Albedo&Metallic
 		std::string key = "GBuffer_AlbedoMetallic";
 		{
@@ -18,6 +20,7 @@ namespace Graphics
 			cTexture* _gAlbedoMetallic = cTexture::s_manager.Get(m_renderToTexture);
 			glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, _gAlbedoMetallic->GetTextureID(), 0);
 		}
+		assert(GL_NO_ERROR == glGetError());
 		// Bind color_attachment_1 to with Normal&Roughness
 		{
 			key = "GBuffer_NormalRoughness";
@@ -26,9 +29,17 @@ namespace Graphics
 			glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT1, GL_TEXTURE_2D, _gNormalRoughness->GetTextureID(), 0);
 		}
 
+		// Bind color_attachment_2 to with IOR
+		{
+			key = "GBuffer_IOR";
+			cTexture::s_manager.Load(key, m_iorHolder, ETT_FRAMEBUFFER_RGB16, m_width, m_height);
+			cTexture* _gIOR = cTexture::s_manager.Get(m_iorHolder);
+			glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT2, GL_TEXTURE_2D, _gIOR->GetTextureID(), 0);
+		}
+
 		// tell OpenGL which color attachments we'll use (of this frame buffer) for rendering 
-		unsigned int attachments[2] = { GL_COLOR_ATTACHMENT0, GL_COLOR_ATTACHMENT1};
-		glDrawBuffers(2, attachments);
+		unsigned int attachments[3] = { GL_COLOR_ATTACHMENT0, GL_COLOR_ATTACHMENT1,GL_COLOR_ATTACHMENT2};
+		glDrawBuffers(3, attachments);
 
 		// create and bind render buffer for depth component
 		glGenRenderbuffers(1, &m_rbo);
@@ -58,6 +69,8 @@ namespace Graphics
 		cFrameBuffer::CleanUp();
 
 		cTexture::s_manager.Release(m_normalHolder);
+		cTexture::s_manager.Release(m_iorHolder);
+
 	}
 
 
@@ -67,9 +80,13 @@ namespace Graphics
 		if (_albedoMetallic) {
 			_albedoMetallic->UseTexture(i_textureIDs[0]);
 		}
-		cTexture* _normalRoughness = cTexture::s_manager.Get(m_renderToTexture);
+		cTexture* _normalRoughness = cTexture::s_manager.Get(m_normalHolder);
 		if (_normalRoughness) {
-			_normalRoughness->UseTexture(i_textureIDs[0]);
+			_normalRoughness->UseTexture(i_textureIDs[1]);
+		}
+		cTexture* _ior = cTexture::s_manager.Get(m_iorHolder);
+		if (_ior) {
+			_ior->UseTexture(i_textureIDs[2]);
 		}
 	}
 

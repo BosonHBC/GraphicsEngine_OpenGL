@@ -39,6 +39,7 @@ namespace Graphics {
 	void Gizmo_RenderTriangulation();
 
 	/** Submit function*/
+	void SubmitGraphicSettings(const ERenderMode& i_renderMode);
 	void SubmitDataToBeRendered(const UniformBufferFormats::sFrame& i_frameData, const std::vector<std::pair<Graphics::cModel::HANDLE, cTransform>>& i_modelToTransform_map, void(*func_ptr)());
 	void SubmitClipPlaneData(const glm::vec4& i_plane0, const glm::vec4& i_plane1 = glm::vec4(0, 0, 0, 0), const glm::vec4& i_plane2 = glm::vec4(0, 0, 0, 0), const glm::vec4& i_plane3 = glm::vec4(0, 0, 0, 0));
 	void SubmitPostProcessingData(const float i_exposure);

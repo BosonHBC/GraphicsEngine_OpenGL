@@ -28,6 +28,9 @@ namespace Graphics
 		// A16R16G16B16 
 		cTexture::HANDLE m_normalHolder;
 
+		// ior holder will be responsible for ColorComponent2, storing ior data
+		// R16G16B16 
+		cTexture::HANDLE m_iorHolder;
 
 	};
 }

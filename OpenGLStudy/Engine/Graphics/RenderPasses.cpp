@@ -5,6 +5,7 @@
 #include "Application/Window/WindowInput.h"
 #include "Application/Application.h"
 #include "Application/Window/Window.h"
+#include "Graphics/FrameBuffer/GeometryBuffer.h"
 
 namespace Graphics
 {
@@ -18,6 +19,7 @@ namespace Graphics
 	extern UniformBufferFormats::sLighting s_globalLightingData;
 	extern cFrameBuffer s_brdfLUTTexture;
 	extern 	cFrameBuffer g_hdrBuffer;
+	extern cGBuffer g_GBuffer;
 	extern cModel::HANDLE s_cubeHandle;
 	extern cModel::HANDLE s_arrowHandle;
 	extern cModel::HANDLE s_quadHandle;
@@ -337,6 +339,70 @@ namespace Graphics
 		RenderQuad();
 		s_currentEffect->UnUseEffect();
 	}
+
+	void GBuffer_Pass()
+	{
+		s_currentEffect = GetEffectByKey(EET_GBuffer);
+		s_currentEffect->UseEffect();
+
+		glClearColor(s_clearColor.r, s_clearColor.g, s_clearColor.b, 0.f);
+		// A lot of things can be cleaned like color buffer, depth buffer, so we need to specify what to clear
+		glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+
+		auto& renderList = s_dataRenderingByGraphicThread->s_renderPasses[s_currentRenderPass].ModelToTransform_map;
+		const auto sphereOffset = renderList.size() - 25;
+		// draw the space first
+		for (size_t i = 0; i < sphereOffset; ++i)
+		{
+			// 1. Update draw call data
+			s_uniformBuffer_drawcall.Update(&UniformBufferFormats::sDrawCall(renderList[i].second.M(), renderList[i].second.TranspostInverse()));
+			// 2. Draw
+			cModel* _model = cModel::s_manager.Get(renderList[i].first);
+			if (_model) {
+				_model->UpdateUniformVariables(s_currentEffect->GetProgramID());
+				_model->Render();
+			}
+		}
+		// assign different material for the sphere
+		for (int i = 0; i < 5; ++i)
+		{
+			for (int j = 0; j < 5; ++j)
+			{
+				// 1. Update draw call data
+				s_uniformBuffer_drawcall.Update(&UniformBufferFormats::sDrawCall(renderList[i * 5 + j + sphereOffset].second.M(), renderList[i * 5 + j + sphereOffset].second.TranspostInverse()));
+				// 2. Draw
+				cModel* _model = cModel::s_manager.Get(renderList[i * 5 + j + sphereOffset].first);
+				if (_model) {
+					Graphics::cMatPBRMR* _sphereMat = dynamic_cast<Graphics::cMatPBRMR*>(_model->GetMaterialAt());
+					_sphereMat->UpdateMetalnessIntensity(1.f / 4.f * j);
+					_sphereMat->UpdateRoughnessIntensity(1.05f - 1.f / 4.f *i);
+					_model->UpdateUniformVariables(s_currentEffect->GetProgramID());
+					_model->Render();
+				}
+			}
+		}
+		s_currentEffect->UnUseEffect();
+	}
+
+	void DisplayGBuffer_Pass()
+	{
+
+		glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+		s_currentEffect = GetEffectByKey(ETT_GBufferDisplay);		
+		s_currentEffect->UseEffect();
+		const ERenderMode& renderMode = s_dataRenderingByGraphicThread->g_renderMode;
+		s_currentEffect->SetInteger("displayMode", static_cast<GLint>(renderMode) - 2);
+		GLenum _textureUnits[3] = { GL_TEXTURE0 , GL_TEXTURE1 ,GL_TEXTURE2 };
+		g_GBuffer.Read(_textureUnits);
+		RenderQuad();
+		s_currentEffect->UnUseEffect();
+	}
+
+	void Deferred_Lighting_Pass()
+	{
+		glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+	}
+
 
 	void Gizmo_RenderTransform()
 	{
