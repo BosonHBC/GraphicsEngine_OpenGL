@@ -42,6 +42,7 @@ private:
 	void SubmitSceneDataForEnvironmentCapture(Graphics::UniformBufferFormats::sFrame* const i_frameData);
 	void SubmitShadowData();
 
+
 	Color m_clearColor = Color(0,0,0);
 	cEditorCamera* m_editorCamera;
 
@@ -60,6 +61,6 @@ private:
 
 	std::vector<cActor*> m_sphereList;
 
-
+	float m_exposureOffset = 3.0f;
 };
 

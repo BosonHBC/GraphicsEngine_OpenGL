@@ -28,7 +28,7 @@ namespace Graphics {
 		void SetupLight(const GLuint& i_programID, GLuint i_lightIndex = 0) override;
 		void UseShadowMap(GLuint i_textureUnit) override;
 		void CreateShadowMap(GLuint i_width, GLuint i_height) override;
-		glm::mat4 CalculateLightTransform() const;
+		glm::mat4 GetViewMatrix() const;
 		void SetLightUniformTransform() override;
 
 	private:

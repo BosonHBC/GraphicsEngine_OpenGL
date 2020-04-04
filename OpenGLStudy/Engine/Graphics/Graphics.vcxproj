@@ -36,6 +36,7 @@
     <ClCompile Include="EnvironmentCaptureManager.cpp" />
     <ClCompile Include="EnvironmentProbes\EnvProbe.cpp" />
     <ClCompile Include="FrameBuffer\cFrameBuffer.cpp" />
+    <ClCompile Include="FrameBuffer\GeometryBuffer.cpp" />
     <ClCompile Include="Graphics.cpp" />
     <ClCompile Include="Light\AmbientLight\AmbientLight.cpp" />
     <ClCompile Include="Light\DirectionalLight\DirectionalLight.cpp" />
@@ -62,6 +63,7 @@
     <ClInclude Include="EnvironmentCaptureManager.h" />
     <ClInclude Include="EnvironmentProbes\EnvProbe.h" />
     <ClInclude Include="FrameBuffer\cFrameBuffer.h" />
+    <ClInclude Include="FrameBuffer\GeometryBuffer.h" />
     <ClInclude Include="Graphics.h" />
     <ClInclude Include="Light\AmbientLight\AmbientLight.h" />
     <ClInclude Include="Light\DirectionalLight\DirectionalLight.h" />

@@ -7,6 +7,20 @@
 #include "Model/Model.h"
 #include "vector"
 namespace Graphics{
+	// render mode
+	enum ERenderMode : uint8_t
+	{
+		ERM_ForwardShading,
+		ERM_DeferredShading,
+		ERM_Deferred_Albede,
+		ERM_Deferred_Metallic,
+		ERM_Deferred_Roughness,
+		ERM_Deferred_Normal,
+		ERM_Deferred_IOR,
+		ERM_Deferred_Depth,
+		ERM_Deferred_WorldPos,
+	};
+
 	// Rendering thread data and data structures
 	// ------------------------------------------------------------------------------------------------------------------------------------
 	struct sPass
@@ -19,7 +33,9 @@ namespace Graphics{
 	// Data required to render a frame, right now do not support switching effect(shader)
 	struct sDataRequiredToRenderAFrame
 	{
+		ERenderMode g_renderMode = ERM_ForwardShading;
 		UniformBufferFormats::sClipPlane s_ClipPlane;
+		UniformBufferFormats::sPostProcessing s_PostProcessing;
 		std::vector<sPass> s_renderPasses;
 		// Lighting data
 		std::vector<cPointLight> s_pointLights;
@@ -35,4 +51,6 @@ namespace Graphics{
 		EPT_Arrow = 1,
 		EPT_Quad = 2
 	};
+
+
 }

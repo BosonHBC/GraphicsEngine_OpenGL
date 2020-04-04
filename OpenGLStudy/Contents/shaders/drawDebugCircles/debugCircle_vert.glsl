@@ -8,9 +8,11 @@ layout(std140, binding = 1) uniform uniformBuffer_drawcall
 };
 layout(std140, binding = 0) uniform uniformBuffer_frame
 {
-	// PVMatrix stands for projection * view matrix
 	mat4 PVMatrix;
-	vec3 ViewPosition;
+	mat4 ProjectionMatrix;
+	mat4 InvProj;
+	mat4 ViewMatrix;
+	mat4 InvView;
 };
 void main()
 {

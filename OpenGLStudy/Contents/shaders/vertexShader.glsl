@@ -17,9 +17,11 @@ out vec4 SpotLightSpacePos[MAX_COUNT_PER_LIGHT];
 
 layout(std140, binding = 0) uniform uniformBuffer_frame
 {
-	// PVMatrix stands for projection * view matrix
 	mat4 PVMatrix;
-	vec3 ViewPosition;
+	mat4 ProjectionMatrix;
+	mat4 InvProj;
+	mat4 ViewMatrix;
+	mat4 InvView;
 };
 layout(std140, binding = 1) uniform uniformBuffer_drawcall
 {
@@ -50,7 +52,7 @@ void main()
 		vec3 B = cross(N, T);
 	*/
 
-	vec4 worldPos = modelMatrix * vec4(pos.x, pos.y, pos.z, 1.0);
+	vec4 worldPos = modelMatrix * vec4(pos, 1.0);
 	fragPos = worldPos.xyz;
 	
 	gl_ClipDistance[0] = dot(worldPos, Planes[0]);

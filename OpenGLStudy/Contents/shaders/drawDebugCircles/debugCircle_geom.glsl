@@ -5,14 +5,13 @@ const float PI = 3.14159265359;
 layout(points) in;
 layout(line_strip, max_vertices = 63)out;
 
-
-
-
 layout(std140, binding = 0) uniform uniformBuffer_frame
 {
-	// PVMatrix stands for projection * view matrix
 	mat4 PVMatrix;
-	vec3 ViewPosition;
+	mat4 ProjectionMatrix;
+	mat4 InvProj;
+	mat4 ViewMatrix;
+	mat4 InvView;
 };
 uniform float radius;
 

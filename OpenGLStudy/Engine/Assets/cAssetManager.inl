@@ -26,7 +26,7 @@ namespace Assets {
 				else {
 					// Wrong Index
 					assert(false);
-					printf("A handle has an index (%d) that's too big for the number of assets (%u)", _index, m_assetList.size());
+					printf("A handle has an index (%d) that's too big for the number of assets (%u)\n", _index, m_assetList.size());
 					return false;
 				}
 			}
@@ -107,7 +107,7 @@ namespace Assets {
 			else {
 				// Index wrong
 				assert(false);
-				printf("A handle has an index (%d) that's too big for the number of assets (%u)", index, m_assetList.size());
+				printf("A handle has an index (%d) that's too big for the number of assets (%u)\n", index, m_assetList.size());
 			}
 		}
 
@@ -139,7 +139,7 @@ namespace Assets {
 			else {
 				// index wrong
 				result = false;
-				printf("A handle has an index (%d) that's too big for the number of assets (%u)", index, m_assetList.size());
+				printf("A handle has an index (%d) that's too big for the number of assets (%u)\n", index, m_assetList.size());
 			}
 		}
 		// Clean up o_handle
@@ -164,11 +164,11 @@ namespace Assets {
 				if (record.pAsset) {
 					// TODO: Log error
 					stillAssetsNotFreeYet = true;
+					assert(false);
 					// There is no way to track which object is referencing this object.
 					record.pAsset = nullptr;
 					record.ReferenceCount = 0;
 					result = false;
-					assert(result);
 				}
 			}
 			m_assetList.clear();

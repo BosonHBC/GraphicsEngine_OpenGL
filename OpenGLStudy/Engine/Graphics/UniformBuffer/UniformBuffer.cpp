@@ -5,7 +5,6 @@ namespace Graphics {
 
 	cUniformBuffer::~cUniformBuffer()
 	{
-		CleanUp();
 	}
 
 	bool cUniformBuffer::Initialize(const void* const i_data)
@@ -35,6 +34,9 @@ namespace Graphics {
 			break;
 		case UBT_EnvCaptureWeight:
 			m_size = sizeof(UniformBufferFormats::sEnvCaptureWeight);
+			break;
+		case UBT_PostProcessing:
+			m_size = sizeof(UniformBufferFormats::sPostProcessing);
 			break;
 		case UBT_Invalid:
 			result = false;

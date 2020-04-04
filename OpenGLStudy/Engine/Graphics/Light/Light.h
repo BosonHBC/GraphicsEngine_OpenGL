@@ -33,7 +33,8 @@ namespace Graphics {
 		/** Shadow map related*/
 		void SetEnableShadow(bool i_enable) { m_enableShadow = i_enable; }
 		virtual void CreateShadowMap(GLuint i_width, GLuint i_height);
-		virtual glm::mat4 CalculateLightTransform() const { return glm::identity < glm::mat4 >(); };
+		glm::mat4 GetProjectionmatrix() const { return m_lightPrjectionMatrix; }
+		virtual glm::mat4 GetViewMatrix() const { return glm::mat4(1.0f); }
 		virtual void SetLightUniformTransform() {};
 		virtual void UseShadowMap(GLuint i_textureUnit) {}
 		cFrameBuffer* GetShadowMap() const { return m_shadowMap; }

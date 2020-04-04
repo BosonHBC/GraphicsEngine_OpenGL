@@ -144,6 +144,9 @@
     <ClCompile Include="RenderPasses.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="FrameBuffer\GeometryBuffer.cpp">
+      <Filter>Source Files\FrameBuffer</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Graphics.h">
@@ -220,6 +223,9 @@
     </ClInclude>
     <ClInclude Include="RenderStructs.h">
       <Filter>Source Files</Filter>
+    </ClInclude>
+    <ClInclude Include="FrameBuffer\GeometryBuffer.h">
+      <Filter>Source Files\FrameBuffer</Filter>
     </ClInclude>
   </ItemGroup>
 </Project>

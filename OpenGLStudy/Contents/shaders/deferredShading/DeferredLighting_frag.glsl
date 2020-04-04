@@ -7,19 +7,17 @@ const float MAX_REFLECTION_LOD = 4.0;
 
 // this sampler is connected to the texture unit, and binding with our texture
 // this uniform is default 0, if we need more texture unit, we need to bind manually
-uniform sampler2D AlbedoMap; // 0
-uniform sampler2D MetallicMap; // 1
-uniform sampler2D RoughnessMap; // 2
-uniform sampler2D NormalMap; // 3
+uniform sampler2D gAlbedoMetallic; // 0
+uniform sampler2D gNormalRoughness; // 1
+uniform sampler2D gIOR; // 2
+uniform sampler2D gDepth; // 3
 uniform sampler2D BrdfLUTMap; // 4
 
 uniform samplerCube IrradianceMap[MAX_COUNT_CUBEMAP_MIXING]; // 5 - 8
 uniform samplerCube PrefilterMap[MAX_COUNT_CUBEMAP_MIXING]; // 9 - 12
 
-uniform sampler2D spotlightShadowMap[MAX_COUNT_PER_LIGHT]; // 13 -> 17
 uniform samplerCube pointLightShadowMap[MAX_COUNT_PER_LIGHT]; // 18-> 22
 uniform sampler2D directionalShadowMap; // 23
-
 
 const vec3 gridSamplingDisk[20] =vec3[]
 (
@@ -30,28 +28,12 @@ const vec3 gridSamplingDisk[20] =vec3[]
    vec3(0, 1,  1), vec3( 0, -1,  1), vec3( 0, -1, -1), vec3( 0, 1, -1)
 );
 
-in vec3 fragPos;
-in vec2 texCood0;
-in mat3 TBN;
 
-in vec4 DirectionalLightSpacePos;
-in vec4 SpotLightSpacePos[MAX_COUNT_PER_LIGHT];
+// in vec2 texCood0;
+in vec2 TexCoords;
 
-layout(std140, binding = 0) uniform uniformBuffer_frame
-{
-	mat4 PVMatrix;
-	mat4 ProjectionMatrix;
-	mat4 InvProj;
-	mat4 ViewMatrix;
-	mat4 InvView;
-};
-layout(std140, binding = 5) uniform g_uniformBuffer_pbrMRModel
-{
-	vec3 diffuseIntensity;
-	float roughnessIntensity;
-	vec3 ior;
-	float metalnessIntensity;
-};
+uniform mat4 directionalLightTransform;
+
 layout(std140, binding = 6) uniform g_uniformBuffer_envCaptureWeight
 {
 	vec4 envCapWeights;
@@ -95,7 +77,14 @@ layout(std140, binding = 3) uniform g_uniformBuffer_Lighting
 	int g_pointLightCount; // 4 bytes
 	int g_spotLightCount; // 4 bytes
 }; // 456 bytes per lighting data
-
+layout(std140, binding = 0) uniform uniformBuffer_frame
+{
+	mat4 PVMatrix;
+	mat4 ProjectionMatrix;
+	mat4 InvProj;
+	mat4 ViewMatrix;
+	mat4 InvView;
+};
 //-------------------------------------------------------------------------
 // Fucntions
 //-------------------------------------------------------------------------
@@ -142,7 +131,20 @@ vec3 fresnelSchlickRoughness(float cosTheta, vec3 F0, float roughness)
 //-------------------------------------------------------------------------
 // Shadow Fucntions
 //-------------------------------------------------------------------------
-float CalcDirectionalLightShadowMap(vec3 vN)
+/*
+float readShadowMap(vec3 eyeDir)
+{
+    mat4 cameraViewToProjectedLightSpace = directionalLightTransform * InvView;
+	vec4 projectedEyeDir = cameraViewToProjectedLightSpace * vec4(eyeDir,1);
+    projectedEyeDir = projectedEyeDir/projectedEyeDir.w;
+
+    vec2 textureCoordinates = projectedEyeDir.xy * vec2(0.5,0.5) + vec2(0.5,0.5);
+
+    const float bias = 0.0001;
+    float depthValue = texture2D( tShadowMap, textureCoordinates ) - bias;
+    return projectedEyeDir.z * 0.5 + 0.5 < depthValue;
+}*/
+float CalcDirectionalLightShadowMap(vec3 vL, vec3 vN, vec4 DirectionalLightSpacePos)
 {
 	vec3 normalizedDeviceCoordinate = DirectionalLightSpacePos.xyz / DirectionalLightSpacePos.w;
 	normalizedDeviceCoordinate = normalizedDeviceCoordinate * 0.5 + 0.5;
@@ -150,8 +152,7 @@ float CalcDirectionalLightShadowMap(vec3 vN)
 	float current = normalizedDeviceCoordinate.z;
 
 	// Calculate bias
-	vec3 lightDir = normalize(g_directionalLight.direction);
-	const float bias = max(0.005 * (1- dot(vN, lightDir)), 0.0005);
+	const float bias = max(0.005 * (1- dot(vN, vL)), 0.0005);
 
 	float shadow = 0.0;
 
@@ -172,41 +173,10 @@ float CalcDirectionalLightShadowMap(vec3 vN)
 	shadow = current > 1.0 ? 0.0 : shadow;
 	return shadow;	
 }
-float CalcSpotLightShadowMap(int idx, SpotLight spLight, vec3 vN)
+
+float CalcPointLightShadowMap(int idx, PointLight pLight, vec3 worldPos, float dist_vV)
 {
-	vec3 normalizedDeviceCoordinate = SpotLightSpacePos[idx].xyz / SpotLightSpacePos[idx].w;
-	normalizedDeviceCoordinate = normalizedDeviceCoordinate * 0.5 + 0.5;
-
-	float current = normalizedDeviceCoordinate.z;
-
-	// Calculate bias
-	vec3 lightDir = normalize(spLight.direction);
-	float _bias = 0.05 * (1.0 - dot(vN, lightDir)) * (1-spLight.edge);
-	const float bias = max(_bias, 0.05);
-
-	float shadow = 0.0;
-
-	const vec2 texelSize = 1.0 / textureSize(spotlightShadowMap[idx], 0);
-	// offset the pixel around center pixel, 3x3	
-	for(int x = -1; x <= 1; ++x)
-	{
-		for(int y = -1; y <= 1; ++y)
-		{
-			// get the depth value of this position in this light's perpective of view
-			float pcfDepth = texture(spotlightShadowMap[idx], normalizedDeviceCoordinate.xy + vec2(x,y) * texelSize).r;
-			// if the current depth that is rendering is larger than the cloest depth,
-			// it is in shadow
-			shadow += (current - bias/SpotLightSpacePos[idx].w > pcfDepth) ? 1.0 : 0.0;
-		}
-	}
-	shadow /= 9.0;
-	shadow = current > 1.0 ? 0.0 : shadow;
-	return shadow;	
-}
-
-float CalcPointLightShadowMap(int idx, PointLight pLight, float dist_vV)
-{
-	vec3 fragToLight = fragPos - pLight.position;
+	vec3 fragToLight = worldPos - pLight.position;
 	// sample the cube map
 	
 	float currentDepth = length(fragToLight) / pLight.radius;
@@ -310,26 +280,26 @@ vec3 CalcAmbientLight(AmbientLight aLight, vec3 albedoColor,float metalness, flo
 //-------------------------------------------------------------------------
 // DirectionalLight
 //-------------------------------------------------------------------------
-vec3 CalcDirectionalLight(DirectionalLight dLight, 
+
+vec3 CalcDirectionalLight(DirectionalLight dLight, vec4 LightSpacePosition,
 vec3 albedoColor, float metalness, float roughness, vec3 f0, vec3 vN, vec3 vV)
 {
 	vec3 vL = normalize(dLight.direction);
-	vec3 vH = normalize(vV+ vL);
+	vec3 vH = normalize(vV + vL);
 	vec3 radiance = dLight.base.color;
-
-	vec3 cookedIrrandance = CookTorranceBrdf(radiance, albedoColor, metalness, roughness, f0,vN, vH, vL ,vV);
-	float shadowFactor = dLight.base.enableShadow ? (1.0 - CalcDirectionalLightShadowMap(vN)): 1.0;
-	shadowFactor = max(shadowFactor, 0.0);
 	
+	vec3 cookedIrrandance = CookTorranceBrdf(radiance, albedoColor, metalness, roughness, f0,vN, vH, vL ,vV);
+	float shadowFactor = dLight.base.enableShadow ? (1.0 - CalcDirectionalLightShadowMap(vL, vN, LightSpacePosition)): 1.0;
+	shadowFactor = max(shadowFactor, 0.0);
 	return shadowFactor * cookedIrrandance;
 }
 //-------------------------------------------------------------------------
 // PointLight
 //-------------------------------------------------------------------------
 
-vec3 CalcPointLight(int idx, PointLight pLight,
+vec3 CalcPointLight(int idx, PointLight pLight, vec3 worldPos,
 vec3 albedoColor, float metalness, float roughness, vec3 f0, vec3 vN, vec3 vV, float viewDistance){
-		vec3 vL = pLight.position - fragPos;
+		vec3 vL = pLight.position - worldPos;
 		float dist = length(vL);
 		vL = normalize(vL); // normalzied light direction
 		vec3 vH = normalize(vV + vL); // halfway vector
@@ -341,18 +311,18 @@ vec3 albedoColor, float metalness, float roughness, vec3 f0, vec3 vN, vec3 vV, f
 		vec3 cookedIrrandance = CookTorranceBrdf(radiance, albedoColor, metalness, roughness, f0,vN, vH, vL ,vV);
 
 		// shadow
-		float shadowFactor = pLight.base.enableShadow ? (1.0 - CalcPointLightShadowMap(idx, pLight, viewDistance)) : 1.0;
+		float shadowFactor = pLight.base.enableShadow ? (1.0 - CalcPointLightShadowMap(idx, pLight, worldPos, viewDistance)) : 1.0;
 		shadowFactor = max(shadowFactor, 0.0);
 
 		return shadowFactor * cookedIrrandance;
 }
 
-vec3 CalcPointLights(vec3 albedoColor, float metalness, float roughtness, vec3 f0, vec3 vN, vec3 norm_vV, float viewDistance){
+vec3 CalcPointLights(vec3 worldPos, vec3 albedoColor, float metalness, float roughtness, vec3 f0, vec3 vN, vec3 norm_vV, float viewDistance){
 	// reflectance equation
 	vec3 Lo = vec3(0,0,0);
 
 	for(int i = 0; i < g_pointLightCount; ++i){
-		Lo += CalcPointLight(i, g_pointLights[i], albedoColor, metalness,roughtness, f0, vN, norm_vV, viewDistance);
+		Lo += CalcPointLight(i, g_pointLights[i], worldPos, albedoColor, metalness,roughtness, f0, vN, norm_vV, viewDistance);
 	}
 
 	return Lo;
@@ -367,42 +337,57 @@ vec3 CalcPointLights(vec3 albedoColor, float metalness, float roughtness, vec3 f
 //-------------------------------------------------------------------------
 // Main
 //-------------------------------------------------------------------------
+vec4 WorldPosFromDepth(vec2 texCoord, float depth) {
+    float z = depth * 2.0 - 1.0;
 
+    vec4 clipSpacePosition = vec4(texCoord * 2.0 - 1.0, z, 1.0);
+    vec4 viewSpacePosition = InvProj * clipSpacePosition;
+
+    // Perspective division
+    viewSpacePosition /= viewSpacePosition.w;
+
+    vec4 worldSpacePosition = InvView * viewSpacePosition;
+
+    return worldSpacePosition;
+}
 void main(){
-	
-	// shared values
+    vec2 texCoord = TexCoords;
+    texCoord.y = 1-texCoord.y;
+
 	vec3 ViewPosition = vec3(InvView[3][0], InvView[3][1], InvView[3][2]);
-	vec3 normal = texture(NormalMap, texCood0).rgb;
-	normal = normalize(normal * 2.0f - 1.0f);   
-	normal = TBN * normal; 
-	vec3 normalized_normal = normalize(normal);
-	vec3 view = ViewPosition - fragPos;
+	float depth = texture(gDepth, texCoord).r;
+	vec4 worldPos = WorldPosFromDepth(texCoord, depth);
+	// shared values
+	vec3 normal = texture(gNormalRoughness, texCoord).rgb;
+	vec3 view = ViewPosition - worldPos.xyz;
 	float viewDistance = length(view);
 	vec3 normalized_view = normalize(view);
-	vec3 vR = reflect(-normalized_view, normalized_normal); 
+	vec3 vR = reflect(-normalized_view, normal);
 
 	// material property
-	vec3 albedoColor = texture(AlbedoMap, texCood0).rgb * diffuseIntensity;
-	float metalness = texture(MetallicMap, texCood0).r * metalnessIntensity;
-	float roughness = texture(RoughnessMap, texCood0).r * roughnessIntensity;
+	vec3 albedoColor = texture(gAlbedoMetallic, texCoord).rgb;
+	float metalness = texture(gAlbedoMetallic, texCoord).a;
+	float roughness = texture(gNormalRoughness, texCoord).a;
+	vec3 ior = texture(gIOR, texCoord).rgb;
 	vec3 F0 = abs ((1.0 - ior) / (1.0 + ior)); //vec3(0.04);
 	F0 = F0 * F0;
 	F0 = mix(F0, albedoColor, vec3(metalness));
 
 	// ambient light
-	vec3 ambientLightColor = CalcAmbientLight(g_ambientLight,albedoColor, metalness, roughness, F0,normalized_normal,normalized_view, vR);
+	vec3 ambientLightColor = CalcAmbientLight(g_ambientLight,albedoColor, metalness, roughness, F0,normal,normalized_view, vR);
 	
 	// cubemap light
 	//vec4 cubemapColor = IlluminateByCubemap(diffuseTexColor,specularTexColor, normalized_normal, normalized_view);
 
 	// point light
-	vec3 pointLightColor = CalcPointLights(albedoColor, metalness,roughness,F0, normalized_normal, normalized_view, viewDistance);
+	vec3 pointLightColor = CalcPointLights(worldPos.xyz, albedoColor, metalness,roughness,F0, normal, normalized_view, viewDistance);
 
 	// spot light with shadow
 	//vec4 spotLightColor = CalcSpotLights(diffuseTexColor, specularTexColor, normalized_normal, normalized_view);
 
 	// directional light
-	vec3 directionLightColor = CalcDirectionalLight(g_directionalLight,albedoColor, metalness,roughness,F0, normalized_normal, normalized_view);
+	vec4 dLightLightSpacePos = directionalLightTransform * worldPos;
+	vec3 directionLightColor = CalcDirectionalLight(g_directionalLight, dLightLightSpacePos, albedoColor, metalness,roughness,F0, normal, normalized_view);
 
 	vec3 allColor = ambientLightColor + pointLightColor + directionLightColor;
 

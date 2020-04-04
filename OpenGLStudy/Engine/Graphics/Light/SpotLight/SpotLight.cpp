@@ -48,16 +48,14 @@ namespace Graphics {
 		m_lightPrjectionMatrix = glm::perspective(glm::radians(m_edge), _aspect, 1.f, m_range *2.f);
 	}
 
-	glm::mat4 cSpotLight::CalculateLightTransform() const
+	glm::mat4 cSpotLight::GetViewMatrix() const
 	{
-		glm::mat4 view = glm::lookAt(Transform.Position(), Transform.Position() + Transform.Forward(), cTransform::WorldUp);
-		return m_lightPrjectionMatrix * view;
+		return glm::lookAt(Transform.Position(), Transform.Position() + Transform.Forward(), cTransform::WorldUp);
 	}
-
 
 	void cSpotLight::SetLightUniformTransform()
 	{
-		glm::mat4 lightTransform = CalculateLightTransform();
+		glm::mat4 lightTransform = GetProjectionmatrix() * GetViewMatrix();
 		glUniformMatrix4fv(m_lightTransformID, 1, GL_FALSE, glm::value_ptr(lightTransform));
 		assert(GL_NO_ERROR == glGetError());
 	}

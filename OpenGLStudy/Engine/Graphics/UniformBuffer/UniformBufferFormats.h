@@ -22,18 +22,25 @@ namespace Graphics {
 		{
 			// PVMatrix stands for projection * view matrix
 			glm::mat4 PVMatrix = glm::mat4(1.0f);
-			glm::vec3 ViewPosition = glm::vec3(0, 0, 0);
-			V1Padding;
-			sFrame(): PVMatrix(glm::mat4(1.0f)), ViewPosition(glm::vec3(0,0,0))
+			glm::mat4 ProjectionMatrix = glm::mat4(1.0f);
+			glm::mat4 InvProj = glm::mat4(1.0f);
+			glm::mat4 ViewMatrix = glm::mat4(1.0f);
+			glm::mat4 InvView = glm::mat4(1.0f);
+
+			sFrame(): PVMatrix(glm::mat4(1.0f)), ProjectionMatrix(glm::mat4(1.0f)),ViewMatrix(glm::mat4(1.0f)), InvView(glm::mat4(1.0f)), InvProj(glm::mat4(1.0f))
 			{}
 
 			sFrame(const glm::mat4& i_projectionMatrix, const glm::mat4& i_viewMatrix)
 			{
 				PVMatrix = i_projectionMatrix * i_viewMatrix;
+				ProjectionMatrix = i_projectionMatrix;
+				ViewMatrix = i_viewMatrix;
+				InvView = glm::inverse(i_viewMatrix);
+				InvProj = glm::inverse(i_projectionMatrix);
 			}
-			sFrame(const glm::mat4& i_PVMatrix)
-			{
-				PVMatrix = i_PVMatrix;
+
+			glm::vec3 GetViewPosition() const {
+				return glm::vec3(InvView[3][0], InvView[3][1], InvView[3][2]);
 			}
 		};
 
@@ -158,5 +165,15 @@ namespace Graphics {
 			sEnvCaptureWeight() : Weights(0) {}
 			sEnvCaptureWeight(float w1, float w2, float w3, float w4) : Weights(w1, w2, w3, w4) {}
 		};
+
+		// Post processing values
+		// --------------------------------------------------------------------------------------------------------------------------------------------
+		struct sPostProcessing
+		{
+			float Exposure;
+
+			sPostProcessing() : Exposure(1.0f) {}
+		};
+
 	}
 }

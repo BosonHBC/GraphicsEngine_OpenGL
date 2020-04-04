@@ -22,6 +22,7 @@
 #include "Assets/Handle.h"
 #include "Graphics/EnvironmentCaptureManager.h"
 #include <map>
+Graphics::ERenderMode g_renderMode = Graphics::ERenderMode::ERM_ForwardShading;
 
 bool Assignment::Initialize(GLuint i_width, GLuint i_height, const char* i_windowName /*= "Default Window"*/)
 {
@@ -99,7 +100,7 @@ void Assignment::CreateCamera()
 {
 	m_editorCamera = new  cEditorCamera(glm::vec3(0, 150, 250), 10, 0, 300, 10.f);
 	float _aspect = (float)(GetCurrentWindow()->GetBufferWidth()) / (float)(GetCurrentWindow()->GetBufferHeight());
-	m_editorCamera->CreateProjectionMatrix(glm::radians(60.f), _aspect, 1.f, 3000.0f);
+	m_editorCamera->CreateProjectionMatrix(glm::radians(60.f), _aspect, 10.f, 2000.0f);
 }
 
 void Assignment::CreateLight()
@@ -107,7 +108,7 @@ void Assignment::CreateLight()
 	Graphics::CreateAmbientLight(Color(0.1f, 0.1f, 0.1f), aLight);
 	Graphics::CreatePointLight(glm::vec3(-100, 150.f, 100.f), Color(1, 1, 1), 300.f, true, pLight1);
 	//Graphics::CreatePointLight(glm::vec3(100, 150.f, 100.f), Color(1, 1, 1), 1.f, 0.7f, 1.8f, true, pLight2);
-	Graphics::CreateDirectionalLight(Color(0.6f, 0.6f, 0.5f), glm::vec3(-1, -0.5f, -0.5f), true, dLight);
+	Graphics::CreateDirectionalLight(Color(0.6f, 0.6f, 0.6f), glm::vec3(-1, -0.5f, -0.5f), true, dLight);
 	//Graphics::CreateSpotLight(glm::vec3(0, 150, 0), glm::vec3(0, 1, 1), Color(1), 65.f, 1.5f, 0.3f, 5.f, true, spLight);
 	//Graphics::CreateSpotLight(glm::vec3(100, 150, 0), glm::vec3(1, 1, 0), Color(1), 65.f, 1.f, 0.7f, 
 
@@ -116,21 +117,24 @@ void Assignment::CreateLight()
 void Assignment::SubmitDataToBeRender(const float i_seconds_elapsedSinceLastLoop)
 {
 	std::vector<std::pair<Graphics::cModel::HANDLE, cTransform>> _renderingMap = std::vector<std::pair<Graphics::cModel::HANDLE, cTransform>>();
-
+	// Submit render setting
+	Graphics::SubmitGraphicSettings(g_renderMode);
 	// Submit lighting data
 	SubmitLightingData();
 	// Submit geometry data for shadow map
 	SubmitShadowData();
-	// Frame data from camera
+	// Submit post processing data
+	Graphics::SubmitPostProcessingData(m_exposureOffset);
 
+	// Frame data from camera
 	Graphics::UniformBufferFormats::sFrame _frameData_Camera(m_editorCamera->GetProjectionMatrix(), m_editorCamera->GetViewMatrix());
-	_frameData_Camera.ViewPosition = m_editorCamera->CamLocation();
 	// Submit geometry data
 	SubmitSceneData(&_frameData_Camera);
 
 	// Gizmos
 	{
 		// Transform Gizmo
+		if (false)
 		{
 			_renderingMap.clear();
 			_renderingMap.reserve(8);
@@ -149,7 +153,6 @@ void Assignment::SubmitDataToBeRender(const float i_seconds_elapsedSinceLastLoop
 				_renderingMap.push_back({ unneccessaryHandle, spLight2->Transform });
 			Graphics::SubmitDataToBeRendered(_frameData_Camera, _renderingMap, &Graphics::Gizmo_RenderTransform);
 		}
-
 		// Normal Gizmo
 		if (false)
 		{
@@ -159,10 +162,13 @@ void Assignment::SubmitDataToBeRender(const float i_seconds_elapsedSinceLastLoop
 			Graphics::SubmitDataToBeRendered(_frameData_Camera, _renderingMap, &Graphics::Gizmo_RenderVertexNormal);
 		}
 		// Triangulation Gizmo
-		_renderingMap.clear();
-		_renderingMap.reserve(1);
-		_renderingMap.push_back({ m_teapot->GetModelHandle(), m_teapot->Transform });
-		Graphics::SubmitDataToBeRendered(_frameData_Camera, _renderingMap, &Graphics::Gizmo_RenderTriangulation);
+		if (false)
+		{
+			_renderingMap.clear();
+			_renderingMap.reserve(1);
+			_renderingMap.push_back({ m_teapot->GetModelHandle(), m_teapot->Transform });
+			Graphics::SubmitDataToBeRendered(_frameData_Camera, _renderingMap, &Graphics::Gizmo_RenderTriangulation);
+		}
 	}
 }
 
@@ -216,6 +222,58 @@ void Assignment::Tick(float second_since_lastFrame)
 	//dLight->Transform()->Rotate(-cTransform::WorldUp, 0.01677f);
 	if (m_teapot) {
 		m_teapot->Transform.gRotate(glm::vec3(0, 1.f, 0), second_since_lastFrame);
+	}
+	// Changing exposure
+	{
+		const float exposureChangeSpeed = 10.f;
+		if (_windowInput->IsKeyDown(GLFW_KEY_EQUAL))
+		{
+			m_exposureOffset += second_since_lastFrame * exposureChangeSpeed;
+		}
+		if (_windowInput->IsKeyDown(GLFW_KEY_MINUS))
+		{
+			m_exposureOffset -= second_since_lastFrame * exposureChangeSpeed;
+			m_exposureOffset = m_exposureOffset < 0.0001f ? 0.0001f : m_exposureOffset;
+		}
+	}
+	// Changing render mode
+	{
+		if (_windowInput->IsKeyDown(GLFW_KEY_1))
+		{
+			g_renderMode = Graphics::ERM_ForwardShading;
+		}
+		if (_windowInput->IsKeyDown(GLFW_KEY_2))
+		{
+			g_renderMode = Graphics::ERM_DeferredShading;
+		}
+		if (_windowInput->IsKeyDown(GLFW_KEY_3))
+		{
+			g_renderMode = Graphics::ERM_Deferred_Albede;
+		}
+		if (_windowInput->IsKeyDown(GLFW_KEY_4))
+		{
+			g_renderMode = Graphics::ERM_Deferred_Metallic;
+		}
+		if (_windowInput->IsKeyDown(GLFW_KEY_5))
+		{
+			g_renderMode = Graphics::ERM_Deferred_Roughness;
+		}
+		if (_windowInput->IsKeyDown(GLFW_KEY_6))
+		{
+			g_renderMode = Graphics::ERM_Deferred_Normal;
+		}
+		if (_windowInput->IsKeyDown(GLFW_KEY_7))
+		{
+			g_renderMode = Graphics::ERM_Deferred_IOR;
+		}
+		if (_windowInput->IsKeyDown(GLFW_KEY_8))
+		{
+			g_renderMode = Graphics::ERM_Deferred_Depth;
+		}
+		if (_windowInput->IsKeyDown(GLFW_KEY_9))
+		{
+			g_renderMode = Graphics::ERM_Deferred_WorldPos;
+		}
 	}
 
 	cTransform* controledActor = nullptr;
@@ -376,7 +434,7 @@ void Assignment::SubmitShadowData()
 	_renderingMap.push_back({ m_teapot->GetModelHandle(), m_teapot->Transform });
 	_renderingMap.push_back({ m_teapot2->GetModelHandle(), m_teapot2->Transform });
 	_renderingMap.push_back({ m_spaceHolder->GetModelHandle(), m_spaceHolder->Transform });
-	
+
 
 	for (size_t i = 0; i < m_sphereList.size(); ++i)
 	{
@@ -394,7 +452,7 @@ void Assignment::SubmitShadowData()
 
 	// Frame data from directional light
 	if (dLight && dLight->IsShadowEnabled()) {
-		Graphics::UniformBufferFormats::sFrame _frameData_Shadow(dLight->CalculateLightTransform());
+		Graphics::UniformBufferFormats::sFrame _frameData_Shadow(dLight->GetProjectionmatrix(), dLight->GetViewMatrix());
 		// directional light shadow map pass
 		Graphics::SubmitDataToBeRendered(_frameData_Shadow, _renderingMap, &Graphics::DirectionalShadowMap_Pass);
 	}

@@ -16,6 +16,7 @@ namespace Graphics {
 		UBT_ClipPlane = 4,
 		UBT_PBRMR = 5,
 		UBT_EnvCaptureWeight = 6,
+		UBT_PostProcessing = 7,
 		UBT_Invalid = 0xff,
 	};
 
@@ -26,7 +27,11 @@ namespace Graphics {
 	{
 	public:
 		// only allow this constructor
+		cUniformBuffer() :m_size(0), m_bufferID(static_cast<GLuint>(-1)), m_initialized(false), m_type(UBT_Invalid) {}
 		cUniformBuffer(const eUniformBufferType i_ubt) : m_type(i_ubt), m_initialized(false){}
+		cUniformBuffer(const cUniformBuffer& i_other) : m_size(i_other.m_size), m_bufferID(i_other.m_bufferID), m_initialized(i_other.m_initialized), m_type(i_other.m_type)
+		{}
+		cUniformBuffer& operator = (const cUniformBuffer& i_other) = delete;
 		~cUniformBuffer();
 
 		// Create the uniform buffer
@@ -54,10 +59,6 @@ namespace Graphics {
 
 		std::mutex m_mutex;
 
-		// Remove all default constructors
-		cUniformBuffer() = delete;
-		cUniformBuffer(const cUniformBuffer& i_other) = delete;
-		cUniformBuffer& operator = (const cUniformBuffer& i_other) = delete;
 	};
 }
 

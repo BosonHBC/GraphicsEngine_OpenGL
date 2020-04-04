@@ -19,6 +19,7 @@
 #include "Time/Time.h"
 #include "Assets/PathProcessor.h"
 #include "EnvironmentCaptureManager.h" 
+#include "Graphics/FrameBuffer/GeometryBuffer.h"
 
 #include "Application/Window/WindowInput.h"
 
@@ -37,10 +38,8 @@ namespace Graphics {
 
 	// Global data
 	// ------------------------------------------------------------------------------------------------------------------------------------
-	cUniformBuffer s_uniformBuffer_frame(eUniformBufferType::UBT_Frame);
-	cUniformBuffer s_uniformBuffer_drawcall(eUniformBufferType::UBT_Drawcall);
-	cUniformBuffer s_uniformBuffer_Lighting(eUniformBufferType::UBT_Lighting);
-	cUniformBuffer s_uniformBuffer_ClipPlane(eUniformBufferType::UBT_ClipPlane);
+	// Uniform buffer maps
+	std::map<eUniformBufferType, cUniformBuffer> g_uniformBufferMap;
 
 	// Pre-defined mesh & textures
 	cModel::HANDLE s_cubeHandle;
@@ -57,6 +56,10 @@ namespace Graphics {
 	cEnvProbe s_cubemapProbe;
 	// the brdfLUTTexture for integrating the brdf
 	cFrameBuffer s_brdfLUTTexture;
+	// the frame buffer for capture HDR image
+	cFrameBuffer g_hdrBuffer;
+	// G-Buffer for deferred shading
+	cGBuffer g_GBuffer;
 
 	// Effect
 	// ------------------------------------------------------------------------------------------------------------------------------------
@@ -74,8 +77,25 @@ namespace Graphics {
 
 	// Functions
 	// ------------------------------------------------------------------------------------------------------------------------------------
+	bool CreateUniformBuffer(const eUniformBufferType& i_bufferFormat)
+	{
+		g_uniformBufferMap.insert({ i_bufferFormat, cUniformBuffer(i_bufferFormat) });
+		if (g_uniformBufferMap[i_bufferFormat].Initialize(nullptr)) {
+			g_uniformBufferMap[i_bufferFormat].Bind();
+			return true;
+		}
+		else {
+			printf("Fail to initialize uniformbuffer_%d\n", static_cast<int>(i_bufferFormat));
+			return false;
+		}
+	}
 
 	void Gizmo_DrawDebugCaptureVolume();
+	void RenderQuad(const UniformBufferFormats::sFrame& i_frameData = UniformBufferFormats::sFrame());
+	void HDR_Pass();
+	void GBuffer_Pass();
+	void Deferred_Lighting_Pass();
+	void DisplayGBuffer_Pass();
 
 	void FixSamplerProblem(const eEffectType& i_effectKey)
 	{
@@ -263,49 +283,80 @@ namespace Graphics {
 					return result;
 				}
 			}
+			// Create HDR effect
+			{
+				if (!(result = CreateEffect(EET_HDREffect,
+					"hdrShader/hdr_shader_vert.glsl",
+					"hdrShader/hdr_shader_frag.glsl"
+				))) {
+					printf("Fail to create HDREffect effect.\n");
+					return result;
+				}
+				cEffect* hdrEffect = GetEffectByKey(EET_HDREffect);
+				hdrEffect->UseEffect();
+				hdrEffect->SetInteger("hdrBuffer", 0);
+				hdrEffect->SetInteger("enableHDR", true);
+				hdrEffect->UnUseEffect();
+			}
 
+			// Create G-Buffer
+			{
+				if (!(result = CreateEffect(EET_GBuffer,
+					"deferredShading/GBuffer_vert.glsl",
+					"deferredShading/GBuffer_frag.glsl"
+				))) {
+					printf("Fail to create GBuffer effect.\n");
+					return result;
+				}
+			}
+			// Create G-Buffer Display
+			{
+				if (!(result = CreateEffect(EET_GBufferDisplay,
+					"hdrShader/hdr_shader_vert.glsl",
+					"deferredShading/GBufferDisplay_frag.glsl"
+				))) {
+					printf("Fail to create GBuffer effect.\n");
+					return result;
+				}
+				cEffect* hdrEffect = GetEffectByKey(EET_GBufferDisplay);
+				hdrEffect->UseEffect();
+				hdrEffect->SetInteger("gAlbedoMetallic", 0);
+				hdrEffect->SetInteger("gNormalRoughness", 1);
+				hdrEffect->SetInteger("gIOR", 2);
+				hdrEffect->SetInteger("gDepth", 3);
+				hdrEffect->UnUseEffect();
+			}
+			// Create Deferred-Lighting pass
+			{
+				if (!(result = CreateEffect(EET_DeferredLighting,
+					"hdrShader/hdr_shader_vert.glsl",
+					"deferredShading/DeferredLighting_frag.glsl"
+				))) {
+					printf("Fail to create Deferred lighting effect.\n");
+					return result;
+				}
+
+				cEffect* dLighting = GetEffectByKey(EET_DeferredLighting);
+				dLighting->UseEffect();
+				dLighting->SetInteger("gAlbedoMetallic", 0);
+				dLighting->SetInteger("gNormalRoughness", 1);
+				dLighting->SetInteger("gIOR", 2);
+				dLighting->SetInteger("gDepth", 3);
+				dLighting->UnUseEffect();
+				FixSamplerProblem(EET_DeferredLighting);
+			}
 			// validate all programs
 			for (auto it : s_KeyToEffect_map)
 			{
 				it.second->ValidateProgram();
 			}
 		}
-
-		// Initialize uniform buffer
-		// Frame buffer
-		if (result = s_uniformBuffer_frame.Initialize(nullptr)) {
-			s_uniformBuffer_frame.Bind();
-		}
-		else {
-			printf("Fail to initialize uniformBuffer_frame\n");
-			return result;
-		}
-		// draw call
-		if (result = s_uniformBuffer_drawcall.Initialize(nullptr)) {
-			s_uniformBuffer_drawcall.Bind();
-		}
-		else {
-			printf("Fail to initialize uniformBuffer_drawcall\n");
-			return result;
-		}
-		if (result = s_uniformBuffer_Lighting.Initialize(nullptr)) {
-			s_uniformBuffer_Lighting.Bind();
-		}
-		else
-		{
-			printf("Fail to initialize uniformBuffer_Lighting\n");
-			return result;
-		}
-		if (result = s_uniformBuffer_ClipPlane.Initialize(nullptr))
-		{
-			s_uniformBuffer_ClipPlane.Bind();
-		}
-		else {
-			printf("Fail to initialize uniformBuffer_ClipPlane\n");
-			return result;
-		}
-
-		assert(GL_NO_ERROR == glGetError());
+		result = CreateUniformBuffer(UBT_Frame);
+		result = CreateUniformBuffer(UBT_Drawcall);
+		result = CreateUniformBuffer(UBT_Lighting);
+		result = CreateUniformBuffer(UBT_ClipPlane);
+		result = CreateUniformBuffer(UBT_PostProcessing);
+		assert(result);
 		// Initialize environment probes
 		{
 			// This is for changing rect hdr map to cubemap
@@ -315,8 +366,19 @@ namespace Graphics {
 			}
 
 			constexpr GLuint envMapResolution = 2048;
-			if (!(result = s_brdfLUTTexture.Initialize(envMapResolution, envMapResolution, ETT_FRAMEBUFFER_HDR_RG))) {
+			if (!(result = s_brdfLUTTexture.Initialize(envMapResolution, envMapResolution, ETT_FRAMEBUFFER_RG16))) {
 				printf("Fail to create brdfLUTTexture.\n");
+				return result;
+			}
+			cWindow* _window = Application::GetCurrentApplication()->GetCurrentWindow();
+			if (!(result = g_hdrBuffer.Initialize(_window->GetBufferWidth(), _window->GetBufferHeight(), ETT_FRAMEBUFFER_RGBA16)))
+			{
+				printf("Fail to create g_hdrBuffer.\n");
+				return result;
+			}
+			if (!(result = g_GBuffer.Initialize(_window->GetBufferWidth(), _window->GetBufferHeight())))
+			{
+				printf("Fail to create G-Buffer.\n");
 				return result;
 			}
 
@@ -401,7 +463,7 @@ namespace Graphics {
 		// After data has been submitted, swap the data
 		std::swap(s_dataSubmittedByApplicationThread, s_dataRenderingByGraphicThread);
 
-		s_uniformBuffer_ClipPlane.Update(&s_dataRenderingByGraphicThread->s_ClipPlane);
+		g_uniformBufferMap[UBT_ClipPlane].Update(&s_dataRenderingByGraphicThread->s_ClipPlane);
 
 		/** 2. Convert all equirectangular HDR maps to cubemap */
 		{
@@ -413,23 +475,24 @@ namespace Graphics {
 			_hdr->UseTexture(GL_TEXTURE0);
 
 			glDisable(GL_CULL_FACE);
-			s_cubemapProbe.StartCapture();
-			for (size_t i = 0; i < 6; ++i)
-			{
-				glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_CUBE_MAP_POSITIVE_X + i, s_cubemapProbe.GetCubemapTextureID(), 0);
-				assert(GL_NO_ERROR == glGetError());
-				glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+			s_cubemapProbe.StartCapture(
+				[] {
+					for (size_t i = 0; i < 6; ++i)
+					{
+						glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_CUBE_MAP_POSITIVE_X + i, s_cubemapProbe.GetCubemapTextureID(), 0);
+						assert(GL_NO_ERROR == glGetError());
+						glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
-				UniformBufferFormats::sFrame _cubemapFrameData(s_cubemapProbe.GetProjectionMat4(), s_cubemapProbe.GetViewMat4(i));
-				_cubemapFrameData.ViewPosition = s_cubemapProbe.GetPosition();
-				s_uniformBuffer_frame.Update(&_cubemapFrameData);
+						UniformBufferFormats::sFrame _cubemapFrameData(s_cubemapProbe.GetProjectionMat4(), s_cubemapProbe.GetViewMat4(i));
+						g_uniformBufferMap[UBT_Frame].Update(&_cubemapFrameData);
 
-				// Render cube
-				cModel* _cube = cModel::s_manager.Get(s_cubeHandle);
-				if (_cube) { _cube->RenderWithoutMaterial(); }
-			}
+						// Render cube
+						cModel* _cube = cModel::s_manager.Get(s_cubeHandle);
+						if (_cube) { _cube->RenderWithoutMaterial(); }
+					}
+				}
+			);
 
-			s_cubemapProbe.StopCapture();
 			glEnable(GL_CULL_FACE);
 			s_currentEffect->UnUseEffect();
 			// After capturing the scene, generate the mip map by opengl itself
@@ -437,27 +500,18 @@ namespace Graphics {
 			glGenerateMipmap(GL_TEXTURE_CUBE_MAP);
 			glBindTexture(GL_TEXTURE_CUBE_MAP, 0);
 		}
-	//	printf("Finish generate equirectangular HDR maps to cubemap.\n");
-		/** 3. start generate BRDF LUTTexture */
+		//	printf("Finish generate equirectangular HDR maps to cubemap.\n");
+			/** 3. start generate BRDF LUTTexture */
 		{
 			s_currentEffect = Graphics::GetEffectByKey(EET_BrdfIntegration);
 			s_currentEffect->UseEffect();
-			s_brdfLUTTexture.Write();
+			s_brdfLUTTexture.Write(
+				[]{
+					glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+					RenderQuad();
+					s_brdfLUTTexture.UnWrite();
+				});
 
-			glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-			cTransform quadTransform;
-			quadTransform.SetRotation(glm::vec3(glm::radians(90.f), 0, 0));
-
-			quadTransform.Update();
-			s_uniformBuffer_drawcall.Update(&UniformBufferFormats::sDrawCall(quadTransform.M(), quadTransform.TranspostInverse()));
-
-			// Render quad
-			cModel* _quad = cModel::s_manager.Get(s_quadHandle);
-			if (_quad) {
-				_quad->RenderWithoutMaterial();
-			}
-
-			s_brdfLUTTexture.UnWrite();
 			s_currentEffect->UnUseEffect();
 		}
 		//printf("Finish generate BRDF LUT texture.\n");
@@ -482,18 +536,73 @@ namespace Graphics {
 		s_whenDataHasBeenSwappedInRenderThread.notify_one();
 
 		// Update cubemap weights before rendering, actually, this step should be done at the application thread
-		EnvironmentCaptureManager::UpdatePointOfInterest(s_dataRenderingByGraphicThread->s_renderPasses[3].FrameData.ViewPosition);
-
+		EnvironmentCaptureManager::UpdatePointOfInterest(s_dataRenderingByGraphicThread->s_renderPasses[3].FrameData.GetViewPosition());
+		g_uniformBufferMap[UBT_ClipPlane].Update(&s_dataRenderingByGraphicThread->s_ClipPlane);
+		g_uniformBufferMap[UBT_PostProcessing].Update(&s_dataRenderingByGraphicThread->s_PostProcessing);
 		/** 2. Start to render pass one by one */
-		for (size_t i = 0; i < s_dataRenderingByGraphicThread->s_renderPasses.size(); ++i)
+		if (s_dataRenderingByGraphicThread->g_renderMode == ERM_ForwardShading)
 		{
-			// Update current render pass
-			s_currentRenderPass = i;
-			// Update frame data
-			s_uniformBuffer_ClipPlane.Update(&s_dataRenderingByGraphicThread->s_ClipPlane);
-			s_uniformBuffer_frame.Update(&s_dataRenderingByGraphicThread->s_renderPasses[i].FrameData);
-			// Execute pass function
-			s_dataRenderingByGraphicThread->s_renderPasses[i].RenderPassFunction();
+			g_hdrBuffer.Write(
+				[] {
+					// 3 shadow map pass, 1 pbr pass, 1 cubemap pass
+					for (size_t i = 0; i < s_dataRenderingByGraphicThread->s_renderPasses.size(); ++i)
+					{
+						// Update current render pass
+						s_currentRenderPass = i;
+						// Update frame data
+						g_uniformBufferMap[UBT_Frame].Update(&s_dataRenderingByGraphicThread->s_renderPasses[i].FrameData);
+						// Execute pass function
+						s_dataRenderingByGraphicThread->s_renderPasses[i].RenderPassFunction();
+					}
+				}
+			);
+
+			HDR_Pass();
+		}
+		else // if not forward shading, it is deferred shading
+		{
+			/** 0. Update lighting data pass 0-2*/
+			for (size_t i = 0; i < 3; ++i)
+			{
+				// Update current render pass
+				s_currentRenderPass = i;
+				// Update frame data
+				g_uniformBufferMap[UBT_Frame].Update(&s_dataRenderingByGraphicThread->s_renderPasses[i].FrameData);
+				// Execute pass function
+				s_dataRenderingByGraphicThread->s_renderPasses[i].RenderPassFunction();
+			}
+			/** 1. Capture the whole scene with PBR material*/
+			g_GBuffer.Write(
+				[] {
+					s_currentRenderPass = 3; // PBR pass
+					g_uniformBufferMap[UBT_Frame].Update(&s_dataRenderingByGraphicThread->s_renderPasses[s_currentRenderPass].FrameData);
+					GBuffer_Pass();
+				});
+
+			g_hdrBuffer.Write(
+				[] {
+					/** 2A. Show the deferred shading */
+					if (s_dataRenderingByGraphicThread->g_renderMode == ERM_DeferredShading)
+						Deferred_Lighting_Pass();
+					/** 2B. Display GBuffer alternatively */
+					else
+						DisplayGBuffer_Pass();
+
+					/** 3. Display cubemap at the end */
+					{
+						glBindFramebuffer(GL_READ_FRAMEBUFFER, g_GBuffer.fbo());
+						glBindFramebuffer(GL_DRAW_FRAMEBUFFER, g_hdrBuffer.fbo()); // write to default frame buffer
+						glBlitFramebuffer(
+							0, 0, g_GBuffer.GetWidth(), g_GBuffer.GetHeight(), 0, 0, g_GBuffer.GetWidth(), g_GBuffer.GetHeight(), GL_DEPTH_BUFFER_BIT, GL_NEAREST
+						);
+						glBindFramebuffer(GL_FRAMEBUFFER, g_hdrBuffer.fbo());
+						s_currentRenderPass = 4; // Cubemap pass
+						g_uniformBufferMap[UBT_Frame].Update(&s_dataRenderingByGraphicThread->s_renderPasses[s_currentRenderPass].FrameData);
+						CubeMap_Pass();
+					}
+				}
+			);
+			HDR_Pass();
 		}
 		//renderCount++;
 		//printf("Render thread count: %d\n", renderCount);
@@ -505,6 +614,11 @@ namespace Graphics {
 		s_dataSubmittedByApplicationThread->s_ClipPlane = UniformBufferFormats::sClipPlane(i_plane0, i_plane1, i_plane2, i_plane3);
 	}
 
+	void SubmitPostProcessingData(const float i_exposure)
+	{
+		s_dataSubmittedByApplicationThread->s_PostProcessing.Exposure = i_exposure;
+	}
+
 	void SubmitLightingData(const std::vector<cPointLight>& i_pointLights, const std::vector<cSpotLight>& i_spotLights, const cAmbientLight& i_ambientLight, const cDirectionalLight& i_directionalLight)
 	{
 		s_dataSubmittedByApplicationThread->s_pointLights = i_pointLights;
@@ -512,6 +626,11 @@ namespace Graphics {
 		s_dataSubmittedByApplicationThread->s_directionalLight = i_directionalLight;
 		s_dataSubmittedByApplicationThread->s_ambientLight = i_ambientLight;
 
+	}
+
+	void SubmitGraphicSettings(const ERenderMode& i_renderMode)
+	{
+		s_dataSubmittedByApplicationThread->g_renderMode = i_renderMode;
 	}
 
 	void SubmitDataToBeRendered(const UniformBufferFormats::sFrame& i_frameData, const std::vector<std::pair<Graphics::cModel::HANDLE, cTransform>>& i_modelToTransform_map, void(*func_ptr)())
@@ -535,12 +654,12 @@ namespace Graphics {
 		for (auto it = renderMap.begin(); it != renderMap.end(); ++it)
 		{
 			// 1. Update draw call data
-			s_uniformBuffer_drawcall.Update(&UniformBufferFormats::sDrawCall(it->second.M(), it->second.TranspostInverse()));
+			g_uniformBufferMap[UBT_Drawcall].Update(&UniformBufferFormats::sDrawCall(it->second.M(), it->second.TranspostInverse()));
 			// 2. Draw
 			cModel* _model = cModel::s_manager.Get(it->first);
 			if (_model) {
 				if (i_effect) {
-					_model->UpdateUniformVariables(s_currentEffect->GetProgramID());
+					_model->UpdateUniformVariables(i_effect->GetProgramID());
 					_model->Render(i_drawMode);
 				}
 				else _model->RenderWithoutMaterial(i_drawMode);
@@ -552,18 +671,11 @@ namespace Graphics {
 	bool CleanUp()
 	{
 		auto result = true;
-		if (!(result = s_uniformBuffer_frame.CleanUp()))
-			printf("Fail to cleanup uniformBuffer_frame\n");
-		if (!(result = s_uniformBuffer_drawcall.CleanUp()))
-			printf("Fail to cleanup uniformBuffer_drawcall\n");
-		if (!(result = cMatBlinn::GetUniformBuffer().CleanUp()))
-			printf("Fail to cleanup uniformBuffer_MatBlinnPhong\n");
-		if (!(result = cMatPBRMR::GetUniformBuffer().CleanUp()))
-			printf("Fail to cleanup uniformBuffer_PBRMR\n");
-		if (!(result = s_uniformBuffer_Lighting.CleanUp()))
-			printf("Fail to cleanup uniformBuffer_Lighting\n");
-		if (!(result = s_uniformBuffer_ClipPlane.CleanUp()))
-			printf("Fail to cleanup uniformBuffer_ClipPlane\n");
+
+		for (auto it : g_uniformBufferMap)
+		{
+			it.second.CleanUp();
+		}
 
 		cModel::s_manager.Release(s_arrowHandle);
 		cModel::s_manager.Release(s_cubeHandle);
@@ -597,7 +709,8 @@ namespace Graphics {
 
 		s_cubemapProbe.CleanUp();
 		s_brdfLUTTexture.CleanUp();
-
+		g_hdrBuffer.CleanUp();
+		g_GBuffer.CleanUp();
 		if (!(result = EnvironmentCaptureManager::CleanUp()))
 			printf("Fail to clean up Environment Capture Manager.\n");
 
@@ -615,16 +728,7 @@ namespace Graphics {
 
 	Graphics::cUniformBuffer* GetUniformBuffer(const eUniformBufferType& i_uniformBufferType)
 	{
-		switch (i_uniformBufferType)
-		{
-		case UBT_Frame:
-			return &s_uniformBuffer_frame;
-			break;
-		default:
-			return nullptr;
-			break;
-		}
-
+		return &g_uniformBufferMap[i_uniformBufferType];
 	}
 
 	Graphics::cModel::HANDLE GetPrimitive(const EPrimitiveType& i_primitiveType)

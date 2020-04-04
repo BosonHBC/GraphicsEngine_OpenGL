@@ -35,19 +35,18 @@ namespace Graphics {
 		cGenLight::CreateShadowMap(i_width, i_height);
 
 		// create light projection matrix for directional light
-		m_lightPrjectionMatrix = glm::ortho(-512.0f, 512.0f, -512.0f, 512.0f, 5.f, 2000.f);
+		m_lightPrjectionMatrix = glm::ortho(-512.0f, 512.0f, -512.0f, 512.0f, 1.f, 2000.f);
 	
 	}
 
-	glm::mat4 cDirectionalLight::CalculateLightTransform() const
+	glm::mat4 cDirectionalLight::GetViewMatrix() const
 	{
-		// PV matrix
-		return m_lightPrjectionMatrix * glm::lookAt(Transform.Forward() * 500.f, glm::vec3(0, 0, 0), glm::vec3(0, 1, 0));
+		return glm::lookAt(Transform.Forward() * 500.f, glm::vec3(0, 0, 0), glm::vec3(0, 1, 0));
 	}
 
 	void cDirectionalLight::SetLightUniformTransform()
 	{
-		glm::mat4 lightTransform = CalculateLightTransform();
+		glm::mat4 lightTransform = GetProjectionmatrix() * GetViewMatrix();
 		// light transform
 		glUniformMatrix4fv(m_directionalLightTransformID, 1, GL_FALSE, glm::value_ptr(lightTransform));
 		assert(GL_NO_ERROR == glGetError());

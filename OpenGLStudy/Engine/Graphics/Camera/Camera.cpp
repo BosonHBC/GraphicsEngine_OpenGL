@@ -13,6 +13,8 @@ void cCamera::Update()
 	Transform.SetRotation(glm::quatLookAt(_forward, _up));
 	Transform.Update();
 
+	glm::vec3 _targetLoc = Transform.Position() + Transform.Forward();
+	m_viewMatrix = glm::lookAt(Transform.Position(), _targetLoc, m_worldUp);
 }
 
 void cCamera::UpdateUniformLocation(GLuint i_programID)
@@ -65,11 +67,14 @@ void cCamera::MouseControl(sWindowInput* const i_windowInput, float i_dt)
 	Update();
 }
 
-glm::mat4 cCamera::GetViewMatrix()
+glm::mat4 cCamera::GetInvViewMatrix()
 {
-	glm::vec3 _targetLoc = Transform.Position() + Transform.Forward();
-	m_viewMatrix = glm::lookAt(Transform.Position(), _targetLoc, m_worldUp);
-	return m_viewMatrix;
+	return glm::inverse(m_viewMatrix);
+}
+
+glm::mat4 cCamera::GetInvprojectionMatrix()
+{
+	return glm::inverse(m_projectionMatrix);
 }
 
 void cCamera::CreateProjectionMatrix(GLfloat i_fov, GLfloat i_aspect, GLfloat i_nearPlane /*= 0.1f*/, GLfloat i_farPlane /*= 100.f*/)

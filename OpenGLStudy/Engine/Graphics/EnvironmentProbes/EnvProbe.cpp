@@ -34,10 +34,10 @@ namespace Graphics
 		return true;
 	}
 
-	void cEnvProbe::StartCapture()
+	void cEnvProbe::StartCapture(const std::function<void()>& captureFunction)
 	{
 		if (!m_captured) m_captured = true;
-		m_frameBuffer.Write();
+		m_frameBuffer.Write(captureFunction);
 	}
 
 	void cEnvProbe::StopCapture()

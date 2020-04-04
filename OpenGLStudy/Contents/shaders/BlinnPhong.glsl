@@ -31,9 +31,11 @@ in vec4 DirectionalLightSpacePos;
 in vec4 SpotLightSpacePos[MAX_COUNT_PER_LIGHT];
 layout(std140, binding = 0) uniform uniformBuffer_frame
 {
-	// PVMatrix stands for projection * view matrix
 	mat4 PVMatrix;
-	vec3 ViewPosition;
+	mat4 ProjectionMatrix;
+	mat4 InvProj;
+	mat4 ViewMatrix;
+	mat4 InvView;
 };
 // the color of the pixel
 out vec4 color;
@@ -322,6 +324,7 @@ vec4 CalcSpotLights(vec4 diffusTexCol, vec4 specTexCol,vec3 vN, vec3 vV){
 void main(){
 	
 	// shared values
+	vec3 ViewPosition = vec3(InvView[3][0], InvView[3][1], InvView[3][2]);
 	vec3 normal = texture(normalTex, texCood0).rgb;
 	normal = normalize(normal * 2.0f - 1.0f);   
 	normal = TBN * normal; 

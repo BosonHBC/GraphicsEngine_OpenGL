@@ -40,7 +40,7 @@ namespace Graphics {
 
 		/** Shadow map related*/
 		void CreateShadowMap(GLuint i_width, GLuint i_height) override;
-		glm::mat4 CalculateLightTransform() const override;
+		glm::mat4 GetViewMatrix() const;
 		void SetLightUniformTransform() override;
 		void UseShadowMap(GLuint i_textureUnit) override;
 	private:
