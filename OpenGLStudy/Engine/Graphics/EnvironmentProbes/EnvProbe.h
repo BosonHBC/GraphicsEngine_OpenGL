@@ -35,7 +35,7 @@ namespace Graphics
 
 		bool IsValid() const { return m_frameBuffer.IsValid() && m_range > 0 && m_width > 0 && m_height > 0 && m_width == m_height && m_captured; }
 
-		void StartCapture();
+		void StartCapture(const std::function<void()>& captureFunction);
 		void StopCapture();
 
 		/** Getters */

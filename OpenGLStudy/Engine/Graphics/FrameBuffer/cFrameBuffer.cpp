@@ -133,7 +133,7 @@ namespace Graphics {
 		return *this;
 	}
 
-	void cFrameBuffer::Write()
+	void cFrameBuffer::Write(const std::function<void()>& captureFunction)
 	{
 		// Change view port size first
 		Application::cApplication* _app = Application::GetCurrentApplication();
@@ -146,6 +146,11 @@ namespace Graphics {
 			glBindRenderbuffer(GL_RENDERBUFFER, m_rbo);
 
 		assert(GL_NO_ERROR == glGetError());
+
+		// Execute capture function
+		captureFunction();
+
+		UnWrite();
 	}
 
 	void cFrameBuffer::UnWrite()

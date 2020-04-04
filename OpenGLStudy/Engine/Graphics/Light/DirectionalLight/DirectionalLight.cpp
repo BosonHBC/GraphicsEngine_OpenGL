@@ -35,7 +35,7 @@ namespace Graphics {
 		cGenLight::CreateShadowMap(i_width, i_height);
 
 		// create light projection matrix for directional light
-		m_lightPrjectionMatrix = glm::ortho(-512.0f, 512.0f, -512.0f, 512.0f, 5.f, 2000.f);
+		m_lightPrjectionMatrix = glm::ortho(-512.0f, 512.0f, -512.0f, 512.0f, 1.f, 2000.f);
 	
 	}
 

@@ -27,10 +27,9 @@ namespace Graphics
 	// arrow colors
 	Color s_arrowColor[3] = { Color(0, 0, 0.8f), Color(0.8f, 0, 0),Color(0, 0.8f, 0) };
 
-	void RenderQuad()
+	void RenderQuad(const UniformBufferFormats::sFrame& i_frameData = UniformBufferFormats::sFrame())
 	{
-		UniformBufferFormats::sFrame defaultFrameData;
-		g_uniformBufferMap[UBT_Frame].Update(&defaultFrameData);
+		g_uniformBufferMap[UBT_Frame].Update(&i_frameData);
 		
 		UniformBufferFormats::sDrawCall defaultDrawcallData;
 		g_uniformBufferMap[UBT_Drawcall].Update(&defaultDrawcallData);
@@ -108,14 +107,13 @@ namespace Graphics
 			if (_directionalLightFBO && _directionalLight->IsShadowEnabled()) {
 
 				// write buffer to the texture
-				_directionalLightFBO->Write();
-				glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-
-				// Draw scenes
-				RenderScene(nullptr);
-
-				// switch back to original buffer
-				_directionalLightFBO->UnWrite();
+				_directionalLightFBO->Write(
+					[] {
+						glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+						// Draw scenes
+						RenderScene(nullptr);
+					}
+				);
 				assert(glGetError() == GL_NO_ERROR);
 			}
 		}
@@ -131,9 +129,6 @@ namespace Graphics
 		s_currentEffect = GetEffectByKey(EET_OmniShadowMap);
 		s_currentEffect->UseEffect();
 
-		s_currentEffect->SetInteger("displacementMap", 24);
-		s_currentEffect->SetFloat("displaceIntensity", 20.0f);
-
 		for (size_t i = 0; i < s_dataRenderingByGraphicThread->s_pointLights.size(); ++i)
 		{
 			auto* it = &s_dataRenderingByGraphicThread->s_pointLights[i];
@@ -141,23 +136,20 @@ namespace Graphics
 			if (_pointLightFBO) {
 
 				// for each light, needs to update the frame data
-				Graphics::UniformBufferFormats::sFrame _frameData_PointLightShadow;
+				Graphics::UniformBufferFormats::sFrame _frameData_PointLightShadow(it->GetProjectionmatrix(), it->GetViewMatrix());
 				g_uniformBufferMap[UBT_Frame].Update(&_frameData_PointLightShadow);
 
 				// point need extra uniform variables to be passed in to shader
 				it->SetupLight(s_currentEffect->GetProgramID(), i);
 				it->SetLightUniformTransform();
 				// write buffer to the texture
-				_pointLightFBO->Write();
-				assert(glGetError() == GL_NO_ERROR);
-
-				glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-
-				// Draw scenes
-				RenderScene(nullptr);
-
-				// switch back to original buffer
-				_pointLightFBO->UnWrite();
+				_pointLightFBO->Write(
+					[] {
+						glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+						// Draw scenes
+						RenderScene(nullptr);
+					}
+				);
 				assert(glGetError() == GL_NO_ERROR);
 			}
 		}
@@ -186,13 +178,13 @@ namespace Graphics
 				g_uniformBufferMap[UBT_Frame].Update(&_frameData_SpotLightShadow);
 
 				// write buffer to the texture
-				_spotLightFB->Write();
-				assert(glGetError() == GL_NO_ERROR);
-				glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-				// Draw scenes
-				RenderScene(nullptr);
-				// switch back to original buffer
-				_spotLightFB->UnWrite();
+				_spotLightFB->Write(
+					[] {
+						glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+						// Draw scenes
+						RenderScene(nullptr);
+					}
+				);
 				assert(glGetError() == GL_NO_ERROR);
 			}
 		}
@@ -390,13 +382,12 @@ namespace Graphics
 		s_currentEffect->SetInteger("displayMode", static_cast<GLint>(renderMode) - 2);
 		GLenum _textureUnits[4] = { GL_TEXTURE0 , GL_TEXTURE1 ,GL_TEXTURE2, GL_TEXTURE3 };
 		g_GBuffer.Read(_textureUnits);
-		RenderQuad();
+		RenderQuad(s_dataRenderingByGraphicThread->s_renderPasses[s_currentRenderPass].FrameData);
 		s_currentEffect->UnUseEffect();
 	}
 
 	void Deferred_Lighting_Pass()
 	{
-		return;
 		glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 		s_currentEffect = GetEffectByKey(EET_DeferredLighting);
 		s_currentEffect->UseEffect();
@@ -405,7 +396,7 @@ namespace Graphics
 		g_GBuffer.Read(_textureUnits);
 		UpdateInfoForPBR();
 
-		RenderQuad();
+		RenderQuad(s_dataRenderingByGraphicThread->s_renderPasses[s_currentRenderPass].FrameData);
 
 		s_currentEffect->UnUseEffect();
 	}

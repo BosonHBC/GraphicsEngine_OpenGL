@@ -91,7 +91,7 @@ namespace Graphics {
 	}
 
 	void Gizmo_DrawDebugCaptureVolume();
-	void RenderQuad();
+	void RenderQuad(const UniformBufferFormats::sFrame& i_frameData = UniformBufferFormats::sFrame());
 	void HDR_Pass();
 	void GBuffer_Pass();
 	void Deferred_Lighting_Pass();
@@ -327,7 +327,7 @@ namespace Graphics {
 				hdrEffect->UnUseEffect();
 			}
 			// Create Deferred-Lighting pass
-			{/*
+			{
 				if (!(result = CreateEffect(EET_DeferredLighting,
 					"hdrShader/hdr_shader_vert.glsl",
 					"deferredShading/DeferredLighting_frag.glsl"
@@ -342,7 +342,8 @@ namespace Graphics {
 				dLighting->SetInteger("gNormalRoughness", 1);
 				dLighting->SetInteger("gIOR", 2);
 				dLighting->SetInteger("gDepth", 3);
-				dLighting->UnUseEffect();*/
+				dLighting->UnUseEffect();
+				FixSamplerProblem(EET_DeferredLighting);
 			}
 			// validate all programs
 			for (auto it : s_KeyToEffect_map)
@@ -474,22 +475,24 @@ namespace Graphics {
 			_hdr->UseTexture(GL_TEXTURE0);
 
 			glDisable(GL_CULL_FACE);
-			s_cubemapProbe.StartCapture();
-			for (size_t i = 0; i < 6; ++i)
-			{
-				glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_CUBE_MAP_POSITIVE_X + i, s_cubemapProbe.GetCubemapTextureID(), 0);
-				assert(GL_NO_ERROR == glGetError());
-				glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+			s_cubemapProbe.StartCapture(
+				[] {
+					for (size_t i = 0; i < 6; ++i)
+					{
+						glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_CUBE_MAP_POSITIVE_X + i, s_cubemapProbe.GetCubemapTextureID(), 0);
+						assert(GL_NO_ERROR == glGetError());
+						glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
-				UniformBufferFormats::sFrame _cubemapFrameData(s_cubemapProbe.GetProjectionMat4(), s_cubemapProbe.GetViewMat4(i));
-				g_uniformBufferMap[UBT_Frame].Update(&_cubemapFrameData);
+						UniformBufferFormats::sFrame _cubemapFrameData(s_cubemapProbe.GetProjectionMat4(), s_cubemapProbe.GetViewMat4(i));
+						g_uniformBufferMap[UBT_Frame].Update(&_cubemapFrameData);
 
-				// Render cube
-				cModel* _cube = cModel::s_manager.Get(s_cubeHandle);
-				if (_cube) { _cube->RenderWithoutMaterial(); }
-			}
+						// Render cube
+						cModel* _cube = cModel::s_manager.Get(s_cubeHandle);
+						if (_cube) { _cube->RenderWithoutMaterial(); }
+					}
+				}
+			);
 
-			s_cubemapProbe.StopCapture();
 			glEnable(GL_CULL_FACE);
 			s_currentEffect->UnUseEffect();
 			// After capturing the scene, generate the mip map by opengl itself
@@ -502,12 +505,13 @@ namespace Graphics {
 		{
 			s_currentEffect = Graphics::GetEffectByKey(EET_BrdfIntegration);
 			s_currentEffect->UseEffect();
-			s_brdfLUTTexture.Write();
+			s_brdfLUTTexture.Write(
+				[]{
+					glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+					RenderQuad();
+					s_brdfLUTTexture.UnWrite();
+				});
 
-			glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-			RenderQuad();
-
-			s_brdfLUTTexture.UnWrite();
 			s_currentEffect->UnUseEffect();
 		}
 		//printf("Finish generate BRDF LUT texture.\n");
@@ -538,9 +542,27 @@ namespace Graphics {
 		/** 2. Start to render pass one by one */
 		if (s_dataRenderingByGraphicThread->g_renderMode == ERM_ForwardShading)
 		{
-			g_hdrBuffer.Write();
-			// 3 shadow map pass, 1 pbr pass, 1 cubemap pass
-			for (size_t i = 0; i < s_dataRenderingByGraphicThread->s_renderPasses.size(); ++i)
+			g_hdrBuffer.Write(
+				[] {
+					// 3 shadow map pass, 1 pbr pass, 1 cubemap pass
+					for (size_t i = 0; i < s_dataRenderingByGraphicThread->s_renderPasses.size(); ++i)
+					{
+						// Update current render pass
+						s_currentRenderPass = i;
+						// Update frame data
+						g_uniformBufferMap[UBT_Frame].Update(&s_dataRenderingByGraphicThread->s_renderPasses[i].FrameData);
+						// Execute pass function
+						s_dataRenderingByGraphicThread->s_renderPasses[i].RenderPassFunction();
+					}
+				}
+			);
+
+			HDR_Pass();
+		}
+		else // if not forward shading, it is deferred shading
+		{
+			/** 0. Update lighting data pass 0-2*/
+			for (size_t i = 0; i < 3; ++i)
 			{
 				// Update current render pass
 				s_currentRenderPass = i;
@@ -549,37 +571,38 @@ namespace Graphics {
 				// Execute pass function
 				s_dataRenderingByGraphicThread->s_renderPasses[i].RenderPassFunction();
 			}
-			g_hdrBuffer.UnWrite();
-			HDR_Pass();
-		}
-		else // if not forward shading, it is deferred shading
-		{
 			/** 1. Capture the whole scene with PBR material*/
-			g_GBuffer.Write();
-			s_currentRenderPass = 3; // PBR pass
-			g_uniformBufferMap[UBT_Frame].Update(&s_dataRenderingByGraphicThread->s_renderPasses[s_currentRenderPass].FrameData);
-			GBuffer_Pass();
-			g_GBuffer.UnWrite();
+			g_GBuffer.Write(
+				[] {
+					s_currentRenderPass = 3; // PBR pass
+					g_uniformBufferMap[UBT_Frame].Update(&s_dataRenderingByGraphicThread->s_renderPasses[s_currentRenderPass].FrameData);
+					GBuffer_Pass();
+				});
 
-			/** 2A. Show the deferred shading */
-			if (s_dataRenderingByGraphicThread->g_renderMode == ERM_DeferredShading)
-				Deferred_Lighting_Pass();
-			/** 2B. Display GBuffer alternatively */
-			else
-				DisplayGBuffer_Pass();
+			g_hdrBuffer.Write(
+				[] {
+					/** 2A. Show the deferred shading */
+					if (s_dataRenderingByGraphicThread->g_renderMode == ERM_DeferredShading)
+						Deferred_Lighting_Pass();
+					/** 2B. Display GBuffer alternatively */
+					else
+						DisplayGBuffer_Pass();
 
-			/** 3. Display cubemap at the end */
-			{
-				glBindFramebuffer(GL_READ_FRAMEBUFFER, g_GBuffer.fbo());
-				glBindFramebuffer(GL_DRAW_FRAMEBUFFER, 0); // write to default frame buffer
-				glBlitFramebuffer(
-					0, 0, g_GBuffer.GetWidth(), g_GBuffer.GetHeight(), 0, 0, g_GBuffer.GetWidth(), g_GBuffer.GetHeight(), GL_DEPTH_BUFFER_BIT, GL_NEAREST
-				);
-				glBindFramebuffer(GL_FRAMEBUFFER, 0);
-				s_currentRenderPass = 4; // Cubemap pass
-				g_uniformBufferMap[UBT_Frame].Update(&s_dataRenderingByGraphicThread->s_renderPasses[s_currentRenderPass].FrameData);
-				CubeMap_Pass();
-			}
+					/** 3. Display cubemap at the end */
+					{
+						glBindFramebuffer(GL_READ_FRAMEBUFFER, g_GBuffer.fbo());
+						glBindFramebuffer(GL_DRAW_FRAMEBUFFER, g_hdrBuffer.fbo()); // write to default frame buffer
+						glBlitFramebuffer(
+							0, 0, g_GBuffer.GetWidth(), g_GBuffer.GetHeight(), 0, 0, g_GBuffer.GetWidth(), g_GBuffer.GetHeight(), GL_DEPTH_BUFFER_BIT, GL_NEAREST
+						);
+						glBindFramebuffer(GL_FRAMEBUFFER, g_hdrBuffer.fbo());
+						s_currentRenderPass = 4; // Cubemap pass
+						g_uniformBufferMap[UBT_Frame].Update(&s_dataRenderingByGraphicThread->s_renderPasses[s_currentRenderPass].FrameData);
+						CubeMap_Pass();
+					}
+				}
+			);
+			HDR_Pass();
 		}
 		//renderCount++;
 		//printf("Render thread count: %d\n", renderCount);
@@ -636,7 +659,7 @@ namespace Graphics {
 			cModel* _model = cModel::s_manager.Get(it->first);
 			if (_model) {
 				if (i_effect) {
-					_model->UpdateUniformVariables(s_currentEffect->GetProgramID());
+					_model->UpdateUniformVariables(i_effect->GetProgramID());
 					_model->Render(i_drawMode);
 				}
 				else _model->RenderWithoutMaterial(i_drawMode);

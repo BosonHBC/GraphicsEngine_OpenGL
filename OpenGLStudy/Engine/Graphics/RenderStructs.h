@@ -18,6 +18,7 @@ namespace Graphics{
 		ERM_Deferred_Normal,
 		ERM_Deferred_IOR,
 		ERM_Deferred_Depth,
+		ERM_Deferred_WorldPos,
 	};
 
 	// Rendering thread data and data structures

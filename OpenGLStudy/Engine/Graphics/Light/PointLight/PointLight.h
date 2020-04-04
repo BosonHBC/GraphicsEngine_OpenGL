@@ -30,6 +30,7 @@ namespace Graphics {
 		void CreateShadowMap(GLuint i_width, GLuint i_height) override;
 		void SetLightUniformTransform() override;
 		void UseShadowMap(GLuint i_textureUnit) override;
+		glm::mat4 GetViewMatrix() const;
 	protected:
 		// use inverse squared fall off
 		GLfloat m_range = 100.f;

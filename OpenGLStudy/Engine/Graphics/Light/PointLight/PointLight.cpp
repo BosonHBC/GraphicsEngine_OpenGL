@@ -66,4 +66,9 @@ namespace Graphics {
 	}
 
 
+	glm::mat4 cPointLight::GetViewMatrix() const
+	{
+		return glm::lookAt(Transform.Position(), Transform.Position() + Transform.Forward(), -cTransform::WorldUp);
+	}
+
 }

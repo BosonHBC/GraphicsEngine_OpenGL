@@ -148,27 +148,28 @@ namespace Graphics
 
 				// ii. start to capture the environment cube map
 				{
-					g_CaptureProbesList[k].EnvironmentProbe.StartCapture();
+					g_CaptureProbesList[k].EnvironmentProbe.StartCapture(
+						[&]{
+							GLuint passesPerFace = static_cast<GLuint>((i_renderThreadData->s_renderPasses.size() - shadowmapPassesCount) / 6.f);
+							for (size_t i = 0; i < 6; ++i)
+							{
+								glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_CUBE_MAP_POSITIVE_X + i, g_CaptureProbesList[k].EnvironmentProbe.GetCubemapTextureID(), 0);
+								glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+								for (size_t j = 0; j < passesPerFace; ++j)
+								{
+									// Update current render pass
+									int _currentRenderPass = i * passesPerFace + j + shadowmapPassesCount;
+									Graphics::SetCurrentPass(_currentRenderPass);
+									// Update frame data using the environment probes' projection and view matrix
+									Graphics::UniformBufferFormats::sFrame _frame(g_CaptureProbesList[k].EnvironmentProbe.GetProjectionMat4(), g_CaptureProbesList[k].EnvironmentProbe.GetViewMat4(i));
+									_uniformBuffer_frame->Update(&_frame);
+									// Execute pass function
+									i_renderThreadData->s_renderPasses[_currentRenderPass].RenderPassFunction();
+								}
 
-					GLuint passesPerFace = static_cast<GLuint>((i_renderThreadData->s_renderPasses.size() - shadowmapPassesCount) / 6.f);
-					for (size_t i = 0; i < 6; ++i)
-					{
-						glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_CUBE_MAP_POSITIVE_X + i, g_CaptureProbesList[k].EnvironmentProbe.GetCubemapTextureID(), 0);
-						glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-						for (size_t j = 0; j < passesPerFace; ++j)
-						{
-							// Update current render pass
-							int _currentRenderPass = i * passesPerFace + j + shadowmapPassesCount;
-							Graphics::SetCurrentPass(_currentRenderPass);
-							// Update frame data using the environment probes' projection and view matrix
-							Graphics::UniformBufferFormats::sFrame _frame(g_CaptureProbesList[k].EnvironmentProbe.GetProjectionMat4(), g_CaptureProbesList[k].EnvironmentProbe.GetViewMat4(i));
-							_uniformBuffer_frame->Update(&_frame);
-							// Execute pass function
-							i_renderThreadData->s_renderPasses[_currentRenderPass].RenderPassFunction();
+							}
 						}
-
-					}
-					g_CaptureProbesList[k].EnvironmentProbe.StopCapture();
+					);
 
 					// After capturing the scene, generate the mip map by opengl itself
 					glBindTexture(GL_TEXTURE_CUBE_MAP, g_CaptureProbesList[k].EnvironmentProbe.GetCubemapTextureID());
@@ -187,20 +188,23 @@ namespace Graphics
 					cTexture* _envProbeTexture = cTexture::s_manager.Get(g_CaptureProbesList[k].EnvironmentProbe.GetCubemapTextureHandle());
 					_envProbeTexture->UseTexture(GL_TEXTURE0);
 
-					g_CaptureProbesList[k].IrradianceProbe.StartCapture();
-					for (size_t i = 0; i < 6; ++i)
-					{
-						glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_CUBE_MAP_POSITIVE_X + i, g_CaptureProbesList[k].IrradianceProbe.GetCubemapTextureID(), 0);
-						glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+					g_CaptureProbesList[k].IrradianceProbe.StartCapture(
+						[&]
+						{
+							for (size_t i = 0; i < 6; ++i)
+							{
+								glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_CUBE_MAP_POSITIVE_X + i, g_CaptureProbesList[k].IrradianceProbe.GetCubemapTextureID(), 0);
+								glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
-						UniformBufferFormats::sFrame _cubemapFrameData(g_CaptureProbesList[k].IrradianceProbe.GetProjectionMat4(), g_CaptureProbesList[k].IrradianceProbe.GetViewMat4(i));
-						_uniformBuffer_frame->Update(&_cubemapFrameData);
+								UniformBufferFormats::sFrame _cubemapFrameData(g_CaptureProbesList[k].IrradianceProbe.GetProjectionMat4(), g_CaptureProbesList[k].IrradianceProbe.GetViewMat4(i));
+								_uniformBuffer_frame->Update(&_cubemapFrameData);
 
-						// Render cube
-						cModel* _cube = cModel::s_manager.Get(Graphics::GetPrimitive(EPT_Cube));
-						if (_cube) { _cube->RenderWithoutMaterial(); }
-					}
-					g_CaptureProbesList[k].IrradianceProbe.StopCapture();
+								// Render cube
+								cModel* _cube = cModel::s_manager.Get(Graphics::GetPrimitive(EPT_Cube));
+								if (_cube) { _cube->RenderWithoutMaterial(); }
+							}
+						}
+					);
 
 					_currentEffct->UnUseEffect();
 
@@ -218,37 +222,38 @@ namespace Graphics
 					cTexture* _envProbeTexture = cTexture::s_manager.Get(g_CaptureProbesList[k].EnvironmentProbe.GetCubemapTextureHandle());
 					_envProbeTexture->UseTexture(GL_TEXTURE0);
 
-					g_CaptureProbesList[k].PrefilterProbe.StartCapture();
+					g_CaptureProbesList[k].PrefilterProbe.StartCapture(
+						[&] {
+							constexpr GLuint maxMipLevels = 5;
+							for (GLuint i = maxMipLevels; i > 0; --i) // capture multiple mip-map levels from low res to high res
+							{
+								GLuint mip = i - 1;
+								// resize frame buffer according to mip-level size.
+								GLuint mipWidth = static_cast<GLuint>(g_CaptureProbesList[k].PrefilterProbe.GetWidth() * glm::pow(0.5f, mip));
+								GLuint mipHeight = static_cast<GLuint>(g_CaptureProbesList[k].PrefilterProbe.GetHeight() * glm::pow(0.5f, mip));
 
-					constexpr GLuint maxMipLevels = 5;
-					for (GLuint i = maxMipLevels; i > 0; --i) // capture multiple mip-map levels from low res to high res
-					{
-						GLuint mip = i - 1;
-						// resize frame buffer according to mip-level size.
-						GLuint mipWidth = static_cast<GLuint>(g_CaptureProbesList[k].PrefilterProbe.GetWidth() * glm::pow(0.5f, mip));
-						GLuint mipHeight = static_cast<GLuint>(g_CaptureProbesList[k].PrefilterProbe.GetHeight() * glm::pow(0.5f, mip));
+								glRenderbufferStorage(GL_RENDERBUFFER, GL_DEPTH_COMPONENT24, mipWidth, mipHeight); // resize render buffer too
+								Application::cApplication* _app = Application::GetCurrentApplication();
+								if (_app) { _app->GetCurrentWindow()->SetViewportSize(mipWidth, mipHeight); }
 
-						glRenderbufferStorage(GL_RENDERBUFFER, GL_DEPTH_COMPONENT24, mipWidth, mipHeight); // resize render buffer too
-						Application::cApplication* _app = Application::GetCurrentApplication();
-						if (_app) { _app->GetCurrentWindow()->SetViewportSize(mipWidth, mipHeight); }
+								float roughness = static_cast<float>(mip) / static_cast<float>(maxMipLevels - 1);
+								_currentEffct->SetFloat("roughness", roughness);
 
-						float roughness = static_cast<float>(mip) / static_cast<float>(maxMipLevels - 1);
-						_currentEffct->SetFloat("roughness", roughness);
+								for (size_t i = 0; i < 6; ++i)
+								{
+									glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_CUBE_MAP_POSITIVE_X + i, g_CaptureProbesList[k].PrefilterProbe.GetCubemapTextureID(), mip);
+									glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+									UniformBufferFormats::sFrame _cubemapFrameData(g_CaptureProbesList[k].PrefilterProbe.GetProjectionMat4(), g_CaptureProbesList[k].PrefilterProbe.GetViewMat4(i));
+									_uniformBuffer_frame->Update(&_cubemapFrameData);
 
-						for (size_t i = 0; i < 6; ++i)
-						{
-							glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_CUBE_MAP_POSITIVE_X + i, g_CaptureProbesList[k].PrefilterProbe.GetCubemapTextureID(), mip);
-							glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-							UniformBufferFormats::sFrame _cubemapFrameData(g_CaptureProbesList[k].PrefilterProbe.GetProjectionMat4(), g_CaptureProbesList[k].PrefilterProbe.GetViewMat4(i));
-							_uniformBuffer_frame->Update(&_cubemapFrameData);
-
-							// Render cube
-							cModel* _cube = cModel::s_manager.Get(Graphics::GetPrimitive(EPT_Cube));
-							if (_cube) { _cube->RenderWithoutMaterial(); }
+									// Render cube
+									cModel* _cube = cModel::s_manager.Get(Graphics::GetPrimitive(EPT_Cube));
+									if (_cube) { _cube->RenderWithoutMaterial(); }
+								}
+							}
 						}
-					}
+					);
 
-					g_CaptureProbesList[k].PrefilterProbe.StopCapture();
 					_currentEffct->UnUseEffect();
 					glFrontFace(GL_CCW);
 				}

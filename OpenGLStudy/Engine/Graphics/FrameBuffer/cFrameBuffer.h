@@ -17,7 +17,7 @@ namespace Graphics {
 		{}
 		cFrameBuffer& operator = (const cFrameBuffer& i_other);
 		// Write current buffer data to this frame buffer
-		void Write();
+		void Write(const std::function<void()>& captureFunction);
 		// Switch back to original frame buffer
 		void UnWrite();
 		// Use the texture loaded from the frame buffer

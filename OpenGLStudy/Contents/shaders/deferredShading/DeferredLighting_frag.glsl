@@ -131,7 +131,20 @@ vec3 fresnelSchlickRoughness(float cosTheta, vec3 F0, float roughness)
 //-------------------------------------------------------------------------
 // Shadow Fucntions
 //-------------------------------------------------------------------------
-float CalcDirectionalLightShadowMap(vec3 vN)
+/*
+float readShadowMap(vec3 eyeDir)
+{
+    mat4 cameraViewToProjectedLightSpace = directionalLightTransform * InvView;
+	vec4 projectedEyeDir = cameraViewToProjectedLightSpace * vec4(eyeDir,1);
+    projectedEyeDir = projectedEyeDir/projectedEyeDir.w;
+
+    vec2 textureCoordinates = projectedEyeDir.xy * vec2(0.5,0.5) + vec2(0.5,0.5);
+
+    const float bias = 0.0001;
+    float depthValue = texture2D( tShadowMap, textureCoordinates ) - bias;
+    return projectedEyeDir.z * 0.5 + 0.5 < depthValue;
+}*/
+float CalcDirectionalLightShadowMap(vec3 vL, vec3 vN, vec4 DirectionalLightSpacePos)
 {
 	vec3 normalizedDeviceCoordinate = DirectionalLightSpacePos.xyz / DirectionalLightSpacePos.w;
 	normalizedDeviceCoordinate = normalizedDeviceCoordinate * 0.5 + 0.5;
@@ -139,8 +152,7 @@ float CalcDirectionalLightShadowMap(vec3 vN)
 	float current = normalizedDeviceCoordinate.z;
 
 	// Calculate bias
-	vec3 lightDir = normalize(g_directionalLight.direction);
-	const float bias = max(0.005 * (1- dot(vN, lightDir)), 0.0005);
+	const float bias = max(0.005 * (1- dot(vN, vL)), 0.0005);
 
 	float shadow = 0.0;
 
@@ -162,9 +174,9 @@ float CalcDirectionalLightShadowMap(vec3 vN)
 	return shadow;	
 }
 
-float CalcPointLightShadowMap(int idx, PointLight pLight, float dist_vV)
+float CalcPointLightShadowMap(int idx, PointLight pLight, vec3 worldPos, float dist_vV)
 {
-	vec3 fragToLight = fragPos - pLight.position;
+	vec3 fragToLight = worldPos - pLight.position;
 	// sample the cube map
 	
 	float currentDepth = length(fragToLight) / pLight.radius;
@@ -268,26 +280,26 @@ vec3 CalcAmbientLight(AmbientLight aLight, vec3 albedoColor,float metalness, flo
 //-------------------------------------------------------------------------
 // DirectionalLight
 //-------------------------------------------------------------------------
-vec3 CalcDirectionalLight(DirectionalLight dLight, 
+
+vec3 CalcDirectionalLight(DirectionalLight dLight, vec4 LightSpacePosition,
 vec3 albedoColor, float metalness, float roughness, vec3 f0, vec3 vN, vec3 vV)
 {
 	vec3 vL = normalize(dLight.direction);
-	vec3 vH = normalize(vV+ vL);
+	vec3 vH = normalize(vV + vL);
 	vec3 radiance = dLight.base.color;
-
-	vec3 cookedIrrandance = CookTorranceBrdf(radiance, albedoColor, metalness, roughness, f0,vN, vH, vL ,vV);
-	float shadowFactor = dLight.base.enableShadow ? (1.0 - CalcDirectionalLightShadowMap(vN)): 1.0;
-	shadowFactor = max(shadowFactor, 0.0);
 	
+	vec3 cookedIrrandance = CookTorranceBrdf(radiance, albedoColor, metalness, roughness, f0,vN, vH, vL ,vV);
+	float shadowFactor = dLight.base.enableShadow ? (1.0 - CalcDirectionalLightShadowMap(vL, vN, LightSpacePosition)): 1.0;
+	shadowFactor = max(shadowFactor, 0.0);
 	return shadowFactor * cookedIrrandance;
 }
 //-------------------------------------------------------------------------
 // PointLight
 //-------------------------------------------------------------------------
 
-vec3 CalcPointLight(int idx, PointLight pLight,
+vec3 CalcPointLight(int idx, PointLight pLight, vec3 worldPos,
 vec3 albedoColor, float metalness, float roughness, vec3 f0, vec3 vN, vec3 vV, float viewDistance){
-		vec3 vL = pLight.position - fragPos;
+		vec3 vL = pLight.position - worldPos;
 		float dist = length(vL);
 		vL = normalize(vL); // normalzied light direction
 		vec3 vH = normalize(vV + vL); // halfway vector
@@ -299,18 +311,18 @@ vec3 albedoColor, float metalness, float roughness, vec3 f0, vec3 vN, vec3 vV, f
 		vec3 cookedIrrandance = CookTorranceBrdf(radiance, albedoColor, metalness, roughness, f0,vN, vH, vL ,vV);
 
 		// shadow
-		float shadowFactor = pLight.base.enableShadow ? (1.0 - CalcPointLightShadowMap(idx, pLight, viewDistance)) : 1.0;
+		float shadowFactor = pLight.base.enableShadow ? (1.0 - CalcPointLightShadowMap(idx, pLight, worldPos, viewDistance)) : 1.0;
 		shadowFactor = max(shadowFactor, 0.0);
 
 		return shadowFactor * cookedIrrandance;
 }
 
-vec3 CalcPointLights(vec3 albedoColor, float metalness, float roughtness, vec3 f0, vec3 vN, vec3 norm_vV, float viewDistance){
+vec3 CalcPointLights(vec3 worldPos, vec3 albedoColor, float metalness, float roughtness, vec3 f0, vec3 vN, vec3 norm_vV, float viewDistance){
 	// reflectance equation
 	vec3 Lo = vec3(0,0,0);
 
 	for(int i = 0; i < g_pointLightCount; ++i){
-		Lo += CalcPointLight(i, g_pointLights[i], albedoColor, metalness,roughtness, f0, vN, norm_vV, viewDistance);
+		Lo += CalcPointLight(i, g_pointLights[i], worldPos, albedoColor, metalness,roughtness, f0, vN, norm_vV, viewDistance);
 	}
 
 	return Lo;
@@ -325,35 +337,38 @@ vec3 CalcPointLights(vec3 albedoColor, float metalness, float roughtness, vec3 f
 //-------------------------------------------------------------------------
 // Main
 //-------------------------------------------------------------------------
-vec3 WorldPosFromDepth(float depth) {
+vec4 WorldPosFromDepth(vec2 texCoord, float depth) {
     float z = depth * 2.0 - 1.0;
 
-    vec4 clipSpacePosition = vec4(TexCoord * 2.0 - 1.0, z, 1.0);
-    vec4 viewSpacePosition = projMatrixInv * clipSpacePosition;
+    vec4 clipSpacePosition = vec4(texCoord * 2.0 - 1.0, z, 1.0);
+    vec4 viewSpacePosition = InvProj * clipSpacePosition;
 
     // Perspective division
     viewSpacePosition /= viewSpacePosition.w;
 
-    vec4 worldSpacePosition = viewMatrixInv * viewSpacePosition;
+    vec4 worldSpacePosition = InvView * viewSpacePosition;
 
-    return worldSpacePosition.xyz;
+    return worldSpacePosition;
 }
 void main(){
+    vec2 texCoord = TexCoords;
+    texCoord.y = 1-texCoord.y;
+
 	vec3 ViewPosition = vec3(InvView[3][0], InvView[3][1], InvView[3][2]);
-	vec3 depth = texture(gDepth, TexCoords).rgb;
-	vec3 worldPos = vec3(0);
+	float depth = texture(gDepth, texCoord).r;
+	vec4 worldPos = WorldPosFromDepth(texCoord, depth);
 	// shared values
-	vec3 normal = texture(gNormalRoughness, TexCoords).rgb;
-	vec3 view = ViewPosition - worldPos;
+	vec3 normal = texture(gNormalRoughness, texCoord).rgb;
+	vec3 view = ViewPosition - worldPos.xyz;
 	float viewDistance = length(view);
 	vec3 normalized_view = normalize(view);
-	vec3 vR = reflect(-normalized_view, normalized_normal); 
+	vec3 vR = reflect(-normalized_view, normal);
 
 	// material property
-	vec3 albedoColor = texture(gAlbedoMetallic, TexCoords).rgb;
-	float metalness = texture(gAlbedoMetallic, TexCoords).a;
-	float roughness = texture(gNormalRoughness, TexCoords).a;
-	vec3 ior = texture(gIOR, TexCoords).rgb;
+	vec3 albedoColor = texture(gAlbedoMetallic, texCoord).rgb;
+	float metalness = texture(gAlbedoMetallic, texCoord).a;
+	float roughness = texture(gNormalRoughness, texCoord).a;
+	vec3 ior = texture(gIOR, texCoord).rgb;
 	vec3 F0 = abs ((1.0 - ior) / (1.0 + ior)); //vec3(0.04);
 	F0 = F0 * F0;
 	F0 = mix(F0, albedoColor, vec3(metalness));
@@ -365,13 +380,14 @@ void main(){
 	//vec4 cubemapColor = IlluminateByCubemap(diffuseTexColor,specularTexColor, normalized_normal, normalized_view);
 
 	// point light
-	vec3 pointLightColor = CalcPointLights(albedoColor, metalness,roughness,F0, normal, normalized_view, viewDistance);
+	vec3 pointLightColor = CalcPointLights(worldPos.xyz, albedoColor, metalness,roughness,F0, normal, normalized_view, viewDistance);
 
 	// spot light with shadow
 	//vec4 spotLightColor = CalcSpotLights(diffuseTexColor, specularTexColor, normalized_normal, normalized_view);
 
 	// directional light
-	vec3 directionLightColor = CalcDirectionalLight(g_directionalLight,albedoColor, metalness,roughness,F0, normal, normalized_view);
+	vec4 dLightLightSpacePos = directionalLightTransform * worldPos;
+	vec3 directionLightColor = CalcDirectionalLight(g_directionalLight, dLightLightSpacePos, albedoColor, metalness,roughness,F0, normal, normalized_view);
 
 	vec3 allColor = ambientLightColor + pointLightColor + directionLightColor;
 

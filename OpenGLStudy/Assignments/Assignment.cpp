@@ -270,6 +270,10 @@ void Assignment::Tick(float second_since_lastFrame)
 		{
 			g_renderMode = Graphics::ERM_Deferred_Depth;
 		}
+		if (_windowInput->IsKeyDown(GLFW_KEY_9))
+		{
+			g_renderMode = Graphics::ERM_Deferred_WorldPos;
+		}
 	}
 
 	cTransform* controledActor = nullptr;
