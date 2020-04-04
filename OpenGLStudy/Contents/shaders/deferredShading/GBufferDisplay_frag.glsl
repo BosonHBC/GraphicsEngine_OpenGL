@@ -18,7 +18,7 @@ layout(std140, binding = 0) uniform uniformBuffer_frame
 	mat4 InvView;
 };
 
-vec4 WorldPosFromDepth(vec2 texCoord, float depth) {
+vec4 ViewPosFromDepth(vec2 texCoord, float depth) {
     float z = depth * 2.0 - 1.0;
 
     vec4 clipSpacePosition = vec4(texCoord * 2.0 - 1.0, z, 1.0);
@@ -26,10 +26,7 @@ vec4 WorldPosFromDepth(vec2 texCoord, float depth) {
 
     // Perspective division
     viewSpacePosition /= viewSpacePosition.w;
-
-    vec4 worldSpacePosition = InvView * viewSpacePosition;
-
-    return worldSpacePosition;
+    return viewSpacePosition;
 }
 uniform int displayMode;
 void main()
@@ -60,10 +57,10 @@ void main()
         break;
         case 6:
             float depth = texture(gDepth, texCoord).r;
-	        vec3 worldPos = WorldPosFromDepth(texCoord, depth).xyz;
+	        vec4 ViewSpacePos = ViewPosFromDepth(texCoord, depth);
             //worldPos /= 500.f;
            // worldPos = (worldPos)/ 2.f;
-            FragColor = vec4(worldPos , 1.0);
+            FragColor = vec4((InvView * ViewSpacePos).xyz , 1.0);
         break;
         default:
         FragColor = vec4(0,0,0,1);

@@ -301,6 +301,8 @@ vec3 CalcPointLight(int idx, PointLight pLight, vec3 worldPos,
 vec3 albedoColor, float metalness, float roughness, vec3 f0, vec3 vN, vec3 vV, float viewDistance){
 		vec3 vL = pLight.position - worldPos;
 		float dist = length(vL);
+		if(dist >  pLight.radius)
+			return vec3(0,0,0);
 		vL = normalize(vL); // normalzied light direction
 		vec3 vH = normalize(vV + vL); // halfway vector
 		float distRate = dist / pLight.radius;
@@ -337,7 +339,7 @@ vec3 CalcPointLights(vec3 worldPos, vec3 albedoColor, float metalness, float rou
 //-------------------------------------------------------------------------
 // Main
 //-------------------------------------------------------------------------
-vec4 WorldPosFromDepth(vec2 texCoord, float depth) {
+vec4 ViewPosFromDepth(vec2 texCoord, float depth) {
     float z = depth * 2.0 - 1.0;
 
     vec4 clipSpacePosition = vec4(texCoord * 2.0 - 1.0, z, 1.0);
@@ -345,18 +347,16 @@ vec4 WorldPosFromDepth(vec2 texCoord, float depth) {
 
     // Perspective division
     viewSpacePosition /= viewSpacePosition.w;
-
-    vec4 worldSpacePosition = InvView * viewSpacePosition;
-
-    return worldSpacePosition;
+    return viewSpacePosition;
 }
+
 void main(){
     vec2 texCoord = TexCoords;
     texCoord.y = 1-texCoord.y;
 
 	vec3 ViewPosition = vec3(InvView[3][0], InvView[3][1], InvView[3][2]);
 	float depth = texture(gDepth, texCoord).r;
-	vec4 worldPos = WorldPosFromDepth(texCoord, depth);
+	vec4 worldPos = InvView * ViewPosFromDepth(texCoord, depth);
 	// shared values
 	vec3 normal = texture(gNormalRoughness, texCoord).rgb;
 	vec3 view = ViewPosition - worldPos.xyz;

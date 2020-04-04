@@ -331,6 +331,8 @@ vec3 CalcPointLight(int idx, PointLight pLight,
 vec3 albedoColor, float metalness, float roughness, vec3 f0, vec3 vN, vec3 vV, float viewDistance){
 		vec3 vL = pLight.position - fragPos;
 		float dist = length(vL);
+		if(dist >  pLight.radius)
+			return vec3(0,0,0);
 		vL = normalize(vL); // normalzied light direction
 		vec3 vH = normalize(vV + vL); // halfway vector
 		float distRate = dist / pLight.radius;
