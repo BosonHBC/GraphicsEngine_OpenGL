@@ -32,5 +32,7 @@ namespace Graphics
 		// R16G16B16 
 		cTexture::HANDLE m_iorHolder;
 
+		// depth texture from the frame buffer
+		cTexture::HANDLE m_depthHolder;
 	};
 }

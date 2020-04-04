@@ -39,15 +39,14 @@ namespace Graphics {
 	
 	}
 
-	glm::mat4 cDirectionalLight::CalculateLightTransform() const
+	glm::mat4 cDirectionalLight::GetViewMatrix() const
 	{
-		// PV matrix
-		return m_lightPrjectionMatrix * glm::lookAt(Transform.Forward() * 500.f, glm::vec3(0, 0, 0), glm::vec3(0, 1, 0));
+		return glm::lookAt(Transform.Forward() * 500.f, glm::vec3(0, 0, 0), glm::vec3(0, 1, 0));
 	}
 
 	void cDirectionalLight::SetLightUniformTransform()
 	{
-		glm::mat4 lightTransform = CalculateLightTransform();
+		glm::mat4 lightTransform = GetProjectionmatrix() * GetViewMatrix();
 		// light transform
 		glUniformMatrix4fv(m_directionalLightTransformID, 1, GL_FALSE, glm::value_ptr(lightTransform));
 		assert(GL_NO_ERROR == glGetError());

@@ -40,10 +40,13 @@ public:
 	void UpdateUniformLocation(GLuint i_programID);
 
 	/** Getters*/
-	glm::mat4 GetViewMatrix();
-	glm::vec3 CamLocation() const { return Transform.Position(); }
+	const glm::mat4& GetViewMatrix() { return m_viewMatrix; }
+	glm::mat4 GetInvViewMatrix();
 	const glm::mat4& GetProjectionMatrix() const { return m_projectionMatrix; }
+	glm::mat4 GetInvprojectionMatrix();
 
+	glm::vec3 CamLocation() const { return Transform.Position(); }
+	
 	cTransform Transform;
 protected:
 	/** private member variables*/

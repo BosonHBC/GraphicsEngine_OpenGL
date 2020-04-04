@@ -6,8 +6,10 @@ out vec3 TexCoords;
 layout(std140, binding = 0) uniform uniformBuffer_frame
 {
 	mat4 PVMatrix;
-    // The position of the viewpoint
-    vec3 ViewPosition;
+	mat4 ProjectionMatrix;
+	mat4 InvProj;
+	mat4 ViewMatrix;
+	mat4 InvView;
 };
 
 void main()

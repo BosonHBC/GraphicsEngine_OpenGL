@@ -12,10 +12,7 @@ namespace Graphics
 	extern unsigned int s_currentRenderPass;
 	extern cEffect* s_currentEffect;
 	extern sDataRequiredToRenderAFrame* s_dataRenderingByGraphicThread;
-	extern cUniformBuffer s_uniformBuffer_frame;
-	extern cUniformBuffer s_uniformBuffer_drawcall;
-	extern cUniformBuffer s_uniformBuffer_Lighting;
-	extern cUniformBuffer s_uniformBuffer_ClipPlane;
+	extern 	std::map<eUniformBufferType, cUniformBuffer> g_uniformBufferMap;
 	extern UniformBufferFormats::sLighting s_globalLightingData;
 	extern cFrameBuffer s_brdfLUTTexture;
 	extern 	cFrameBuffer g_hdrBuffer;
@@ -33,10 +30,10 @@ namespace Graphics
 	void RenderQuad()
 	{
 		UniformBufferFormats::sFrame defaultFrameData;
-		s_uniformBuffer_frame.Update(&defaultFrameData);
+		g_uniformBufferMap[UBT_Frame].Update(&defaultFrameData);
 		
 		UniformBufferFormats::sDrawCall defaultDrawcallData;
-		s_uniformBuffer_drawcall.Update(&defaultDrawcallData);
+		g_uniformBufferMap[UBT_Drawcall].Update(&defaultDrawcallData);
 
 		// Render quad
 		cModel* _quad = cModel::s_manager.Get(s_quadHandle);
@@ -93,7 +90,7 @@ namespace Graphics
 
 		s_globalLightingData.pointLightCount = s_dataRenderingByGraphicThread->s_pointLights.size();
 		s_globalLightingData.spotLightCount = s_dataRenderingByGraphicThread->s_spotLights.size();
-		s_uniformBuffer_Lighting.Update(&s_globalLightingData);
+		g_uniformBufferMap[UBT_Lighting].Update(&s_globalLightingData);
 
 	}
 
@@ -145,8 +142,7 @@ namespace Graphics
 
 				// for each light, needs to update the frame data
 				Graphics::UniformBufferFormats::sFrame _frameData_PointLightShadow;
-				_frameData_PointLightShadow.ViewPosition = it->Transform.Position();
-				s_uniformBuffer_frame.Update(&_frameData_PointLightShadow);
+				g_uniformBufferMap[UBT_Frame].Update(&_frameData_PointLightShadow);
 
 				// point need extra uniform variables to be passed in to shader
 				it->SetupLight(s_currentEffect->GetProgramID(), i);
@@ -185,9 +181,9 @@ namespace Graphics
 			if (_spotLightFB) {
 
 				// for each light, needs to update the frame data
-				Graphics::UniformBufferFormats::sFrame _frameData_SpotLightShadow(it->CalculateLightTransform());
-				_frameData_SpotLightShadow.ViewPosition = it->Transform.Position();
-				s_uniformBuffer_frame.Update(&_frameData_SpotLightShadow);
+				Graphics::UniformBufferFormats::sFrame _frameData_SpotLightShadow(it->GetProjectionmatrix(), it->GetViewMatrix());
+
+				g_uniformBufferMap[UBT_Frame].Update(&_frameData_SpotLightShadow);
 
 				// write buffer to the texture
 				_spotLightFB->Write();
@@ -218,6 +214,7 @@ namespace Graphics
 		s_currentEffect->UnUseEffect();
 	}
 
+	// Update lighting data, update BRDF-LUT texture, update environment captures for irradiance and pre-filtering mapping
 	void UpdateInfoForPBR()
 	{
 		// Update Lighting Data
@@ -286,7 +283,7 @@ namespace Graphics
 		for (size_t i = 0; i < sphereOffset; ++i)
 		{
 			// 1. Update draw call data
-			s_uniformBuffer_drawcall.Update(&UniformBufferFormats::sDrawCall(renderList[i].second.M(), renderList[i].second.TranspostInverse()));
+			g_uniformBufferMap[UBT_Drawcall].Update(&UniformBufferFormats::sDrawCall(renderList[i].second.M(), renderList[i].second.TranspostInverse()));
 			// 2. Draw
 			cModel* _model = cModel::s_manager.Get(renderList[i].first);
 			if (_model) {
@@ -300,7 +297,7 @@ namespace Graphics
 			for (int j = 0; j < 5; ++j)
 			{
 				// 1. Update draw call data
-				s_uniformBuffer_drawcall.Update(&UniformBufferFormats::sDrawCall(renderList[i * 5 + j + sphereOffset].second.M(), renderList[i * 5 + j + sphereOffset].second.TranspostInverse()));
+				g_uniformBufferMap[UBT_Drawcall].Update(&UniformBufferFormats::sDrawCall(renderList[i * 5 + j + sphereOffset].second.M(), renderList[i * 5 + j + sphereOffset].second.TranspostInverse()));
 				// 2. Draw
 				cModel* _model = cModel::s_manager.Get(renderList[i * 5 + j + sphereOffset].first);
 				if (_model) {
@@ -355,7 +352,7 @@ namespace Graphics
 		for (size_t i = 0; i < sphereOffset; ++i)
 		{
 			// 1. Update draw call data
-			s_uniformBuffer_drawcall.Update(&UniformBufferFormats::sDrawCall(renderList[i].second.M(), renderList[i].second.TranspostInverse()));
+			g_uniformBufferMap[UBT_Drawcall].Update(&UniformBufferFormats::sDrawCall(renderList[i].second.M(), renderList[i].second.TranspostInverse()));
 			// 2. Draw
 			cModel* _model = cModel::s_manager.Get(renderList[i].first);
 			if (_model) {
@@ -369,7 +366,7 @@ namespace Graphics
 			for (int j = 0; j < 5; ++j)
 			{
 				// 1. Update draw call data
-				s_uniformBuffer_drawcall.Update(&UniformBufferFormats::sDrawCall(renderList[i * 5 + j + sphereOffset].second.M(), renderList[i * 5 + j + sphereOffset].second.TranspostInverse()));
+				g_uniformBufferMap[UBT_Drawcall].Update(&UniformBufferFormats::sDrawCall(renderList[i * 5 + j + sphereOffset].second.M(), renderList[i * 5 + j + sphereOffset].second.TranspostInverse()));
 				// 2. Draw
 				cModel* _model = cModel::s_manager.Get(renderList[i * 5 + j + sphereOffset].first);
 				if (_model) {
@@ -386,13 +383,12 @@ namespace Graphics
 
 	void DisplayGBuffer_Pass()
 	{
-
 		glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-		s_currentEffect = GetEffectByKey(ETT_GBufferDisplay);		
+		s_currentEffect = GetEffectByKey(EET_GBufferDisplay);		
 		s_currentEffect->UseEffect();
 		const ERenderMode& renderMode = s_dataRenderingByGraphicThread->g_renderMode;
 		s_currentEffect->SetInteger("displayMode", static_cast<GLint>(renderMode) - 2);
-		GLenum _textureUnits[3] = { GL_TEXTURE0 , GL_TEXTURE1 ,GL_TEXTURE2 };
+		GLenum _textureUnits[4] = { GL_TEXTURE0 , GL_TEXTURE1 ,GL_TEXTURE2, GL_TEXTURE3 };
 		g_GBuffer.Read(_textureUnits);
 		RenderQuad();
 		s_currentEffect->UnUseEffect();
@@ -400,7 +396,18 @@ namespace Graphics
 
 	void Deferred_Lighting_Pass()
 	{
+		return;
 		glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+		s_currentEffect = GetEffectByKey(EET_DeferredLighting);
+		s_currentEffect->UseEffect();
+
+		GLenum _textureUnits[4] = { GL_TEXTURE0 , GL_TEXTURE1 ,GL_TEXTURE2, GL_TEXTURE3 };
+		g_GBuffer.Read(_textureUnits);
+		UpdateInfoForPBR();
+
+		RenderQuad();
+
+		s_currentEffect->UnUseEffect();
 	}
 
 
@@ -431,7 +438,7 @@ namespace Graphics
 				arrowTransform[i].SetPosition(it->second.Position());
 				arrowTransform[i].SetScale(glm::vec3(2, 10, 2));
 				arrowTransform[i].Update();
-				s_uniformBuffer_drawcall.Update(&UniformBufferFormats::sDrawCall(arrowTransform[i].M(), arrowTransform[i].TranspostInverse()));
+				g_uniformBufferMap[UBT_Drawcall].Update(&UniformBufferFormats::sDrawCall(arrowTransform[i].M(), arrowTransform[i].TranspostInverse()));
 
 				if (_model) {
 					_arrowMat->SetUnlitColor(s_arrowColor[i]);
@@ -462,7 +469,7 @@ namespace Graphics
 			s_currentEffect->SetVec3("color", glm::vec3(1, 1, 1));
 			_tempTransform.SetPosition(_outerBV.c());
 			_tempTransform.Update();
-			s_uniformBuffer_drawcall.Update(&UniformBufferFormats::sDrawCall(_tempTransform.M(), _tempTransform.TranspostInverse()));
+			g_uniformBufferMap[UBT_Drawcall].Update(&UniformBufferFormats::sDrawCall(_tempTransform.M(), _tempTransform.TranspostInverse()));
 			_Point->Render();
 
 			// inner
@@ -470,7 +477,7 @@ namespace Graphics
 			s_currentEffect->SetVec3("color", glm::vec3(1, 0, 0));
 			_tempTransform.SetPosition(_innerBV.c());
 			_tempTransform.Update();
-			s_uniformBuffer_drawcall.Update(&UniformBufferFormats::sDrawCall(_tempTransform.M(), _tempTransform.TranspostInverse()));
+			g_uniformBufferMap[UBT_Drawcall].Update(&UniformBufferFormats::sDrawCall(_tempTransform.M(), _tempTransform.TranspostInverse()));
 			_Point->Render();
 		}
 		s_currentEffect->UnUseEffect();

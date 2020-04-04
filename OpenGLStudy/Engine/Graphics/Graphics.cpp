@@ -38,11 +38,8 @@ namespace Graphics {
 
 	// Global data
 	// ------------------------------------------------------------------------------------------------------------------------------------
-	cUniformBuffer s_uniformBuffer_frame(eUniformBufferType::UBT_Frame);
-	cUniformBuffer s_uniformBuffer_drawcall(eUniformBufferType::UBT_Drawcall);
-	cUniformBuffer s_uniformBuffer_Lighting(eUniformBufferType::UBT_Lighting);
-	cUniformBuffer s_uniformBuffer_ClipPlane(eUniformBufferType::UBT_ClipPlane);
-	cUniformBuffer s_uniformBuffer_PostProcessing(eUniformBufferType::UBT_PostProcessing);
+	// Uniform buffer maps
+	std::map<eUniformBufferType, cUniformBuffer> g_uniformBufferMap;
 
 	// Pre-defined mesh & textures
 	cModel::HANDLE s_cubeHandle;
@@ -80,6 +77,18 @@ namespace Graphics {
 
 	// Functions
 	// ------------------------------------------------------------------------------------------------------------------------------------
+	bool CreateUniformBuffer(const eUniformBufferType& i_bufferFormat)
+	{
+		g_uniformBufferMap.insert({ i_bufferFormat, cUniformBuffer(i_bufferFormat) });
+		if (g_uniformBufferMap[i_bufferFormat].Initialize(nullptr)) {
+			g_uniformBufferMap[i_bufferFormat].Bind();
+			return true;
+		}
+		else {
+			printf("Fail to initialize uniformbuffer_%d\n", static_cast<int>(i_bufferFormat));
+			return false;
+		}
+	}
 
 	void Gizmo_DrawDebugCaptureVolume();
 	void RenderQuad();
@@ -302,19 +311,38 @@ namespace Graphics {
 			}
 			// Create G-Buffer Display
 			{
-				if (!(result = CreateEffect(ETT_GBufferDisplay,
+				if (!(result = CreateEffect(EET_GBufferDisplay,
 					"hdrShader/hdr_shader_vert.glsl",
 					"deferredShading/GBufferDisplay_frag.glsl"
 				))) {
 					printf("Fail to create GBuffer effect.\n");
 					return result;
 				}
-				cEffect* hdrEffect = GetEffectByKey(ETT_GBufferDisplay);
+				cEffect* hdrEffect = GetEffectByKey(EET_GBufferDisplay);
 				hdrEffect->UseEffect();
 				hdrEffect->SetInteger("gAlbedoMetallic", 0);
 				hdrEffect->SetInteger("gNormalRoughness", 1);
 				hdrEffect->SetInteger("gIOR", 2);
+				hdrEffect->SetInteger("gDepth", 3);
 				hdrEffect->UnUseEffect();
+			}
+			// Create Deferred-Lighting pass
+			{/*
+				if (!(result = CreateEffect(EET_DeferredLighting,
+					"hdrShader/hdr_shader_vert.glsl",
+					"deferredShading/DeferredLighting_frag.glsl"
+				))) {
+					printf("Fail to create Deferred lighting effect.\n");
+					return result;
+				}
+
+				cEffect* dLighting = GetEffectByKey(EET_DeferredLighting);
+				dLighting->UseEffect();
+				dLighting->SetInteger("gAlbedoMetallic", 0);
+				dLighting->SetInteger("gNormalRoughness", 1);
+				dLighting->SetInteger("gIOR", 2);
+				dLighting->SetInteger("gDepth", 3);
+				dLighting->UnUseEffect();*/
 			}
 			// validate all programs
 			for (auto it : s_KeyToEffect_map)
@@ -322,49 +350,12 @@ namespace Graphics {
 				it.second->ValidateProgram();
 			}
 		}
-
-		// Initialize uniform buffer
-		// Frame buffer
-		if (result = s_uniformBuffer_frame.Initialize(nullptr)) {
-			s_uniformBuffer_frame.Bind();
-		}
-		else {
-			printf("Fail to initialize uniformBuffer_frame\n");
-			return result;
-		}
-		// draw call
-		if (result = s_uniformBuffer_drawcall.Initialize(nullptr)) {
-			s_uniformBuffer_drawcall.Bind();
-		}
-		else {
-			printf("Fail to initialize uniformBuffer_drawcall\n");
-			return result;
-		}
-		if (result = s_uniformBuffer_Lighting.Initialize(nullptr)) {
-			s_uniformBuffer_Lighting.Bind();
-		}
-		else
-		{
-			printf("Fail to initialize uniformBuffer_Lighting\n");
-			return result;
-		}
-		if (result = s_uniformBuffer_ClipPlane.Initialize(nullptr))
-		{
-			s_uniformBuffer_ClipPlane.Bind();
-		}
-		else {
-			printf("Fail to initialize uniformBuffer_ClipPlane\n");
-			return result;
-		}
-		if (result = s_uniformBuffer_PostProcessing.Initialize(nullptr))
-		{
-			s_uniformBuffer_PostProcessing.Bind();
-		}
-		else {
-			printf("Fail to initialize uniformBuffer_PostProcessing\n");
-			return result;
-		}
-
+		result = CreateUniformBuffer(UBT_Frame);
+		result = CreateUniformBuffer(UBT_Drawcall);
+		result = CreateUniformBuffer(UBT_Lighting);
+		result = CreateUniformBuffer(UBT_ClipPlane);
+		result = CreateUniformBuffer(UBT_PostProcessing);
+		assert(result);
 		// Initialize environment probes
 		{
 			// This is for changing rect hdr map to cubemap
@@ -471,7 +462,7 @@ namespace Graphics {
 		// After data has been submitted, swap the data
 		std::swap(s_dataSubmittedByApplicationThread, s_dataRenderingByGraphicThread);
 
-		s_uniformBuffer_ClipPlane.Update(&s_dataRenderingByGraphicThread->s_ClipPlane);
+		g_uniformBufferMap[UBT_ClipPlane].Update(&s_dataRenderingByGraphicThread->s_ClipPlane);
 
 		/** 2. Convert all equirectangular HDR maps to cubemap */
 		{
@@ -491,8 +482,7 @@ namespace Graphics {
 				glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
 				UniformBufferFormats::sFrame _cubemapFrameData(s_cubemapProbe.GetProjectionMat4(), s_cubemapProbe.GetViewMat4(i));
-				_cubemapFrameData.ViewPosition = s_cubemapProbe.GetPosition();
-				s_uniformBuffer_frame.Update(&_cubemapFrameData);
+				g_uniformBufferMap[UBT_Frame].Update(&_cubemapFrameData);
 
 				// Render cube
 				cModel* _cube = cModel::s_manager.Get(s_cubeHandle);
@@ -542,9 +532,9 @@ namespace Graphics {
 		s_whenDataHasBeenSwappedInRenderThread.notify_one();
 
 		// Update cubemap weights before rendering, actually, this step should be done at the application thread
-		EnvironmentCaptureManager::UpdatePointOfInterest(s_dataRenderingByGraphicThread->s_renderPasses[3].FrameData.ViewPosition);
-		s_uniformBuffer_ClipPlane.Update(&s_dataRenderingByGraphicThread->s_ClipPlane);
-		s_uniformBuffer_PostProcessing.Update(&s_dataRenderingByGraphicThread->s_PostProcessing);
+		EnvironmentCaptureManager::UpdatePointOfInterest(s_dataRenderingByGraphicThread->s_renderPasses[3].FrameData.GetViewPosition());
+		g_uniformBufferMap[UBT_ClipPlane].Update(&s_dataRenderingByGraphicThread->s_ClipPlane);
+		g_uniformBufferMap[UBT_PostProcessing].Update(&s_dataRenderingByGraphicThread->s_PostProcessing);
 		/** 2. Start to render pass one by one */
 		if (s_dataRenderingByGraphicThread->g_renderMode == ERM_ForwardShading)
 		{
@@ -555,7 +545,7 @@ namespace Graphics {
 				// Update current render pass
 				s_currentRenderPass = i;
 				// Update frame data
-				s_uniformBuffer_frame.Update(&s_dataRenderingByGraphicThread->s_renderPasses[i].FrameData);
+				g_uniformBufferMap[UBT_Frame].Update(&s_dataRenderingByGraphicThread->s_renderPasses[i].FrameData);
 				// Execute pass function
 				s_dataRenderingByGraphicThread->s_renderPasses[i].RenderPassFunction();
 			}
@@ -567,15 +557,16 @@ namespace Graphics {
 			/** 1. Capture the whole scene with PBR material*/
 			g_GBuffer.Write();
 			s_currentRenderPass = 3; // PBR pass
-			s_uniformBuffer_frame.Update(&s_dataRenderingByGraphicThread->s_renderPasses[s_currentRenderPass].FrameData);
+			g_uniformBufferMap[UBT_Frame].Update(&s_dataRenderingByGraphicThread->s_renderPasses[s_currentRenderPass].FrameData);
 			GBuffer_Pass();
 			g_GBuffer.UnWrite();
-			
-			/** 2. Display GBuffer alternatively */
-			if (s_dataRenderingByGraphicThread->g_renderMode != ERM_DeferredShading)
-				DisplayGBuffer_Pass();
-			else
+
+			/** 2A. Show the deferred shading */
+			if (s_dataRenderingByGraphicThread->g_renderMode == ERM_DeferredShading)
 				Deferred_Lighting_Pass();
+			/** 2B. Display GBuffer alternatively */
+			else
+				DisplayGBuffer_Pass();
 
 			/** 3. Display cubemap at the end */
 			{
@@ -586,7 +577,7 @@ namespace Graphics {
 				);
 				glBindFramebuffer(GL_FRAMEBUFFER, 0);
 				s_currentRenderPass = 4; // Cubemap pass
-				s_uniformBuffer_frame.Update(&s_dataRenderingByGraphicThread->s_renderPasses[s_currentRenderPass].FrameData);
+				g_uniformBufferMap[UBT_Frame].Update(&s_dataRenderingByGraphicThread->s_renderPasses[s_currentRenderPass].FrameData);
 				CubeMap_Pass();
 			}
 		}
@@ -640,7 +631,7 @@ namespace Graphics {
 		for (auto it = renderMap.begin(); it != renderMap.end(); ++it)
 		{
 			// 1. Update draw call data
-			s_uniformBuffer_drawcall.Update(&UniformBufferFormats::sDrawCall(it->second.M(), it->second.TranspostInverse()));
+			g_uniformBufferMap[UBT_Drawcall].Update(&UniformBufferFormats::sDrawCall(it->second.M(), it->second.TranspostInverse()));
 			// 2. Draw
 			cModel* _model = cModel::s_manager.Get(it->first);
 			if (_model) {
@@ -657,20 +648,11 @@ namespace Graphics {
 	bool CleanUp()
 	{
 		auto result = true;
-		if (!(result = s_uniformBuffer_frame.CleanUp()))
-			printf("Fail to cleanup uniformBuffer_frame\n");
-		if (!(result = s_uniformBuffer_drawcall.CleanUp()))
-			printf("Fail to cleanup uniformBuffer_drawcall\n");
-		if (!(result = cMatBlinn::GetUniformBuffer().CleanUp()))
-			printf("Fail to cleanup uniformBuffer_MatBlinnPhong\n");
-		if (!(result = cMatPBRMR::GetUniformBuffer().CleanUp()))
-			printf("Fail to cleanup uniformBuffer_PBRMR\n");
-		if (!(result = s_uniformBuffer_Lighting.CleanUp()))
-			printf("Fail to cleanup uniformBuffer_Lighting\n");
-		if (!(result = s_uniformBuffer_ClipPlane.CleanUp()))
-			printf("Fail to cleanup uniformBuffer_ClipPlane\n");
-		if (!(result = s_uniformBuffer_PostProcessing.CleanUp()))
-			printf("Fail to cleanup uniformBuffer_PostProcessing\n");
+
+		for (auto it : g_uniformBufferMap)
+		{
+			it.second.CleanUp();
+		}
 
 		cModel::s_manager.Release(s_arrowHandle);
 		cModel::s_manager.Release(s_cubeHandle);
@@ -723,16 +705,7 @@ namespace Graphics {
 
 	Graphics::cUniformBuffer* GetUniformBuffer(const eUniformBufferType& i_uniformBufferType)
 	{
-		switch (i_uniformBufferType)
-		{
-		case UBT_Frame:
-			return &s_uniformBuffer_frame;
-			break;
-		default:
-			return nullptr;
-			break;
-		}
-
+		return &g_uniformBufferMap[i_uniformBufferType];
 	}
 
 	Graphics::cModel::HANDLE GetPrimitive(const EPrimitiveType& i_primitiveType)

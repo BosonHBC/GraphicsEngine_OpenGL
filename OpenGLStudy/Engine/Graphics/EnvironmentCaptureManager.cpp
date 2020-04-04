@@ -162,7 +162,6 @@ namespace Graphics
 							Graphics::SetCurrentPass(_currentRenderPass);
 							// Update frame data using the environment probes' projection and view matrix
 							Graphics::UniformBufferFormats::sFrame _frame(g_CaptureProbesList[k].EnvironmentProbe.GetProjectionMat4(), g_CaptureProbesList[k].EnvironmentProbe.GetViewMat4(i));
-							_frame.ViewPosition = g_CaptureProbesList[k].BV.c();
 							_uniformBuffer_frame->Update(&_frame);
 							// Execute pass function
 							i_renderThreadData->s_renderPasses[_currentRenderPass].RenderPassFunction();
@@ -195,7 +194,6 @@ namespace Graphics
 						glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
 						UniformBufferFormats::sFrame _cubemapFrameData(g_CaptureProbesList[k].IrradianceProbe.GetProjectionMat4(), g_CaptureProbesList[k].IrradianceProbe.GetViewMat4(i));
-						_cubemapFrameData.ViewPosition = g_CaptureProbesList[k].IrradianceProbe.GetPosition();
 						_uniformBuffer_frame->Update(&_cubemapFrameData);
 
 						// Render cube
@@ -242,7 +240,6 @@ namespace Graphics
 							glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_CUBE_MAP_POSITIVE_X + i, g_CaptureProbesList[k].PrefilterProbe.GetCubemapTextureID(), mip);
 							glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 							UniformBufferFormats::sFrame _cubemapFrameData(g_CaptureProbesList[k].PrefilterProbe.GetProjectionMat4(), g_CaptureProbesList[k].PrefilterProbe.GetViewMat4(i));
-							_cubemapFrameData.ViewPosition = g_CaptureProbesList[k].PrefilterProbe.GetPosition();
 							_uniformBuffer_frame->Update(&_cubemapFrameData);
 
 							// Render cube

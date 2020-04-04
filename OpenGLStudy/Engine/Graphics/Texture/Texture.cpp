@@ -63,6 +63,9 @@ namespace Graphics {
 			case ETT_FRAMEBUFFER_RGB16:
 				result = _texture->LoadRGBA16Texture(i_path, i_override_width, i_override_height);
 				break;
+			case ETT_FRAMEBUFFER_DEPTH16:
+				result = _texture->LoadDepth16Texture(i_path, i_override_width, i_override_height);
+				break;
 			case ETT_FILE_HDR_IMAGE:
 				result = _texture->LoadHDRImageFromFile(i_path);
 				break;
@@ -507,6 +510,34 @@ namespace Graphics {
 
 		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
 		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+		assert(GL_NO_ERROR == glGetError());
+
+		// unbind texture
+		glBindTexture(GL_TEXTURE_2D, 0);
+		return result;
+	}
+
+	bool cTexture::LoadDepth16Texture(const std::string& i_type_id, const GLuint& i_width, const GLuint& i_height)
+	{
+		auto result = true;
+		m_width = i_width;
+		m_height = i_height;
+
+		glGenTextures(1, &m_textureID);
+		glBindTexture(GL_TEXTURE_2D, m_textureID);
+
+		// allocate space for the texture with null data fill in
+		glTexImage2D(GL_TEXTURE_2D, 0, GL_DEPTH_COMPONENT24, m_width, m_height, 0, GL_DEPTH_COMPONENT, GL_FLOAT, nullptr);
+
+		// Set up texture wrapping in s,t axis
+		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
+		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
+
+		//glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_COMPARE_FUNC, GL_LEQUAL);
+		//glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_COMPARE_MODE, GL_NONE);
+
 		assert(GL_NO_ERROR == glGetError());
 
 		// unbind texture

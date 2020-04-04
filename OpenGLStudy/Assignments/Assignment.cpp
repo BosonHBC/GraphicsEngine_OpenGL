@@ -100,7 +100,7 @@ void Assignment::CreateCamera()
 {
 	m_editorCamera = new  cEditorCamera(glm::vec3(0, 150, 250), 10, 0, 300, 10.f);
 	float _aspect = (float)(GetCurrentWindow()->GetBufferWidth()) / (float)(GetCurrentWindow()->GetBufferHeight());
-	m_editorCamera->CreateProjectionMatrix(glm::radians(60.f), _aspect, 1.f, 3000.0f);
+	m_editorCamera->CreateProjectionMatrix(glm::radians(60.f), _aspect, 10.f, 2000.0f);
 }
 
 void Assignment::CreateLight()
@@ -128,7 +128,6 @@ void Assignment::SubmitDataToBeRender(const float i_seconds_elapsedSinceLastLoop
 
 	// Frame data from camera
 	Graphics::UniformBufferFormats::sFrame _frameData_Camera(m_editorCamera->GetProjectionMatrix(), m_editorCamera->GetViewMatrix());
-	_frameData_Camera.ViewPosition = m_editorCamera->CamLocation();
 	// Submit geometry data
 	SubmitSceneData(&_frameData_Camera);
 
@@ -266,6 +265,10 @@ void Assignment::Tick(float second_since_lastFrame)
 		if (_windowInput->IsKeyDown(GLFW_KEY_7))
 		{
 			g_renderMode = Graphics::ERM_Deferred_IOR;
+		}
+		if (_windowInput->IsKeyDown(GLFW_KEY_8))
+		{
+			g_renderMode = Graphics::ERM_Deferred_Depth;
 		}
 	}
 
@@ -445,7 +448,7 @@ void Assignment::SubmitShadowData()
 
 	// Frame data from directional light
 	if (dLight && dLight->IsShadowEnabled()) {
-		Graphics::UniformBufferFormats::sFrame _frameData_Shadow(dLight->CalculateLightTransform());
+		Graphics::UniformBufferFormats::sFrame _frameData_Shadow(dLight->GetProjectionmatrix(), dLight->GetViewMatrix());
 		// directional light shadow map pass
 		Graphics::SubmitDataToBeRendered(_frameData_Shadow, _renderingMap, &Graphics::DirectionalShadowMap_Pass);
 	}

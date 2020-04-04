@@ -5,7 +5,6 @@ namespace Graphics {
 
 	cUniformBuffer::~cUniformBuffer()
 	{
-		CleanUp();
 	}
 
 	bool cUniformBuffer::Initialize(const void* const i_data)

@@ -7,6 +7,7 @@ in vec2 TexCoords;
 uniform sampler2D gAlbedoMetallic;
 uniform sampler2D gNormalRoughness;
 uniform sampler2D gIOR;
+uniform sampler2D gDepth;
 
 uniform int displayMode;
 void main()
@@ -31,6 +32,9 @@ void main()
         break;
         case 4:
             FragColor = vec4(texture(gIOR, texCoord).rgb/maxIORinNature, 1.0);
+        break;
+        case 5:
+            FragColor = vec4(vec3(texture(gDepth, texCoord).r-0.9) * 10, 1.0);
         break;
         default:
         FragColor = vec4(0,0,0,1);

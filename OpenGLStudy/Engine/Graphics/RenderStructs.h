@@ -17,6 +17,7 @@ namespace Graphics{
 		ERM_Deferred_Roughness,
 		ERM_Deferred_Normal,
 		ERM_Deferred_IOR,
+		ERM_Deferred_Depth,
 	};
 
 	// Rendering thread data and data structures

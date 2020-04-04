@@ -23,6 +23,7 @@ namespace Graphics {
 		ETT_FRAMEBUFFER_RGBA16 = 11,
 		ETT_FRAMEBUFFER_RGBA8 = 12,
 		ETT_FRAMEBUFFER_RGB16 = 13,
+		ETT_FRAMEBUFFER_DEPTH16 = 14,
 		ETT_INVALID = 0xff
 	};
 
@@ -70,6 +71,7 @@ namespace Graphics {
 		bool LoadRGBA16Texture(const std::string& i_type_id, const GLuint& i_width, const GLuint& i_height);
 		bool LoadRGBA8Texture(const std::string& i_type_id, const GLuint& i_width, const GLuint& i_height);
 		bool LoadRGB16Texture(const std::string& i_type_id, const GLuint& i_width, const GLuint& i_height);
+		bool LoadDepth16Texture(const std::string& i_type_id, const GLuint& i_width, const GLuint& i_height);
 		// Load color format texture from frame buffer
 		bool LoadPlannerReflectionTexture(const std::string& i_type_id, const GLuint& i_width, const GLuint& i_height);
 
