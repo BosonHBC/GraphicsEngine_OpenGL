@@ -18,6 +18,7 @@ uniform samplerCube PrefilterMap[MAX_COUNT_CUBEMAP_MIXING]; // 9 - 12
 
 uniform samplerCube pointLightShadowMap[MAX_COUNT_PER_LIGHT]; // 18-> 22
 uniform sampler2D directionalShadowMap; // 23
+uniform sampler2D gSSAOMap; 			// 24
 
 const vec3 gridSamplingDisk[20] =vec3[]
 (
@@ -131,19 +132,6 @@ vec3 fresnelSchlickRoughness(float cosTheta, vec3 F0, float roughness)
 //-------------------------------------------------------------------------
 // Shadow Fucntions
 //-------------------------------------------------------------------------
-/*
-float readShadowMap(vec3 eyeDir)
-{
-    mat4 cameraViewToProjectedLightSpace = directionalLightTransform * InvView;
-	vec4 projectedEyeDir = cameraViewToProjectedLightSpace * vec4(eyeDir,1);
-    projectedEyeDir = projectedEyeDir/projectedEyeDir.w;
-
-    vec2 textureCoordinates = projectedEyeDir.xy * vec2(0.5,0.5) + vec2(0.5,0.5);
-
-    const float bias = 0.0001;
-    float depthValue = texture2D( tShadowMap, textureCoordinates ) - bias;
-    return projectedEyeDir.z * 0.5 + 0.5 < depthValue;
-}*/
 float CalcDirectionalLightShadowMap(vec3 vL, vec3 vN, vec4 DirectionalLightSpacePos)
 {
 	vec3 normalizedDeviceCoordinate = DirectionalLightSpacePos.xyz / DirectionalLightSpacePos.w;
@@ -301,6 +289,8 @@ vec3 CalcPointLight(int idx, PointLight pLight, vec3 worldPos,
 vec3 albedoColor, float metalness, float roughness, vec3 f0, vec3 vN, vec3 vV, float viewDistance){
 		vec3 vL = pLight.position - worldPos;
 		float dist = length(vL);
+		if(dist >  pLight.radius)
+			return vec3(0,0,0);
 		vL = normalize(vL); // normalzied light direction
 		vec3 vH = normalize(vV + vL); // halfway vector
 		float distRate = dist / pLight.radius;
@@ -337,7 +327,7 @@ vec3 CalcPointLights(vec3 worldPos, vec3 albedoColor, float metalness, float rou
 //-------------------------------------------------------------------------
 // Main
 //-------------------------------------------------------------------------
-vec4 WorldPosFromDepth(vec2 texCoord, float depth) {
+vec4 ViewPosFromDepth(vec2 texCoord, float depth) {
     float z = depth * 2.0 - 1.0;
 
     vec4 clipSpacePosition = vec4(texCoord * 2.0 - 1.0, z, 1.0);
@@ -345,18 +335,16 @@ vec4 WorldPosFromDepth(vec2 texCoord, float depth) {
 
     // Perspective division
     viewSpacePosition /= viewSpacePosition.w;
-
-    vec4 worldSpacePosition = InvView * viewSpacePosition;
-
-    return worldSpacePosition;
+    return viewSpacePosition;
 }
+
 void main(){
     vec2 texCoord = TexCoords;
     texCoord.y = 1-texCoord.y;
 
 	vec3 ViewPosition = vec3(InvView[3][0], InvView[3][1], InvView[3][2]);
 	float depth = texture(gDepth, texCoord).r;
-	vec4 worldPos = WorldPosFromDepth(texCoord, depth);
+	vec4 worldPos = InvView * ViewPosFromDepth(texCoord, depth);
 	// shared values
 	vec3 normal = texture(gNormalRoughness, texCoord).rgb;
 	vec3 view = ViewPosition - worldPos.xyz;
@@ -368,13 +356,14 @@ void main(){
 	vec3 albedoColor = texture(gAlbedoMetallic, texCoord).rgb;
 	float metalness = texture(gAlbedoMetallic, texCoord).a;
 	float roughness = texture(gNormalRoughness, texCoord).a;
+	float ssao = texture(gSSAOMap, texCoord).r;
 	vec3 ior = texture(gIOR, texCoord).rgb;
 	vec3 F0 = abs ((1.0 - ior) / (1.0 + ior)); //vec3(0.04);
 	F0 = F0 * F0;
 	F0 = mix(F0, albedoColor, vec3(metalness));
 
 	// ambient light
-	vec3 ambientLightColor = CalcAmbientLight(g_ambientLight,albedoColor, metalness, roughness, F0,normal,normalized_view, vR);
+	vec3 ambientLightColor = CalcAmbientLight(g_ambientLight,albedoColor, metalness, roughness, F0,normal,normalized_view, vR) * ssao;
 	
 	// cubemap light
 	//vec4 cubemapColor = IlluminateByCubemap(diffuseTexColor,specularTexColor, normalized_normal, normalized_view);

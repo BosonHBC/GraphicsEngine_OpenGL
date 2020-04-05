@@ -38,6 +38,9 @@ namespace Graphics {
 		case UBT_PostProcessing:
 			m_size = sizeof(UniformBufferFormats::sPostProcessing);
 			break;
+		case UBT_SSAO:
+			m_size = sizeof(UniformBufferFormats::sSSAO);
+			break;
 		case UBT_Invalid:
 			result = false;
 			return result;

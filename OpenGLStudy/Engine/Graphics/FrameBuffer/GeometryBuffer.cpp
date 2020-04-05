@@ -86,24 +86,43 @@ namespace Graphics
 
 	}
 
-
 	void cGBuffer::Read(GLenum* i_textureIDs)
+	{
+		ReadAlbedoMetallic(i_textureIDs[0]);
+		ReadNormalRoughness(i_textureIDs[1]);
+		ReadIOR(i_textureIDs[2]);
+		ReadDepth(i_textureIDs[3]);
+	}
+
+	void cGBuffer::ReadAlbedoMetallic(GLenum i_textureID)
 	{
 		cTexture* _albedoMetallic = cTexture::s_manager.Get(m_renderToTexture);
 		if (_albedoMetallic) {
-			_albedoMetallic->UseTexture(i_textureIDs[0]);
+			_albedoMetallic->UseTexture(i_textureID);
 		}
+	}
+
+	void cGBuffer::ReadNormalRoughness(GLenum i_textureID)
+	{
 		cTexture* _normalRoughness = cTexture::s_manager.Get(m_normalHolder);
 		if (_normalRoughness) {
-			_normalRoughness->UseTexture(i_textureIDs[1]);
+			_normalRoughness->UseTexture(i_textureID);
 		}
+	}
+
+	void cGBuffer::ReadIOR(GLenum i_textureID)
+	{
 		cTexture* _ior = cTexture::s_manager.Get(m_iorHolder);
 		if (_ior) {
-			_ior->UseTexture(i_textureIDs[2]);
+			_ior->UseTexture(i_textureID);
 		}
+	}
+
+	void cGBuffer::ReadDepth(GLenum i_textureID)
+	{
 		cTexture* _depth = cTexture::s_manager.Get(m_depthHolder);
 		if (_depth) {
-			_depth->UseTexture(i_textureIDs[3]);
+			_depth->UseTexture(i_textureID);
 		}
 	}
 

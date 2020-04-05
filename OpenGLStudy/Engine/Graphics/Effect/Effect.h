@@ -25,6 +25,8 @@ namespace Graphics {
 		EET_GBuffer,
 		EET_GBufferDisplay,
 		EET_DeferredLighting,
+		EET_SSAO,
+		EET_SSAO_Blur,
 		EET_Invalid = static_cast<uint16_t>(-1),
 	};
 	/** Forward declaration*/

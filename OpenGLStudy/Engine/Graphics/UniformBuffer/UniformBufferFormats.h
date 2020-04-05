@@ -174,6 +174,17 @@ namespace Graphics {
 
 			sPostProcessing() : Exposure(1.0f) {}
 		};
-
+		// SSAO values
+		// --------------------------------------------------------------------------------------------------------------------------------------------
+#define SSAO_MAX_SAMPLECOUNT 64
+		struct sSSAO
+		{
+			glm::vec4 Samples[SSAO_MAX_SAMPLECOUNT];
+			GLuint SampeCount = SSAO_MAX_SAMPLECOUNT;
+			float radius = 10.f;
+			float power = 1.0f;
+			
+			sSSAO() {}
+		};
 	}
 }

@@ -17,6 +17,7 @@ namespace Graphics {
 		UBT_PBRMR = 5,
 		UBT_EnvCaptureWeight = 6,
 		UBT_PostProcessing = 7,
+		UBT_SSAO = 8,
 		UBT_Invalid = 0xff,
 	};
 

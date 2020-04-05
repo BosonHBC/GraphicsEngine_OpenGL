@@ -1,4 +1,5 @@
 #include <map>
+#include <random>
 #include <stdio.h>
 #include <condition_variable> // threading
 #include <mutex> // unique_lock
@@ -47,9 +48,10 @@ namespace Graphics {
 	cModel::HANDLE s_quadHandle;
 	cMesh::HANDLE s_point;
 	cTexture::HANDLE s_spruitSunRise_HDR;
+	cTexture::HANDLE g_ssaoNoiseTexture;
 	// Lighting data
 	UniformBufferFormats::sLighting s_globalLightingData;
-
+	UniformBufferFormats::sSSAO g_ssaoData;
 	// Frame buffers
 	// ------------------------------------------------------------------------------------------------------------------------------------
 	// Rectangular HDR map to cubemap
@@ -60,7 +62,11 @@ namespace Graphics {
 	cFrameBuffer g_hdrBuffer;
 	// G-Buffer for deferred shading
 	cGBuffer g_GBuffer;
-
+	// SSAO frame buffer
+	cFrameBuffer g_ssaoBuffer;
+	// SSAO blur frame buffer
+	cFrameBuffer g_ssao_blur_Buffer;
+	const int noiseResolution = 4;
 	// Effect
 	// ------------------------------------------------------------------------------------------------------------------------------------
 	std::map<eEffectType, cEffect*> s_KeyToEffect_map;
@@ -96,7 +102,10 @@ namespace Graphics {
 	void GBuffer_Pass();
 	void Deferred_Lighting_Pass();
 	void DisplayGBuffer_Pass();
-
+	float lerp(float a, float b, float f)
+	{
+		return a + f * (b - a);
+	}
 	void FixSamplerProblem(const eEffectType& i_effectKey)
 	{
 		// Fix sampler problem before validating the program
@@ -128,6 +137,8 @@ namespace Graphics {
 		assert(GL_NO_ERROR == glGetError());
 		_effect->UnUseEffect();
 	}
+	void ForwardShading();
+	void DeferredShading();
 
 	bool Initialize()
 	{
@@ -318,13 +329,14 @@ namespace Graphics {
 					printf("Fail to create GBuffer effect.\n");
 					return result;
 				}
-				cEffect* hdrEffect = GetEffectByKey(EET_GBufferDisplay);
-				hdrEffect->UseEffect();
-				hdrEffect->SetInteger("gAlbedoMetallic", 0);
-				hdrEffect->SetInteger("gNormalRoughness", 1);
-				hdrEffect->SetInteger("gIOR", 2);
-				hdrEffect->SetInteger("gDepth", 3);
-				hdrEffect->UnUseEffect();
+				cEffect* bufferDisplayEffect = GetEffectByKey(EET_GBufferDisplay);
+				bufferDisplayEffect->UseEffect();
+				bufferDisplayEffect->SetInteger("gAlbedoMetallic", 0);
+				bufferDisplayEffect->SetInteger("gNormalRoughness", 1);
+				bufferDisplayEffect->SetInteger("gIOR", 2);
+				bufferDisplayEffect->SetInteger("gDepth", 3);
+				bufferDisplayEffect->SetInteger("gSSAOMap", 4);
+				bufferDisplayEffect->UnUseEffect();
 			}
 			// Create Deferred-Lighting pass
 			{
@@ -342,8 +354,38 @@ namespace Graphics {
 				dLighting->SetInteger("gNormalRoughness", 1);
 				dLighting->SetInteger("gIOR", 2);
 				dLighting->SetInteger("gDepth", 3);
+				dLighting->SetInteger("gSSAOMap", 24);
 				dLighting->UnUseEffect();
 				FixSamplerProblem(EET_DeferredLighting);
+			}
+
+			// Create ssao and ssao_blur pass
+			{
+				if (!(result = CreateEffect(EET_SSAO,
+					"hdrShader/hdr_shader_vert.glsl",
+					"ssao/ssao_frag.glsl"
+				))) {
+					printf("Fail to create SSAO effect.\n");
+					return result;
+				}
+				cEffect* ssaoEffect = GetEffectByKey(EET_SSAO);
+				ssaoEffect->UseEffect();
+				ssaoEffect->SetInteger("gNormalRoughness", 0);
+				ssaoEffect->SetInteger("gDepth", 1);
+				ssaoEffect->SetInteger("texNoise", 2);
+				ssaoEffect->UnUseEffect();
+
+				if (!(result = CreateEffect(EET_SSAO_Blur,
+					"hdrShader/hdr_shader_vert.glsl",
+					"ssao/ssao_blur_frag.glsl"
+				))) {
+					printf("Fail to create SSAO_Blur effect.\n");
+					return result;
+				}
+				ssaoEffect = GetEffectByKey(EET_SSAO_Blur);
+				ssaoEffect->UseEffect();
+				ssaoEffect->SetInteger("ssaoInput", 0);
+				ssaoEffect->UnUseEffect();
 			}
 			// validate all programs
 			for (auto it : s_KeyToEffect_map)
@@ -356,6 +398,7 @@ namespace Graphics {
 		result = CreateUniformBuffer(UBT_Lighting);
 		result = CreateUniformBuffer(UBT_ClipPlane);
 		result = CreateUniformBuffer(UBT_PostProcessing);
+		result = CreateUniformBuffer(UBT_SSAO);
 		assert(result);
 		// Initialize environment probes
 		{
@@ -381,7 +424,16 @@ namespace Graphics {
 				printf("Fail to create G-Buffer.\n");
 				return result;
 			}
-
+			if (!(result = g_ssaoBuffer.Initialize(_window->GetBufferWidth(), _window->GetBufferHeight(), ETT_FRAMEBUFFER_R16)))
+			{
+				printf("Fail to create SSAO-Buffer.\n");
+				return result;
+			}
+			if (!(result = g_ssao_blur_Buffer.Initialize(_window->GetBufferWidth(), _window->GetBufferHeight(), ETT_FRAMEBUFFER_R16)))
+			{
+				printf("Fail to create SSAO-Blur-Buffer.\n");
+				return result;
+			}
 			/*
 			EnvironmentCaptureManager::AddCaptureProbes(cSphere(glm::vec3(-450, 10, 0), 600.f), 50.f, envMapResolution);
 			EnvironmentCaptureManager::AddCaptureProbes(cSphere(glm::vec3(-225, 10, 0), 600.f), 50.f, envMapResolution);
@@ -439,6 +491,12 @@ namespace Graphics {
 				printf("Failed to LoadspruitSunRise_HDR texture!\n");
 				return result;
 			}
+			_path = "ssaoNoiseTexture";
+			if (!(result = cTexture::s_manager.Load(_path, g_ssaoNoiseTexture, ETT_FRAMEBUFFER_RGB32, noiseResolution, noiseResolution)))
+			{
+				printf("Failed to ssao_NoiseTexture!\n");
+				return result;
+			}
 		}
 
 		// Enable opengl features
@@ -450,10 +508,47 @@ namespace Graphics {
 
 		GLint MaxPatchVertices = 0;
 		glGetIntegerv(GL_MAX_PATCH_VERTICES, &MaxPatchVertices);
-		printf("Max supported patch vertices %d\n", MaxPatchVertices);
+		printf("Max supported patch vertices: %d\n", MaxPatchVertices);
 		glPatchParameteri(GL_PATCH_VERTICES, 3);
 
+		GLint MaxTextureUnit = 0;
+		glGetIntegerv(GL_MAX_TEXTURE_IMAGE_UNITS, &MaxTextureUnit);
+		printf("Max supported textures per shader: %d\n", MaxTextureUnit);
+
 		assert(GL_NO_ERROR == glGetError());
+
+		// Generate ssao samples and noise texture
+		{
+			std::uniform_real_distribution<GLfloat> randomFloats(0.0, 1.0); // generates random floats between 0.0 and 1.0
+			std::default_random_engine generator;
+
+			for (unsigned int i = 0; i < SSAO_MAX_SAMPLECOUNT; ++i)
+			{
+				glm::vec3 sample(randomFloats(generator) * 2.0 - 1.0, randomFloats(generator) * 2.0 - 1.0, randomFloats(generator));
+				sample = glm::normalize(sample);
+				sample *= randomFloats(generator);
+				float scale = float(i) / SSAO_MAX_SAMPLECOUNT;
+
+				// scale samples s.t. they're more aligned to center of kernel
+				scale = lerp(0.1f, 1.0f, scale * scale);
+				sample *= scale;
+				g_ssaoData.Samples[i] = glm::vec4(sample,0.0);
+			}
+			const int noiseSampleCount = noiseResolution * noiseResolution;
+			glm::vec3 ssaoNoise[noiseSampleCount];
+			for (unsigned int i = 0; i < noiseSampleCount; i++)
+			{
+				glm::vec3 noise(randomFloats(generator) * 2.0 - 1.0, randomFloats(generator) * 2.0 - 1.0, 0.0f); // rotate around z-axis (in tangent space)
+				ssaoNoise[i] = noise;
+			}
+			GLuint noiseTextureID = cTexture::s_manager.Get(g_ssaoNoiseTexture)->GetTextureID();
+			glBindTexture(GL_TEXTURE_2D, noiseTextureID);
+			glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB32F, noiseResolution, noiseResolution, 0, GL_RGB, GL_FLOAT, ssaoNoise);
+			glBindTexture(GL_TEXTURE_2D, 0);
+
+			g_ssaoData.power = 5;
+			g_ssaoData.radius = 20.f;
+		}
 
 		return result;
 	}
@@ -539,70 +634,15 @@ namespace Graphics {
 		EnvironmentCaptureManager::UpdatePointOfInterest(s_dataRenderingByGraphicThread->s_renderPasses[3].FrameData.GetViewPosition());
 		g_uniformBufferMap[UBT_ClipPlane].Update(&s_dataRenderingByGraphicThread->s_ClipPlane);
 		g_uniformBufferMap[UBT_PostProcessing].Update(&s_dataRenderingByGraphicThread->s_PostProcessing);
+		g_uniformBufferMap[UBT_SSAO].Update(&g_ssaoData);
 		/** 2. Start to render pass one by one */
 		if (s_dataRenderingByGraphicThread->g_renderMode == ERM_ForwardShading)
 		{
-			g_hdrBuffer.Write(
-				[] {
-					// 3 shadow map pass, 1 pbr pass, 1 cubemap pass
-					for (size_t i = 0; i < s_dataRenderingByGraphicThread->s_renderPasses.size(); ++i)
-					{
-						// Update current render pass
-						s_currentRenderPass = i;
-						// Update frame data
-						g_uniformBufferMap[UBT_Frame].Update(&s_dataRenderingByGraphicThread->s_renderPasses[i].FrameData);
-						// Execute pass function
-						s_dataRenderingByGraphicThread->s_renderPasses[i].RenderPassFunction();
-					}
-				}
-			);
-
-			HDR_Pass();
+			ForwardShading();
 		}
 		else // if not forward shading, it is deferred shading
 		{
-			/** 0. Update lighting data pass 0-2*/
-			for (size_t i = 0; i < 3; ++i)
-			{
-				// Update current render pass
-				s_currentRenderPass = i;
-				// Update frame data
-				g_uniformBufferMap[UBT_Frame].Update(&s_dataRenderingByGraphicThread->s_renderPasses[i].FrameData);
-				// Execute pass function
-				s_dataRenderingByGraphicThread->s_renderPasses[i].RenderPassFunction();
-			}
-			/** 1. Capture the whole scene with PBR material*/
-			g_GBuffer.Write(
-				[] {
-					s_currentRenderPass = 3; // PBR pass
-					g_uniformBufferMap[UBT_Frame].Update(&s_dataRenderingByGraphicThread->s_renderPasses[s_currentRenderPass].FrameData);
-					GBuffer_Pass();
-				});
-
-			g_hdrBuffer.Write(
-				[] {
-					/** 2A. Show the deferred shading */
-					if (s_dataRenderingByGraphicThread->g_renderMode == ERM_DeferredShading)
-						Deferred_Lighting_Pass();
-					/** 2B. Display GBuffer alternatively */
-					else
-						DisplayGBuffer_Pass();
-
-					/** 3. Display cubemap at the end */
-					{
-						glBindFramebuffer(GL_READ_FRAMEBUFFER, g_GBuffer.fbo());
-						glBindFramebuffer(GL_DRAW_FRAMEBUFFER, g_hdrBuffer.fbo()); // write to default frame buffer
-						glBlitFramebuffer(
-							0, 0, g_GBuffer.GetWidth(), g_GBuffer.GetHeight(), 0, 0, g_GBuffer.GetWidth(), g_GBuffer.GetHeight(), GL_DEPTH_BUFFER_BIT, GL_NEAREST
-						);
-						glBindFramebuffer(GL_FRAMEBUFFER, g_hdrBuffer.fbo());
-						s_currentRenderPass = 4; // Cubemap pass
-						g_uniformBufferMap[UBT_Frame].Update(&s_dataRenderingByGraphicThread->s_renderPasses[s_currentRenderPass].FrameData);
-						CubeMap_Pass();
-					}
-				}
-			);
-			HDR_Pass();
+			DeferredShading();
 		}
 		//renderCount++;
 		//printf("Render thread count: %d\n", renderCount);
@@ -681,6 +721,7 @@ namespace Graphics {
 		cModel::s_manager.Release(s_cubeHandle);
 		cModel::s_manager.Release(s_quadHandle);
 		cTexture::s_manager.Release(s_spruitSunRise_HDR);
+		cTexture::s_manager.Release(g_ssaoNoiseTexture);
 		cMesh::s_manager.Release(s_point);
 		// Clean up effect
 		for (auto it = s_KeyToEffect_map.begin(); it != s_KeyToEffect_map.end(); ++it)
@@ -711,6 +752,8 @@ namespace Graphics {
 		s_brdfLUTTexture.CleanUp();
 		g_hdrBuffer.CleanUp();
 		g_GBuffer.CleanUp();
+		g_ssaoBuffer.CleanUp();
+		g_ssao_blur_Buffer.CleanUp();
 		if (!(result = EnvironmentCaptureManager::CleanUp()))
 			printf("Fail to clean up Environment Capture Manager.\n");
 
