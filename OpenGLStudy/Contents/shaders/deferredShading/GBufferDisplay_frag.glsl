@@ -4,10 +4,11 @@ out vec4 FragColor;
 
 in vec2 TexCoords;
 
-uniform sampler2D gAlbedoMetallic;
-uniform sampler2D gNormalRoughness;
-uniform sampler2D gIOR;
-uniform sampler2D gDepth;
+uniform sampler2D gAlbedoMetallic;  // 0
+uniform sampler2D gNormalRoughness; // 1
+uniform sampler2D gIOR;             // 2
+uniform sampler2D gDepth;           // 3
+uniform sampler2D gSSAOMap;         // 4
 
 layout(std140, binding = 0) uniform uniformBuffer_frame
 {
@@ -61,6 +62,9 @@ void main()
             //worldPos /= 500.f;
            // worldPos = (worldPos)/ 2.f;
             FragColor = vec4((InvView * ViewSpacePos).xyz , 1.0);
+        break;
+        case 7:
+            FragColor = vec4(vec3(texture(gSSAOMap, texCoord).r), 1.0);
         break;
         default:
         FragColor = vec4(0,0,0,1);

@@ -274,6 +274,10 @@ void Assignment::Tick(float second_since_lastFrame)
 		{
 			g_renderMode = Graphics::ERM_Deferred_WorldPos;
 		}
+		if (_windowInput->IsKeyDown(GLFW_KEY_0))
+		{
+			g_renderMode = Graphics::ERM_SSAO;
+		}
 	}
 
 	cTransform* controledActor = nullptr;

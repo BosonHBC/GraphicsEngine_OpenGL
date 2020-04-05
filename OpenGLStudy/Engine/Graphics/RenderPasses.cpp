@@ -17,10 +17,13 @@ namespace Graphics
 	extern cFrameBuffer s_brdfLUTTexture;
 	extern 	cFrameBuffer g_hdrBuffer;
 	extern cGBuffer g_GBuffer;
+	extern cFrameBuffer g_ssaoBuffer;
+	extern cFrameBuffer g_ssao_blur_Buffer;
 	extern cModel::HANDLE s_cubeHandle;
 	extern cModel::HANDLE s_arrowHandle;
 	extern cModel::HANDLE s_quadHandle;
 	extern cMesh::HANDLE s_point;
+	extern 	cTexture::HANDLE g_ssaoNoiseTexture;
 
 	// clear color
 	Color s_clearColor;
@@ -329,6 +332,26 @@ namespace Graphics
 		s_currentEffect->UnUseEffect();
 	}
 
+	void ForwardShading()
+	{
+		g_hdrBuffer.Write(
+			[] {
+				// 3 shadow map pass, 1 pbr pass, 1 cubemap pass
+				for (size_t i = 0; i < s_dataRenderingByGraphicThread->s_renderPasses.size(); ++i)
+				{
+					// Update current render pass
+					s_currentRenderPass = i;
+					// Update frame data
+					g_uniformBufferMap[UBT_Frame].Update(&s_dataRenderingByGraphicThread->s_renderPasses[i].FrameData);
+					// Execute pass function
+					s_dataRenderingByGraphicThread->s_renderPasses[i].RenderPassFunction();
+				}
+			}
+		);
+
+		HDR_Pass();
+	}
+
 	void GBuffer_Pass()
 	{
 		s_currentEffect = GetEffectByKey(EET_GBuffer);
@@ -382,6 +405,7 @@ namespace Graphics
 		s_currentEffect->SetInteger("displayMode", static_cast<GLint>(renderMode) - 2);
 		GLenum _textureUnits[4] = { GL_TEXTURE0 , GL_TEXTURE1 ,GL_TEXTURE2, GL_TEXTURE3 };
 		g_GBuffer.Read(_textureUnits);
+		g_ssao_blur_Buffer.Read(GL_TEXTURE4);
 		RenderQuad(s_dataRenderingByGraphicThread->s_renderPasses[s_currentRenderPass].FrameData);
 		s_currentEffect->UnUseEffect();
 	}
@@ -394,6 +418,7 @@ namespace Graphics
 
 		GLenum _textureUnits[4] = { GL_TEXTURE0 , GL_TEXTURE1 ,GL_TEXTURE2, GL_TEXTURE3 };
 		g_GBuffer.Read(_textureUnits);
+		g_ssao_blur_Buffer.Read(GL_TEXTURE24);
 		UpdateInfoForPBR();
 
 		RenderQuad(s_dataRenderingByGraphicThread->s_renderPasses[s_currentRenderPass].FrameData);
@@ -401,6 +426,81 @@ namespace Graphics
 		s_currentEffect->UnUseEffect();
 	}
 
+	void DeferredShading()
+	{
+		/** 0. Update lighting data pass 0-2*/
+		for (size_t i = 0; i < 3; ++i)
+		{
+			// Update current render pass
+			s_currentRenderPass = i;
+			// Update frame data
+			g_uniformBufferMap[UBT_Frame].Update(&s_dataRenderingByGraphicThread->s_renderPasses[i].FrameData);
+			// Execute pass function
+			s_dataRenderingByGraphicThread->s_renderPasses[i].RenderPassFunction();
+		}
+		/** 1. Capture the whole scene with PBR material*/
+		g_GBuffer.Write(
+			[] {
+				s_currentRenderPass = 3; // PBR pass
+				g_uniformBufferMap[UBT_Frame].Update(&s_dataRenderingByGraphicThread->s_renderPasses[s_currentRenderPass].FrameData);
+				GBuffer_Pass();
+			});
+		/** 2.1 Capture SSAO buffer*/
+		g_ssaoBuffer.Write(
+			[] {
+				s_currentEffect = GetEffectByKey(EET_SSAO);
+				s_currentEffect->UseEffect();
+				glClear(GL_COLOR_BUFFER_BIT);
+
+				g_GBuffer.ReadNormalRoughness(GL_TEXTURE0);
+				g_GBuffer.ReadDepth(GL_TEXTURE1);
+				cTexture* _noiseTex = cTexture::s_manager.Get(g_ssaoNoiseTexture);
+				_noiseTex->UseTexture(GL_TEXTURE2);
+
+				RenderQuad(s_dataRenderingByGraphicThread->s_renderPasses[s_currentRenderPass].FrameData);
+
+				s_currentEffect->UnUseEffect();
+			}
+		);
+		/** 2.2 Capture SSAO_blur buffer*/
+		g_ssao_blur_Buffer.Write(
+			[] {
+				s_currentEffect = GetEffectByKey(EET_SSAO_Blur);
+				s_currentEffect->UseEffect();
+				glClear(GL_COLOR_BUFFER_BIT);
+
+				g_ssaoBuffer.Read(GL_TEXTURE0);
+				RenderQuad(s_dataRenderingByGraphicThread->s_renderPasses[s_currentRenderPass].FrameData);
+
+				s_currentEffect->UnUseEffect();
+			}
+		);
+		/** 3. Capture HDR buffer*/
+		g_hdrBuffer.Write(
+			[] {
+				/** 3.1A. Show the deferred shading */
+				if (s_dataRenderingByGraphicThread->g_renderMode == ERM_DeferredShading)
+					Deferred_Lighting_Pass();
+				/** 3.1B. Display GBuffer alternatively */
+				else
+					DisplayGBuffer_Pass();
+
+				/** 3.2. Display cubemap at the end */
+				{
+					glBindFramebuffer(GL_READ_FRAMEBUFFER, g_GBuffer.fbo());
+					glBindFramebuffer(GL_DRAW_FRAMEBUFFER, g_hdrBuffer.fbo()); // write to default frame buffer
+					glBlitFramebuffer(
+						0, 0, g_GBuffer.GetWidth(), g_GBuffer.GetHeight(), 0, 0, g_GBuffer.GetWidth(), g_GBuffer.GetHeight(), GL_DEPTH_BUFFER_BIT, GL_NEAREST
+					);
+					glBindFramebuffer(GL_FRAMEBUFFER, g_hdrBuffer.fbo());
+					s_currentRenderPass = 4; // Cubemap pass
+					g_uniformBufferMap[UBT_Frame].Update(&s_dataRenderingByGraphicThread->s_renderPasses[s_currentRenderPass].FrameData);
+					CubeMap_Pass();
+				}
+			}
+		);
+		HDR_Pass();
+	}
 
 	void Gizmo_RenderTransform()
 	{

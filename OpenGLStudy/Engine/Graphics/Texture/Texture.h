@@ -24,6 +24,8 @@ namespace Graphics {
 		ETT_FRAMEBUFFER_RGBA8 = 12,
 		ETT_FRAMEBUFFER_RGB16 = 13,
 		ETT_FRAMEBUFFER_DEPTH16 = 14,
+		ETT_FRAMEBUFFER_R16 = 15,
+		ETT_FRAMEBUFFER_RGB32 = 16,
 		ETT_INVALID = 0xff
 	};
 
@@ -67,11 +69,13 @@ namespace Graphics {
 		bool LoadOmniShadowMapTexture(const std::string& i_type_id, const GLuint& i_width, const GLuint& i_height);
 		bool LoadHDRCubemapTexture(const std::string& i_type_id, const GLuint& i_width, const GLuint& i_height); // assume the bit width is 16 bits per channel
 		bool LoadHDRMipMapCubemapTexture(const std::string& i_type_id, const GLuint& i_baseWidth, const GLuint& i_baseHeight);
-		bool LoadHDRRG16Texture(const std::string& i_type_id, const GLuint& i_width, const GLuint& i_height);
-		bool LoadRGBA16Texture(const std::string& i_type_id, const GLuint& i_width, const GLuint& i_height);
-		bool LoadRGBA8Texture(const std::string& i_type_id, const GLuint& i_width, const GLuint& i_height);
-		bool LoadRGB16Texture(const std::string& i_type_id, const GLuint& i_width, const GLuint& i_height);
-		bool LoadDepth16Texture(const std::string& i_type_id, const GLuint& i_width, const GLuint& i_height);
+		bool LoadRG16Texture(const std::string& i_type_id, const GLuint& i_width, const GLuint& i_height);			// brdf lookup texture/
+		bool LoadRGBA16Texture(const std::string& i_type_id, const GLuint& i_width, const GLuint& i_height);		// deferred shading buffers
+		bool LoadRGBA8Texture(const std::string& i_type_id, const GLuint& i_width, const GLuint& i_height);		// 8-bit rgba color buffer
+		bool LoadRGB16Texture(const std::string& i_type_id, const GLuint& i_width, const GLuint& i_height);		// hdr buffer
+		bool LoadDepth16Texture(const std::string& i_type_id, const GLuint& i_width, const GLuint& i_height);		// depth buffer
+		bool LoadR16Texture(const std::string& i_type_id, const GLuint& i_width, const GLuint& i_height);				// ssao textures
+		bool LoadRGB32Texture(const std::string& i_type_id, const GLuint& i_width, const GLuint& i_height);		// noise texture
 		// Load color format texture from frame buffer
 		bool LoadPlannerReflectionTexture(const std::string& i_type_id, const GLuint& i_width, const GLuint& i_height);
 

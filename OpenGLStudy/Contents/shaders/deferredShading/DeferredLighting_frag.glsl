@@ -18,6 +18,7 @@ uniform samplerCube PrefilterMap[MAX_COUNT_CUBEMAP_MIXING]; // 9 - 12
 
 uniform samplerCube pointLightShadowMap[MAX_COUNT_PER_LIGHT]; // 18-> 22
 uniform sampler2D directionalShadowMap; // 23
+uniform sampler2D gSSAOMap; 			// 24
 
 const vec3 gridSamplingDisk[20] =vec3[]
 (
@@ -131,19 +132,6 @@ vec3 fresnelSchlickRoughness(float cosTheta, vec3 F0, float roughness)
 //-------------------------------------------------------------------------
 // Shadow Fucntions
 //-------------------------------------------------------------------------
-/*
-float readShadowMap(vec3 eyeDir)
-{
-    mat4 cameraViewToProjectedLightSpace = directionalLightTransform * InvView;
-	vec4 projectedEyeDir = cameraViewToProjectedLightSpace * vec4(eyeDir,1);
-    projectedEyeDir = projectedEyeDir/projectedEyeDir.w;
-
-    vec2 textureCoordinates = projectedEyeDir.xy * vec2(0.5,0.5) + vec2(0.5,0.5);
-
-    const float bias = 0.0001;
-    float depthValue = texture2D( tShadowMap, textureCoordinates ) - bias;
-    return projectedEyeDir.z * 0.5 + 0.5 < depthValue;
-}*/
 float CalcDirectionalLightShadowMap(vec3 vL, vec3 vN, vec4 DirectionalLightSpacePos)
 {
 	vec3 normalizedDeviceCoordinate = DirectionalLightSpacePos.xyz / DirectionalLightSpacePos.w;
@@ -368,13 +356,14 @@ void main(){
 	vec3 albedoColor = texture(gAlbedoMetallic, texCoord).rgb;
 	float metalness = texture(gAlbedoMetallic, texCoord).a;
 	float roughness = texture(gNormalRoughness, texCoord).a;
+	float ssao = texture(gSSAOMap, texCoord).r;
 	vec3 ior = texture(gIOR, texCoord).rgb;
 	vec3 F0 = abs ((1.0 - ior) / (1.0 + ior)); //vec3(0.04);
 	F0 = F0 * F0;
 	F0 = mix(F0, albedoColor, vec3(metalness));
 
 	// ambient light
-	vec3 ambientLightColor = CalcAmbientLight(g_ambientLight,albedoColor, metalness, roughness, F0,normal,normalized_view, vR);
+	vec3 ambientLightColor = CalcAmbientLight(g_ambientLight,albedoColor, metalness, roughness, F0,normal,normalized_view, vR) * ssao;
 	
 	// cubemap light
 	//vec4 cubemapColor = IlluminateByCubemap(diffuseTexColor,specularTexColor, normalized_normal, normalized_view);

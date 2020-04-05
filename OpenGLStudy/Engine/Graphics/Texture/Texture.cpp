@@ -52,7 +52,7 @@ namespace Graphics {
 				result = _texture->LoadHDRMipMapCubemapTexture(i_path, i_override_width, i_override_height);
 				break;
 			case ETT_FRAMEBUFFER_RG16:
-				result = _texture->LoadHDRRG16Texture(i_path, i_override_width, i_override_height);
+				result = _texture->LoadRG16Texture(i_path, i_override_width, i_override_height);
 				break;
 			case ETT_FRAMEBUFFER_RGBA16:
 				result = _texture->LoadRGBA16Texture(i_path, i_override_width, i_override_height);
@@ -65,6 +65,12 @@ namespace Graphics {
 				break;
 			case ETT_FRAMEBUFFER_DEPTH16:
 				result = _texture->LoadDepth16Texture(i_path, i_override_width, i_override_height);
+				break;
+			case ETT_FRAMEBUFFER_R16:
+				result = _texture->LoadR16Texture(i_path, i_override_width, i_override_height);
+				break;
+			case ETT_FRAMEBUFFER_RGB32:
+				result = _texture->LoadRGB32Texture(i_path, i_override_width, i_override_height);
 				break;
 			case ETT_FILE_HDR_IMAGE:
 				result = _texture->LoadHDRImageFromFile(i_path);
@@ -435,7 +441,7 @@ namespace Graphics {
 		return result;
 	}
 
-	bool cTexture::LoadHDRRG16Texture(const std::string& i_type_id, const GLuint& i_width, const GLuint& i_height)
+	bool cTexture::LoadRG16Texture(const std::string& i_type_id, const GLuint& i_width, const GLuint& i_height)
 	{
 		auto result = true;
 		m_width = i_width;
@@ -537,6 +543,49 @@ namespace Graphics {
 
 		//glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_COMPARE_FUNC, GL_LEQUAL);
 		//glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_COMPARE_MODE, GL_NONE);
+
+		assert(GL_NO_ERROR == glGetError());
+
+		// unbind texture
+		glBindTexture(GL_TEXTURE_2D, 0);
+		return result;
+	}
+
+	bool cTexture::LoadR16Texture(const std::string& i_type_id, const GLuint& i_width, const GLuint& i_height)
+	{
+		auto result = true;
+		m_width = i_width;
+		m_height = i_height;
+
+		glGenTextures(1, &m_textureID);
+		glBindTexture(GL_TEXTURE_2D, m_textureID);
+
+		glTexImage2D(GL_TEXTURE_2D, 0, GL_RED, m_width, m_height, 0, GL_RGB, GL_FLOAT, nullptr);
+
+		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+
+		assert(GL_NO_ERROR == glGetError());
+
+		// unbind texture
+		glBindTexture(GL_TEXTURE_2D, 0);
+		return result;
+	}
+
+	bool cTexture::LoadRGB32Texture(const std::string& i_type_id, const GLuint& i_width, const GLuint& i_height)
+	{
+		auto result = true;
+		m_width = i_width;
+		m_height = i_height;
+
+		glGenTextures(1, &m_textureID);
+		glBindTexture(GL_TEXTURE_2D, m_textureID);
+
+		glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB32F, m_width, m_width, 0, GL_RGB, GL_FLOAT, nullptr);
+		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
+		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
 
 		assert(GL_NO_ERROR == glGetError());
 

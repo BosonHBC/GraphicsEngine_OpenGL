@@ -18,7 +18,10 @@ namespace Graphics
 		void CleanUp();
 
 		void Read(GLenum* i_textureIDs);
-
+		void ReadAlbedoMetallic(GLenum i_textureID);
+		void ReadNormalRoughness(GLenum i_textureID);
+		void ReadIOR(GLenum i_textureID);
+		void ReadDepth(GLenum i_textureID);
 	private:
 		// m_renderToTexture will be responsible for ColorComponent0, recording albedo color in RGB channel, metallic in A channel
 		// So the format Texture mode should be A8R8G8B8
