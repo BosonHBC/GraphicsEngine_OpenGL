@@ -43,6 +43,8 @@ namespace Graphics{
 		std::vector<cSpotLight> s_spotLights;
 		cAmbientLight s_ambientLight;
 		cDirectionalLight s_directionalLight;
+		// for simulation specifically
+		glm::vec3 particles[25];
 	};
 
 	// Primitive types

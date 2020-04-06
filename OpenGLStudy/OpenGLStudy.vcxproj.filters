@@ -28,6 +28,9 @@
     <Filter Include="Source Files\Assignments">
       <UniqueIdentifier>{fa08801f-210b-41aa-97c6-07501b24a87d}</UniqueIdentifier>
     </Filter>
+    <Filter Include="Source Files\ClothSimulation">
+      <UniqueIdentifier>{b0c18f91-1f29-4cb3-aa0c-ca861c5626f1}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="EntryPoint.cpp">

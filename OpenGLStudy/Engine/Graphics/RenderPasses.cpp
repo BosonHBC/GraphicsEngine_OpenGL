@@ -272,38 +272,8 @@ namespace Graphics
 
 		UpdateInfoForPBR();
 
-		auto& renderList = s_dataRenderingByGraphicThread->s_renderPasses[s_currentRenderPass].ModelToTransform_map;
-		const auto sphereOffset = renderList.size() - 25;
-		// draw the space first
-		for (size_t i = 0; i < sphereOffset; ++i)
-		{
-			// 1. Update draw call data
-			g_uniformBufferMap[UBT_Drawcall].Update(&UniformBufferFormats::sDrawCall(renderList[i].second.M(), renderList[i].second.TranspostInverse()));
-			// 2. Draw
-			cModel* _model = cModel::s_manager.Get(renderList[i].first);
-			if (_model) {
-				_model->UpdateUniformVariables(s_currentEffect->GetProgramID());
-				_model->Render();
-			}
-		}
-		// assign different material for the sphere
-		for (int i = 0; i < 5; ++i)
-		{
-			for (int j = 0; j < 5; ++j)
-			{
-				// 1. Update draw call data
-				g_uniformBufferMap[UBT_Drawcall].Update(&UniformBufferFormats::sDrawCall(renderList[i * 5 + j + sphereOffset].second.M(), renderList[i * 5 + j + sphereOffset].second.TranspostInverse()));
-				// 2. Draw
-				cModel* _model = cModel::s_manager.Get(renderList[i * 5 + j + sphereOffset].first);
-				if (_model) {
-					Graphics::cMatPBRMR* _sphereMat = dynamic_cast<Graphics::cMatPBRMR*>(_model->GetMaterialAt());
-					_sphereMat->UpdateMetalnessIntensity(1.f / 4.f * j );
-					_sphereMat->UpdateRoughnessIntensity(1.05f - 1.f / 4.f *i);
-					_model->UpdateUniformVariables(s_currentEffect->GetProgramID());
-					_model->Render();
-				}
-			}
-		}
+		RenderScene(s_currentEffect);
+
 		s_currentEffect->UnUseEffect();
 	}
 
@@ -346,10 +316,31 @@ namespace Graphics
 					// Execute pass function
 					s_dataRenderingByGraphicThread->s_renderPasses[i].RenderPassFunction();
 				}
+				
+				// Render spheres
+				s_currentEffect = GetEffectByKey(EET_DrawDebugCircles);
+				s_currentEffect->UseEffect();
+				g_uniformBufferMap[UBT_Frame].Update(&s_dataRenderingByGraphicThread->s_renderPasses[3].FrameData);
+				for (size_t i = 0; i < 25; ++i)
+				{
+					cMesh* _Point = cMesh::s_manager.Get(s_point);
+					cTransform _tempTransform;
+
+					s_currentEffect->SetFloat("radius", 25);
+					s_currentEffect->SetVec3("color", glm::vec3(1.0, 0.0, 0.0));
+					_tempTransform.SetPosition(s_dataRenderingByGraphicThread->particles[i]);
+					_tempTransform.Update();
+					g_uniformBufferMap[UBT_Drawcall].Update(&UniformBufferFormats::sDrawCall(_tempTransform.M(), _tempTransform.TranspostInverse()));
+					_Point->Render();
+
+				}
+				s_currentEffect->UnUseEffect();
 			}
 		);
 
 		HDR_Pass();
+
+		
 	}
 
 	void GBuffer_Pass()
@@ -361,38 +352,7 @@ namespace Graphics
 		// A lot of things can be cleaned like color buffer, depth buffer, so we need to specify what to clear
 		glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
-		auto& renderList = s_dataRenderingByGraphicThread->s_renderPasses[s_currentRenderPass].ModelToTransform_map;
-		const auto sphereOffset = renderList.size() - 25;
-		// draw the space first
-		for (size_t i = 0; i < sphereOffset; ++i)
-		{
-			// 1. Update draw call data
-			g_uniformBufferMap[UBT_Drawcall].Update(&UniformBufferFormats::sDrawCall(renderList[i].second.M(), renderList[i].second.TranspostInverse()));
-			// 2. Draw
-			cModel* _model = cModel::s_manager.Get(renderList[i].first);
-			if (_model) {
-				_model->UpdateUniformVariables(s_currentEffect->GetProgramID());
-				_model->Render();
-			}
-		}
-		// assign different material for the sphere
-		for (int i = 0; i < 5; ++i)
-		{
-			for (int j = 0; j < 5; ++j)
-			{
-				// 1. Update draw call data
-				g_uniformBufferMap[UBT_Drawcall].Update(&UniformBufferFormats::sDrawCall(renderList[i * 5 + j + sphereOffset].second.M(), renderList[i * 5 + j + sphereOffset].second.TranspostInverse()));
-				// 2. Draw
-				cModel* _model = cModel::s_manager.Get(renderList[i * 5 + j + sphereOffset].first);
-				if (_model) {
-					Graphics::cMatPBRMR* _sphereMat = dynamic_cast<Graphics::cMatPBRMR*>(_model->GetMaterialAt());
-					_sphereMat->UpdateMetalnessIntensity(1.f / 4.f * j);
-					_sphereMat->UpdateRoughnessIntensity(1.05f - 1.f / 4.f *i);
-					_model->UpdateUniformVariables(s_currentEffect->GetProgramID());
-					_model->Render();
-				}
-			}
-		}
+		RenderScene(s_currentEffect);
 		s_currentEffect->UnUseEffect();
 	}
 
@@ -475,31 +435,32 @@ namespace Graphics
 				s_currentEffect->UnUseEffect();
 			}
 		);
-		/** 3. Capture HDR buffer*/
-		g_hdrBuffer.Write(
-			[] {
-				/** 3.1A. Show the deferred shading */
-				if (s_dataRenderingByGraphicThread->g_renderMode == ERM_DeferredShading)
+		/** 3.1B. Display GBuffer alternatively */
+		if (s_dataRenderingByGraphicThread->g_renderMode != ERM_DeferredShading)
+				DisplayGBuffer_Pass();
+		else
+		{
+			/** 3. Capture HDR buffer*/
+			g_hdrBuffer.Write(
+				[] {
+					/** 3.1A. Show the deferred shading */
 					Deferred_Lighting_Pass();
-				/** 3.1B. Display GBuffer alternatively */
-				else
-					DisplayGBuffer_Pass();
-
-				/** 3.2. Display cubemap at the end */
-				{
-					glBindFramebuffer(GL_READ_FRAMEBUFFER, g_GBuffer.fbo());
-					glBindFramebuffer(GL_DRAW_FRAMEBUFFER, g_hdrBuffer.fbo()); // write to default frame buffer
-					glBlitFramebuffer(
-						0, 0, g_GBuffer.GetWidth(), g_GBuffer.GetHeight(), 0, 0, g_GBuffer.GetWidth(), g_GBuffer.GetHeight(), GL_DEPTH_BUFFER_BIT, GL_NEAREST
-					);
-					glBindFramebuffer(GL_FRAMEBUFFER, g_hdrBuffer.fbo());
-					s_currentRenderPass = 4; // Cubemap pass
-					g_uniformBufferMap[UBT_Frame].Update(&s_dataRenderingByGraphicThread->s_renderPasses[s_currentRenderPass].FrameData);
-					CubeMap_Pass();
+					/** 3.2. Display cubemap at the end */
+					{
+						glBindFramebuffer(GL_READ_FRAMEBUFFER, g_GBuffer.fbo());
+						glBindFramebuffer(GL_DRAW_FRAMEBUFFER, g_hdrBuffer.fbo()); // write to default frame buffer
+						glBlitFramebuffer(
+							0, 0, g_GBuffer.GetWidth(), g_GBuffer.GetHeight(), 0, 0, g_GBuffer.GetWidth(), g_GBuffer.GetHeight(), GL_DEPTH_BUFFER_BIT, GL_NEAREST
+						);
+						glBindFramebuffer(GL_FRAMEBUFFER, g_hdrBuffer.fbo());
+						s_currentRenderPass = 4; // Cubemap pass
+						g_uniformBufferMap[UBT_Frame].Update(&s_dataRenderingByGraphicThread->s_renderPasses[s_currentRenderPass].FrameData);
+						CubeMap_Pass();
+					}
 				}
-			}
-		);
-		HDR_Pass();
+			);
+			HDR_Pass();
+		}
 	}
 
 	void Gizmo_RenderTransform()
