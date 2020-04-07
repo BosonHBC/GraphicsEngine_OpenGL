@@ -2,9 +2,6 @@
 #include "Application/Window/Window.h"
 #include "Application/Window/WindowInput.h"
 #include "Constants/Constants.h"
-
-
-
 #include "Graphics/Graphics.h"
 #include "Time/Time.h"
 
@@ -21,6 +18,9 @@
 #include "Assets/Handle.h"
 #include "Graphics/EnvironmentCaptureManager.h"
 #include <map>
+
+#include "Assignments/ClothSimulation/SimulationParams.h"
+
 Graphics::ERenderMode g_renderMode = Graphics::ERenderMode::ERM_ForwardShading;
 
 bool Assignment::Initialize(GLuint i_width, GLuint i_height, const char* i_windowName /*= "Default Window"*/)
@@ -75,12 +75,13 @@ void Assignment::CreateActor()
 	m_spaceHolder->Transform.SetTransform(glm::vec3(0, 150.f, 0), glm::quat(1, 0, 0, 0), glm::vec3(5, 5, 5));
 	m_spaceHolder->SetModel("Contents/models/spaceHolder.model");
 
-
+	float clothLength = CLOTH_LENGTH * 100;
+	float distBetweenVertex = clothLength / (CLOTH_RESOLUTION - 1);
 	for (size_t i = 0; i < 5; i++)
 	{
 		for (int j = 0; j < 5; ++j)
 		{
-			m_particles[i * 5 + j] = glm::vec3(-100.f + i * 50, 25.f + j * 50, -200);
+			m_particles[i * 5 + j] = glm::vec3(-100.f + i * distBetweenVertex, 25.f + j * distBetweenVertex, -200);
 		}
 	}
 }

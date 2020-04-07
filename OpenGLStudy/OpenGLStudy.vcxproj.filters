@@ -39,6 +39,9 @@
     <ClCompile Include="Assignments\Assignment.cpp">
       <Filter>Source Files\Assignments</Filter>
     </ClCompile>
+    <ClCompile Include="Assignments\ClothSimulation\SimulationParams.cpp">
+      <Filter>Source Files\ClothSimulation</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Tool\stb_image.h">
@@ -46,6 +49,9 @@
     </ClInclude>
     <ClInclude Include="Assignments\Assignment.h">
       <Filter>Source Files\Assignments</Filter>
+    </ClInclude>
+    <ClInclude Include="Assignments\ClothSimulation\SimulationParams.h">
+      <Filter>Source Files\ClothSimulation</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>
