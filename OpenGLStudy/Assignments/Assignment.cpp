@@ -75,15 +75,17 @@ void Assignment::CreateActor()
 	m_spaceHolder->Transform.SetTransform(glm::vec3(0, 150.f, 0), glm::quat(1, 0, 0, 0), glm::vec3(5, 5, 5));
 	m_spaceHolder->SetModel("Contents/models/spaceHolder.model");
 
-	float clothLength = CLOTH_LENGTH * 100;
-	float distBetweenVertex = clothLength / (CLOTH_RESOLUTION - 1);
-	for (size_t i = 0; i < 5; i++)
+	// Set up initial position for cloths
+	float distBetweenVertex = CLOTH_LENGTH / (CLOTH_RESOLUTION - 1);
+	for (size_t i = 0; i < CLOTH_RESOLUTION; i++)
 	{
-		for (int j = 0; j < 5; ++j)
+		for (int j = 0; j < CLOTH_RESOLUTION; ++j)
 		{
-			m_particles[i * 5 + j] = glm::vec3(-100.f + i * distBetweenVertex, 25.f + j * distBetweenVertex, -200);
+			ClothSim::g_particles[i * CLOTH_RESOLUTION + j] = ClothSim::sParticle(glm::vec3(-100 + j * distBetweenVertex, 225.f - 0, i * distBetweenVertex -200));
 		}
 	}
+	ClothSim::g_particles[0].isFixed = true;
+	ClothSim::g_particles[CLOTH_RESOLUTION - 1].isFixed = true;
 }
 
 void Assignment::CreateCamera()
@@ -121,7 +123,7 @@ void Assignment::SubmitDataToBeRender(const float i_seconds_elapsedSinceLastLoop
 	// Submit geometry data
 	SubmitSceneData(&_frameData_Camera);
 
-	Graphics::SubmitParticleData(m_particles);
+	Graphics::SubmitParticleData(ClothSim::g_positionData);
 	// Gizmos
 	{
 		// Transform Gizmo
@@ -136,13 +138,13 @@ void Assignment::SubmitDataToBeRender(const float i_seconds_elapsedSinceLastLoop
 
 			if (pLight1)
 				_renderingMap.push_back({ unneccessaryHandle, pLight1->Transform });
-/*
-			if (pLight2)
-				_renderingMap.push_back({ unneccessaryHandle, pLight2->Transform });
-			if (spLight)
-				_renderingMap.push_back({ unneccessaryHandle, spLight->Transform });
-			if (spLight2)
-				_renderingMap.push_back({ unneccessaryHandle, spLight2->Transform });*/
+			/*
+						if (pLight2)
+							_renderingMap.push_back({ unneccessaryHandle, pLight2->Transform });
+						if (spLight)
+							_renderingMap.push_back({ unneccessaryHandle, spLight->Transform });
+						if (spLight2)
+							_renderingMap.push_back({ unneccessaryHandle, spLight2->Transform });*/
 			Graphics::SubmitDataToBeRendered(_frameData_Camera, _renderingMap, &Graphics::Gizmo_RenderTransform);
 		}
 		// Normal Gizmo
@@ -297,26 +299,20 @@ void Assignment::Tick(float second_since_lastFrame)
 
 	}
 
-	cTransform* rotateControl = nullptr;
-	if (spLight)
-		rotateControl = &spLight->Transform;
-	//if (dLight)
-		//rotateControl = dLight->Transform();
-	if (rotateControl)
-	{
-		if (_windowInput->IsKeyDown(GLFW_KEY_LEFT)) {
-			rotateControl->Rotate(cTransform::WorldUp, second_since_lastFrame);
-		}
-		if (_windowInput->IsKeyDown(GLFW_KEY_RIGHT)) {
-			rotateControl->Rotate(-cTransform::WorldUp, second_since_lastFrame);
-		}
-		if (_windowInput->IsKeyDown(GLFW_KEY_UP)) {
-			rotateControl->Rotate(cTransform::WorldRight, second_since_lastFrame);
-		}
-		if (_windowInput->IsKeyDown(GLFW_KEY_DOWN)) {
-			rotateControl->Rotate(-cTransform::WorldRight, second_since_lastFrame);
-		}
+	float nodeMoveSpeed = 50.f;
+	if (_windowInput->IsKeyDown(GLFW_KEY_LEFT)) {
+		ClothSim::MoveFixedNode(glm::vec3(-1, 0, 0) *nodeMoveSpeed * second_since_lastFrame);
 	}
+	if (_windowInput->IsKeyDown(GLFW_KEY_RIGHT)) {
+		ClothSim::MoveFixedNode(glm::vec3(1, 0, 0) *nodeMoveSpeed * second_since_lastFrame);
+	}
+	if (_windowInput->IsKeyDown(GLFW_KEY_UP)) {
+		ClothSim::MoveFixedNode(glm::vec3(0, 0, -1) *nodeMoveSpeed * second_since_lastFrame);
+	}
+	if (_windowInput->IsKeyDown(GLFW_KEY_DOWN)) {
+		ClothSim::MoveFixedNode(glm::vec3(0, 0, 1) *nodeMoveSpeed * second_since_lastFrame);
+	}
+
 
 	m_teapot->Transform.Update();
 	m_teapot2->Transform.Update();
@@ -335,6 +331,7 @@ void Assignment::Tick(float second_since_lastFrame)
 	if (spLight2)
 		spLight2->Transform.Update();
 
+	
 }
 
 void Assignment::SubmitLightingData()
@@ -439,7 +436,7 @@ void Assignment::SubmitShadowData()
 
 void Assignment::FixedTick()
 {
-
+	ClothSim::UpdateSprings(m_simulationUpdateRate_InSeconds);
 }
 
 void Assignment::CleanUp()

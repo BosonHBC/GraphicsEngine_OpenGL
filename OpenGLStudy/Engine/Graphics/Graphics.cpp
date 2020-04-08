@@ -670,7 +670,7 @@ namespace Graphics {
 
 	void SubmitParticleData(const glm::vec3* i_particles)
 	{
-		memcpy(s_dataSubmittedByApplicationThread->particles, i_particles, sizeof(glm::vec3) * 25);
+		memcpy(s_dataSubmittedByApplicationThread->particles, i_particles, sizeof(glm::vec3) * ClothSim::VC);
 	}
 
 	void SubmitGraphicSettings(const ERenderMode& i_renderMode)

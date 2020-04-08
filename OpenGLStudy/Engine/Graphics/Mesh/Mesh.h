@@ -7,6 +7,7 @@ namespace Graphics {
 	{
 		EMT_Mesh = 0,
 		EMT_Point = 1,
+		EMT_Line = 2,
 	};
 	// cMesh represent a triangular mesh which contains mesh data, handle drawing the mesh
 	class cMesh

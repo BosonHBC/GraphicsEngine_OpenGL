@@ -6,7 +6,7 @@
 #include "Application/Application.h"
 #include "Application/Window/Window.h"
 #include "Graphics/FrameBuffer/GeometryBuffer.h"
-
+#include "Assignments/ClothSimulation/SimulationParams.h"
 namespace Graphics
 {
 	extern unsigned int s_currentRenderPass;
@@ -321,18 +321,21 @@ namespace Graphics
 				s_currentEffect = GetEffectByKey(EET_DrawDebugCircles);
 				s_currentEffect->UseEffect();
 				g_uniformBufferMap[UBT_Frame].Update(&s_dataRenderingByGraphicThread->s_renderPasses[3].FrameData);
-				for (size_t i = 0; i < 25; ++i)
+				for (size_t i = 0; i < ClothSim::VC; ++i)
 				{
 					cMesh* _Point = cMesh::s_manager.Get(s_point);
 					cTransform _tempTransform;
-
-					s_currentEffect->SetFloat("radius", 25);
-					s_currentEffect->SetVec3("color", glm::vec3(1.0, 0.0, 0.0));
+					
+					s_currentEffect->SetFloat("radius", 5 * 5 / static_cast<float>(CLOTH_RESOLUTION));
+					glm::vec3 sphereColor = glm::vec3(1.0, 0.0, 0.0);
+					if (i == 0 || i == CLOTH_RESOLUTION - 1)
+						sphereColor = glm::vec3(0, 1, 0);
+						
+					s_currentEffect->SetVec3("color", sphereColor);
 					_tempTransform.SetPosition(s_dataRenderingByGraphicThread->particles[i]);
 					_tempTransform.Update();
 					g_uniformBufferMap[UBT_Drawcall].Update(&UniformBufferFormats::sDrawCall(_tempTransform.M(), _tempTransform.TranspostInverse()));
 					_Point->Render();
-
 				}
 				s_currentEffect->UnUseEffect();
 			}

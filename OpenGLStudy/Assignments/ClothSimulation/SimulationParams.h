@@ -20,6 +20,19 @@
 
 namespace ClothSim
 {
+	// rendering data
+// --------------------------------------------
+// Vertices per cloth edge
+#define CLOTH_RESOLUTION 15
+	// cloth length in meters
+#define CLOTH_LENGTH 200.0
+	const int VC = CLOTH_RESOLUTION * CLOTH_RESOLUTION;
+
+	// Rest length for structural, shear and blend constrains;
+	extern const float g_structRestLen;
+	extern const float g_shearRestLen;
+	extern const float g_blendRestLen;
+
 	// stiff and damping for spring particles
 #define STRUCT_STIFF 30
 #define STRUCT_DAMP	-0.5f
@@ -29,42 +42,10 @@ namespace ClothSim
 #define BEND_DAMP	-0.5f
 
 #define MASS 1.f // 1 kg
-#define GRAVITY glm::vec3(0, -9.8f, 0)
+#define GRAVITY glm::vec3(0, -9.8f * 5.f , 0)
 #define GRAVITY_DAMPING -0.30f
-#define DEFAULT_DAMPING -0.25f
-
-	// SprintNode definition
-	// --------------------------------------------
-	struct sParticle
-	{
-		glm::vec3 V = glm::vec3(0);// velocity
-		glm::vec3 P = glm::vec3(0);// position
-		glm::vec3 pP= glm::vec3(0); // previous position
-		bool isFixed = false;
-
-		sParticle():V(glm::vec3(0)), P(glm::vec3(0)), pP(glm::vec3(0)) {}
-		sParticle(glm::vec3 initialP) : V(glm::vec3(0)), P(initialP), pP(initialP) {}
-	};
-
-
-	// rendering data
-	// --------------------------------------------
-	// Vertices per cloth edge
-#define CLOTH_RESOLUTION 5
-	const int VC = CLOTH_RESOLUTION * CLOTH_RESOLUTION;
-	// cloth length in meters
-#define CLOTH_LENGTH 2.0
-
-	// Cloth particles
-	extern sParticle g_particles[VC];
-	extern glm::vec3 g_positionData[VC];
-	// Rest length for structural, shear and blend constrains;
-	extern const float g_structRestLen;
-	extern const float g_shearRestLen;
-	extern const float g_blendRestLen;
-
 	// Clock wise from struct-shear-bend
-	// --------------------------------------------
+// --------------------------------------------
 #define NO_Neighbor -1
 #define Struct_Up 0
 #define Struct_Right 1
@@ -116,10 +97,27 @@ namespace ClothSim
 	};
 
 
+	// SprintNode definition
+	// --------------------------------------------
+	struct sParticle
+	{
+		glm::vec3 V = glm::vec3(0);// velocity
+		glm::vec3 P = glm::vec3(0);// position
+		glm::vec3 pP= glm::vec3(0); // previous position
+		bool isFixed = false;
+		sNeighborParticles neighbor[12];
 
+		sParticle():V(glm::vec3(0)), P(glm::vec3(0)), pP(glm::vec3(0)) {}
+		sParticle(glm::vec3 initialP) : V(glm::vec3(0)), P(initialP), pP(initialP) {}
+	};
+
+	// Cloth particles
+	extern sParticle g_particles[VC];
+	extern glm::vec3 g_positionData[VC];
 
 // Using discrete time step
 	void UpdateSprings(const float dt);
+	void MoveFixedNode(const glm::vec3& i_deltaPosition);
 
 }
 

@@ -60,8 +60,6 @@ private:
 	cActor* m_cubemap;
 	cActor* m_spaceHolder;
 
-	glm::vec3 m_particles[25];
-
 	float m_exposureOffset = 3.0f;
 };
 
