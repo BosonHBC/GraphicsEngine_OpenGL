@@ -13,6 +13,7 @@
 */
 
 #ifndef SIM_PARAMS_DEFINED
+#include <vector>
 #include "glm/glm.hpp"
 #include "glm/gtc/matrix_transform.hpp"
 
@@ -34,16 +35,17 @@ namespace ClothSim
 	extern const float g_blendRestLen;
 
 	// stiff and damping for spring particles
-#define STRUCT_STIFF 30
+#define STRUCT_STIFF 50
 #define STRUCT_DAMP	-0.5f
 #define SHEAR_STIFF 30
 #define SHEAR_DAMP	-0.5f
-#define BEND_STIFF 15
+#define BEND_STIFF 30
 #define BEND_DAMP	-0.5f
 
 #define MASS 1.f // 1 kg
-#define GRAVITY glm::vec3(0, -9.8f * 5.f , 0)
+#define GRAVITY glm::vec3(0, -9.8f * 3.f , 0)
 #define GRAVITY_DAMPING -0.30f
+#define DEFAULT_DAMPING - 0.20f
 	// Clock wise from struct-shear-bend
 // --------------------------------------------
 #define NO_Neighbor -1
@@ -115,10 +117,14 @@ namespace ClothSim
 	extern sParticle g_particles[VC];
 	extern glm::vec3 g_positionData[VC];
 
+	void InitializeNeghbors();
 // Using discrete time step
 	void UpdateSprings(const float dt);
 	void MoveFixedNode(const glm::vec3& i_deltaPosition);
+	void CleanUpData();
 
+	float* GetVertexData();
+	const std::vector<unsigned int>& GetIndexData();
 }
 
 #endif // !SIM_PARAMS_DEFINED

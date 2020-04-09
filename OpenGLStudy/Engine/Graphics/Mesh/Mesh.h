@@ -28,9 +28,11 @@ namespace Graphics {
 		~cMesh();
 
 		/** Initializations and clean up*/
-		void CreateMesh(GLfloat* i_vertices, GLuint* i_indices, GLuint i_numOfVertices, GLuint i_numOfIndicesm);
+		void CreateMesh(GLfloat* i_vertices, GLuint* i_indices, GLuint i_numOfVertices, GLuint i_numOfIndices);
 		void CreatePoint(GLfloat* i_vertices, GLuint i_numOfVertices);
 		void CleanUp();
+		void UpdateBufferData(GLfloat* i_verticData, GLuint i_numOfVertices );
+		void UpdateIndexBufferData(GLuint* i_indices, GLuint i_numOfIndices);
 		void Render(GLenum i_drawMode = GL_TRIANGLES);
 
 	private:

@@ -46,6 +46,7 @@ namespace Graphics{
 		cDirectionalLight s_directionalLight;
 		// for simulation specifically
 		glm::vec3 particles[ClothSim::VC];
+		float clothVertexData[ClothSim::VC * 14];
 	};
 
 	// Primitive types

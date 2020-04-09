@@ -23,8 +23,9 @@ namespace Graphics
 	extern cModel::HANDLE s_arrowHandle;
 	extern cModel::HANDLE s_quadHandle;
 	extern cMesh::HANDLE s_point;
+	extern 	cMesh::HANDLE g_cloth;
 	extern 	cTexture::HANDLE g_ssaoNoiseTexture;
-
+	extern cMatPBRMR g_clothMat;
 	// clear color
 	Color s_clearColor;
 	// arrow colors
@@ -115,6 +116,10 @@ namespace Graphics
 						glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 						// Draw scenes
 						RenderScene(nullptr);
+						cMesh* _cloth = cMesh::s_manager.Get(g_cloth);
+						cTransform defaultTransform;
+						g_uniformBufferMap[UBT_Drawcall].Update(&UniformBufferFormats::sDrawCall(defaultTransform.M(), defaultTransform.TranspostInverse()));
+						_cloth->Render();
 					}
 				);
 				assert(glGetError() == GL_NO_ERROR);
@@ -273,6 +278,15 @@ namespace Graphics
 		UpdateInfoForPBR();
 
 		RenderScene(s_currentEffect);
+
+		cMesh* _cloth = cMesh::s_manager.Get(g_cloth);
+		cTransform defaultTransform;
+		g_uniformBufferMap[UBT_Drawcall].Update(&UniformBufferFormats::sDrawCall(defaultTransform.M(), defaultTransform.TranspostInverse()));
+		
+		g_clothMat.UpdateUniformVariables(s_currentEffect->GetProgramID());
+		g_clothMat.UseMaterial();
+		_cloth->Render();
+		g_clothMat.CleanUpMaterialBind();
 
 		s_currentEffect->UnUseEffect();
 	}

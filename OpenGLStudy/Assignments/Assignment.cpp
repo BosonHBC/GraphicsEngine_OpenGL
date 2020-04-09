@@ -74,18 +74,6 @@ void Assignment::CreateActor()
 	m_spaceHolder->Initialize();
 	m_spaceHolder->Transform.SetTransform(glm::vec3(0, 150.f, 0), glm::quat(1, 0, 0, 0), glm::vec3(5, 5, 5));
 	m_spaceHolder->SetModel("Contents/models/spaceHolder.model");
-
-	// Set up initial position for cloths
-	float distBetweenVertex = CLOTH_LENGTH / (CLOTH_RESOLUTION - 1);
-	for (size_t i = 0; i < CLOTH_RESOLUTION; i++)
-	{
-		for (int j = 0; j < CLOTH_RESOLUTION; ++j)
-		{
-			ClothSim::g_particles[i * CLOTH_RESOLUTION + j] = ClothSim::sParticle(glm::vec3(-100 + j * distBetweenVertex, 225.f - 0, i * distBetweenVertex -200));
-		}
-	}
-	ClothSim::g_particles[0].isFixed = true;
-	ClothSim::g_particles[CLOTH_RESOLUTION - 1].isFixed = true;
 }
 
 void Assignment::CreateCamera()
@@ -123,7 +111,7 @@ void Assignment::SubmitDataToBeRender(const float i_seconds_elapsedSinceLastLoop
 	// Submit geometry data
 	SubmitSceneData(&_frameData_Camera);
 
-	Graphics::SubmitParticleData(ClothSim::g_positionData);
+	Graphics::SubmitParticleData();
 	// Gizmos
 	{
 		// Transform Gizmo
@@ -446,4 +434,5 @@ void Assignment::CleanUp()
 	safe_delete(m_teapot2);
 	safe_delete(m_cubemap);
 	safe_delete(m_spaceHolder);
+	ClothSim::CleanUpData();
 }
