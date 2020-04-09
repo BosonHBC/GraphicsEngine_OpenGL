@@ -202,46 +202,51 @@ namespace ClothSim
 			UpdateV3Data(i, &g_particles[i].P, 0);
 		}
 
-		/*
-				// Inverse dynamic
-				for (int i = 0; i < VC; ++i)
+
+		// Inverse dynamic procedural
+		if (false)
+		{
+			for (int i = 0; i < VC; ++i)
+			{
+				glm::vec3 adjustedPos = g_particles[i].P;
+				if (!g_particles[i].isFixed)
 				{
-					glm::vec3 adjustedPos = g_particles[i].P;
-					if (!g_particles[i].isFixed)
-					{
-						const auto structUpIdx = g_particles[i].neighbor[Struct_Up].idx;
-						if (structUpIdx != NO_Neighbor)
-							fixStretchConstrain(structUpIdx, adjustedPos, g_structRestLen * 1.1f, 1.0f);
+					const auto structUpIdx = g_particles[i].neighbor[Struct_Up].idx;
+					if (structUpIdx != NO_Neighbor)
+						fixStretchConstrain(structUpIdx, adjustedPos, g_structRestLen * 1.1f, 1.0f);
 
-						const auto structRightIdx = g_particles[i].neighbor[Struct_Right].idx;
-						if (structRightIdx != NO_Neighbor)
-							fixStretchConstrain(structRightIdx, adjustedPos, g_structRestLen * 1.1f, 2.0f);
+					const auto structRightIdx = g_particles[i].neighbor[Struct_Right].idx;
+					if (structRightIdx != NO_Neighbor)
+						fixStretchConstrain(structRightIdx, adjustedPos, g_structRestLen * 1.1f, 2.0f);
 
-						const auto structLeftIdx = g_particles[i].neighbor[Struct_Left].idx;
-						if (structLeftIdx != NO_Neighbor)
-							fixStretchConstrain(structLeftIdx, adjustedPos, g_structRestLen * 1.1f, 2.0f);
+					const auto structLeftIdx = g_particles[i].neighbor[Struct_Left].idx;
+					if (structLeftIdx != NO_Neighbor)
+						fixStretchConstrain(structLeftIdx, adjustedPos, g_structRestLen * 1.1f, 2.0f);
 
-						const auto Shear0Idx = g_particles[i].neighbor[Shear_0].idx;
-						if (Shear0Idx != NO_Neighbor)
-							fixStretchConstrain(Shear0Idx, adjustedPos, g_shearRestLen * 1.2f, 1.0f);
+					const auto Shear0Idx = g_particles[i].neighbor[Shear_0].idx;
+					if (Shear0Idx != NO_Neighbor)
+						fixStretchConstrain(Shear0Idx, adjustedPos, g_shearRestLen * 1.2f, 1.0f);
 
-						const auto Shear1Idx = g_particles[i].neighbor[Shear_1].idx;
-						if (Shear1Idx != NO_Neighbor)
-							fixStretchConstrain(Shear1Idx, adjustedPos, g_shearRestLen * 1.2f, 1.0f);
+					const auto Shear1Idx = g_particles[i].neighbor[Shear_1].idx;
+					if (Shear1Idx != NO_Neighbor)
+						fixStretchConstrain(Shear1Idx, adjustedPos, g_shearRestLen * 1.2f, 1.0f);
 
-						g_positionData[i] = adjustedPos;
-					}
+					g_positionData[i] = adjustedPos;
 				}
+			}
 
-				// update position info and velocity info
-				for (int i = 0; i < VC; ++i)
+			// update position info and velocity info
+			for (int i = 0; i < VC; ++i)
+			{
+				if (!g_particles[i].isFixed)
 				{
-					if (!g_particles[i].isFixed)
-					{
-						g_particles[i].P = g_positionData[i];
-						g_particles[i].V = (g_particles[i].P - g_particles[i].pP) / dt;
-					}
-				}*/
+					g_particles[i].P = g_positionData[i];
+					g_particles[i].V = (g_particles[i].P - g_particles[i].pP) / dt;
+					UpdateV3Data(i, &g_particles[i].P, 0);
+				}
+			}
+		}
+
 
 	}
 

@@ -424,7 +424,7 @@ void Assignment::SubmitShadowData()
 
 void Assignment::FixedTick()
 {
-	ClothSim::UpdateSprings(m_simulationUpdateRate_InSeconds);
+	ClothSim::UpdateSprings(0.05f);
 }
 
 void Assignment::CleanUp()
