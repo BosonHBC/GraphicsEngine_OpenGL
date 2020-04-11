@@ -561,6 +561,8 @@ namespace Graphics {
 				for (int j = 0; j < CLOTH_RESOLUTION; ++j)
 				{
 					ClothSim::g_particles[i * CLOTH_RESOLUTION + j] = ClothSim::sParticle(glm::vec3(-100 + j * distBetweenVertex, 280.f - 0, i * distBetweenVertex - 200));
+					if ((j + 1) % (CLOTH_RESOLUTION / 5) == 1 && i == 0)
+						ClothSim::g_particles[i * CLOTH_RESOLUTION + j].isFixed = true;
 				}
 			}
 			ClothSim::g_particles[0].isFixed = true;

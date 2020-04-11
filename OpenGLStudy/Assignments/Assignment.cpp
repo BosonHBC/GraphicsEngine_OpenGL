@@ -300,6 +300,18 @@ void Assignment::Tick(float second_since_lastFrame)
 	if (_windowInput->IsKeyDown(GLFW_KEY_DOWN)) {
 		ClothSim::MoveFixedNode(glm::vec3(0, 0, 1) *nodeMoveSpeed * second_since_lastFrame);
 	}
+	if (_windowInput->IsKeyDown(GLFW_KEY_Y)) {
+		ClothSim::MoveFixedNode(glm::vec3(0, 1, 0) *nodeMoveSpeed * second_since_lastFrame);
+	}
+	if (_windowInput->IsKeyDown(GLFW_KEY_H)) {
+		ClothSim::MoveFixedNode(glm::vec3(0, -1, 0) *nodeMoveSpeed * second_since_lastFrame);
+	}
+	if (_windowInput->IsKeyDown(GLFW_KEY_Z)) {
+		ClothSim::ScaleFixedNode(glm::vec3(-1, 0, 0) *nodeMoveSpeed * second_since_lastFrame);
+	}
+	if (_windowInput->IsKeyDown(GLFW_KEY_X)) {
+		ClothSim::ScaleFixedNode(glm::vec3(1, 0, 0) *nodeMoveSpeed * second_since_lastFrame);
+	}
 
 
 	m_teapot->Transform.Update();

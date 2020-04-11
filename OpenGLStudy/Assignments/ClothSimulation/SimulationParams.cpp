@@ -20,6 +20,10 @@ namespace ClothSim
 	std::uniform_real_distribution<float> randomFloats(0.0, 1.0); // generates random floats between 0.0 and 1.0
 	std::default_random_engine generator;
 
+#define FRICTION_COEFFICENT 0.75f
+#define TOUCH_DIST_THRESHOLD 1.f
+	const glm::vec3 g_floorPlane = glm::vec3(0, 5, 0);
+
 	void InitializeNeghbors()
 	{
 		for (int i = 0; i < VC; ++i)
@@ -178,6 +182,25 @@ namespace ClothSim
 			// Add gravity force
 			force += GRAVITY * MASS + GRAVITY_DAMPING * currentV;
 
+			// Add friction 
+			{
+				if (g_particles[i].P.y - g_floorPlane.y < TOUCH_DIST_THRESHOLD)
+				{
+					glm::vec3 fNorm = glm::vec3(0, 1, 0);
+					glm::vec3 fTangent = glm::normalize(glm::cross(glm::cross(fNorm, force), fNorm));
+
+					float fVertical =glm::max(glm::dot(force, -fNorm), 0.0f);
+					float fHori = glm::max(glm::dot(force, fTangent), 0.0f);
+					// if the overall force is going down, calculate friction
+					if (fVertical > 0.0f)
+					{
+						float fFriction = fVertical * FRICTION_COEFFICENT;
+						force = glm::max(fHori - fFriction, 0.0f) * fTangent + currentV * -0.75f;
+					}
+				}
+			}
+
+
 			// Verlet integration
 			glm::vec3 a = glm::vec3(0); // a stands for acceleration
 			if (!g_particles[i].isFixed)
@@ -194,11 +217,12 @@ namespace ClothSim
 		for (int i = 0; i < VC; ++i)
 		{
 			g_particles[i].pP = g_particles[i].P;
-			if (!g_particles[i].isFixed)
+			if (!g_particles[i].isFixed && g_positionData[i].y > g_floorPlane.y)
 			{
 				g_particles[i].P = g_positionData[i];
-				g_particles[i].V = (g_particles[i].P - g_particles[i].pP) / dt;
 			}
+			g_particles[i].V = (g_particles[i].P - g_particles[i].pP) / dt;
+
 			UpdateV3Data(i, &g_particles[i].P, 0);
 		}
 
@@ -252,8 +276,21 @@ namespace ClothSim
 
 	void MoveFixedNode(const glm::vec3& i_deltaPosition)
 	{
-		g_particles[0].P += i_deltaPosition;
-		g_particles[CLOTH_RESOLUTION - 1].P += i_deltaPosition;
+		for (int i = 0; i < CLOTH_RESOLUTION; ++i)
+		{
+			if (g_particles[i].isFixed)
+				g_particles[i].P += i_deltaPosition;
+		}
+	}
+
+	void ScaleFixedNode(const glm::vec3& i_deltaPosition)
+	{
+		for (int i = 0 ; i < CLOTH_RESOLUTION; ++i)
+		{
+			if(g_particles[i].isFixed)
+				g_particles[i].P += i_deltaPosition * ( 1.f - i / static_cast<float>(CLOTH_RESOLUTION - 1));
+		}
+		
 	}
 
 	void CleanUpData()
