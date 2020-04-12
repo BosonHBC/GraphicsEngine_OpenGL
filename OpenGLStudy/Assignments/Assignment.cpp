@@ -74,6 +74,11 @@ void Assignment::CreateActor()
 	m_spaceHolder->Initialize();
 	m_spaceHolder->Transform.SetTransform(glm::vec3(0, 150.f, 0), glm::quat(1, 0, 0, 0), glm::vec3(5, 5, 5));
 	m_spaceHolder->SetModel("Contents/models/spaceHolder.model");
+
+	m_collisionSphere = new cActor();
+	m_collisionSphere->Initialize();
+	m_collisionSphere->Transform.SetTransform(glm::vec3(0, 0, -150), glm::quat(1,0,0,0), glm::vec3(10,10,10));
+	m_collisionSphere->SetModel("Contents/models/pbrSphere.model");
 }
 
 void Assignment::CreateCamera()
@@ -374,6 +379,8 @@ void Assignment::SubmitSceneData(Graphics::UniformBufferFormats::sFrame* const i
 		_renderingMap.push_back({ m_spaceHolder->GetModelHandle(), m_spaceHolder->Transform });
 		_renderingMap.push_back({ m_teapot->GetModelHandle(), m_teapot->Transform });
 		_renderingMap.push_back({ m_teapot2->GetModelHandle(), m_teapot2->Transform });
+		_renderingMap.push_back({ m_collisionSphere->GetModelHandle(), m_collisionSphere->Transform });
+
 		Graphics::SubmitDataToBeRendered(*i_frameData, _renderingMap, &Graphics::PBR_Pass);
 	}
 
@@ -396,6 +403,8 @@ void Assignment::SubmitSceneDataForEnvironmentCapture(Graphics::UniformBufferFor
 		_renderingMap.push_back({ m_spaceHolder->GetModelHandle(), m_spaceHolder->Transform });
 		_renderingMap.push_back({ m_teapot->GetModelHandle(), m_teapot->Transform });
 		_renderingMap.push_back({ m_teapot2->GetModelHandle(), m_teapot2->Transform });
+		_renderingMap.push_back({ m_collisionSphere->GetModelHandle(), m_collisionSphere->Transform });
+
 		Graphics::SubmitDataToBeRendered(*i_frameData, _renderingMap, &Graphics::PBR_Pass);
 	}
 
@@ -416,6 +425,7 @@ void Assignment::SubmitShadowData()
 	_renderingMap.push_back({ m_teapot->GetModelHandle(), m_teapot->Transform });
 	_renderingMap.push_back({ m_teapot2->GetModelHandle(), m_teapot2->Transform });
 	_renderingMap.push_back({ m_spaceHolder->GetModelHandle(), m_spaceHolder->Transform });
+	_renderingMap.push_back({ m_collisionSphere->GetModelHandle(), m_collisionSphere->Transform });
 
 	{// Spot light shadow map pass
 		Graphics::SubmitDataToBeRendered(Graphics::UniformBufferFormats::sFrame(), _renderingMap, &Graphics::SpotLightShadowMap_Pass);
@@ -441,6 +451,7 @@ void Assignment::FixedTick()
 
 void Assignment::CleanUp()
 {
+	safe_delete(m_collisionSphere);
 	safe_delete(m_editorCamera);
 	safe_delete(m_teapot);
 	safe_delete(m_teapot2);

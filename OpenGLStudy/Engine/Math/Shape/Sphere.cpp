@@ -30,3 +30,18 @@ float cSphere::NDF(const glm::vec3& i_point) const
 {
 	return glm::distance(m_center, i_point) / m_radius;
 }
+
+eCollisionType cSphere::InverectRay(const glm::vec3& o, const glm::vec3& d, float& t1, float& t2) const
+{
+	float A = glm::dot(d, d);
+	float B = 2 * glm::dot(d, o - m_center);
+	float C = glm::dot(o - m_center, o- m_center) - m_radius * m_radius;
+
+	float DD = B * B - 4 * A*C;
+	if (DD > 0) {
+		t2 = (-B + sqrt(DD)) / (2 * A);
+		t1 = (-B - sqrt(DD)) / (2 * A);
+		return ECT_Overlap;
+	}
+	return ECT_NoIntersect;
+}

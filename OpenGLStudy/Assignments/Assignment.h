@@ -59,6 +59,7 @@ private:
 	cActor* m_teapot2;
 	cActor* m_cubemap;
 	cActor* m_spaceHolder;
+	cActor* m_collisionSphere;
 
 	float m_exposureOffset = 3.0f;
 };

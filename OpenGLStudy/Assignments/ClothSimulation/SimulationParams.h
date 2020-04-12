@@ -35,11 +35,11 @@ namespace ClothSim
 	extern const float g_blendRestLen;
 
 	// stiff and damping for spring particles
-#define STRUCT_STIFF 50
+#define STRUCT_STIFF 80
 #define STRUCT_DAMP	-0.5f
-#define SHEAR_STIFF 30
+#define SHEAR_STIFF 50
 #define SHEAR_DAMP	-0.5f
-#define BEND_STIFF 30
+#define BEND_STIFF 50
 #define BEND_DAMP	-0.5f
 
 #define MASS 1.f // 1 kg
