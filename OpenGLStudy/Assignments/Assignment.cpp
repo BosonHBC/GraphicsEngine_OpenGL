@@ -49,17 +49,30 @@ bool Assignment::Initialize(GLuint i_width, GLuint i_height, const char* i_windo
 	return result;
 }
 
+const char* g_teapotPaths[Assignment::s_teapotCount] = 
+{
+	"Contents/models/pbrTeapot.model",
+	"Contents/models/pbrTeapot_rustedIron.model",
+	"Contents/models/pbrTeapot_caveFloor.model",
+	"Contents/models/pbrTeapot_wornPainted.model",
+	"Contents/models/pbrTeapot_ChipedPaintMetal.model",
+	"Contents/models/pbrTeapot_RustPanel.model",
+	"Contents/models/pbrTeapot_SpeckledCountertop.model",
+	"Contents/models/pbrTeapot_WinkledPaper.model"
+};
 void Assignment::CreateActor()
 {
-	m_teapot = new cActor();
-	m_teapot->Initialize();
-	m_teapot->Transform.SetTransform(glm::vec3(0, 0, 100), glm::quat(glm::vec3(-glm::radians(90.f), 0, 0)), glm::vec3(5, 5, 5));
-	m_teapot->SetModel("Contents/models/pbrTeapot.model");
+	const int teapotPerRow = 4;
+	const float horiDist = 100;
+	const float vertDist = 100;
+	for (int i = 0; i < m_renderingTeapotCount; ++i)
+	{
+		m_teapots[i] = new cActor();
+		m_teapots[i]->Initialize();
+		m_teapots[i]->Transform.SetTransform(glm::vec3(-150 + (i % teapotPerRow) * horiDist, 0, 100 - (i / teapotPerRow) * vertDist), glm::quat(glm::vec3(-glm::radians(90.f), glm::radians(30.f), 0)), glm::vec3(5, 5, 5));
+		m_teapots[i]->SetModel(g_teapotPaths[i]);
+	}
 
-	m_teapot2 = new cActor();
-	m_teapot2->Initialize();
-	m_teapot2->Transform.SetTransform(glm::vec3(150, 0, 100), glm::quat(glm::vec3(-glm::radians(90.f), 0, 0)), glm::vec3(3, 3, 3));
-	m_teapot2->SetModel("Contents/models/pbrTeapot.model");
 
 	m_cubemap = new cActor();
 	m_cubemap->Initialize();
@@ -83,14 +96,15 @@ void Assignment::CreateActor()
 
 void Assignment::CreateCamera()
 {
-	m_editorCamera = new  cEditorCamera(glm::vec3(0, 250, 150), 20, 0, 300, 10.f);
+	//m_editorCamera = new  cEditorCamera(glm::vec3(0, 250, 150), 20, 0, 300, 10.f);
+	m_editorCamera = new  cEditorCamera(glm::vec3(0, 250, 300), 35, 0, 300, 10.f);
 	float _aspect = (float)(GetCurrentWindow()->GetBufferWidth()) / (float)(GetCurrentWindow()->GetBufferHeight());
 	m_editorCamera->CreateProjectionMatrix(glm::radians(60.f), _aspect, 10.f, 2000.0f);
 }
 
 void Assignment::CreateLight()
 {
-	Graphics::CreateAmbientLight(Color(0.1f, 0.1f, 0.1f), aLight);
+	Graphics::CreateAmbientLight(Color(0.2f, 0.2f, 0.2f), aLight);
 	Graphics::CreatePointLight(glm::vec3(-100, 150.f, 100.f), Color(1, 1, 1), 300.f, true, pLight1);
 	//Graphics::CreatePointLight(glm::vec3(100, 150.f, 100.f), Color(1, 1, 1), 1.f, 0.7f, 1.8f, true, pLight2);
 	Graphics::CreateDirectionalLight(Color(0.6f, 0.6f, 0.6f), glm::vec3(-1, -0.5f, -0.5f), true, dLight);
@@ -142,6 +156,7 @@ void Assignment::SubmitDataToBeRender(const float i_seconds_elapsedSinceLastLoop
 			Graphics::SubmitDataToBeRendered(_frameData_Camera, _renderingMap, &Graphics::Gizmo_RenderTransform);
 		}
 		// Normal Gizmo
+/*
 		if (false)
 		{
 			_renderingMap.clear();
@@ -156,7 +171,7 @@ void Assignment::SubmitDataToBeRender(const float i_seconds_elapsedSinceLastLoop
 			_renderingMap.reserve(1);
 			_renderingMap.push_back({ m_teapot->GetModelHandle(), m_teapot->Transform });
 			Graphics::SubmitDataToBeRendered(_frameData_Camera, _renderingMap, &Graphics::Gizmo_RenderTriangulation);
-		}
+		}*/
 	}
 }
 
@@ -208,8 +223,8 @@ void Assignment::Tick(float second_since_lastFrame)
 	}
 
 	//dLight->Transform()->Rotate(-cTransform::WorldUp, 0.01677f);
-	if (m_teapot) {
-		m_teapot->Transform.gRotate(glm::vec3(0, 1.f, 0), second_since_lastFrame);
+	if (m_teapots[0]) {
+		//m_teapot->Transform.gRotate(glm::vec3(0, 1.f, 0), second_since_lastFrame);
 	}
 	// Changing exposure
 	{
@@ -319,9 +334,10 @@ void Assignment::Tick(float second_since_lastFrame)
 		ClothSim::ScaleFixedNode(glm::vec3(1, 0, 0) *nodeMoveSpeed * second_since_lastFrame);
 	}
 
-
-	m_teapot->Transform.Update();
-	m_teapot2->Transform.Update();
+	for (int i = 0; i < m_renderingTeapotCount; ++i)
+	{
+		m_teapots[i]->Transform.Update();
+	}
 
 	if (pLight1)
 		pLight1->Transform.Update();
@@ -376,10 +392,12 @@ void Assignment::SubmitSceneData(Graphics::UniformBufferFormats::sFrame* const i
 	// PBR pass
 	{
 		_renderingMap.clear();
-		_renderingMap.reserve(3);
+		_renderingMap.reserve(m_renderingTeapotCount + 2);
 		_renderingMap.push_back({ m_spaceHolder->GetModelHandle(), m_spaceHolder->Transform });
-		_renderingMap.push_back({ m_teapot->GetModelHandle(), m_teapot->Transform });
-		_renderingMap.push_back({ m_teapot2->GetModelHandle(), m_teapot2->Transform });
+		for (int i = 0; i < m_renderingTeapotCount; ++i)
+		{
+			_renderingMap.push_back({ m_teapots[i]->GetModelHandle(), m_teapots[i]->Transform });
+		}
 
 		if (ClothSim::g_bEnableClothSim)
 			_renderingMap.push_back({ m_collisionSphere->GetModelHandle(), m_collisionSphere->Transform });
@@ -402,10 +420,12 @@ void Assignment::SubmitSceneDataForEnvironmentCapture(Graphics::UniformBufferFor
 	// PBR pass
 	{
 		_renderingMap.clear();
-		_renderingMap.reserve(3);
+		_renderingMap.reserve(m_renderingTeapotCount + 2);
 		_renderingMap.push_back({ m_spaceHolder->GetModelHandle(), m_spaceHolder->Transform });
-		_renderingMap.push_back({ m_teapot->GetModelHandle(), m_teapot->Transform });
-		_renderingMap.push_back({ m_teapot2->GetModelHandle(), m_teapot2->Transform });
+		for (int i = 0; i < m_renderingTeapotCount; ++i)
+		{
+			_renderingMap.push_back({ m_teapots[i]->GetModelHandle(), m_teapots[i]->Transform });
+		}
 		if (ClothSim::g_bEnableClothSim)
 			_renderingMap.push_back({ m_collisionSphere->GetModelHandle(), m_collisionSphere->Transform });
 
@@ -425,9 +445,11 @@ void Assignment::SubmitShadowData()
 {
 	std::vector<std::pair<Graphics::cModel::HANDLE, cTransform>> _renderingMap;
 
-	_renderingMap.reserve(32);
-	_renderingMap.push_back({ m_teapot->GetModelHandle(), m_teapot->Transform });
-	_renderingMap.push_back({ m_teapot2->GetModelHandle(), m_teapot2->Transform });
+	_renderingMap.reserve(m_renderingTeapotCount + 2);
+	for (int i = 0; i < m_renderingTeapotCount; ++i)
+	{
+		_renderingMap.push_back({ m_teapots[i]->GetModelHandle(), m_teapots[i]->Transform });
+	}
 	_renderingMap.push_back({ m_spaceHolder->GetModelHandle(), m_spaceHolder->Transform });
 
 	if (ClothSim::g_bEnableClothSim)
@@ -460,8 +482,10 @@ void Assignment::CleanUp()
 {
 	safe_delete(m_collisionSphere);
 	safe_delete(m_editorCamera);
-	safe_delete(m_teapot);
-	safe_delete(m_teapot2);
+	for (int i = 0; i < m_renderingTeapotCount; ++i)
+	{
+		safe_delete(m_teapots[i]);
+	}
 	safe_delete(m_cubemap);
 	safe_delete(m_spaceHolder);
 	ClothSim::CleanUpData();

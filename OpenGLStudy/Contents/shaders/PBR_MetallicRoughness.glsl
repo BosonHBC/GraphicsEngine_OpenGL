@@ -12,13 +12,14 @@ uniform sampler2D MetallicMap; // 1
 uniform sampler2D RoughnessMap; // 2
 uniform sampler2D NormalMap; // 3
 uniform sampler2D BrdfLUTMap; // 4
+uniform sampler2D AOMap; 	  // 5
 
-uniform samplerCube IrradianceMap[MAX_COUNT_CUBEMAP_MIXING]; // 5 - 8
-uniform samplerCube PrefilterMap[MAX_COUNT_CUBEMAP_MIXING]; // 9 - 12
+uniform samplerCube IrradianceMap[MAX_COUNT_CUBEMAP_MIXING]; // 6 - 9
+uniform samplerCube PrefilterMap[MAX_COUNT_CUBEMAP_MIXING]; // 10 - 13
 
-uniform sampler2D spotlightShadowMap[MAX_COUNT_PER_LIGHT]; // 13 -> 17
-uniform samplerCube pointLightShadowMap[MAX_COUNT_PER_LIGHT]; // 18-> 22
-uniform sampler2D directionalShadowMap; // 23
+uniform sampler2D spotlightShadowMap[MAX_COUNT_PER_LIGHT]; // 14 -> 18
+uniform samplerCube pointLightShadowMap[MAX_COUNT_PER_LIGHT]; // 19-> 23
+uniform sampler2D directionalShadowMap; // 24
 
 
 const vec3 gridSamplingDisk[20] =vec3[]
@@ -100,9 +101,9 @@ layout(std140, binding = 3) uniform g_uniformBuffer_Lighting
 // Fucntions
 //-------------------------------------------------------------------------
 // Normal distribution function
-float DistributionGGX(vec3 N, vec3 H, float a)
+float DistributionGGX(vec3 N, vec3 H, float roughness)
 {
-    float a2     = a*a;
+    float a2     = roughness * roughness;
     float NdotH  = max(dot(N, H), 0.0);
     float NdotH2 = NdotH*NdotH;
 	
@@ -113,20 +114,23 @@ float DistributionGGX(vec3 N, vec3 H, float a)
     return nom / denom;
 }
 // Geometry function
-float GeometrySchlickGGX(float NdotV, float k)
+float GeometrySchlickGGX(float NdotV, float roughness)
 {
+	float r = (roughness + 1.0);
+    float k = (r*r) / 8.0;
+
     float nom   = NdotV;
     float denom = NdotV * (1.0 - k) + k;
 	
     return nom / denom;
 }
 //k is a remapping of α based on whether we're using the geometry function for either direct lighting or IBL lighting
-float GeometrySmith(vec3 N, vec3 V, vec3 L, float k)
+float GeometrySmith(vec3 N, vec3 V, vec3 L, float roughness)
 {
     float NdotV = max(dot(N, V), 0.0);
     float NdotL = max(dot(N, L), 0.0);
-    float ggx1 	= GeometrySchlickGGX(NdotV, k);
-    float ggx2 	= GeometrySchlickGGX(NdotL, k);
+    float ggx1 	= GeometrySchlickGGX(NdotV, roughness);
+    float ggx2 	= GeometrySchlickGGX(NdotL, roughness);
 	
     return ggx1 * ggx2;
 }
@@ -384,15 +388,16 @@ void main(){
 	vec3 vR = reflect(-normalized_view, normalized_normal); 
 
 	// material property
-	vec3 albedoColor = texture(AlbedoMap, texCood0).rgb * diffuseIntensity;
+	vec3 albedoColor = pow(texture(AlbedoMap, texCood0).rgb, vec3(2.2)).rgb * diffuseIntensity;
 	float metalness = texture(MetallicMap, texCood0).r * metalnessIntensity;
 	float roughness = texture(RoughnessMap, texCood0).r * roughnessIntensity;
+	float textureAO = texture(AOMap, texCood0).r;
 	vec3 F0 = abs ((1.0 - ior) / (1.0 + ior)); //vec3(0.04);
 	F0 = F0 * F0;
 	F0 = mix(F0, albedoColor, vec3(metalness));
 
 	// ambient light
-	vec3 ambientLightColor = CalcAmbientLight(g_ambientLight,albedoColor, metalness, roughness, F0,normalized_normal,normalized_view, vR);
+	vec3 ambientLightColor = CalcAmbientLight(g_ambientLight, albedoColor, metalness, roughness, F0,normalized_normal,normalized_view, vR) * textureAO;
 	
 	// cubemap light
 	//vec4 cubemapColor = IlluminateByCubemap(diffuseTexColor,specularTexColor, normalized_normal, normalized_view);

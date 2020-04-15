@@ -34,7 +34,7 @@ namespace Graphics
 		// Bind color_attachment_2 to with IOR
 		{
 			key = "GBuffer_IOR";
-			cTexture::s_manager.Load(key, m_iorHolder, ETT_FRAMEBUFFER_RGB16, m_width, m_height);
+			cTexture::s_manager.Load(key, m_iorHolder, ETT_FRAMEBUFFER_RGBA16, m_width, m_height);
 			cTexture* _gIOR = cTexture::s_manager.Get(m_iorHolder);
 			const GLuint _textureID = _gIOR->GetTextureID();
 			glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT2, GL_TEXTURE_2D, _textureID, 0);

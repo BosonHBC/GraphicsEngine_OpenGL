@@ -1,0 +1,16 @@
+--[[
+    Default Physcis based rendering metallic roughness workflow
+]]
+return 
+{
+    MaterialType = 4,
+    AlbedoTexture = "pbrTextures/chipped-paint-metal/chipped-paint-metal-albedo.png",
+    MetallicTexture = "pbrTextures/chipped-paint-metal/chipped-paint-metal-metal.png",
+    RoughnessTexture = "pbrTextures/chipped-paint-metal/chipped-paint-metal-rough2.png",
+    NormalTexture = "pbrTextures/chipped-paint-metal/chipped-paint-metal-normal-dx.png",
+    AOTexture = "pbrTextures/chipped-paint-metal/chipped-paint-ao.png",
+    DiffuseIntensity = {1.0,1.0,1.0},
+    MetallicIntensity = 1.0,
+    RoughnessIntensity = 1.0,
+    IOR = {2.5, 2.5, 2.5},
+}

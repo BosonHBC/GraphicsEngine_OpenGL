@@ -8,6 +8,7 @@ return
     MetallicTexture = "Cloth/worn-blue-burlap-Metallic.png",
     RoughnessTexture = "Cloth/worn-blue-burlap-Roughness.png",
     NormalTexture = "Cloth/worn-blue-burlap-Normal-dx.png",
+    AOTexture = "",
     DiffuseIntensity = {1.0,1.0,1.0},
     MetallicIntensity = 1.0,
     RoughnessIntensity = 1.0,

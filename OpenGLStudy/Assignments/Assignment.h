@@ -26,6 +26,8 @@ namespace Graphics {
 class Assignment : public Application::cApplication
 {
 public:
+	static const int s_teapotCount = 12;
+
 	bool Initialize(GLuint i_width, GLuint i_height, const char* i_windowName = "Default Window");
 	void Run();
 	void CleanUp();
@@ -55,8 +57,9 @@ private:
 	Graphics::cSpotLight* spLight;
 	Graphics::cSpotLight* spLight2;
 
-	cActor* m_teapot;
-	cActor* m_teapot2;
+
+	int m_renderingTeapotCount = 8;
+	cActor* m_teapots[s_teapotCount] = {nullptr};
 	cActor* m_cubemap;
 	cActor* m_spaceHolder;
 	cActor* m_collisionSphere;

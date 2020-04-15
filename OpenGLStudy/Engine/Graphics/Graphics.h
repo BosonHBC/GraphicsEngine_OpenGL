@@ -16,7 +16,8 @@
 
 // Graphics stores, initializes, cleans up all data that needs to be rendered
 namespace Graphics {
-#define SHADOWMAP_START_TEXTURE_UNIT 13
+#define SHADOWMAP_START_TEXTURE_UNIT 14
+#define IBL_CUBEMAP_START_TEXTURE_UNIT 6
 
 	/** Initialization and clean up function*/
 	bool Initialize();

@@ -1,0 +1,9 @@
+--[[
+    Default Model sheet
+]]
+return 
+{
+    ModelPath = "teapot.obj",
+    MaterialPath = "pbrRustPanel.material",
+
+}

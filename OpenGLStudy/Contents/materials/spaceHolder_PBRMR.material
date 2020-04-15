@@ -8,6 +8,7 @@ return
     MetallicTexture = "spaceHolder/holder_Metallic.png",
     RoughnessTexture = "spaceHolder/holder_Roughness.png",
     NormalTexture = "spaceHolder/holder_Normal.png",
+    AOTexture = "",
     DiffuseIntensity = {1.0,1.0,1.0},
     MetallicIntensity = 1.0,
     RoughnessIntensity = 1.0,

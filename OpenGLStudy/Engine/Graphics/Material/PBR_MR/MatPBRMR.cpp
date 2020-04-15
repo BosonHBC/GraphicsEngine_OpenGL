@@ -12,9 +12,9 @@ namespace Graphics
 	bool cMatPBRMR::Initialize(const std::string& i_path)
 	{
 		bool result = true;
-		std::string _albedoPath, _metallicPath, _roughnessPath, _normalPath;
+		std::string _albedoPath, _metallicPath, _roughnessPath, _normalPath, _aoPath;
 		// load material data from LUA files
-		if (!(result = LoadFileFromLua(i_path, _albedoPath, _metallicPath, _roughnessPath, _normalPath, m_diffuseIntensity, m_metallicIntensity, m_roughnessIntensity, m_ior))) {
+		if (!(result = LoadFileFromLua(i_path, _albedoPath, _metallicPath, _roughnessPath, _normalPath, _aoPath, m_diffuseIntensity, m_metallicIntensity, m_roughnessIntensity, m_ior))) {
 			printf("Fail to load PBR_MetallicRoughness[%s] from LUA.\n", i_path.c_str());
 			return result;
 		}
@@ -23,6 +23,7 @@ namespace Graphics
 		SetMetallic(_metallicPath);
 		SetRoughness(_roughnessPath);
 		SetNormal(_normalPath);
+		SetAO(_aoPath);
 
 		if (!(result = s_PBRMRUniformBlock.Initialize(nullptr))) {
 			printf("Fail to initialize uniformBuffer_PBRMMR\n");
@@ -48,6 +49,7 @@ namespace Graphics
 		m_metallicID = glGetUniformLocation(i_programID, "MetallicMap");
 		m_roughnessID = glGetUniformLocation(i_programID, "RoughnessMap");
 		m_normalID = glGetUniformLocation(i_programID, "NormalMap");
+		m_aoID = glGetUniformLocation(i_programID, "AOMap");
 		assert(GL_NO_ERROR == glGetError());
 		return result;
 	}
@@ -82,6 +84,13 @@ namespace Graphics
 		else
 			cTexture::UnBindTexture(GL_TEXTURE3, ETT_FILE);
 
+		glUniform1i(m_aoID, 5);
+		cTexture* _aoTexture = cTexture::s_manager.Get(m_aoMapHandle);
+		if (_aoTexture)
+			_aoTexture->UseTexture(GL_TEXTURE5);
+		else
+			cTexture::UnBindTexture(GL_TEXTURE5, ETT_FILE_GRAY);
+
 		s_PBRMRUniformBlock.Update(&UniformBufferFormats::sPBRMRMaterial(m_diffuseIntensity, m_roughnessIntensity, m_ior, m_metallicIntensity));
 
 		assert(GL_NO_ERROR == glGetError());
@@ -107,6 +116,10 @@ namespace Graphics
 		if (_normalTex)
 			_normalTex->CleanUpTextureBind(GL_TEXTURE3);
 
+		cTexture* _aoTexture = cTexture::s_manager.Get(m_aoMapHandle);
+		if (_aoTexture)
+			_aoTexture->CleanUpTextureBind(GL_TEXTURE5);
+
 		assert(GL_NO_ERROR == glGetError());
 
 	}
@@ -117,9 +130,10 @@ namespace Graphics
 		cTexture::s_manager.Release(m_metallicMapHandle);
 		cTexture::s_manager.Release(m_roughnessMapHandle);
 		cTexture::s_manager.Release(m_normalMapHandle);
+		cTexture::s_manager.Release(m_aoMapHandle);
 	}
 
-	bool cMatPBRMR::LoadFileFromLua(const std::string& i_path, std::string& o_albedoPath, std::string& o_metallicPath, std::string& o_roughnessPath, std::string& o_normalPath, Color& o_diffuseIntensity, float& o_metallicIntensity, float& o_roughnessIntensity, glm::vec3& o_ior)
+	bool cMatPBRMR::LoadFileFromLua(const std::string& i_path, std::string& o_albedoPath, std::string& o_metallicPath, std::string& o_roughnessPath, std::string& o_normalPath, std::string& o_aoPath,Color& o_diffuseIntensity, float& o_metallicIntensity, float& o_roughnessIntensity, glm::vec3& o_ior)
 	{
 		bool result;
 		lua_State* luaState = nullptr;
@@ -158,6 +172,14 @@ namespace Graphics
 		{
 			constexpr auto* const _key = "NormalTexture";
 			if (!(result = Assets::Lua_LoadString(luaState, _key, o_normalPath))) {
+				printf("LUA error: fail to load key[%s]", _key);
+				return result;
+			}
+		}
+		// o_aoPath
+		{
+			constexpr auto* const _key = "AOTexture";
+			if (!(result = Assets::Lua_LoadString(luaState, _key, o_aoPath))) {
 				printf("LUA error: fail to load key[%s]", _key);
 				return result;
 			}
@@ -267,5 +289,20 @@ namespace Graphics
 	}
 
 
+
+	bool cMatPBRMR::SetAO(const std::string& i_path)
+	{
+		auto result = true;
+		std::string _path = Assets::ProcessPathTex(i_path);
+		if (!(result = cTexture::s_manager.Load(_path, m_aoMapHandle, ETextureType::ETT_FILE_GRAY))) {
+			printf("Texture[%s] for ao map is invalid, use default color texture instead.\n", _path.c_str());
+			//Use default texture, which is the white board
+			if (!(result = cTexture::s_manager.Load(Constants::CONST_PATH_DEFAULT_COLOR, m_aoMapHandle, ETextureType::ETT_FILE_GRAY)))
+			{
+				printf("Fail to load default texture.\n");
+			}
+		}
+		return result;
+	}
 
 }

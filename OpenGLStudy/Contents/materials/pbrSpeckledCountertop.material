@@ -1,0 +1,16 @@
+--[[
+    Default Physcis based rendering metallic roughness workflow
+]]
+return 
+{
+    MaterialType = 4,
+    AlbedoTexture = "pbrTextures/SpeckledCountertop/speckled_countertop1_albedo.png",
+    MetallicTexture = "pbrTextures/SpeckledCountertop/speckled_countertop1_Metallic.png",
+    RoughnessTexture = "pbrTextures/SpeckledCountertop/speckled_countertop1_Roughness.png",
+    NormalTexture = "pbrTextures/SpeckledCountertop/speckled_countertop1_Normal-dx.png",
+    AOTexture = "pbrTextures/SpeckledCountertop/speckled_countertop1_ao.png",
+    DiffuseIntensity = {1.0,1.0,1.0},
+    MetallicIntensity = 1.0,
+    RoughnessIntensity = 1.0,
+    IOR = {2.5, 2.5, 2.5},
+}

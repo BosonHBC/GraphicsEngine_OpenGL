@@ -8,6 +8,7 @@ return
     MetallicTexture = "",
     RoughnessTexture = "",
     NormalTexture = "",
+    AOTexture = "",
     DiffuseIntensity = {1.0,1.0,1.0},
     MetallicIntensity = 1.0,
     RoughnessIntensity = 0.1,
