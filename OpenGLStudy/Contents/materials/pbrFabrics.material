@@ -1,0 +1,15 @@
+--[[
+    Default Physcis based rendering metallic roughness workflow
+]]
+return 
+{
+    MaterialType = 4,
+    AlbedoTexture = "teapot_disp.png",
+    MetallicTexture = "Cloth/worn-blue-burlap-Metallic.png",
+    RoughnessTexture = "Cloth/worn-blue-burlap-Roughness.png",
+    NormalTexture = "Cloth/worn-blue-burlap-Normal-dx.png",
+    DiffuseIntensity = {1.0,1.0,1.0},
+    MetallicIntensity = 1.0,
+    RoughnessIntensity = 1.0,
+    IOR = {1.52, 1.52, 1.52},
+}

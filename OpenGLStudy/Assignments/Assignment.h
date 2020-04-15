@@ -2,6 +2,8 @@
 #include "Application/Application.h"
 #include <vector>
 #include "Color/Color.h"
+#include "glm/glm.hpp"
+#include "glm/gtc/matrix_transform.hpp"
 
 /** Forward deceleration*/
 //----------------------------------------------
@@ -57,9 +59,7 @@ private:
 	cActor* m_teapot2;
 	cActor* m_cubemap;
 	cActor* m_spaceHolder;
-	cActor* m_gun;
-
-	std::vector<cActor*> m_sphereList;
+	cActor* m_collisionSphere;
 
 	float m_exposureOffset = 3.0f;
 };

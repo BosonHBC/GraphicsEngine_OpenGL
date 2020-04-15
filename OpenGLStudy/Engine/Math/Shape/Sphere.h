@@ -13,6 +13,8 @@ public:
 	
 	eCollisionType Intersect(const glm::vec3& i_point) const override;
 	eCollisionType Intersect(const cSphere& i_sphere) const ;
+	eCollisionType InverectRay(const glm::vec3& o, const glm::vec3& d, float& t1, float& t2) const;
+
 	float NDF(const glm::vec3& i_point) const override;
 	void SetRadius(float i_radius) { m_radius = i_radius; }
 	void SetCenter(const glm::vec3& i_center) { m_center = i_center; }

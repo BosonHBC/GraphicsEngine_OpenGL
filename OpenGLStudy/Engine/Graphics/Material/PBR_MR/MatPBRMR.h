@@ -7,8 +7,11 @@ namespace Graphics
 	class cMatPBRMR : public cMaterial
 	{
 	public:
+		cMatPBRMR()
+			: m_diffuseIntensity(Color::White()), m_roughnessIntensity(1.0f), m_ior(1.0f), m_metallicIntensity(1.0f), cMaterial(eMaterialType::MT_PBRMR)
+		{}
 		static cUniformBuffer& GetUniformBuffer() { return s_PBRMRUniformBlock; }
-		~cMatPBRMR() { CleanUp(); };
+		~cMatPBRMR() {};
 
 		bool Initialize(const std::string& i_path) override;
 		bool UpdateUniformVariables(GLuint i_programID) override;
@@ -36,9 +39,7 @@ namespace Graphics
 		GLuint m_albedoID = static_cast<GLuint>(-1), m_metallicID = static_cast<GLuint>(-1), m_roughnessID = static_cast<GLuint>(-1), m_normalID = static_cast<GLuint>(-1);
 
 		/* private functions */
-		cMatPBRMR()
-			: m_diffuseIntensity(Color::White()), m_roughnessIntensity(1.0f), m_ior(1.0f), m_metallicIntensity(1.0f), cMaterial(eMaterialType::MT_PBRMR)
-		{}
+
 		bool LoadFileFromLua(const std::string& i_path, std::string& o_albedoPath, std::string& o_metallicPath, std::string& o_roughnessPath, std::string& o_normalPath, Color& o_diffuseIntensity, float& o_metallicIntensity, float& o_roughnessIntensity, glm::vec3& o_ior);
 		bool SetAlbedo(const std::string& i_path);
 		bool SetMetallic(const std::string& i_path);

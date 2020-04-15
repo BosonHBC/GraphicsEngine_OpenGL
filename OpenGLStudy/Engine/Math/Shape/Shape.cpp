@@ -5,3 +5,4 @@ const char* cShape::CollisionEnumToString(const eCollisionType& i_collisionType)
 {
 	return EnumStrings[i_collisionType];
 }
+

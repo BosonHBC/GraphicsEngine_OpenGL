@@ -6,6 +6,7 @@
 #include "Light/SpotLight/SpotLight.h"
 #include "Model/Model.h"
 #include "vector"
+#include "Assignments/ClothSimulation/SimulationParams.h"
 namespace Graphics{
 	// render mode
 	enum ERenderMode : uint8_t
@@ -43,6 +44,9 @@ namespace Graphics{
 		std::vector<cSpotLight> s_spotLights;
 		cAmbientLight s_ambientLight;
 		cDirectionalLight s_directionalLight;
+		// for simulation specifically
+		glm::vec3 particles[ClothSim::VC];
+		float clothVertexData[ClothSim::VC * 14];
 	};
 
 	// Primitive types

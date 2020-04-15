@@ -126,6 +126,7 @@ namespace Graphics {
 	{
 		for (size_t i = 0; i < m_materialList.size(); ++i)
 		{
+			m_materialList[i]->CleanUp();
 			safe_delete(m_materialList[i]);
 		}
 		m_materialList.clear();

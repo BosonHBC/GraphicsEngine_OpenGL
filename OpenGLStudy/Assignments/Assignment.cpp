@@ -2,10 +2,6 @@
 #include "Application/Window/Window.h"
 #include "Application/Window/WindowInput.h"
 #include "Constants/Constants.h"
-
-#include "glm/glm.hpp"
-#include "glm/gtc/matrix_transform.hpp"
-
 #include "Graphics/Graphics.h"
 #include "Time/Time.h"
 
@@ -22,6 +18,9 @@
 #include "Assets/Handle.h"
 #include "Graphics/EnvironmentCaptureManager.h"
 #include <map>
+
+#include "Assignments/ClothSimulation/SimulationParams.h"
+
 Graphics::ERenderMode g_renderMode = Graphics::ERenderMode::ERM_ForwardShading;
 
 bool Assignment::Initialize(GLuint i_width, GLuint i_height, const char* i_windowName /*= "Default Window"*/)
@@ -71,34 +70,20 @@ void Assignment::CreateActor()
 	if (_matCubemap)
 		_matCubemap->UpdateCubemap(Graphics::GetHDRtoCubemap()->GetCubemapTextureHandle()); // used for debugging the environment
 
-
 	m_spaceHolder = new cActor();
 	m_spaceHolder->Initialize();
 	m_spaceHolder->Transform.SetTransform(glm::vec3(0, 150.f, 0), glm::quat(1, 0, 0, 0), glm::vec3(5, 5, 5));
 	m_spaceHolder->SetModel("Contents/models/spaceHolder.model");
 
-	m_gun = new cActor();
-	m_gun->Initialize();
-	m_gun->Transform.SetTransform(glm::vec3(300, 50, 100), glm::quat(glm::vec3(0, glm::radians(90.f), 0)), glm::vec3(1, 1, 1));
-	m_gun->SetModel("Contents/models/Cerberus.model");
-
-	m_sphereList.reserve(25);
-	for (int i = 0; i < 5; ++i)
-	{
-		for (int j = 0; j < 5; ++j)
-		{
-			cActor * _sphere = new cActor();
-			_sphere->Initialize();
-			_sphere->Transform.SetTransform(glm::vec3(-200.f + i * 100, 25.f + j * 50, -200), glm::quat(1, 0, 0, 0), glm::vec3(2.5f, 2.5f, 2.5f));
-			_sphere->SetModel("Contents/models/pbrSphere.model");
-			m_sphereList.push_back(_sphere);
-		}
-	}
+	m_collisionSphere = new cActor();
+	m_collisionSphere->Initialize();
+	m_collisionSphere->Transform.SetTransform(glm::vec3(0, 0, -150), glm::quat(1, 0, 0, 0), glm::vec3(10, 10, 10));
+	m_collisionSphere->SetModel("Contents/models/pbrSphere.model");
 }
 
 void Assignment::CreateCamera()
 {
-	m_editorCamera = new  cEditorCamera(glm::vec3(0, 150, 250), 10, 0, 300, 10.f);
+	m_editorCamera = new  cEditorCamera(glm::vec3(0, 250, 150), 20, 0, 300, 10.f);
 	float _aspect = (float)(GetCurrentWindow()->GetBufferWidth()) / (float)(GetCurrentWindow()->GetBufferHeight());
 	m_editorCamera->CreateProjectionMatrix(glm::radians(60.f), _aspect, 10.f, 2000.0f);
 }
@@ -131,10 +116,12 @@ void Assignment::SubmitDataToBeRender(const float i_seconds_elapsedSinceLastLoop
 	// Submit geometry data
 	SubmitSceneData(&_frameData_Camera);
 
+	if (ClothSim::g_bEnableClothSim)
+		Graphics::SubmitParticleData();
 	// Gizmos
 	{
 		// Transform Gizmo
-		if (false)
+		if (true)
 		{
 			_renderingMap.clear();
 			_renderingMap.reserve(8);
@@ -145,12 +132,13 @@ void Assignment::SubmitDataToBeRender(const float i_seconds_elapsedSinceLastLoop
 
 			if (pLight1)
 				_renderingMap.push_back({ unneccessaryHandle, pLight1->Transform });
-			if (pLight2)
-				_renderingMap.push_back({ unneccessaryHandle, pLight2->Transform });
-			if (spLight)
-				_renderingMap.push_back({ unneccessaryHandle, spLight->Transform });
-			if (spLight2)
-				_renderingMap.push_back({ unneccessaryHandle, spLight2->Transform });
+			/*
+						if (pLight2)
+							_renderingMap.push_back({ unneccessaryHandle, pLight2->Transform });
+						if (spLight)
+							_renderingMap.push_back({ unneccessaryHandle, spLight->Transform });
+						if (spLight2)
+							_renderingMap.push_back({ unneccessaryHandle, spLight2->Transform });*/
 			Graphics::SubmitDataToBeRendered(_frameData_Camera, _renderingMap, &Graphics::Gizmo_RenderTransform);
 		}
 		// Normal Gizmo
@@ -305,26 +293,32 @@ void Assignment::Tick(float second_since_lastFrame)
 
 	}
 
-	cTransform* rotateControl = nullptr;
-	if (spLight)
-		rotateControl = &spLight->Transform;
-	//if (dLight)
-		//rotateControl = dLight->Transform();
-	if (rotateControl)
-	{
-		if (_windowInput->IsKeyDown(GLFW_KEY_LEFT)) {
-			rotateControl->Rotate(cTransform::WorldUp, second_since_lastFrame);
-		}
-		if (_windowInput->IsKeyDown(GLFW_KEY_RIGHT)) {
-			rotateControl->Rotate(-cTransform::WorldUp, second_since_lastFrame);
-		}
-		if (_windowInput->IsKeyDown(GLFW_KEY_UP)) {
-			rotateControl->Rotate(cTransform::WorldRight, second_since_lastFrame);
-		}
-		if (_windowInput->IsKeyDown(GLFW_KEY_DOWN)) {
-			rotateControl->Rotate(-cTransform::WorldRight, second_since_lastFrame);
-		}
+	float nodeMoveSpeed = 50.f;
+	if (_windowInput->IsKeyDown(GLFW_KEY_LEFT)) {
+		ClothSim::MoveFixedNode(glm::vec3(-1, 0, 0) *nodeMoveSpeed * second_since_lastFrame);
 	}
+	if (_windowInput->IsKeyDown(GLFW_KEY_RIGHT)) {
+		ClothSim::MoveFixedNode(glm::vec3(1, 0, 0) *nodeMoveSpeed * second_since_lastFrame);
+	}
+	if (_windowInput->IsKeyDown(GLFW_KEY_UP)) {
+		ClothSim::MoveFixedNode(glm::vec3(0, 0, -1) *nodeMoveSpeed * second_since_lastFrame);
+	}
+	if (_windowInput->IsKeyDown(GLFW_KEY_DOWN)) {
+		ClothSim::MoveFixedNode(glm::vec3(0, 0, 1) *nodeMoveSpeed * second_since_lastFrame);
+	}
+	if (_windowInput->IsKeyDown(GLFW_KEY_Y)) {
+		ClothSim::MoveFixedNode(glm::vec3(0, 1, 0) *nodeMoveSpeed * second_since_lastFrame);
+	}
+	if (_windowInput->IsKeyDown(GLFW_KEY_H)) {
+		ClothSim::MoveFixedNode(glm::vec3(0, -1, 0) *nodeMoveSpeed * second_since_lastFrame);
+	}
+	if (_windowInput->IsKeyDown(GLFW_KEY_Z)) {
+		ClothSim::ScaleFixedNode(glm::vec3(-1, 0, 0) *nodeMoveSpeed * second_since_lastFrame);
+	}
+	if (_windowInput->IsKeyDown(GLFW_KEY_X)) {
+		ClothSim::ScaleFixedNode(glm::vec3(1, 0, 0) *nodeMoveSpeed * second_since_lastFrame);
+	}
+
 
 	m_teapot->Transform.Update();
 	m_teapot2->Transform.Update();
@@ -342,6 +336,7 @@ void Assignment::Tick(float second_since_lastFrame)
 		spLight->Transform.Update();
 	if (spLight2)
 		spLight2->Transform.Update();
+
 
 }
 
@@ -381,15 +376,14 @@ void Assignment::SubmitSceneData(Graphics::UniformBufferFormats::sFrame* const i
 	// PBR pass
 	{
 		_renderingMap.clear();
-		_renderingMap.reserve(m_sphereList.size() + 2);
+		_renderingMap.reserve(3);
 		_renderingMap.push_back({ m_spaceHolder->GetModelHandle(), m_spaceHolder->Transform });
 		_renderingMap.push_back({ m_teapot->GetModelHandle(), m_teapot->Transform });
 		_renderingMap.push_back({ m_teapot2->GetModelHandle(), m_teapot2->Transform });
-		//_renderingMap.push_back({ m_gun->GetModelHandle(), *m_gun->Transform() });
-		for (size_t i = 0; i < m_sphereList.size(); ++i)
-		{
-			_renderingMap.push_back({ m_sphereList[i]->GetModelHandle(), m_sphereList[i]->Transform });
-		}
+
+		if (ClothSim::g_bEnableClothSim)
+			_renderingMap.push_back({ m_collisionSphere->GetModelHandle(), m_collisionSphere->Transform });
+
 		Graphics::SubmitDataToBeRendered(*i_frameData, _renderingMap, &Graphics::PBR_Pass);
 	}
 
@@ -408,15 +402,12 @@ void Assignment::SubmitSceneDataForEnvironmentCapture(Graphics::UniformBufferFor
 	// PBR pass
 	{
 		_renderingMap.clear();
-		_renderingMap.reserve(m_sphereList.size() + 2);
+		_renderingMap.reserve(3);
 		_renderingMap.push_back({ m_spaceHolder->GetModelHandle(), m_spaceHolder->Transform });
 		_renderingMap.push_back({ m_teapot->GetModelHandle(), m_teapot->Transform });
 		_renderingMap.push_back({ m_teapot2->GetModelHandle(), m_teapot2->Transform });
-		//_renderingMap.push_back({ m_gun->GetModelHandle(), *m_gun->Transform() });
-		for (size_t i = 0; i < m_sphereList.size(); ++i)
-		{
-			_renderingMap.push_back({ m_sphereList[i]->GetModelHandle(), m_sphereList[i]->Transform });
-		}
+		if (ClothSim::g_bEnableClothSim)
+			_renderingMap.push_back({ m_collisionSphere->GetModelHandle(), m_collisionSphere->Transform });
 
 		Graphics::SubmitDataToBeRendered(*i_frameData, _renderingMap, &Graphics::PBR_Pass);
 	}
@@ -439,12 +430,8 @@ void Assignment::SubmitShadowData()
 	_renderingMap.push_back({ m_teapot2->GetModelHandle(), m_teapot2->Transform });
 	_renderingMap.push_back({ m_spaceHolder->GetModelHandle(), m_spaceHolder->Transform });
 
-
-	for (size_t i = 0; i < m_sphereList.size(); ++i)
-	{
-		_renderingMap.push_back({ m_sphereList[i]->GetModelHandle(), m_sphereList[i]->Transform });
-	}
-	//_renderingMap.push_back({ m_gun->GetModelHandle(), *m_gun->Transform() });
+	if (ClothSim::g_bEnableClothSim)
+		_renderingMap.push_back({ m_collisionSphere->GetModelHandle(), m_collisionSphere->Transform });
 
 	{// Spot light shadow map pass
 		Graphics::SubmitDataToBeRendered(Graphics::UniformBufferFormats::sFrame(), _renderingMap, &Graphics::SpotLightShadowMap_Pass);
@@ -465,20 +452,17 @@ void Assignment::SubmitShadowData()
 
 void Assignment::FixedTick()
 {
-
+	if (ClothSim::g_bEnableClothSim)
+		ClothSim::UpdateSprings(0.05f);
 }
 
 void Assignment::CleanUp()
 {
+	safe_delete(m_collisionSphere);
 	safe_delete(m_editorCamera);
 	safe_delete(m_teapot);
 	safe_delete(m_teapot2);
 	safe_delete(m_cubemap);
 	safe_delete(m_spaceHolder);
-	safe_delete(m_gun);
-	for (size_t i = 0; i < m_sphereList.size(); ++i)
-	{
-		safe_delete(m_sphereList[i]);
-	}
-	m_sphereList.clear();
+	ClothSim::CleanUpData();
 }

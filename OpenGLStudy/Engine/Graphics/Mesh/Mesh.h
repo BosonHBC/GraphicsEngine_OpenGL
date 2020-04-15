@@ -7,6 +7,7 @@ namespace Graphics {
 	{
 		EMT_Mesh = 0,
 		EMT_Point = 1,
+		EMT_Line = 2,
 	};
 	// cMesh represent a triangular mesh which contains mesh data, handle drawing the mesh
 	class cMesh
@@ -27,9 +28,11 @@ namespace Graphics {
 		~cMesh();
 
 		/** Initializations and clean up*/
-		void CreateMesh(GLfloat* i_vertices, GLuint* i_indices, GLuint i_numOfVertices, GLuint i_numOfIndicesm);
+		void CreateMesh(GLfloat* i_vertices, GLuint* i_indices, GLuint i_numOfVertices, GLuint i_numOfIndices);
 		void CreatePoint(GLfloat* i_vertices, GLuint i_numOfVertices);
 		void CleanUp();
+		void UpdateBufferData(GLfloat* i_verticData, GLuint i_numOfVertices );
+		void UpdateIndexBufferData(GLuint* i_indices, GLuint i_numOfIndices);
 		void Render(GLenum i_drawMode = GL_TRIANGLES);
 
 	private:

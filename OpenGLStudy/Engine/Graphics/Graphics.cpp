@@ -47,8 +47,10 @@ namespace Graphics {
 	cModel::HANDLE s_arrowHandle;
 	cModel::HANDLE s_quadHandle;
 	cMesh::HANDLE s_point;
+	cMesh::HANDLE g_cloth;
 	cTexture::HANDLE s_spruitSunRise_HDR;
 	cTexture::HANDLE g_ssaoNoiseTexture;
+	cMatPBRMR g_clothMat;
 	// Lighting data
 	UniformBufferFormats::sLighting s_globalLightingData;
 	UniformBufferFormats::sSSAO g_ssaoData;
@@ -550,6 +552,37 @@ namespace Graphics {
 			g_ssaoData.radius = 20.f;
 		}
 
+		// Initialize Cloth simulation progress
+		{
+			// Set up initial position for cloths
+			float distBetweenVertex = CLOTH_LENGTH / (CLOTH_RESOLUTION - 1);
+			for (size_t i = 0; i < CLOTH_RESOLUTION; i++)
+			{
+				for (int j = 0; j < CLOTH_RESOLUTION; ++j)
+				{
+					ClothSim::g_particles[i * CLOTH_RESOLUTION + j] = ClothSim::sParticle(glm::vec3(-100 + j * distBetweenVertex, 280.f - 0, i * distBetweenVertex - 200));
+					if ((j + 1) % (CLOTH_RESOLUTION / 5) == 1 && i == 0)
+						ClothSim::g_particles[i * CLOTH_RESOLUTION + j].isFixed = true;
+				}
+			}
+			ClothSim::g_particles[0].isFixed = true;
+			ClothSim::g_particles[CLOTH_RESOLUTION - 1].isFixed = true;
+			ClothSim::InitializeNeghbors();
+
+			auto _indices = ClothSim::GetIndexData();
+			std::vector<float> _vertices;
+			_vertices.resize(ClothSim::VC * 14);
+			if (!(result == cMesh::s_manager.Load("Cloth", g_cloth, EMT_Mesh, _vertices,_indices)))
+			{
+				printf("Failed to Load Cloth!\n");
+				return result;
+			}
+			if (!(result == g_clothMat.Initialize("Contents/materials/pbrFabrics.material")))
+			{
+				printf("Failed to Cloth material !\n");
+				return result;
+			}
+		}
 		return result;
 	}
 
@@ -635,6 +668,7 @@ namespace Graphics {
 		g_uniformBufferMap[UBT_ClipPlane].Update(&s_dataRenderingByGraphicThread->s_ClipPlane);
 		g_uniformBufferMap[UBT_PostProcessing].Update(&s_dataRenderingByGraphicThread->s_PostProcessing);
 		g_uniformBufferMap[UBT_SSAO].Update(&g_ssaoData);
+		cMesh::s_manager.Get(g_cloth)->UpdateBufferData(s_dataRenderingByGraphicThread->clothVertexData, ClothSim::VC * 14);
 		/** 2. Start to render pass one by one */
 		if (s_dataRenderingByGraphicThread->g_renderMode == ERM_ForwardShading)
 		{
@@ -666,6 +700,12 @@ namespace Graphics {
 		s_dataSubmittedByApplicationThread->s_directionalLight = i_directionalLight;
 		s_dataSubmittedByApplicationThread->s_ambientLight = i_ambientLight;
 
+	}
+
+	void SubmitParticleData()
+	{
+		memcpy(s_dataSubmittedByApplicationThread->particles, ClothSim::g_positionData, sizeof(glm::vec3) * ClothSim::VC);
+		memcpy(s_dataSubmittedByApplicationThread->clothVertexData, ClothSim::GetVertexData(), sizeof(float) * ClothSim::VC * 14);
 	}
 
 	void SubmitGraphicSettings(const ERenderMode& i_renderMode)
@@ -723,6 +763,8 @@ namespace Graphics {
 		cTexture::s_manager.Release(s_spruitSunRise_HDR);
 		cTexture::s_manager.Release(g_ssaoNoiseTexture);
 		cMesh::s_manager.Release(s_point);
+		cMesh::s_manager.Release(g_cloth);
+		g_clothMat.CleanUp();
 		// Clean up effect
 		for (auto it = s_KeyToEffect_map.begin(); it != s_KeyToEffect_map.end(); ++it)
 			safe_delete(it->second);

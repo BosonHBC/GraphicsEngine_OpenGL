@@ -139,7 +139,7 @@ namespace Assets {
 			else {
 				// index wrong
 				result = false;
-				printf("A handle has an index (%d) that's too big for the number of assets (%u)\n", index, m_assetList.size());
+				printf("A handle has an index (%d) that's too big for the number of assets (%u) during releasing \n", index, m_assetList.size());
 			}
 		}
 		// Clean up o_handle

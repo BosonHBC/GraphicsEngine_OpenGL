@@ -202,4 +202,19 @@ namespace Graphics {
 		m_indexCount = 0;
 	}
 
+	void cMesh::UpdateBufferData(GLfloat* i_verticData, GLuint i_numOfVertices)
+	{
+		// bind this VBO to the VAO just created
+		glBindBuffer(GL_ARRAY_BUFFER, m_vbo);
+		// connect the buffer data(the vertices that just created) to gl array buffer for this vbo
+		glBufferData(GL_ARRAY_BUFFER, i_numOfVertices * sizeof(i_verticData[0]), i_verticData, GL_STATIC_DRAW); // static draw, means that this vertices will not change
+	}
+
+	void cMesh::UpdateIndexBufferData(GLuint* i_indices, GLuint i_numOfIndices)
+	{
+		m_indexCount = i_numOfIndices;
+		glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, m_ibo);
+		glBufferData(GL_ELEMENT_ARRAY_BUFFER, m_indexCount * sizeof(i_indices[0]), i_indices, GL_STATIC_DRAW);
+	}
+
 }
