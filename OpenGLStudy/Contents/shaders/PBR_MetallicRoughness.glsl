@@ -101,9 +101,9 @@ layout(std140, binding = 3) uniform g_uniformBuffer_Lighting
 // Fucntions
 //-------------------------------------------------------------------------
 // Normal distribution function
-float DistributionGGX(vec3 N, vec3 H, float a)
+float DistributionGGX(vec3 N, vec3 H, float roughness)
 {
-    float a2     = a*a;
+    float a2     = roughness * roughness;
     float NdotH  = max(dot(N, H), 0.0);
     float NdotH2 = NdotH*NdotH;
 	
@@ -388,7 +388,7 @@ void main(){
 	vec3 vR = reflect(-normalized_view, normalized_normal); 
 
 	// material property
-	vec3 albedoColor = texture(AlbedoMap, texCood0).rgb * diffuseIntensity;
+	vec3 albedoColor = pow(texture(AlbedoMap, texCood0).rgb, vec3(2.2)).rgb * diffuseIntensity;
 	float metalness = texture(MetallicMap, texCood0).r * metalnessIntensity;
 	float roughness = texture(RoughnessMap, texCood0).r * roughnessIntensity;
 	float textureAO = texture(AOMap, texCood0).r;

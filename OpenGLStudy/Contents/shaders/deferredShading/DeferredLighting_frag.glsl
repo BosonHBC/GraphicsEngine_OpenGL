@@ -356,7 +356,7 @@ void main(){
 	vec3 vR = reflect(-normalized_view, normal);
 
 	// material property
-	vec3 albedoColor = texture(gAlbedoMetallic, texCoord).rgb;
+	vec3 albedoColor =  pow(texture(gAlbedoMetallic, texCoord).rgb, vec3(2.2));
 	float metalness = texture(gAlbedoMetallic, texCoord).a;
 	float roughness = texture(gNormalRoughness, texCoord).a;
 	float ssao = texture(gSSAOMap, texCoord).r;
