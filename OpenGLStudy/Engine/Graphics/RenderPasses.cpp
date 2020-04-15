@@ -26,6 +26,7 @@ namespace Graphics
 	extern 	cMesh::HANDLE g_cloth;
 	extern 	cTexture::HANDLE g_ssaoNoiseTexture;
 	extern cMatPBRMR g_clothMat;
+
 	// clear color
 	Color s_clearColor;
 	// arrow colors
@@ -279,16 +280,19 @@ namespace Graphics
 
 		RenderScene(s_currentEffect);
 
-		cMesh* _cloth = cMesh::s_manager.Get(g_cloth);
-		cTransform defaultTransform;
-		g_uniformBufferMap[UBT_Drawcall].Update(&UniformBufferFormats::sDrawCall(defaultTransform.M(), defaultTransform.TranspostInverse()));
-		
-		g_clothMat.UpdateUniformVariables(s_currentEffect->GetProgramID());
-		g_clothMat.UseMaterial();
-		glDisable(GL_CULL_FACE);
-		_cloth->Render();
-		glEnable(GL_CULL_FACE);
-		g_clothMat.CleanUpMaterialBind();
+		if(ClothSim::g_bEnableClothSim)
+		{
+			cMesh* _cloth = cMesh::s_manager.Get(g_cloth);
+			cTransform defaultTransform;
+			g_uniformBufferMap[UBT_Drawcall].Update(&UniformBufferFormats::sDrawCall(defaultTransform.M(), defaultTransform.TranspostInverse()));
+
+			g_clothMat.UpdateUniformVariables(s_currentEffect->GetProgramID());
+			g_clothMat.UseMaterial();
+			glDisable(GL_CULL_FACE);
+			_cloth->Render();
+			glEnable(GL_CULL_FACE);
+			g_clothMat.CleanUpMaterialBind();
+		}
 
 		s_currentEffect->UnUseEffect();
 	}
@@ -334,7 +338,7 @@ namespace Graphics
 				}
 				
 				// Render spheres
-				if(false)
+				if(ClothSim::g_bEnableClothSim && ClothSim::g_bDrawNodes)
 				{
 					s_currentEffect = GetEffectByKey(EET_DrawDebugCircles);
 					s_currentEffect->UseEffect();

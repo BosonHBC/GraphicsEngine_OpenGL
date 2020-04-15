@@ -116,7 +116,8 @@ namespace ClothSim
 	// Cloth particles
 	extern sParticle g_particles[VC];
 	extern glm::vec3 g_positionData[VC];
-
+	extern bool g_bEnableClothSim;
+	extern bool g_bDrawNodes;
 	void InitializeNeghbors();
 // Using discrete time step
 	void UpdateSprings(const float dt);

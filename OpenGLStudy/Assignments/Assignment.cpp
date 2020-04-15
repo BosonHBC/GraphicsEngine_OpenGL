@@ -77,7 +77,7 @@ void Assignment::CreateActor()
 
 	m_collisionSphere = new cActor();
 	m_collisionSphere->Initialize();
-	m_collisionSphere->Transform.SetTransform(glm::vec3(0, 0, -150), glm::quat(1,0,0,0), glm::vec3(10,10,10));
+	m_collisionSphere->Transform.SetTransform(glm::vec3(0, 0, -150), glm::quat(1, 0, 0, 0), glm::vec3(10, 10, 10));
 	m_collisionSphere->SetModel("Contents/models/pbrSphere.model");
 }
 
@@ -116,7 +116,8 @@ void Assignment::SubmitDataToBeRender(const float i_seconds_elapsedSinceLastLoop
 	// Submit geometry data
 	SubmitSceneData(&_frameData_Camera);
 
-	Graphics::SubmitParticleData();
+	if (ClothSim::g_bEnableClothSim)
+		Graphics::SubmitParticleData();
 	// Gizmos
 	{
 		// Transform Gizmo
@@ -336,7 +337,7 @@ void Assignment::Tick(float second_since_lastFrame)
 	if (spLight2)
 		spLight2->Transform.Update();
 
-	
+
 }
 
 void Assignment::SubmitLightingData()
@@ -379,7 +380,9 @@ void Assignment::SubmitSceneData(Graphics::UniformBufferFormats::sFrame* const i
 		_renderingMap.push_back({ m_spaceHolder->GetModelHandle(), m_spaceHolder->Transform });
 		_renderingMap.push_back({ m_teapot->GetModelHandle(), m_teapot->Transform });
 		_renderingMap.push_back({ m_teapot2->GetModelHandle(), m_teapot2->Transform });
-		_renderingMap.push_back({ m_collisionSphere->GetModelHandle(), m_collisionSphere->Transform });
+
+		if (ClothSim::g_bEnableClothSim)
+			_renderingMap.push_back({ m_collisionSphere->GetModelHandle(), m_collisionSphere->Transform });
 
 		Graphics::SubmitDataToBeRendered(*i_frameData, _renderingMap, &Graphics::PBR_Pass);
 	}
@@ -403,7 +406,8 @@ void Assignment::SubmitSceneDataForEnvironmentCapture(Graphics::UniformBufferFor
 		_renderingMap.push_back({ m_spaceHolder->GetModelHandle(), m_spaceHolder->Transform });
 		_renderingMap.push_back({ m_teapot->GetModelHandle(), m_teapot->Transform });
 		_renderingMap.push_back({ m_teapot2->GetModelHandle(), m_teapot2->Transform });
-		_renderingMap.push_back({ m_collisionSphere->GetModelHandle(), m_collisionSphere->Transform });
+		if (ClothSim::g_bEnableClothSim)
+			_renderingMap.push_back({ m_collisionSphere->GetModelHandle(), m_collisionSphere->Transform });
 
 		Graphics::SubmitDataToBeRendered(*i_frameData, _renderingMap, &Graphics::PBR_Pass);
 	}
@@ -425,7 +429,9 @@ void Assignment::SubmitShadowData()
 	_renderingMap.push_back({ m_teapot->GetModelHandle(), m_teapot->Transform });
 	_renderingMap.push_back({ m_teapot2->GetModelHandle(), m_teapot2->Transform });
 	_renderingMap.push_back({ m_spaceHolder->GetModelHandle(), m_spaceHolder->Transform });
-	_renderingMap.push_back({ m_collisionSphere->GetModelHandle(), m_collisionSphere->Transform });
+
+	if (ClothSim::g_bEnableClothSim)
+		_renderingMap.push_back({ m_collisionSphere->GetModelHandle(), m_collisionSphere->Transform });
 
 	{// Spot light shadow map pass
 		Graphics::SubmitDataToBeRendered(Graphics::UniformBufferFormats::sFrame(), _renderingMap, &Graphics::SpotLightShadowMap_Pass);
@@ -446,7 +452,8 @@ void Assignment::SubmitShadowData()
 
 void Assignment::FixedTick()
 {
-	ClothSim::UpdateSprings(0.05f);
+	if (ClothSim::g_bEnableClothSim)
+		ClothSim::UpdateSprings(0.05f);
 }
 
 void Assignment::CleanUp()

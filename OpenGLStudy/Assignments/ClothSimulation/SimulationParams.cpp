@@ -30,6 +30,8 @@ namespace ClothSim
 	const glm::vec3 g_floorPlane = glm::vec3(0, 5, 0);
 	cSphere g_sphere(glm::vec3(0, 0, -150), 100.f);
 	const float inSphereDist = sqrt(pow(g_sphere.r(), 2) + pow(g_structRestLen / 2, 2));
+	bool g_bEnableClothSim = false;
+	bool g_bDrawNodes = false;
 
 	void InitializeNeghbors()
 	{
