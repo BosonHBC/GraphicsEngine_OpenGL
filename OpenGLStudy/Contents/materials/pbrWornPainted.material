@@ -1,0 +1,16 @@
+--[[
+    Default Physcis based rendering metallic roughness workflow
+]]
+return 
+{
+    MaterialType = 4,
+    AlbedoTexture =     "pbrTextures/wornpaintedcement/wornpaintedcement-albedo.png",
+    MetallicTexture =   "pbrTextures/wornpaintedcement/wornpaintedcement-metalness.png",
+    RoughnessTexture =  "pbrTextures/wornpaintedcement/wornpaintedcement-roughness.png",
+    NormalTexture =     "pbrTextures/wornpaintedcement/wornpaintedcement-norrmal.png",
+    AOTexture =         "",
+    DiffuseIntensity = {1.0,1.0,1.0},
+    MetallicIntensity = 1.0,
+    RoughnessIntensity = 1.0,
+    IOR = {2.5, 2.5, 2.5},
+}

@@ -8,6 +8,7 @@ return
     MetallicTexture = "Cerberus/Cerberus_Metallic.png",
     RoughnessTexture = "Cerberus/Cerberus_Roughness.png",
     NormalTexture = "Cerberus/Cerberus_Normal.png",
+    AOTexture = "",
     DiffuseIntensity = {1.0,1.0,1.0},
     MetallicIntensity = 1.0,
     RoughnessIntensity = 1.0,

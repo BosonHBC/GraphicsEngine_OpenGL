@@ -51,7 +51,8 @@ void main()
             FragColor = vec4(_normal, 1.0);
         break;
         case 4:
-            FragColor = vec4(texture(gIOR, texCoord).rgb/maxIORinNature, 1.0);
+           // FragColor = vec4(texture(gIOR, texCoord).rgb/maxIORinNature, 1.0);
+           FragColor = vec4(vec3(texture(gIOR, texCoord).a), 1.0);
         break;
         case 5:
             FragColor = vec4(vec3(texture(gDepth, texCoord).r-0.9) * 10, 1.0);

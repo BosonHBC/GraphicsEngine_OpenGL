@@ -6,10 +6,11 @@ layout (location = 2) out vec4 gIOR;
 in vec2 texCood0;
 in mat3 TBN;
 
-uniform sampler2D AlbedoMap; // 0
-uniform sampler2D MetallicMap; // 1
+uniform sampler2D AlbedoMap; 	// 0
+uniform sampler2D MetallicMap; 	// 1
 uniform sampler2D RoughnessMap; // 2
-uniform sampler2D NormalMap; // 3
+uniform sampler2D NormalMap; 	// 3
+uniform sampler2D AOMap;		// 5
 
 layout(std140, binding = 5) uniform g_uniformBuffer_pbrMRModel
 {
@@ -30,6 +31,7 @@ void main()
 	vec3 normalized_normal = normalize(normal); 
 	gNormalRoughness.rgb = normalized_normal.rgb;
 	gNormalRoughness.a = float(texture(RoughnessMap, texCood0).r) * roughnessIntensity;
-
-	gIOR = vec4(ior.rgb, 1.0);
+	
+	float textureAO = texture(AOMap, texCood0).r;
+	gIOR = vec4(ior.rgb, textureAO);
 }

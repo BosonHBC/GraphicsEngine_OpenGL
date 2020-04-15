@@ -136,7 +136,7 @@ namespace Graphics {
 		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
 
 		// Set up texture filtering for looking closer
-		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_LINEAR);
 		// Set up texture filtering for looking further
 		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
 
@@ -214,10 +214,9 @@ namespace Graphics {
 		unsigned char* _data = stbi_load(i_path.c_str(), &m_width, &m_height, &m_bitDepth, STBI_grey);
 		if (!_data) {
 			// TODO: Print load texture fail
-			printf("Fail to load texture data!\n");
+			printf("Fail to load texture data of type ETT_FILE_GREY!\n");
 			return false;
 		}
-
 
 		// generate texture and assign with an id
 		glGenTextures(1, &m_textureID);

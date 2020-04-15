@@ -1,0 +1,16 @@
+--[[
+    Default Physcis based rendering metallic roughness workflow
+]]
+return 
+{
+    MaterialType = 4,
+    AlbedoTexture = "pbrTextures/wrinkledPaper/wrinkled-paper-albedo.png",
+    MetallicTexture = "pbrTextures/wrinkledPaper/wrinkled-paper-metalness.png",
+    RoughnessTexture = "pbrTextures/wrinkledPaper/wrinkled-paper-roughness.png",
+    NormalTexture = "pbrTextures/wrinkledPaper/wrinkled-paper-normal-dx.png",
+    AOTexture = "pbrTextures/wrinkledPaper/wrinkled-paper-ao.png",
+    DiffuseIntensity = {1.0,1.0,1.0},
+    MetallicIntensity = 1.0,
+    RoughnessIntensity = 1.0,
+    IOR = {2.5, 2.5, 2.5},
+}

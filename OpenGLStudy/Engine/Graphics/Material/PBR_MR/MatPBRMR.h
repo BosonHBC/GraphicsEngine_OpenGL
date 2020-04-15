@@ -31,20 +31,22 @@ namespace Graphics
 		Assets::cHandle<cTexture> m_metallicMapHandle;
 		Assets::cHandle<cTexture> m_roughnessMapHandle;
 		Assets::cHandle<cTexture> m_normalMapHandle;
+		Assets::cHandle<cTexture> m_aoMapHandle;
 
 		Color m_diffuseIntensity = Color(1,1,1);
 		float m_metallicIntensity = 1.0f, m_roughnessIntensity = 1.0f;
 		glm::vec3 m_ior = glm::vec3(1.0f, 1.0f, 1.0f);
 
-		GLuint m_albedoID = static_cast<GLuint>(-1), m_metallicID = static_cast<GLuint>(-1), m_roughnessID = static_cast<GLuint>(-1), m_normalID = static_cast<GLuint>(-1);
+		GLuint m_albedoID = static_cast<GLuint>(-1), m_metallicID = static_cast<GLuint>(-1), m_roughnessID = static_cast<GLuint>(-1), m_normalID = static_cast<GLuint>(-1), m_aoID = static_cast<GLuint>(-1);
 
 		/* private functions */
 
-		bool LoadFileFromLua(const std::string& i_path, std::string& o_albedoPath, std::string& o_metallicPath, std::string& o_roughnessPath, std::string& o_normalPath, Color& o_diffuseIntensity, float& o_metallicIntensity, float& o_roughnessIntensity, glm::vec3& o_ior);
+		bool LoadFileFromLua(const std::string& i_path, std::string& o_albedoPath, std::string& o_metallicPath, std::string& o_roughnessPath, std::string& o_normalPath, std::string& o_aoPath, Color& o_diffuseIntensity, float& o_metallicIntensity, float& o_roughnessIntensity, glm::vec3& o_ior);
 		bool SetAlbedo(const std::string& i_path);
 		bool SetMetallic(const std::string& i_path);
 		bool SetRoughness(const std::string& i_path);
 		bool SetNormal(const std::string& i_path);
+		bool SetAO(const std::string& i_path);
 
 
 		/* private static variable */

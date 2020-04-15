@@ -234,7 +234,7 @@ namespace Graphics
 
 		const auto currentReadyCapturesCount = EnvironmentCaptureManager::GetReadyCapturesCount();
 		const auto maxCubemapMixing = EnvironmentCaptureManager::MaximumCubemapMixingCount();
-		const auto cubemapStartUnit = 5;
+		const int cubemapStartUnit = IBL_CUBEMAP_START_TEXTURE_UNIT;
 		for (size_t i = 0; i < currentReadyCapturesCount; ++i)
 		{
 			// Irradiance cube map
@@ -404,7 +404,7 @@ namespace Graphics
 
 		GLenum _textureUnits[4] = { GL_TEXTURE0 , GL_TEXTURE1 ,GL_TEXTURE2, GL_TEXTURE3 };
 		g_GBuffer.Read(_textureUnits);
-		g_ssao_blur_Buffer.Read(GL_TEXTURE24);
+		g_ssao_blur_Buffer.Read(GL_TEXTURE0 + SHADOWMAP_START_TEXTURE_UNIT + MAX_COUNT_PER_LIGHT * 2 + 1);
 		UpdateInfoForPBR();
 
 		RenderQuad(s_dataRenderingByGraphicThread->s_renderPasses[s_currentRenderPass].FrameData);

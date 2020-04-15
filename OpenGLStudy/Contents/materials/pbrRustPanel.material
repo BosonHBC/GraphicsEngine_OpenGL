@@ -1,0 +1,16 @@
+--[[
+    Default Physcis based rendering metallic roughness workflow
+]]
+return 
+{
+    MaterialType = 4,
+    AlbedoTexture = "pbrTextures/rust-panel/rust-panel-albedo.png",
+    MetallicTexture = "pbrTextures/rust-panel/rust-panel-metalness.png",
+    RoughnessTexture = "pbrTextures/rust-panel/rust-panel-roughness.png",
+    NormalTexture = "pbrTextures/rust-panel/rust-panel-normal.png",
+    AOTexture = "pbrTextures/rust-panel/rust-panel-ao.png",
+    DiffuseIntensity = {1.0,1.0,1.0},
+    MetallicIntensity = 1.0,
+    RoughnessIntensity = 1.0,
+    IOR = {2.5, 2.5, 2.5},
+}

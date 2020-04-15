@@ -118,9 +118,10 @@ namespace Graphics {
 		char _charBuffer[64] = { '\0' };
 
 		_effect->SetInteger("BrdfLUTMap", 4);
+		_effect->SetInteger("AOMap", 5);
 
 		const auto maxCubemapMixing = EnvironmentCaptureManager::MaximumCubemapMixingCount();
-		constexpr auto cubemapStartID = 5;
+		constexpr auto cubemapStartID = IBL_CUBEMAP_START_TEXTURE_UNIT;
 		for (size_t i = 0; i < maxCubemapMixing; ++i)
 		{
 			snprintf(_charBuffer, sizeof(_charBuffer), "IrradianceMap[%d]", i);
@@ -356,7 +357,7 @@ namespace Graphics {
 				dLighting->SetInteger("gNormalRoughness", 1);
 				dLighting->SetInteger("gIOR", 2);
 				dLighting->SetInteger("gDepth", 3);
-				dLighting->SetInteger("gSSAOMap", 24);
+				dLighting->SetInteger("gSSAOMap", SHADOWMAP_START_TEXTURE_UNIT + MAX_COUNT_PER_LIGHT * 2 + 1);
 				dLighting->UnUseEffect();
 				FixSamplerProblem(EET_DeferredLighting);
 			}
