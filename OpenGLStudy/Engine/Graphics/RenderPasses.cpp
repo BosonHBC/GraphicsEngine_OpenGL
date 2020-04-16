@@ -32,10 +32,28 @@ namespace Graphics
 	// arrow colors
 	Color s_arrowColor[3] = { Color(0, 0, 0.8f), Color(0.8f, 0, 0),Color(0, 0.8f, 0) };
 
+	void RenderPointLightPosition()
+	{
+		s_currentEffect = GetEffectByKey(EET_DrawDebugCircles);
+		s_currentEffect->UseEffect();
+		g_uniformBufferMap[UBT_Frame].Update(&s_dataRenderingByGraphicThread->s_renderPasses[3].FrameData);
+		for (size_t i = 0; i < s_dataRenderingByGraphicThread->s_pointLights.size(); ++i)
+		{
+			cMesh* _Point = cMesh::s_manager.Get(s_point);
+			s_currentEffect->SetFloat("radius", 5);
+			glm::vec3 sphereColor = glm::vec3(1.0, 0.0, 0.0);
+
+			s_currentEffect->SetVec3("color", sphereColor);
+			g_uniformBufferMap[UBT_Drawcall].Update(&UniformBufferFormats::sDrawCall(s_dataRenderingByGraphicThread->s_pointLights[i].Transform.M(), s_dataRenderingByGraphicThread->s_pointLights[i].Transform.TranspostInverse()));
+			_Point->Render();
+		}
+		s_currentEffect->UnUseEffect();
+	}
+
 	void RenderQuad(const UniformBufferFormats::sFrame& i_frameData = UniformBufferFormats::sFrame())
 	{
 		g_uniformBufferMap[UBT_Frame].Update(&i_frameData);
-		
+
 		UniformBufferFormats::sDrawCall defaultDrawcallData;
 		g_uniformBufferMap[UBT_Drawcall].Update(&defaultDrawcallData);
 
@@ -70,7 +88,7 @@ namespace Graphics
 			it->SetupLight(s_currentEffect->GetProgramID(), i);
 			it->Illuminate();
 
-			if (it->IsShadowEnabled()) {
+			if (it->IsShadowEnabled() && i < MAX_COUNT_PER_LIGHT) {
 				// has offset
 				it->UseShadowMap(MAX_COUNT_PER_LIGHT + SHADOWMAP_START_TEXTURE_UNIT + i);
 				it->GetShadowMap()->Read(GL_TEXTURE0 + MAX_COUNT_PER_LIGHT + SHADOWMAP_START_TEXTURE_UNIT + i);
@@ -138,7 +156,7 @@ namespace Graphics
 		s_currentEffect = GetEffectByKey(EET_OmniShadowMap);
 		s_currentEffect->UseEffect();
 
-		for (size_t i = 0; i < s_dataRenderingByGraphicThread->s_pointLights.size(); ++i)
+		for (size_t i = 0; i < s_dataRenderingByGraphicThread->s_pointLights.size() && i < MAX_COUNT_PER_LIGHT; ++i)
 		{
 			auto* it = &s_dataRenderingByGraphicThread->s_pointLights[i];
 			cFrameBuffer* _pointLightFBO = it->GetShadowMap();
@@ -280,7 +298,7 @@ namespace Graphics
 
 		RenderScene(s_currentEffect);
 
-		if(ClothSim::g_bEnableClothSim)
+		if (ClothSim::g_bEnableClothSim)
 		{
 			cMesh* _cloth = cMesh::s_manager.Get(g_cloth);
 			cTransform defaultTransform;
@@ -336,9 +354,9 @@ namespace Graphics
 					// Execute pass function
 					s_dataRenderingByGraphicThread->s_renderPasses[i].RenderPassFunction();
 				}
-				
+
 				// Render spheres
-				if(ClothSim::g_bEnableClothSim && ClothSim::g_bDrawNodes)
+				if (ClothSim::g_bEnableClothSim && ClothSim::g_bDrawNodes)
 				{
 					s_currentEffect = GetEffectByKey(EET_DrawDebugCircles);
 					s_currentEffect->UseEffect();
@@ -361,12 +379,14 @@ namespace Graphics
 					}
 					s_currentEffect->UnUseEffect();
 				}
+
+				RenderPointLightPosition();
 			}
 		);
 
 		HDR_Pass();
 
-		
+
 	}
 
 	void GBuffer_Pass()
@@ -385,7 +405,7 @@ namespace Graphics
 	void DisplayGBuffer_Pass()
 	{
 		glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-		s_currentEffect = GetEffectByKey(EET_GBufferDisplay);		
+		s_currentEffect = GetEffectByKey(EET_GBufferDisplay);
 		s_currentEffect->UseEffect();
 		const ERenderMode& renderMode = s_dataRenderingByGraphicThread->g_renderMode;
 		s_currentEffect->SetInteger("displayMode", static_cast<GLint>(renderMode) - 2);
@@ -463,7 +483,7 @@ namespace Graphics
 		);
 		/** 3.1B. Display GBuffer alternatively */
 		if (s_dataRenderingByGraphicThread->g_renderMode != ERM_DeferredShading)
-				DisplayGBuffer_Pass();
+			DisplayGBuffer_Pass();
 		else
 		{
 			/** 3. Capture HDR buffer*/
@@ -471,6 +491,7 @@ namespace Graphics
 				[] {
 					/** 3.1A. Show the deferred shading */
 					Deferred_Lighting_Pass();
+
 					/** 3.2. Display cubemap at the end */
 					{
 						glBindFramebuffer(GL_READ_FRAMEBUFFER, g_GBuffer.fbo());
@@ -482,7 +503,8 @@ namespace Graphics
 						s_currentRenderPass = 4; // Cubemap pass
 						g_uniformBufferMap[UBT_Frame].Update(&s_dataRenderingByGraphicThread->s_renderPasses[s_currentRenderPass].FrameData);
 						CubeMap_Pass();
-					}
+						RenderPointLightPosition();
+}
 				}
 			);
 			HDR_Pass();

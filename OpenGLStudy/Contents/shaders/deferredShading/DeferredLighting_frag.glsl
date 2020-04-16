@@ -304,9 +304,11 @@ vec3 albedoColor, float metalness, float roughness, vec3 f0, vec3 vN, vec3 vV, f
 		vec3 cookedIrrandance = CookTorranceBrdf(radiance, albedoColor, metalness, roughness, f0,vN, vH, vL ,vV);
 
 		// shadow
-		float shadowFactor = pLight.base.enableShadow ? (1.0 - CalcPointLightShadowMap(idx, pLight, worldPos, viewDistance)) : 1.0;
-		shadowFactor = max(shadowFactor, 0.0);
-
+		float shadowFactor = 1.0;
+		if(pLight.base.enableShadow && idx < MAX_COUNT_PER_LIGHT){
+			shadowFactor = 1.0 - CalcPointLightShadowMap(idx, pLight, worldPos,viewDistance);
+			shadowFactor = max(shadowFactor, 0.0);
+		}
 		return shadowFactor * cookedIrrandance;
 }
 
