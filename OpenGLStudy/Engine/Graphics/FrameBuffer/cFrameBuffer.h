@@ -2,7 +2,7 @@
 
 #include "GL/glew.h"
 #include "Graphics/Texture/Texture.h"
-
+#include "Math/Shape/Rect.h"
 namespace Graphics {
 	class cFrameBuffer
 	{
@@ -18,6 +18,8 @@ namespace Graphics {
 		cFrameBuffer& operator = (const cFrameBuffer& i_other);
 		// Write current buffer data to this frame buffer
 		void Write(const std::function<void()>& captureFunction);
+		// Write current buffer to this frame buffer with offset
+		void WriteSubArea(const std::function<void()>& captureFunction, const sRect& i_offsetArea);
 		// Switch back to original frame buffer
 		void UnWrite();
 		// Use the texture loaded from the frame buffer

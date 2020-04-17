@@ -37,7 +37,7 @@ namespace Graphics {
 	void cPointLight::CreateShadowMap(GLuint i_width, GLuint i_height)
 	{
 		m_shadowMap = new cFrameBuffer();
-		m_shadowMap->Initialize(i_width, i_height, ETextureType::ETT_FRAMEBUFFER_CUBEMAP);
+		m_shadowMap->Initialize(i_width, i_height, ETextureType::ETT_FRAMEBUFFER_OMNI_SHADOWMAP);
 
 		m_lightPrjectionMatrix = glm::perspective(glm::radians(90.f), 1.f, 1.f, m_range);
 	}

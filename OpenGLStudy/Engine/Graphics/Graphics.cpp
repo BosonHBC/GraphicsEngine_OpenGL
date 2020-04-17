@@ -895,7 +895,7 @@ namespace Graphics {
 		// TODO: lighting, range should be passed in
 		cPointLight* newPointLight = new cPointLight(i_color, i_initialLocation, i_radius);
 		newPointLight->SetEnableShadow(i_enableShadow);
-		newPointLight->CreateShadowMap(1024, 1024);
+		newPointLight->CreateShadowMap(2048, 2048);
 		o_pointLight = newPointLight;
 		s_pointLight_list.push_back(newPointLight);
 		return result;

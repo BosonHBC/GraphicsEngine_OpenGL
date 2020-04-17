@@ -21,9 +21,6 @@ namespace ClothSim
 
 	glm::vec3 g_positionData[VC] = { glm::vec3(0) };
 
-	std::uniform_real_distribution<float> randomFloats(0.0, 1.0); // generates random floats between 0.0 and 1.0
-	std::default_random_engine generator;
-
 #define FRICTION_COEFFICENT 0.1f
 #define TOUCH_DIST_THRESHOLD 1.f
 #define SPHERE_COLLISION_BIAS 1.1f

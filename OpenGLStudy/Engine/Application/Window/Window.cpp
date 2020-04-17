@@ -187,3 +187,8 @@ void cWindow::SetViewportSize(GLuint i_newWidth, GLuint i_newHeight)
 	glViewport(0, 0, i_newWidth, i_newHeight);
 
 }
+
+void cWindow::SetViewPort(const sRect& i_newViewPort)
+{
+	glViewport(i_newViewPort.Min.x, i_newViewPort.Min.y, i_newViewPort.w(), i_newViewPort.h());
+}

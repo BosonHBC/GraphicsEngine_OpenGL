@@ -207,10 +207,71 @@ float CalcSpotLightShadowMap(int idx, SpotLight spLight, vec3 vN)
 	shadow = current > 1.0 ? 0.0 : shadow;
 	return shadow;	
 }
-
+vec2 sampleCube(
+    const vec3 v,
+    out int faceIndex)
+{
+	vec3 vAbs = abs(v);
+	float ma;
+	vec2 uv;
+	if(vAbs.z >= vAbs.x && vAbs.z >= vAbs.y)
+	{
+		faceIndex = v.z < 0.0 ? 5 : 4;
+		ma = 0.5 / vAbs.z;
+		uv = vec2(v.z < 0.0 ? -v.x : v.x, -v.y);
+	}
+	else if(vAbs.y >= vAbs.x)
+	{
+		faceIndex = v.y < 0.0 ? 3 : 2;
+		ma = 0.5 / vAbs.y;
+		uv = vec2(v.x, v.y < 0.0 ? -v.z : v.z);
+	}
+	else
+	{
+		faceIndex = v.x < 0.0 ? 1 : 0;
+		ma = 0.5 / vAbs.x;
+		uv = vec2(v.x < 0.0 ? v.z : -v.z, -v.y);
+	}
+	return uv * ma + 0.5;
+}
+vec3 ChangeDir(PointLight pLight,int faceIdx, vec2 uv, vec3 fragPos, int resolutionIdx)
+{
+	vec2 newUV = uv / 2.0 + 0.5f;
+	float r = pLight.radius;
+	float l = 2 * r;
+	switch(faceIdx)
+	{
+		case 0: // px
+		return vec3(r, r, r) 	+ vec3(0 , -newUV.y * l , -newUV.x * l);
+		break;
+		
+		case 1: // nx
+		return vec3(-r, r, -r) + vec3(0 , -newUV.y * l , newUV.x * l);
+		break;
+		
+		case 2: // py
+		return vec3(-r, r, -r) 	+ vec3(newUV.x * l, 0, newUV.y * l);
+		break;
+		
+		case 3: // ny
+		return vec3(-r, -r, r) 	+ vec3(newUV.x * l, 0, -newUV.y * l);
+		break;
+		
+		case 4: // pz
+		return vec3(-r, r, r) 	+ vec3(newUV.x * l, -newUV.y * l, 0);
+		break;
+		
+		case 5: // nz
+		return vec3(r, r, -r) 	+ vec3(-newUV.x * l, -newUV.y * l, 0);
+		break;
+	}
+}
 float CalcPointLightShadowMap(int idx, PointLight pLight, float dist_vV)
 {
 	vec3 fragToLight = fragPos - pLight.position;
+	int faceIdx;
+	vec2 uv = sampleCube(fragToLight,faceIdx);
+	vec3 reconstructDir = ChangeDir(pLight, faceIdx, uv, fragPos, 0);
 	// sample the cube map
 	
 	float currentDepth = length(fragToLight) / pLight.radius;
@@ -222,7 +283,7 @@ float CalcPointLightShadowMap(int idx, PointLight pLight, float dist_vV)
 
 	for(int i = 0; i < samples; ++i) 
 	{
-		float cloestDepth = texture(pointLightShadowMap[idx], fragToLight + gridSamplingDisk[i] * diskRadius).r;
+		float cloestDepth = texture(pointLightShadowMap[idx], reconstructDir + gridSamplingDisk[i] * diskRadius).r;
 		shadow += (currentDepth - bias > cloestDepth) ? 1.0 : 0.0;
 	}
 

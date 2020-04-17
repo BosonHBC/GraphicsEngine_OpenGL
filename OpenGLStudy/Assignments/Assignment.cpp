@@ -20,8 +20,12 @@
 #include <map>
 
 #include "Assignments/ClothSimulation/SimulationParams.h"
+#include <random>
 
 Graphics::ERenderMode g_renderMode = Graphics::ERenderMode::ERM_ForwardShading;
+
+std::uniform_real_distribution<float> randomFloats(0.0, 1.0); // generates random floats between 0.0 and 1.0
+std::default_random_engine generator;
 
 bool Assignment::Initialize(GLuint i_width, GLuint i_height, const char* i_windowName /*= "Default Window"*/)
 {
@@ -105,17 +109,21 @@ void Assignment::CreateCamera()
 void Assignment::CreateLight()
 {
 	const int lightPerRow = 4;
-	const float horiDist = 100;
-	const float vertDist = 100;
+	const float horiDist = 150;
+	const float vertDist = 30;
 
-	Graphics::CreateAmbientLight(Color(0.2f, 0.2f, 0.2f), aLight);
+	Graphics::CreateAmbientLight(Color(0.1f, 0.1f, 0.1f), aLight);
 	for (int i = 0; i < m_createdPLightCount; ++i)
 	{
-		Graphics::CreatePointLight(glm::vec3(-150 + (i % lightPerRow) * horiDist, 150, 100 - (i / lightPerRow) * vertDist), Color(1, 1, 1), 300.f, true, m_pLights[i]);
+		//Color randomColor = Color(randomFloats(generator), randomFloats(generator), randomFloats(generator));
+		bool enableShadow = false;
+		if (i < MAX_COUNT_PER_LIGHT)
+			enableShadow = true;
+		Graphics::CreatePointLight(glm::vec3(-250 + (i % lightPerRow) * horiDist, 150, 200 - (i / lightPerRow) * vertDist), Color::White(), 300.f, enableShadow, m_pLights[i]);
 	}
 
 	//Graphics::CreatePointLight(glm::vec3(100, 150.f, 100.f), Color(1, 1, 1), 1.f, 0.7f, 1.8f, true, pLight2);
-	Graphics::CreateDirectionalLight(Color(0.6f, 0.6f, 0.6f), glm::vec3(-1, -0.5f, -0.5f), true, dLight);
+	Graphics::CreateDirectionalLight(Color(0.01f, 0.01f, 0.01f), glm::vec3(-1, -0.5f, -0.5f), true, dLight);
 	//Graphics::CreateSpotLight(glm::vec3(0, 150, 0), glm::vec3(0, 1, 1), Color(1), 65.f, 1.5f, 0.3f, 5.f, true, spLight);
 	//Graphics::CreateSpotLight(glm::vec3(100, 150, 0), glm::vec3(1, 1, 0), Color(1), 65.f, 1.f, 0.7f, 
 

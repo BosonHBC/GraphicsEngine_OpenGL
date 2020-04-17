@@ -170,12 +170,13 @@ namespace Graphics
 				it->SetupLight(s_currentEffect->GetProgramID(), i);
 				it->SetLightUniformTransform();
 				// write buffer to the texture
-				_pointLightFBO->Write(
+				_pointLightFBO->WriteSubArea(
 					[] {
 						glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 						// Draw scenes
 						RenderScene(nullptr);
 					}
+					, sRect(1024.f, 1024.f, 2048.f, 2048.f)
 				);
 				assert(glGetError() == GL_NO_ERROR);
 			}
@@ -504,7 +505,7 @@ namespace Graphics
 						g_uniformBufferMap[UBT_Frame].Update(&s_dataRenderingByGraphicThread->s_renderPasses[s_currentRenderPass].FrameData);
 						CubeMap_Pass();
 						RenderPointLightPosition();
-}
+					}
 				}
 			);
 			HDR_Pass();

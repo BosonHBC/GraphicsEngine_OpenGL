@@ -2,6 +2,7 @@
 
 #include "GL/glew.h"
 #include "GLFW/glfw3.h"
+#include "Math/Shape/Rect.h"
 
 #define GLFW_MAX_KEY_COUNT 360
 #define GLFW_MAX_BUTTON_COUNT 8
@@ -29,6 +30,7 @@ public:
 	void SwapBuffers();
 	// Update the viewport size
 	void SetViewportSize(GLuint i_newWidth, GLuint i_newHeight);
+	void SetViewPort(const sRect& i_newViewPort);
 
 	/** Getters */
 	const GLint& GetBufferWidth() const { return m_bufferWidth; }
