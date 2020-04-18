@@ -51,7 +51,7 @@ private:
 	Color m_clearColor = Color(0,0,0);
 	cEditorCamera* m_editorCamera;
 
-	int m_createdPLightCount = 1;
+	int m_createdPLightCount = 64;
 	Graphics::cPointLight* m_pLights[s_maxPLightCount] = {nullptr};
 
 	Graphics::cAmbientLight* aLight;
@@ -60,7 +60,7 @@ private:
 	Graphics::cSpotLight* spLight2;
 
 
-	int m_renderingTeapotCount = 1;
+	int m_renderingTeapotCount = 4;
 	cActor* m_teapots[s_teapotCount] = {nullptr};
 	cActor* m_cubemap;
 	cActor* m_spaceHolder;

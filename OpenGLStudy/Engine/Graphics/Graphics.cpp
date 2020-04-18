@@ -56,6 +56,7 @@ namespace Graphics {
 	UniformBufferFormats::sSSAO g_ssaoData;
 	// Frame buffers
 	// ------------------------------------------------------------------------------------------------------------------------------------
+	cFrameBuffer g_omniShadowMaps[OMNI_SHADOW_MAP_COUNT];
 	// Rectangular HDR map to cubemap
 	cEnvProbe s_cubemapProbe;
 	// the brdfLUTTexture for integrating the brdf
@@ -403,6 +404,17 @@ namespace Graphics {
 		result = CreateUniformBuffer(UBT_PostProcessing);
 		result = CreateUniformBuffer(UBT_SSAO);
 		assert(result);
+		
+		// Initialize omni shadow maps
+		{
+			for (int i = 0; i < OMNI_SHADOW_MAP_COUNT; ++i)
+			{
+				if (!(result = g_omniShadowMaps[i].Initialize(2048, 2048, ETT_FRAMEBUFFER_OMNI_SHADOWMAP))) {
+					printf("Fail to create omni shadow map[%d].\n", i);
+					return result;
+				}
+			}
+		}
 		// Initialize environment probes
 		{
 			// This is for changing rect hdr map to cubemap
@@ -790,7 +802,10 @@ namespace Graphics {
 		if (s_directionalLight)
 			s_directionalLight->CleanUpShadowMap();
 		safe_delete(s_directionalLight);
-
+		for (int i = 0; i < OMNI_SHADOW_MAP_COUNT; ++i)
+		{
+			g_omniShadowMaps[i].CleanUp();
+		}
 		s_cubemapProbe.CleanUp();
 		s_brdfLUTTexture.CleanUp();
 		g_hdrBuffer.CleanUp();

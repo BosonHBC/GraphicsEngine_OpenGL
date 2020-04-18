@@ -17,6 +17,7 @@ struct sRect
 		assert(Max.y > Min.y);
 	}
 	sRect(float minx, float miny, float maxx, float maxy) : Min(glm::vec2(minx, miny)), Max(glm::vec2(maxx, maxy)) {}
+	sRect(const glm::vec2 i_min, float width, float height) : Min(i_min), Max(i_min + glm::vec2(width, height)) {}
 
 	glm::vec2 center() const { return (Min + Max) / 2.f; }
 	glm::vec2 br() const { return glm::vec2(Max.x, Min.y); }

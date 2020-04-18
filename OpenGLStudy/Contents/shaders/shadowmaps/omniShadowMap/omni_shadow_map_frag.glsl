@@ -1,6 +1,6 @@
 #version 420
 in vec4 FragPos;
-
+out vec4 outColor;
 layout(std140, binding = 0) uniform uniformBuffer_frame
 {
 	mat4 PVMatrix;
@@ -18,4 +18,5 @@ void main(){
     // normalize to [0,1]
     distance = distance / farPlane;
     gl_FragDepth = distance;
+    outColor = vec4(distance);
 }

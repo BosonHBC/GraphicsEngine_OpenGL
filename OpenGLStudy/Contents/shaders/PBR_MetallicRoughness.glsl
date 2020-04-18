@@ -4,6 +4,27 @@ const float PI = 3.14159265359;
 const int MAX_COUNT_PER_LIGHT = 5;
 const int MAX_COUNT_CUBEMAP_MIXING = 4;
 const float MAX_REFLECTION_LOD = 4.0;
+const vec2 uvOffsets[16] = 
+{
+	vec2(0.0, 0.0),
+	vec2(0.5, 0.0),
+
+	vec2(0.00, 0.50),
+	vec2(0.25, 0.50),
+	vec2(0.00, 0.75),
+	vec2(0.25, 0.75),
+	vec2(0.50, 0.50),
+	vec2(0.75, 0.50),
+
+	vec2(0.500, 0.750),
+	vec2(0.625, 0.750),
+	vec2(0.500, 0.875),
+	vec2(0.625, 0.875),
+	vec2(0.750, 0.750),
+	vec2(0.875, 0.750),
+	vec2(0.750, 0.875),
+	vec2(0.875, 0.875)
+};
 
 // this sampler is connected to the texture unit, and binding with our texture
 // this uniform is default 0, if we need more texture unit, we need to bind manually
@@ -81,21 +102,24 @@ struct PointLight{
 	Light base;
 	vec3 position;
 	float radius;
+	int ShadowMapIdx;	
+	int ResolutionIdx;		
 };
 struct SpotLight{
 	PointLight base;
 	vec3 direction;
 	float edge;
 };
+const int OMNI_SHADOW_MAP_COUNT = 5;
 layout(std140, binding = 3) uniform g_uniformBuffer_Lighting
 {
-	SpotLight g_spotLights[MAX_COUNT_PER_LIGHT]; // 48 * MAX_COUNT_PER_LIGHT = 240 bytes
-	PointLight g_pointLights[MAX_COUNT_PER_LIGHT]; // 32 * MAX_COUNT_PER_LIGHT = 160 bytes
+	SpotLight g_spotLights[MAX_COUNT_PER_LIGHT]; // 64 * MAX_COUNT_PER_LIGHT = 240 bytes
+	PointLight g_pointLights[OMNI_SHADOW_MAP_COUNT * 16]; //  40 * 80 = 3.2 KB
 	DirectionalLight g_directionalLight; // 32 bytes
 	AmbientLight g_ambientLight; // 16 bytes	
 	int g_pointLightCount; // 4 bytes
 	int g_spotLightCount; // 4 bytes
-}; // 456 bytes per lighting data
+}; 
 
 //-------------------------------------------------------------------------
 // Fucntions
@@ -207,9 +231,7 @@ float CalcSpotLightShadowMap(int idx, SpotLight spLight, vec3 vN)
 	shadow = current > 1.0 ? 0.0 : shadow;
 	return shadow;	
 }
-vec2 sampleCube(
-    const vec3 v,
-    out int faceIndex)
+vec2 sampleCube(const vec3 v, out int faceIndex)
 {
 	vec3 vAbs = abs(v);
 	float ma;
@@ -234,9 +256,20 @@ vec2 sampleCube(
 	}
 	return uv * ma + 0.5;
 }
-vec3 ChangeDir(PointLight pLight,int faceIdx, vec2 uv, vec3 fragPos, int resolutionIdx)
+
+vec2 ChangeUV(vec2 i_uv, int resIdx)
 {
-	vec2 newUV = uv / 2.0 + 0.5f;
+	float scale = 0.5;
+	if(resIdx > 1 && resIdx <= 7)
+		scale = 0.25;
+	else if(resIdx > 7)
+		scale = 0.125;
+
+	return i_uv * scale + uvOffsets[resIdx];
+}
+vec3 ChangeDir(PointLight pLight,int faceIdx, vec2 uv)
+{
+	vec2 newUV = ChangeUV(uv, pLight.ResolutionIdx);
 	float r = pLight.radius;
 	float l = 2 * r;
 	switch(faceIdx)
@@ -271,7 +304,7 @@ float CalcPointLightShadowMap(int idx, PointLight pLight, float dist_vV)
 	vec3 fragToLight = fragPos - pLight.position;
 	int faceIdx;
 	vec2 uv = sampleCube(fragToLight,faceIdx);
-	vec3 reconstructDir = ChangeDir(pLight, faceIdx, uv, fragPos, 0);
+	vec3 reconstructDir = ChangeDir(pLight, faceIdx, uv);
 	// sample the cube map
 	
 	float currentDepth = length(fragToLight) / pLight.radius;

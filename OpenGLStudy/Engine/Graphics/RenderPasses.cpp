@@ -14,8 +14,9 @@ namespace Graphics
 	extern sDataRequiredToRenderAFrame* s_dataRenderingByGraphicThread;
 	extern 	std::map<eUniformBufferType, cUniformBuffer> g_uniformBufferMap;
 	extern UniformBufferFormats::sLighting s_globalLightingData;
+	extern cFrameBuffer g_omniShadowMaps[OMNI_SHADOW_MAP_COUNT];
 	extern cFrameBuffer s_brdfLUTTexture;
-	extern 	cFrameBuffer g_hdrBuffer;
+	extern cFrameBuffer g_hdrBuffer;
 	extern cGBuffer g_GBuffer;
 	extern cFrameBuffer g_ssaoBuffer;
 	extern cFrameBuffer g_ssao_blur_Buffer;
@@ -23,8 +24,8 @@ namespace Graphics
 	extern cModel::HANDLE s_arrowHandle;
 	extern cModel::HANDLE s_quadHandle;
 	extern cMesh::HANDLE s_point;
-	extern 	cMesh::HANDLE g_cloth;
-	extern 	cTexture::HANDLE g_ssaoNoiseTexture;
+	extern cMesh::HANDLE g_cloth;
+	extern cTexture::HANDLE g_ssaoNoiseTexture;
 	extern cMatPBRMR g_clothMat;
 
 	// clear color
@@ -85,14 +86,9 @@ namespace Graphics
 		for (size_t i = 0; i < s_dataRenderingByGraphicThread->s_pointLights.size(); ++i)
 		{
 			auto* it = &s_dataRenderingByGraphicThread->s_pointLights[i];
-			it->SetupLight(s_currentEffect->GetProgramID(), i);
 			it->Illuminate();
 
-			if (it->IsShadowEnabled() && i < MAX_COUNT_PER_LIGHT) {
-				// has offset
-				it->UseShadowMap(MAX_COUNT_PER_LIGHT + SHADOWMAP_START_TEXTURE_UNIT + i);
-				it->GetShadowMap()->Read(GL_TEXTURE0 + MAX_COUNT_PER_LIGHT + SHADOWMAP_START_TEXTURE_UNIT + i);
-			}
+			g_omniShadowMaps[it->ShadowMapIdx()].Read(GL_TEXTURE0 + MAX_COUNT_PER_LIGHT + SHADOWMAP_START_TEXTURE_UNIT + i);
 		}
 
 		// Directional Light
@@ -148,6 +144,39 @@ namespace Graphics
 		glEnable(GL_CULL_FACE);
 		glCullFace(GL_BACK);
 	}
+	const int shadowMapResolution = 2048;
+	const sRect g_subRectRefs[16] =
+	{
+		// 0-1. 1024 * 1024 * 2
+		sRect(glm::vec2(0,0),																								shadowMapResolution / 2, shadowMapResolution / 2),
+		sRect(glm::vec2(shadowMapResolution / 2,0),														shadowMapResolution / 2, shadowMapResolution / 2),
+		// 2-7. 512 * 512 * 6
+		sRect(glm::vec2(shadowMapResolution * 0 / 4, shadowMapResolution * 2 / 4),	shadowMapResolution / 4, shadowMapResolution / 4),
+		sRect(glm::vec2(shadowMapResolution * 1 / 4, shadowMapResolution * 2 / 4),	shadowMapResolution / 4, shadowMapResolution / 4),
+		sRect(glm::vec2(shadowMapResolution * 0 / 4, shadowMapResolution * 3 / 4),	shadowMapResolution / 4, shadowMapResolution / 4),
+		sRect(glm::vec2(shadowMapResolution * 1 / 4, shadowMapResolution * 3 / 4),	shadowMapResolution / 4, shadowMapResolution / 4),
+		sRect(glm::vec2(shadowMapResolution * 2 / 4, shadowMapResolution * 2 / 4),	shadowMapResolution / 4, shadowMapResolution / 4),
+		sRect(glm::vec2(shadowMapResolution * 3 / 4, shadowMapResolution * 2 / 4),	shadowMapResolution / 4, shadowMapResolution / 4),
+		// 8-15. 256 * 256 * 8
+		sRect(glm::vec2(shadowMapResolution * 4 / 8, shadowMapResolution * 6 / 8),	shadowMapResolution / 8, shadowMapResolution / 8),
+		sRect(glm::vec2(shadowMapResolution * 5 / 8, shadowMapResolution * 6 / 8),	shadowMapResolution / 8, shadowMapResolution / 8),
+		sRect(glm::vec2(shadowMapResolution * 4 / 8, shadowMapResolution * 7 / 8),	shadowMapResolution / 8, shadowMapResolution / 8),
+		sRect(glm::vec2(shadowMapResolution * 5 / 8, shadowMapResolution * 7 / 8),	shadowMapResolution / 8, shadowMapResolution / 8),
+		sRect(glm::vec2(shadowMapResolution * 6 / 8, shadowMapResolution * 6 / 8),	shadowMapResolution / 8, shadowMapResolution / 8),
+		sRect(glm::vec2(shadowMapResolution * 7 / 8, shadowMapResolution * 6 / 8),	shadowMapResolution / 8, shadowMapResolution / 8),
+		sRect(glm::vec2(shadowMapResolution * 6 / 8, shadowMapResolution * 7 / 8),	shadowMapResolution / 8, shadowMapResolution / 8),
+		sRect(glm::vec2(shadowMapResolution * 7 / 8, shadowMapResolution * 7 / 8),	shadowMapResolution / 8, shadowMapResolution / 8),
+	};
+
+	bool RetriveShadowMapIndexAndSubRect(int i_lightIdx, int& io_shadowmapIdx, int& io_resolutionIdx, sRect& o_rect)
+	{
+		const int  N = g_omniShadowMaps[0].GetWidth(); // shadow map resolution
+		io_resolutionIdx = i_lightIdx % 16;
+
+		io_shadowmapIdx = i_lightIdx / 16;
+		o_rect = g_subRectRefs[io_resolutionIdx];
+		return (io_shadowmapIdx < OMNI_SHADOW_MAP_COUNT && io_shadowmapIdx >=0 && io_resolutionIdx >=0 && io_resolutionIdx < 16);
+	}
 
 	void PointLightShadowMap_Pass()
 	{
@@ -155,13 +184,14 @@ namespace Graphics
 		glDisable(GL_CULL_FACE);
 		s_currentEffect = GetEffectByKey(EET_OmniShadowMap);
 		s_currentEffect->UseEffect();
-
-		for (size_t i = 0; i < s_dataRenderingByGraphicThread->s_pointLights.size() && i < MAX_COUNT_PER_LIGHT; ++i)
+		glClear(GL_DEPTH_BUFFER_BIT);
+		glEnable(GL_SCISSOR_TEST);
+		
+		for (size_t i = 0; i < s_dataRenderingByGraphicThread->s_pointLights.size(); ++i)
 		{
 			auto* it = &s_dataRenderingByGraphicThread->s_pointLights[i];
-			cFrameBuffer* _pointLightFBO = it->GetShadowMap();
-			if (_pointLightFBO) {
-
+			int shadowMapIdx = -1; int resolutionIdx = -1; sRect subRect;
+			if (RetriveShadowMapIndexAndSubRect(i, shadowMapIdx, resolutionIdx, subRect)) {
 				// for each light, needs to update the frame data
 				Graphics::UniformBufferFormats::sFrame _frameData_PointLightShadow(it->GetProjectionmatrix(), it->GetViewMatrix());
 				g_uniformBufferMap[UBT_Frame].Update(&_frameData_PointLightShadow);
@@ -169,18 +199,20 @@ namespace Graphics
 				// point need extra uniform variables to be passed in to shader
 				it->SetupLight(s_currentEffect->GetProgramID(), i);
 				it->SetLightUniformTransform();
+				it->SetShadowmapIdxAndResolutionIdx(shadowMapIdx, resolutionIdx);
 				// write buffer to the texture
-				_pointLightFBO->WriteSubArea(
-					[] {
-						glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+				g_omniShadowMaps[shadowMapIdx].WriteSubArea(
+					[&] {
+						glScissor(subRect.Min.x, subRect.Min.y, subRect.w(), subRect.h()); // set this up with the same inputs as the glViewport function
+						glClear(GL_DEPTH_BUFFER_BIT);
 						// Draw scenes
 						RenderScene(nullptr);
 					}
-					, sRect(1024.f, 1024.f, 2048.f, 2048.f)
-				);
+				, subRect);
 				assert(glGetError() == GL_NO_ERROR);
 			}
 		}
+		glDisable(GL_SCISSOR_TEST);
 		s_currentEffect->UnUseEffect();
 		glEnable(GL_CULL_FACE);
 		glCullFace(GL_BACK);

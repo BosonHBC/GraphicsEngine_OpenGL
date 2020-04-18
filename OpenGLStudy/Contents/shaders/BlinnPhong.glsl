@@ -65,28 +65,29 @@ struct AmbientLight{
 struct DirectionalLight{
 	Light base;
 	vec3 direction;
-	// For vec4 alignment
-	float v1Padding;
 };
 struct PointLight{
 	Light base;
 	vec3 position;
 	float radius;
+	int ShadowMapIdx;	
+	int ResolutionIdx;		
 };
 struct SpotLight{
 	PointLight base;
 	vec3 direction;
 	float edge;
 };
+const int OMNI_SHADOW_MAP_COUNT = 5;
 layout(std140, binding = 3) uniform g_uniformBuffer_Lighting
 {
-	SpotLight g_spotLights[MAX_COUNT_PER_LIGHT]; // 48 * MAX_COUNT_PER_LIGHT = 240 bytes
-	PointLight g_pointLights[MAX_COUNT_PER_LIGHT]; // 32 * MAX_COUNT_PER_LIGHT = 160 bytes
+	SpotLight g_spotLights[MAX_COUNT_PER_LIGHT]; // 64 * MAX_COUNT_PER_LIGHT = 240 bytes
+	PointLight g_pointLights[OMNI_SHADOW_MAP_COUNT * 16]; //  40 * 80 = 3.2 KB
 	DirectionalLight g_directionalLight; // 32 bytes
 	AmbientLight g_ambientLight; // 16 bytes	
 	int g_pointLightCount; // 4 bytes
 	int g_spotLightCount; // 4 bytes
-}; // 456 bytes per lighting data
+}; 
 
 //-------------------------------------------------------------------------
 // Fucntions

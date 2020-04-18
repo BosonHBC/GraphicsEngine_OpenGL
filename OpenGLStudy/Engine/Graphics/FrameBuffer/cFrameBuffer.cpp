@@ -57,6 +57,7 @@ namespace Graphics {
 				break;
 			case ETT_FRAMEBUFFER_OMNI_SHADOWMAP:
 				glFramebufferTexture(GL_FRAMEBUFFER, GL_DEPTH_ATTACHMENT, _texture->GetTextureID(), mipMapLevel);
+				
 				glDrawBuffer(GL_NONE);
 				glReadBuffer(GL_NONE);
 				assert(GL_NO_ERROR == glGetError());

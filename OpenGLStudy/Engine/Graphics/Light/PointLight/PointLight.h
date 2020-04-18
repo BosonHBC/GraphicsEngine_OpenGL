@@ -30,11 +30,14 @@ namespace Graphics {
 		void CreateShadowMap(GLuint i_width, GLuint i_height) override;
 		void SetLightUniformTransform() override;
 		void UseShadowMap(GLuint i_textureUnit) override;
+		void SetShadowmapIdxAndResolutionIdx(GLuint i_shadowMapIdx, GLuint i_resolutionIDx) { m_shadowMapIdx = i_shadowMapIdx; m_resolutionIdx = i_resolutionIDx; };
+		GLuint ShadowMapIdx() const { return m_shadowMapIdx; }
 		glm::mat4 GetViewMatrix() const;
 	protected:
 		// use inverse squared fall off
 		GLfloat m_range = 100.f;
 		GLuint m_lightTransformID = static_cast<GLuint>(-1), m_lightShadowMapID = static_cast<GLuint>(-1);
+		GLuint m_shadowMapIdx = -1, m_resolutionIdx = 0;
 	private:
 		GLuint m_farPlaneID = static_cast<GLuint>(-1);
 	};
