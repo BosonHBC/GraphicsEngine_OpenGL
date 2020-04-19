@@ -2,6 +2,7 @@
 // Constants
 const float PI = 3.14159265359;
 const int MAX_COUNT_PER_LIGHT = 5;
+const int OMNI_SHADOW_MAP_COUNT = 5;
 const int MAX_COUNT_CUBEMAP_MIXING = 4;
 const float MAX_REFLECTION_LOD = 4.0;
 const vec2 uvOffsets[16] = 
@@ -39,7 +40,7 @@ uniform samplerCube IrradianceMap[MAX_COUNT_CUBEMAP_MIXING]; // 6 - 9
 uniform samplerCube PrefilterMap[MAX_COUNT_CUBEMAP_MIXING]; // 10 - 13
 
 uniform sampler2D spotlightShadowMap[MAX_COUNT_PER_LIGHT]; // 14 -> 18
-uniform samplerCube pointLightShadowMap[MAX_COUNT_PER_LIGHT]; // 19-> 23
+uniform samplerCube pointLightShadowMap[OMNI_SHADOW_MAP_COUNT]; // 19-> 23
 uniform sampler2D directionalShadowMap; // 24
 
 
@@ -110,7 +111,7 @@ struct SpotLight{
 	vec3 direction;
 	float edge;
 };
-const int OMNI_SHADOW_MAP_COUNT = 5;
+
 layout(std140, binding = 3) uniform g_uniformBuffer_Lighting
 {
 	SpotLight g_spotLights[MAX_COUNT_PER_LIGHT]; // 64 * MAX_COUNT_PER_LIGHT = 240 bytes
@@ -299,7 +300,7 @@ vec3 ChangeDir(PointLight pLight,int faceIdx, vec2 uv)
 		break;
 	}
 }
-float CalcPointLightShadowMap(int idx, PointLight pLight, float dist_vV)
+float CalcPointLightShadowMap(PointLight pLight, float dist_vV)
 {
 	vec3 fragToLight = fragPos - pLight.position;
 	int faceIdx;
@@ -316,7 +317,7 @@ float CalcPointLightShadowMap(int idx, PointLight pLight, float dist_vV)
 
 	for(int i = 0; i < samples; ++i) 
 	{
-		float cloestDepth = texture(pointLightShadowMap[idx], reconstructDir + gridSamplingDisk[i] * diskRadius).r;
+		float cloestDepth = texture(pointLightShadowMap[pLight.ShadowMapIdx], reconstructDir + gridSamplingDisk[i] * diskRadius).r;
 		shadow += (currentDepth - bias > cloestDepth) ? 1.0 : 0.0;
 	}
 
@@ -425,7 +426,7 @@ vec3 albedoColor, float metalness, float roughness, vec3 f0, vec3 vN, vec3 vV)
 // PointLight
 //-------------------------------------------------------------------------
 
-vec3 CalcPointLight(int idx, PointLight pLight,
+vec3 CalcPointLight(PointLight pLight,
 vec3 albedoColor, float metalness, float roughness, vec3 f0, vec3 vN, vec3 vV, float viewDistance){
 		vec3 vL = pLight.position - fragPos;
 		float dist = length(vL);
@@ -442,8 +443,8 @@ vec3 albedoColor, float metalness, float roughness, vec3 f0, vec3 vN, vec3 vV, f
 
 		// shadow
 		float shadowFactor = 1.0;
-		if(pLight.base.enableShadow && idx < MAX_COUNT_PER_LIGHT){
-			shadowFactor = 1.0 - CalcPointLightShadowMap(idx, pLight, viewDistance);
+		if(pLight.base.enableShadow && pLight.ShadowMapIdx < MAX_COUNT_PER_LIGHT){
+			shadowFactor = 1.0 - CalcPointLightShadowMap(pLight, viewDistance);
 			shadowFactor = max(shadowFactor, 0.0);
 		}
 		return shadowFactor * cookedIrrandance;
@@ -454,7 +455,7 @@ vec3 CalcPointLights(vec3 albedoColor, float metalness, float roughtness, vec3 f
 	vec3 Lo = vec3(0,0,0);
 
 	for(int i = 0; i < g_pointLightCount; ++i){
-		Lo += CalcPointLight(i, g_pointLights[i], albedoColor, metalness,roughtness, f0, vN, norm_vV, viewDistance);
+		Lo += CalcPointLight(g_pointLights[i], albedoColor, metalness,roughtness, f0, vN, norm_vV, viewDistance);
 	}
 
 	return Lo;

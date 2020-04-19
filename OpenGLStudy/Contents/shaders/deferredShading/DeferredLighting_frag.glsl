@@ -257,7 +257,7 @@ vec3 ChangeDir(PointLight pLight,int faceIdx, vec2 uv)
 		break;
 	}
 }
-float CalcPointLightShadowMap(int idx, PointLight pLight, vec3 worldPos, float dist_vV)
+float CalcPointLightShadowMap(PointLight pLight, vec3 worldPos, float dist_vV)
 {
 	vec3 fragToLight = worldPos - pLight.position;
 	int faceIdx;
@@ -274,7 +274,7 @@ float CalcPointLightShadowMap(int idx, PointLight pLight, vec3 worldPos, float d
 
 	for(int i = 0; i < samples; ++i) 
 	{
-		float cloestDepth = texture(pointLightShadowMap[idx], reconstructDir + gridSamplingDisk[i] * diskRadius).r;
+		float cloestDepth = texture(pointLightShadowMap[pLight.ShadowMapIdx], reconstructDir + gridSamplingDisk[i] * diskRadius).r;
 		shadow += (currentDepth - bias > cloestDepth) ? 1.0 : 0.0;
 	}
 
@@ -383,7 +383,7 @@ vec3 albedoColor, float metalness, float roughness, vec3 f0, vec3 vN, vec3 vV)
 // PointLight
 //-------------------------------------------------------------------------
 
-vec3 CalcPointLight(int idx, PointLight pLight, vec3 worldPos,
+vec3 CalcPointLight(PointLight pLight, vec3 worldPos,
 vec3 albedoColor, float metalness, float roughness, vec3 f0, vec3 vN, vec3 vV, float viewDistance){
 		vec3 vL = pLight.position - worldPos;
 		float dist = length(vL);
@@ -400,8 +400,8 @@ vec3 albedoColor, float metalness, float roughness, vec3 f0, vec3 vN, vec3 vV, f
 
 		// shadow
 		float shadowFactor = 1.0;
-		if(pLight.base.enableShadow && idx < MAX_COUNT_PER_LIGHT){
-			shadowFactor = 1.0 - CalcPointLightShadowMap(idx, pLight, worldPos,viewDistance);
+		if(pLight.base.enableShadow && pLight.ShadowMapIdx < MAX_COUNT_PER_LIGHT){
+			shadowFactor = 1.0 - CalcPointLightShadowMap(pLight, worldPos,viewDistance);
 			shadowFactor = max(shadowFactor, 0.0);
 		}
 		return shadowFactor * cookedIrrandance;
@@ -412,7 +412,7 @@ vec3 CalcPointLights(vec3 worldPos, vec3 albedoColor, float metalness, float rou
 	vec3 Lo = vec3(0,0,0);
 
 	for(int i = 0; i < g_pointLightCount; ++i){
-		Lo += CalcPointLight(i, g_pointLights[i], worldPos, albedoColor, metalness,roughtness, f0, vN, norm_vV, viewDistance);
+		Lo += CalcPointLight(g_pointLights[i], worldPos, albedoColor, metalness,roughtness, f0, vN, norm_vV, viewDistance);
 	}
 
 	return Lo;

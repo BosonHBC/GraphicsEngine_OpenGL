@@ -109,7 +109,7 @@ namespace Graphics {
 				glm::vec3 direction = glm::vec3(0, 1, 0); // 12 bytes
 				V1Padding; // 4 bytes
 
-				DirectionalLight32() : direction(glm::vec3(0, 1, 0)) {}
+				DirectionalLight32() : base(Light16()), direction(glm::vec3(0, 1, 0)) {}
 			};
 			struct PointLight48 {
 				Light16 base; // 16 bytes

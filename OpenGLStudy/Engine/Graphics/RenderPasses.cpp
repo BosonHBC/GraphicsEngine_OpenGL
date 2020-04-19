@@ -7,6 +7,7 @@
 #include "Application/Window/Window.h"
 #include "Graphics/FrameBuffer/GeometryBuffer.h"
 #include "Assignments/ClothSimulation/SimulationParams.h"
+#include <algorithm>
 namespace Graphics
 {
 	extern unsigned int s_currentRenderPass;
@@ -32,6 +33,28 @@ namespace Graphics
 	Color s_clearColor;
 	// arrow colors
 	Color s_arrowColor[3] = { Color(0, 0, 0.8f), Color(0.8f, 0, 0),Color(0, 0.8f, 0) };
+	void RenderQuad(const UniformBufferFormats::sFrame& i_frameData = UniformBufferFormats::sFrame(), const UniformBufferFormats::sDrawCall& i_drawCallData = UniformBufferFormats::sDrawCall())
+	{
+		g_uniformBufferMap[UBT_Frame].Update(&i_frameData);
+		g_uniformBufferMap[UBT_Drawcall].Update(&i_drawCallData);
+
+		// Render quad
+		cModel* _quad = cModel::s_manager.Get(s_quadHandle);
+		if (_quad) {
+			_quad->RenderWithoutMaterial();
+		}
+	}
+
+	void RenderCube(const UniformBufferFormats::sFrame& i_frameData = UniformBufferFormats::sFrame(), const UniformBufferFormats::sDrawCall& i_drawCallData = UniformBufferFormats::sDrawCall())
+	{
+		g_uniformBufferMap[UBT_Frame].Update(&i_frameData);
+		g_uniformBufferMap[UBT_Drawcall].Update(&i_drawCallData);
+
+		cModel* _cube = cModel::s_manager.Get(s_cubeHandle);
+		if (_cube) {
+			_cube->RenderWithoutMaterial();
+		}
+	}
 
 	void RenderPointLightPosition()
 	{
@@ -40,9 +63,10 @@ namespace Graphics
 		g_uniformBufferMap[UBT_Frame].Update(&s_dataRenderingByGraphicThread->s_renderPasses[3].FrameData);
 		for (size_t i = 0; i < s_dataRenderingByGraphicThread->s_pointLights.size(); ++i)
 		{
+			float ratio = 1.0 - (float)(s_dataRenderingByGraphicThread->s_pointLights[i].ImportanceOrder) / s_dataRenderingByGraphicThread->s_pointLights.size();
 			cMesh* _Point = cMesh::s_manager.Get(s_point);
 			s_currentEffect->SetFloat("radius", 5);
-			glm::vec3 sphereColor = glm::vec3(1.0, 0.0, 0.0);
+			glm::vec3 sphereColor = glm::vec3(1.0f, 0.0f, 0.0f) * pow( ratio, 5);
 
 			s_currentEffect->SetVec3("color", sphereColor);
 			g_uniformBufferMap[UBT_Drawcall].Update(&UniformBufferFormats::sDrawCall(s_dataRenderingByGraphicThread->s_pointLights[i].Transform.M(), s_dataRenderingByGraphicThread->s_pointLights[i].Transform.TranspostInverse()));
@@ -51,19 +75,23 @@ namespace Graphics
 		s_currentEffect->UnUseEffect();
 	}
 
-	void RenderQuad(const UniformBufferFormats::sFrame& i_frameData = UniformBufferFormats::sFrame())
+	void RenderOmniShadowMap()
 	{
-		g_uniformBufferMap[UBT_Frame].Update(&i_frameData);
+		for (int i = 0; i < OMNI_SHADOW_MAP_COUNT; ++i)
+		{
+			s_currentEffect = GetEffectByKey(EET_CubemapDisplayer);
+			s_currentEffect->UseEffect();
+		
+			s_currentEffect->SetInteger("cubemapTex", 0);
+			g_omniShadowMaps[i].Read(GL_TEXTURE0);
 
-		UniformBufferFormats::sDrawCall defaultDrawcallData;
-		g_uniformBufferMap[UBT_Drawcall].Update(&defaultDrawcallData);
+			cTransform tempTr(glm::vec3(-300, 200, 300 - 150 * i ), glm::quat(1,0,0,0), glm::vec3(5,5, 5));
+			RenderCube(s_dataRenderingByGraphicThread->s_renderPasses[3].FrameData, UniformBufferFormats::sDrawCall(tempTr.M(), tempTr.TranspostInverse()));
 
-		// Render quad
-		cModel* _quad = cModel::s_manager.Get(s_quadHandle);
-		if (_quad) {
-			_quad->RenderWithoutMaterial();
+			s_currentEffect->UnUseEffect();
 		}
 	}
+
 
 	void UpdateLightingData()
 	{
@@ -88,7 +116,7 @@ namespace Graphics
 			auto* it = &s_dataRenderingByGraphicThread->s_pointLights[i];
 			it->Illuminate();
 
-			g_omniShadowMaps[it->ShadowMapIdx()].Read(GL_TEXTURE0 + MAX_COUNT_PER_LIGHT + SHADOWMAP_START_TEXTURE_UNIT + i);
+			g_omniShadowMaps[it->ShadowMapIdx()].Read(GL_TEXTURE0 + MAX_COUNT_PER_LIGHT + SHADOWMAP_START_TEXTURE_UNIT + it->ShadowMapIdx());
 		}
 
 		// Directional Light
@@ -114,32 +142,33 @@ namespace Graphics
 
 	void DirectionalShadowMap_Pass()
 	{
+		cDirectionalLight* _directionalLight = &s_dataRenderingByGraphicThread->s_directionalLight;
+
+		if (!_directionalLight || !_directionalLight->IsShadowEnabled()) return;
+
 		glDisable(GL_CULL_FACE);
 		s_currentEffect = GetEffectByKey(EET_ShadowMap);
 		s_currentEffect->UseEffect();
-		cDirectionalLight* _directionalLight = &s_dataRenderingByGraphicThread->s_directionalLight;
 
-		if (_directionalLight)
-		{
-			_directionalLight->SetupLight(s_currentEffect->GetProgramID(), 0);
-			cFrameBuffer* _directionalLightFBO = _directionalLight->GetShadowMap();
-			if (_directionalLightFBO && _directionalLight->IsShadowEnabled()) {
+		_directionalLight->SetupLight(s_currentEffect->GetProgramID(), 0);
+		cFrameBuffer* _directionalLightFBO = _directionalLight->GetShadowMap();
+		if (_directionalLightFBO && _directionalLight->IsShadowEnabled()) {
 
-				// write buffer to the texture
-				_directionalLightFBO->Write(
-					[] {
-						glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-						// Draw scenes
-						RenderScene(nullptr);
-						cMesh* _cloth = cMesh::s_manager.Get(g_cloth);
-						cTransform defaultTransform;
-						g_uniformBufferMap[UBT_Drawcall].Update(&UniformBufferFormats::sDrawCall(defaultTransform.M(), defaultTransform.TranspostInverse()));
-						_cloth->Render();
-					}
-				);
-				assert(glGetError() == GL_NO_ERROR);
-			}
+			// write buffer to the texture
+			_directionalLightFBO->Write(
+				[] {
+					glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+					// Draw scenes
+					RenderScene(nullptr);
+					cMesh* _cloth = cMesh::s_manager.Get(g_cloth);
+					cTransform defaultTransform;
+					g_uniformBufferMap[UBT_Drawcall].Update(&UniformBufferFormats::sDrawCall(defaultTransform.M(), defaultTransform.TranspostInverse()));
+					_cloth->Render();
+				}
+			);
+			assert(glGetError() == GL_NO_ERROR);
 		}
+
 		s_currentEffect->UnUseEffect();
 		glEnable(GL_CULL_FACE);
 		glCullFace(GL_BACK);
@@ -168,14 +197,25 @@ namespace Graphics
 		sRect(glm::vec2(shadowMapResolution * 7 / 8, shadowMapResolution * 7 / 8),	shadowMapResolution / 8, shadowMapResolution / 8),
 	};
 
-	bool RetriveShadowMapIndexAndSubRect(int i_lightIdx, int& io_shadowmapIdx, int& io_resolutionIdx, sRect& o_rect)
+	bool RetriveShadowMapIndexAndSubRect(int i_lightIdx, int& io_shadowmapIdx, int& io_resolutionIdx)
 	{
 		const int  N = g_omniShadowMaps[0].GetWidth(); // shadow map resolution
-		io_resolutionIdx = i_lightIdx % 16;
-
-		io_shadowmapIdx = i_lightIdx / 16;
-		o_rect = g_subRectRefs[io_resolutionIdx];
-		return (io_shadowmapIdx < OMNI_SHADOW_MAP_COUNT && io_shadowmapIdx >=0 && io_resolutionIdx >=0 && io_resolutionIdx < 16);
+		if (i_lightIdx >= 0 && i_lightIdx < 10)	// 1K
+		{
+			io_resolutionIdx = (i_lightIdx % 2 == 0) ? 0 : 1;
+			io_shadowmapIdx = i_lightIdx / 2;
+		}
+		if (i_lightIdx >= 10 && i_lightIdx < 40) // 512 * 512
+		{
+			io_resolutionIdx = (i_lightIdx - 10) % 6 + 2;
+			io_shadowmapIdx = (i_lightIdx - 10) / 6;
+		}
+		if (i_lightIdx >= 40 && i_lightIdx < 80) // 256 * 256
+		{
+			io_resolutionIdx = (i_lightIdx - 40) % 8 + 8;
+			io_shadowmapIdx = (i_lightIdx - 40) / 8;
+		}
+		return (io_shadowmapIdx < OMNI_SHADOW_MAP_COUNT && io_shadowmapIdx >= 0 && io_resolutionIdx >= 0 && io_resolutionIdx < 16);
 	}
 
 	void PointLightShadowMap_Pass()
@@ -186,31 +226,50 @@ namespace Graphics
 		s_currentEffect->UseEffect();
 		glClear(GL_DEPTH_BUFFER_BIT);
 		glEnable(GL_SCISSOR_TEST);
-		
+
+		std::sort(s_dataRenderingByGraphicThread->s_pointLights.begin(), s_dataRenderingByGraphicThread->s_pointLights.end(), [](cPointLight& const l1, cPointLight&  const l2) {
+			return l1.Importance() > l2.Importance(); });
+		// Now the point light list is sorted depends on their importance
 		for (size_t i = 0; i < s_dataRenderingByGraphicThread->s_pointLights.size(); ++i)
 		{
 			auto* it = &s_dataRenderingByGraphicThread->s_pointLights[i];
-			int shadowMapIdx = -1; int resolutionIdx = -1; sRect subRect;
-			if (RetriveShadowMapIndexAndSubRect(i, shadowMapIdx, resolutionIdx, subRect)) {
-				// for each light, needs to update the frame data
-				Graphics::UniformBufferFormats::sFrame _frameData_PointLightShadow(it->GetProjectionmatrix(), it->GetViewMatrix());
-				g_uniformBufferMap[UBT_Frame].Update(&_frameData_PointLightShadow);
-
-				// point need extra uniform variables to be passed in to shader
-				it->SetupLight(s_currentEffect->GetProgramID(), i);
-				it->SetLightUniformTransform();
+			int shadowMapIdx = -1; int resolutionIdx = -1;
+			if (RetriveShadowMapIndexAndSubRect(i, shadowMapIdx, resolutionIdx))
+			{
 				it->SetShadowmapIdxAndResolutionIdx(shadowMapIdx, resolutionIdx);
-				// write buffer to the texture
-				g_omniShadowMaps[shadowMapIdx].WriteSubArea(
-					[&] {
-						glScissor(subRect.Min.x, subRect.Min.y, subRect.w(), subRect.h()); // set this up with the same inputs as the glViewport function
-						glClear(GL_DEPTH_BUFFER_BIT);
-						// Draw scenes
-						RenderScene(nullptr);
-					}
-				, subRect);
-				assert(glGetError() == GL_NO_ERROR);
+				it->ImportanceOrder = i;
 			}
+			else
+				assert(false);
+		}
+		std::sort(s_dataRenderingByGraphicThread->s_pointLights.begin(), s_dataRenderingByGraphicThread->s_pointLights.end(), [](cPointLight& const l1, cPointLight&  const l2) {
+			return l1.ShadowMapIdx() < l2.ShadowMapIdx(); });
+
+		// Now the point light list is sorted depends on their shadow map index
+		for (size_t i = 0; i < s_dataRenderingByGraphicThread->s_pointLights.size(); ++i)
+		{
+			auto* it = &s_dataRenderingByGraphicThread->s_pointLights[i];
+
+			// for each light, needs to update the frame data
+			Graphics::UniformBufferFormats::sFrame _frameData_PointLightShadow(it->GetProjectionmatrix(), it->GetViewMatrix());
+			g_uniformBufferMap[UBT_Frame].Update(&_frameData_PointLightShadow);
+
+			// point need extra uniform variables to be passed in to shader
+			it->SetupLight(s_currentEffect->GetProgramID(), i);
+			it->SetLightUniformTransform();
+
+			// write buffer to the texture
+			sRect subRect = g_subRectRefs[it->ResolutionIdx()];
+			g_omniShadowMaps[it->ShadowMapIdx()].WriteSubArea(
+				[&] {
+					glScissor(subRect.Min.x, subRect.Min.y, subRect.w(), subRect.h()); // set this up with the same inputs as the glViewport function
+					glClear(GL_DEPTH_BUFFER_BIT);
+					// Draw scenes
+					RenderScene(nullptr);
+				}
+			, subRect);
+			assert(glGetError() == GL_NO_ERROR);
+
 		}
 		glDisable(GL_SCISSOR_TEST);
 		s_currentEffect->UnUseEffect();
@@ -414,12 +473,11 @@ namespace Graphics
 				}
 
 				RenderPointLightPosition();
+				RenderOmniShadowMap();
 			}
 		);
-
+		
 		HDR_Pass();
-
-
 	}
 
 	void GBuffer_Pass()
@@ -537,6 +595,7 @@ namespace Graphics
 						g_uniformBufferMap[UBT_Frame].Update(&s_dataRenderingByGraphicThread->s_renderPasses[s_currentRenderPass].FrameData);
 						CubeMap_Pass();
 						RenderPointLightPosition();
+						RenderOmniShadowMap();
 					}
 				}
 			);

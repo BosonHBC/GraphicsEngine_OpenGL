@@ -85,7 +85,7 @@ void Assignment::CreateActor()
 	Graphics::cModel* _cubeMap = Graphics::cModel::s_manager.Get(m_cubemap->GetModelHandle());
 	Graphics::cMatCubemap* _matCubemap = dynamic_cast<Graphics::cMatCubemap*>(_cubeMap->GetMaterialAt());
 	if (_matCubemap)
-		_matCubemap->UpdateCubemap(Graphics::GetHDRtoCubemap()->GetCubemapTextureHandle()); // used for debugging the environment
+		_matCubemap->UpdateCubemap(Graphics::GetHDRtoCubemap()->GetCubemapTextureHandle());
 
 	m_spaceHolder = new cActor();
 	m_spaceHolder->Initialize();
@@ -110,20 +110,20 @@ void Assignment::CreateLight()
 {
 	const int lightPerRow = 4;
 	const float horiDist = 150;
-	const float vertDist = 30;
+	const float vertDist = 50 * 40.f / m_createdPLightCount;
 
-	Graphics::CreateAmbientLight(Color(0.1f, 0.1f, 0.1f), aLight);
+	Graphics::CreateAmbientLight(Color(0.01f, 0.01f, 0.01f), aLight);
 	for (int i = 0; i < m_createdPLightCount; ++i)
 	{
 		//Color randomColor = Color(randomFloats(generator), randomFloats(generator), randomFloats(generator));
 		bool enableShadow = false;
 		if (i < MAX_COUNT_PER_LIGHT)
 			enableShadow = true;
-		Graphics::CreatePointLight(glm::vec3(-250 + (i % lightPerRow) * horiDist, 150, 200 - (i / lightPerRow) * vertDist), Color::White(), 300.f, enableShadow, m_pLights[i]);
+		Graphics::CreatePointLight(glm::vec3(-250 + (i % lightPerRow) * horiDist, 100, 300 - (i / lightPerRow) * vertDist), Color::White() * 0.5f, 250.f, enableShadow, m_pLights[i]);
 	}
 
 	//Graphics::CreatePointLight(glm::vec3(100, 150.f, 100.f), Color(1, 1, 1), 1.f, 0.7f, 1.8f, true, pLight2);
-	Graphics::CreateDirectionalLight(Color(0.01f, 0.01f, 0.01f), glm::vec3(-1, -0.5f, -0.5f), true, dLight);
+	Graphics::CreateDirectionalLight(Color(0.00f, 0.00f, 0.00f), glm::vec3(-1, -0.5f, -0.5f), true, dLight);
 	//Graphics::CreateSpotLight(glm::vec3(0, 150, 0), glm::vec3(0, 1, 1), Color(1), 65.f, 1.5f, 0.3f, 5.f, true, spLight);
 	//Graphics::CreateSpotLight(glm::vec3(100, 150, 0), glm::vec3(1, 1, 0), Color(1), 65.f, 1.f, 0.7f, 
 
@@ -185,6 +185,7 @@ void Assignment::SubmitDataToBeRender(const float i_seconds_elapsedSinceLastLoop
 void Assignment::BeforeUpdate()
 {
 	Graphics::MakeApplicationThreadWaitUntilPreRenderFrameDone(m_applicationMutex);
+
 }
 
 void Assignment::Run()
@@ -295,22 +296,40 @@ void Assignment::Tick(float second_since_lastFrame)
 	//controledActor = m_sphere->Transform();
 	if (controledActor) {
 		if (_windowInput->IsKeyDown(GLFW_KEY_J)) {
-			controledActor->Translate(-cTransform::WorldRight * 100.f * second_since_lastFrame);
+			for (int i = 0; i < m_createdPLightCount; ++i)
+			{
+				m_pLights[i]->Transform.Translate(-cTransform::WorldRight * 100.f * second_since_lastFrame);
+			}
 		}
 		if (_windowInput->IsKeyDown(GLFW_KEY_L)) {
-			controledActor->Translate(cTransform::WorldRight* 100.f  * second_since_lastFrame);
+			for (int i = 0; i < m_createdPLightCount; ++i)
+			{
+				m_pLights[i]->Transform.Translate(cTransform::WorldRight* 100.f  * second_since_lastFrame);
+			}
 		}
 		if (_windowInput->IsKeyDown(GLFW_KEY_I)) {
-			controledActor->Translate(-cTransform::WorldForward* 100.f  * second_since_lastFrame);
+			for (int i = 0; i < m_createdPLightCount; ++i)
+			{
+				m_pLights[i]->Transform.Translate(-cTransform::WorldForward* 100.f  * second_since_lastFrame);
+			}
 		}
 		if (_windowInput->IsKeyDown(GLFW_KEY_K)) {
-			controledActor->Translate(cTransform::WorldForward* 100.f  * second_since_lastFrame);
+			for (int i = 0; i < m_createdPLightCount; ++i)
+			{
+				m_pLights[i]->Transform.Translate(cTransform::WorldForward* 100.f  * second_since_lastFrame);
+			}
 		}
 		if (_windowInput->IsKeyDown(GLFW_KEY_SPACE)) {
-			controledActor->Translate(cTransform::WorldUp* 100.f* second_since_lastFrame);
+			for (int i = 0; i < m_createdPLightCount; ++i)
+			{
+				m_pLights[i]->Transform.Translate(cTransform::WorldUp* 100.f* second_since_lastFrame);
+			}
 		}
 		if (_windowInput->IsKeyDown(GLFW_KEY_LEFT_CONTROL)) {
-			controledActor->Translate(-cTransform::WorldUp* 100.f * second_since_lastFrame);
+			for (int i = 0; i < m_createdPLightCount; ++i)
+			{
+				m_pLights[i]->Transform.Translate(-cTransform::WorldUp* 100.f * second_since_lastFrame);
+			}
 		}
 
 	}
@@ -369,6 +388,7 @@ void Assignment::SubmitLightingData()
 	for (int i = 0; i < m_createdPLightCount; ++i)
 	{
 		m_pLights[i]->UpdateLightIndex(_pLights.size());
+		m_pLights[i]->CalculateDistToEye(m_editorCamera->CamLocation());
 		_pLights.push_back(*m_pLights[i]);
 	}
 

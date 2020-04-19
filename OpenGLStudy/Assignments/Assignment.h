@@ -27,7 +27,7 @@ class Assignment : public Application::cApplication
 {
 public:
 	static const int s_teapotCount = 12;
-	static const int s_maxPLightCount = 64;
+	static const int s_maxPLightCount = 80;
 
 	bool Initialize(GLuint i_width, GLuint i_height, const char* i_windowName = "Default Window");
 	void Run();
@@ -51,7 +51,7 @@ private:
 	Color m_clearColor = Color(0,0,0);
 	cEditorCamera* m_editorCamera;
 
-	int m_createdPLightCount = 64;
+	int m_createdPLightCount = 2;
 	Graphics::cPointLight* m_pLights[s_maxPLightCount] = {nullptr};
 
 	Graphics::cAmbientLight* aLight;
@@ -60,7 +60,7 @@ private:
 	Graphics::cSpotLight* spLight2;
 
 
-	int m_renderingTeapotCount = 4;
+	int m_renderingTeapotCount = 1;
 	cActor* m_teapots[s_teapotCount] = {nullptr};
 	cActor* m_cubemap;
 	cActor* m_spaceHolder;

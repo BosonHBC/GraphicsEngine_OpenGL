@@ -68,7 +68,7 @@ namespace Graphics {
 	/** Others */
 	cEnvProbe* GetHDRtoCubemap();
 	cUniformBuffer* GetUniformBuffer(const eUniformBufferType& i_uniformBufferType);
-
+	cFrameBuffer* GetOmniShadowMapAt(int i_idx);
 	/** Predefined model and textures*/
 	 cModel::HANDLE GetPrimitive(const EPrimitiveType& i_primitiveType);
 }

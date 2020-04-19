@@ -100,7 +100,11 @@ namespace Graphics {
 	}
 
 	void Gizmo_DrawDebugCaptureVolume();
-	void RenderQuad(const UniformBufferFormats::sFrame& i_frameData = UniformBufferFormats::sFrame());
+	void RenderQuad(const UniformBufferFormats::sFrame& i_frameData = UniformBufferFormats::sFrame(), const UniformBufferFormats::sDrawCall& i_drawCallData = UniformBufferFormats::sDrawCall());
+	void RenderCube(const UniformBufferFormats::sFrame& i_frameData = UniformBufferFormats::sFrame(), const UniformBufferFormats::sDrawCall& i_drawCallData = UniformBufferFormats::sDrawCall());
+	void RenderPointLightPosition();
+	void RenderOmniShadowMap();
+
 	void HDR_Pass();
 	void GBuffer_Pass();
 	void Deferred_Lighting_Pass();
@@ -174,7 +178,7 @@ namespace Graphics {
 					return result;
 				}
 			}
-			// Create OmniShadowmap display effect
+			// Create OmniShadowmap effect
 			{
 				if (!(result = CreateEffect(EET_OmniShadowMap,
 					"shadowmaps/omniShadowMap/omni_shadow_map_vert.glsl",
@@ -390,6 +394,17 @@ namespace Graphics {
 				ssaoEffect->UseEffect();
 				ssaoEffect->SetInteger("ssaoInput", 0);
 				ssaoEffect->UnUseEffect();
+			}
+
+			// Create cubemap displayer
+			{
+				if (!(result = CreateEffect(EET_CubemapDisplayer,
+					"cubemap/cuebmapDisplay_vert.glsl",
+					"cubemap/cubemapDisplay_frag.glsl"
+				))) {
+					printf("Fail to create Cubemap displayer effect.\n");
+					return result;
+				}
 			}
 			// validate all programs
 			for (auto it : s_KeyToEffect_map)
@@ -830,6 +845,12 @@ namespace Graphics {
 	Graphics::cUniformBuffer* GetUniformBuffer(const eUniformBufferType& i_uniformBufferType)
 	{
 		return &g_uniformBufferMap[i_uniformBufferType];
+	}
+
+	Graphics::cFrameBuffer* GetOmniShadowMapAt(int i_idx)
+	{
+		assert(i_idx < OMNI_SHADOW_MAP_COUNT);
+		return &g_omniShadowMaps[i_idx];
 	}
 
 	Graphics::cModel::HANDLE GetPrimitive(const EPrimitiveType& i_primitiveType)

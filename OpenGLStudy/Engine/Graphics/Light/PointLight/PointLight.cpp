@@ -63,6 +63,11 @@ namespace Graphics {
 	}
 
 
+	void cPointLight::CalculateDistToEye(const glm::vec3& i_eyePos)
+	{
+		m_distToEye = glm::distance(Transform.Position(), i_eyePos);
+	}
+
 	glm::mat4 cPointLight::GetViewMatrix() const
 	{
 		return glm::lookAt(Transform.Position(), Transform.Position() + Transform.Forward(), -cTransform::WorldUp);
