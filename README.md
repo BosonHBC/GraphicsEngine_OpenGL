@@ -8,7 +8,7 @@ Post-Processing effect
 Omni shadow map subdivision for many lights
 
 Control: 
-1234567890: switch between different mode.(1: forward shading, 2: deferred shading, 3: albedo, 4: metallic, 5: roughness, 6: normal, 7: texture AO, 8: depth, 9: blurry SSAO) 
+1234567890: switch between different mode.(1: forward shading, 2: deferred shading, 3: albedo, 4: metallic, 5: roughness, 6: normal, 7: texture AO, 8: depth, 9: blurry SSAO)
 -/+ : Adjust exposure in forward/deferred mode. 
 C/V: Adjust ambient light intensity in forward/deferred mode.
 G: Spawn a point light in front of the camera position.
