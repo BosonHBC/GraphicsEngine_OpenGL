@@ -303,12 +303,11 @@ vec3 ChangeDir(PointLight pLight,int faceIdx, vec2 uv)
 float CalcPointLightShadowMap(PointLight pLight, float dist_vV)
 {
 	vec3 fragToLight = fragPos - pLight.position;
-	int faceIdx;
-	vec2 uv = sampleCube(fragToLight,faceIdx);
-	vec3 reconstructDir = ChangeDir(pLight, faceIdx, uv);
+	float fragToLightLength = length(fragToLight);
+
 	// sample the cube map
-	
-	float currentDepth = length(fragToLight) / pLight.radius;
+
+	float currentDepth = fragToLightLength / pLight.radius;
 	float shadow = 0.0;
 	float bias = 0.05;
 	float samples = 20;
@@ -317,7 +316,12 @@ float CalcPointLightShadowMap(PointLight pLight, float dist_vV)
 
 	for(int i = 0; i < samples; ++i) 
 	{
-		float cloestDepth = texture(pointLightShadowMap[pLight.ShadowMapIdx], reconstructDir + gridSamplingDisk[i] * diskRadius).r;
+		int faceIdx;
+		vec3 biasedFragToLight = fragToLight + gridSamplingDisk[i] * diskRadius;
+		vec2 uv = sampleCube(biasedFragToLight,faceIdx);
+		vec3 reconstructDir = ChangeDir(pLight, faceIdx, uv);
+
+		float cloestDepth = texture(pointLightShadowMap[pLight.ShadowMapIdx], reconstructDir).r;
 		shadow += (currentDepth - bias > cloestDepth) ? 1.0 : 0.0;
 	}
 

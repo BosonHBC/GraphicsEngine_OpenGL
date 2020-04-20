@@ -61,7 +61,7 @@ private:
 	Graphics::cSpotLight* spLight2;
 
 
-	int m_renderingTeapotCount = 8;
+	int m_renderingTeapotCount = 1;
 	cActor* m_teapots[s_maxTeapotCount] = {nullptr};
 	cActor* m_cubemap;
 	cActor* m_spaceHolder;
