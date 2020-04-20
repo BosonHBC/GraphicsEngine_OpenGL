@@ -113,13 +113,16 @@ void Assignment::CreateLight()
 	const int lightPerRow = 4;
 	const float horiDist = 150;
 	const float vertDist = 50 * 40.f / m_createdPLightCount;
-	Graphics::CreateAmbientLight(Color(0.1f, 0.1f, 0.1f), aLight);
+	Graphics::CreateAmbientLight(Color(0,0,0), aLight);
+
 	for (int i = 0; i < m_createdPLightCount; ++i)
 	{
 		//Color randomColor = Color(randomFloats(generator), randomFloats(generator), randomFloats(generator));
 		bool enableShadow = true;
-		Graphics::CreatePointLight(glm::vec3(-250 + (i % lightPerRow) * horiDist, 100, 300 - (i / lightPerRow) * vertDist), Color::White() * 0.5f, 250.f, enableShadow, m_pLights[i]);
+		Graphics::CreatePointLight(glm::vec3(0 + (i % lightPerRow) * horiDist, 100,0 - (i / lightPerRow) * vertDist), Color::White() * 0.5f, 250.f, enableShadow, m_pLights[i]);
 	}
+
+	//CreatePointLight(glm::vec3(0, 100, 0), Color::White() * 0.5f, 250, true);
 
 	//Graphics::CreatePointLight(glm::vec3(100, 150.f, 100.f), Color(1, 1, 1), 1.f, 0.7f, 1.8f, true, pLight2);
 	Graphics::CreateDirectionalLight(Color(0.00f, 0.00f, 0.00f), glm::vec3(-1, -0.5f, -0.5f), true, dLight);
@@ -218,7 +221,8 @@ void Assignment::Run()
 	}
 }
 bool gKeyPressed = false;
-float ambientIntensity = 1.0f;
+float ambientIntensity = 0.0f;
+float directionalIntensity = 0.0f;
 void Assignment::Tick(float second_since_lastFrame)
 {
 	sWindowInput* _windowInput = m_window->GetWindowInput();
@@ -364,15 +368,24 @@ void Assignment::Tick(float second_since_lastFrame)
 
 	if (_windowInput->IsKeyDown(GLFW_KEY_C)) {
 		ambientIntensity -= second_since_lastFrame * 5.f;
-		ambientIntensity = glm::clamp(ambientIntensity, 1.f, 10.f);
+		ambientIntensity = glm::clamp(ambientIntensity, 0.f, 10.f);
 		aLight->SetColor(Color(0.1f ,0.1f, 0.1f) * ambientIntensity);
 	}
 	if (_windowInput->IsKeyDown(GLFW_KEY_V)) {
 		ambientIntensity += second_since_lastFrame * 5.f;
-		ambientIntensity = glm::clamp(ambientIntensity, 1.f, 10.f);
+		ambientIntensity = glm::clamp(ambientIntensity, 0.f, 10.f);
 		aLight->SetColor(Color(0.1f, 0.1f, 0.1f) * ambientIntensity);
 	}
-
+	if (_windowInput->IsKeyDown(GLFW_KEY_B)) {
+		directionalIntensity -= second_since_lastFrame * 2.f;
+		directionalIntensity = glm::clamp(directionalIntensity, 0.f, 3.f);
+		dLight->SetColor(Color(0.6f, 0.6f, 0.5f) * directionalIntensity);
+	}
+	if (_windowInput->IsKeyDown(GLFW_KEY_N)) {
+		directionalIntensity += second_since_lastFrame * 2.f;
+		directionalIntensity = glm::clamp(directionalIntensity, 0.f, 3.f);
+		dLight->SetColor(Color(0.6f, 0.6f, 0.5f) * directionalIntensity);
+	}
 	if (!gKeyPressed &&_windowInput->IsKeyDown(GLFW_KEY_G))
 	{
 		gKeyPressed = true;
