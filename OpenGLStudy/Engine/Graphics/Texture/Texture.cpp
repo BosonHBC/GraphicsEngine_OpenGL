@@ -42,7 +42,7 @@ namespace Graphics {
 			case  ETT_CUBEMAP:
 				// Cube map is loaded in the cube map material, so it will not load here
 				break;
-			case ETT_FRAMEBUFFER_CUBEMAP:
+			case ETT_FRAMEBUFFER_OMNI_SHADOWMAP:
 				result = _texture->LoadOmniShadowMapTexture(i_path, i_override_width, i_override_height);
 				break;
 			case  ETT_FRAMEBUFFER_HDR_CUBEMAP:
@@ -109,7 +109,7 @@ namespace Graphics {
 		GLenum _glTextureType = GL_TEXTURE_2D;
 		// if the texture is a cube map, use GL_TEXTURE_CUBE_MAP
 		if (_textureType == ETT_CUBEMAP
-			|| _textureType == ETT_FRAMEBUFFER_CUBEMAP
+			|| _textureType == ETT_FRAMEBUFFER_OMNI_SHADOWMAP
 			|| _textureType == ETT_FRAMEBUFFER_HDR_CUBEMAP
 			|| _textureType == ETT_FRAMEBUFFER_HDR_MIPMAP_CUBEMAP)
 			_glTextureType = GL_TEXTURE_CUBE_MAP;
@@ -359,9 +359,9 @@ namespace Graphics {
 		glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_WRAP_R, GL_CLAMP_TO_EDGE);
 
 		// Set up texture filtering for looking closer
-		glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+		glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
 		// Set up texture filtering for looking further
-		glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+		glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
 
 		// unbind texture
 		glBindTexture(GL_TEXTURE_CUBE_MAP, 0);
@@ -678,7 +678,7 @@ namespace Graphics {
 		GLenum _textureType = GL_TEXTURE_2D;
 		// if the texture is a cube map, use GL_TEXTURE_CUBE_MAP
 		if (m_textureType == ETT_CUBEMAP
-			|| m_textureType == ETT_FRAMEBUFFER_CUBEMAP 
+			|| m_textureType == ETT_FRAMEBUFFER_OMNI_SHADOWMAP 
 			|| m_textureType == ETT_FRAMEBUFFER_HDR_CUBEMAP
 			|| m_textureType == ETT_FRAMEBUFFER_HDR_MIPMAP_CUBEMAP)
 			_textureType = GL_TEXTURE_CUBE_MAP;

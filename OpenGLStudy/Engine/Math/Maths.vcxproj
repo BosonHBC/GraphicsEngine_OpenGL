@@ -29,6 +29,7 @@
     <ClInclude Include="..\Math\Transform\Transform.h" />
     <ClInclude Include="Quaternion\Quaternion.h" />
     <ClInclude Include="Shape\Box.h" />
+    <ClInclude Include="Shape\Rect.h" />
     <ClInclude Include="Shape\Shape.h" />
     <ClInclude Include="Shape\Sphere.h" />
   </ItemGroup>

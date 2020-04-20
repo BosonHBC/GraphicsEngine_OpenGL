@@ -28,6 +28,9 @@
     <Filter Include="Source Files\Shape\Box">
       <UniqueIdentifier>{b82e55ca-3776-4a7e-8c9b-73630140881e}</UniqueIdentifier>
     </Filter>
+    <Filter Include="Source Files\2DShape">
+      <UniqueIdentifier>{57a7a7eb-c4bf-4e99-adb6-327000e5e171}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="..\Math\Transform\Transform.cpp">
@@ -61,6 +64,9 @@
     </ClInclude>
     <ClInclude Include="Shape\Box.h">
       <Filter>Source Files\Shape\Box</Filter>
+    </ClInclude>
+    <ClInclude Include="Shape\Rect.h">
+      <Filter>Source Files\2DShape</Filter>
     </ClInclude>
   </ItemGroup>
 </Project>

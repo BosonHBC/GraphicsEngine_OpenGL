@@ -20,8 +20,12 @@
 #include <map>
 
 #include "Assignments/ClothSimulation/SimulationParams.h"
+#include <random>
 
 Graphics::ERenderMode g_renderMode = Graphics::ERenderMode::ERM_ForwardShading;
+
+std::uniform_real_distribution<float> randomFloats(0.0, 1.0); // generates random floats between 0.0 and 1.0
+std::default_random_engine generator;
 
 bool Assignment::Initialize(GLuint i_width, GLuint i_height, const char* i_windowName /*= "Default Window"*/)
 {
@@ -44,12 +48,14 @@ bool Assignment::Initialize(GLuint i_width, GLuint i_height, const char* i_windo
 
 	//Graphics::cMatPBRMR* _spaceHolderMat = dynamic_cast<Graphics::cMatPBRMR*>(Graphics::cModel::s_manager.Get(m_spaceHolder->GetModelHandle())->GetMaterialAt());
 
+	m_renderingTeapotCount = glm::clamp(m_renderingTeapotCount, 1, s_maxTeapotCount);
+	m_createdPLightCount = glm::clamp(m_createdPLightCount, 1, s_maxPLightCount);
 
 	printf("---------------------------------Game initialization done.---------------------------------\n");
 	return result;
 }
 
-const char* g_teapotPaths[Assignment::s_teapotCount] = 
+const char* g_teapotPaths[Assignment::s_maxTeapotCount] =
 {
 	"Contents/models/pbrTeapot.model",
 	"Contents/models/pbrTeapot_rustedIron.model",
@@ -81,7 +87,7 @@ void Assignment::CreateActor()
 	Graphics::cModel* _cubeMap = Graphics::cModel::s_manager.Get(m_cubemap->GetModelHandle());
 	Graphics::cMatCubemap* _matCubemap = dynamic_cast<Graphics::cMatCubemap*>(_cubeMap->GetMaterialAt());
 	if (_matCubemap)
-		_matCubemap->UpdateCubemap(Graphics::GetHDRtoCubemap()->GetCubemapTextureHandle()); // used for debugging the environment
+		_matCubemap->UpdateCubemap(Graphics::GetHDRtoCubemap()->GetCubemapTextureHandle());
 
 	m_spaceHolder = new cActor();
 	m_spaceHolder->Initialize();
@@ -104,10 +110,22 @@ void Assignment::CreateCamera()
 
 void Assignment::CreateLight()
 {
-	Graphics::CreateAmbientLight(Color(0.2f, 0.2f, 0.2f), aLight);
-	Graphics::CreatePointLight(glm::vec3(-100, 150.f, 100.f), Color(1, 1, 1), 300.f, true, pLight1);
+	const int lightPerRow = 4;
+	const float horiDist = 150;
+	const float vertDist = 50 * 40.f / m_createdPLightCount;
+	Graphics::CreateAmbientLight(Color(0,0,0), aLight);
+
+	for (int i = 0; i < m_createdPLightCount; ++i)
+	{
+		//Color randomColor = Color(randomFloats(generator), randomFloats(generator), randomFloats(generator));
+		bool enableShadow = true;
+		Graphics::CreatePointLight(glm::vec3(0 + (i % lightPerRow) * horiDist, 100,0 - (i / lightPerRow) * vertDist), Color::White() * 0.5f, 250.f, enableShadow, m_pLights[i]);
+	}
+
+	//CreatePointLight(glm::vec3(0, 100, 0), Color::White() * 0.5f, 250, true);
+
 	//Graphics::CreatePointLight(glm::vec3(100, 150.f, 100.f), Color(1, 1, 1), 1.f, 0.7f, 1.8f, true, pLight2);
-	Graphics::CreateDirectionalLight(Color(0.6f, 0.6f, 0.6f), glm::vec3(-1, -0.5f, -0.5f), true, dLight);
+	Graphics::CreateDirectionalLight(Color(0.00f, 0.00f, 0.00f), glm::vec3(-1, -0.5f, -0.5f), true, dLight);
 	//Graphics::CreateSpotLight(glm::vec3(0, 150, 0), glm::vec3(0, 1, 1), Color(1), 65.f, 1.5f, 0.3f, 5.f, true, spLight);
 	//Graphics::CreateSpotLight(glm::vec3(100, 150, 0), glm::vec3(1, 1, 0), Color(1), 65.f, 1.f, 0.7f, 
 
@@ -135,7 +153,7 @@ void Assignment::SubmitDataToBeRender(const float i_seconds_elapsedSinceLastLoop
 	// Gizmos
 	{
 		// Transform Gizmo
-		if (true)
+		if (false)
 		{
 			_renderingMap.clear();
 			_renderingMap.reserve(8);
@@ -144,15 +162,6 @@ void Assignment::SubmitDataToBeRender(const float i_seconds_elapsedSinceLastLoop
 			//_renderingMap.push_back({ unneccessaryHandle, _worldTransform });
 			//_renderingMap.push_back({ unneccessaryHandle, *m_teapot->Transform() });
 
-			if (pLight1)
-				_renderingMap.push_back({ unneccessaryHandle, pLight1->Transform });
-			/*
-						if (pLight2)
-							_renderingMap.push_back({ unneccessaryHandle, pLight2->Transform });
-						if (spLight)
-							_renderingMap.push_back({ unneccessaryHandle, spLight->Transform });
-						if (spLight2)
-							_renderingMap.push_back({ unneccessaryHandle, spLight2->Transform });*/
 			Graphics::SubmitDataToBeRendered(_frameData_Camera, _renderingMap, &Graphics::Gizmo_RenderTransform);
 		}
 		// Normal Gizmo
@@ -178,6 +187,7 @@ void Assignment::SubmitDataToBeRender(const float i_seconds_elapsedSinceLastLoop
 void Assignment::BeforeUpdate()
 {
 	Graphics::MakeApplicationThreadWaitUntilPreRenderFrameDone(m_applicationMutex);
+
 }
 
 void Assignment::Run()
@@ -210,7 +220,9 @@ void Assignment::Run()
 		m_window->SwapBuffers();
 	}
 }
-
+bool gKeyPressed = false;
+float ambientIntensity = 0.0f;
+float directionalIntensity = 0.0f;
 void Assignment::Tick(float second_since_lastFrame)
 {
 	sWindowInput* _windowInput = m_window->GetWindowInput();
@@ -284,54 +296,105 @@ void Assignment::Tick(float second_since_lastFrame)
 	}
 
 	cTransform* controledActor = nullptr;
-	controledActor = &pLight1->Transform;
+	controledActor = &m_pLights[0]->Transform;
 	//controledActor = m_sphere->Transform();
 	if (controledActor) {
 		if (_windowInput->IsKeyDown(GLFW_KEY_J)) {
-			controledActor->Translate(-cTransform::WorldRight * 100.f * second_since_lastFrame);
+			for (int i = 0; i < m_createdPLightCount; ++i)
+			{
+				m_pLights[i]->Transform.Translate(-cTransform::WorldRight * 100.f * second_since_lastFrame);
+			}
 		}
 		if (_windowInput->IsKeyDown(GLFW_KEY_L)) {
-			controledActor->Translate(cTransform::WorldRight* 100.f  * second_since_lastFrame);
+			for (int i = 0; i < m_createdPLightCount; ++i)
+			{
+				m_pLights[i]->Transform.Translate(cTransform::WorldRight* 100.f  * second_since_lastFrame);
+			}
 		}
 		if (_windowInput->IsKeyDown(GLFW_KEY_I)) {
-			controledActor->Translate(-cTransform::WorldForward* 100.f  * second_since_lastFrame);
+			for (int i = 0; i < m_createdPLightCount; ++i)
+			{
+				m_pLights[i]->Transform.Translate(-cTransform::WorldForward* 100.f  * second_since_lastFrame);
+			}
 		}
 		if (_windowInput->IsKeyDown(GLFW_KEY_K)) {
-			controledActor->Translate(cTransform::WorldForward* 100.f  * second_since_lastFrame);
+			for (int i = 0; i < m_createdPLightCount; ++i)
+			{
+				m_pLights[i]->Transform.Translate(cTransform::WorldForward* 100.f  * second_since_lastFrame);
+			}
 		}
 		if (_windowInput->IsKeyDown(GLFW_KEY_SPACE)) {
-			controledActor->Translate(cTransform::WorldUp* 100.f* second_since_lastFrame);
+			for (int i = 0; i < m_createdPLightCount; ++i)
+			{
+				m_pLights[i]->Transform.Translate(cTransform::WorldUp* 100.f* second_since_lastFrame);
+			}
 		}
 		if (_windowInput->IsKeyDown(GLFW_KEY_LEFT_CONTROL)) {
-			controledActor->Translate(-cTransform::WorldUp* 100.f * second_since_lastFrame);
+			for (int i = 0; i < m_createdPLightCount; ++i)
+			{
+				m_pLights[i]->Transform.Translate(-cTransform::WorldUp* 100.f * second_since_lastFrame);
+			}
 		}
 
 	}
+	// ClothSim
+	{
+		float nodeMoveSpeed = 50.f;
+		if (_windowInput->IsKeyDown(GLFW_KEY_LEFT)) {
+			ClothSim::MoveFixedNode(glm::vec3(-1, 0, 0) *nodeMoveSpeed * second_since_lastFrame);
+		}
+		if (_windowInput->IsKeyDown(GLFW_KEY_RIGHT)) {
+			ClothSim::MoveFixedNode(glm::vec3(1, 0, 0) *nodeMoveSpeed * second_since_lastFrame);
+		}
+		if (_windowInput->IsKeyDown(GLFW_KEY_UP)) {
+			ClothSim::MoveFixedNode(glm::vec3(0, 0, -1) *nodeMoveSpeed * second_since_lastFrame);
+		}
+		if (_windowInput->IsKeyDown(GLFW_KEY_DOWN)) {
+			ClothSim::MoveFixedNode(glm::vec3(0, 0, 1) *nodeMoveSpeed * second_since_lastFrame);
+		}
+		if (_windowInput->IsKeyDown(GLFW_KEY_Y)) {
+			ClothSim::MoveFixedNode(glm::vec3(0, 1, 0) *nodeMoveSpeed * second_since_lastFrame);
+		}
+		if (_windowInput->IsKeyDown(GLFW_KEY_H)) {
+			ClothSim::MoveFixedNode(glm::vec3(0, -1, 0) *nodeMoveSpeed * second_since_lastFrame);
+		}
+		if (_windowInput->IsKeyDown(GLFW_KEY_Z)) {
+			ClothSim::ScaleFixedNode(glm::vec3(-1, 0, 0) *nodeMoveSpeed * second_since_lastFrame);
+		}
+		if (_windowInput->IsKeyDown(GLFW_KEY_X)) {
+			ClothSim::ScaleFixedNode(glm::vec3(1, 0, 0) *nodeMoveSpeed * second_since_lastFrame);
+		}
+	}
 
-	float nodeMoveSpeed = 50.f;
-	if (_windowInput->IsKeyDown(GLFW_KEY_LEFT)) {
-		ClothSim::MoveFixedNode(glm::vec3(-1, 0, 0) *nodeMoveSpeed * second_since_lastFrame);
+	if (_windowInput->IsKeyDown(GLFW_KEY_C)) {
+		ambientIntensity -= second_since_lastFrame * 5.f;
+		ambientIntensity = glm::clamp(ambientIntensity, 0.f, 10.f);
+		aLight->SetColor(Color(0.1f ,0.1f, 0.1f) * ambientIntensity);
 	}
-	if (_windowInput->IsKeyDown(GLFW_KEY_RIGHT)) {
-		ClothSim::MoveFixedNode(glm::vec3(1, 0, 0) *nodeMoveSpeed * second_since_lastFrame);
+	if (_windowInput->IsKeyDown(GLFW_KEY_V)) {
+		ambientIntensity += second_since_lastFrame * 5.f;
+		ambientIntensity = glm::clamp(ambientIntensity, 0.f, 10.f);
+		aLight->SetColor(Color(0.1f, 0.1f, 0.1f) * ambientIntensity);
 	}
-	if (_windowInput->IsKeyDown(GLFW_KEY_UP)) {
-		ClothSim::MoveFixedNode(glm::vec3(0, 0, -1) *nodeMoveSpeed * second_since_lastFrame);
+	if (_windowInput->IsKeyDown(GLFW_KEY_B)) {
+		directionalIntensity -= second_since_lastFrame * 2.f;
+		directionalIntensity = glm::clamp(directionalIntensity, 0.f, 3.f);
+		dLight->SetColor(Color(0.6f, 0.6f, 0.5f) * directionalIntensity);
 	}
-	if (_windowInput->IsKeyDown(GLFW_KEY_DOWN)) {
-		ClothSim::MoveFixedNode(glm::vec3(0, 0, 1) *nodeMoveSpeed * second_since_lastFrame);
+	if (_windowInput->IsKeyDown(GLFW_KEY_N)) {
+		directionalIntensity += second_since_lastFrame * 2.f;
+		directionalIntensity = glm::clamp(directionalIntensity, 0.f, 3.f);
+		dLight->SetColor(Color(0.6f, 0.6f, 0.5f) * directionalIntensity);
 	}
-	if (_windowInput->IsKeyDown(GLFW_KEY_Y)) {
-		ClothSim::MoveFixedNode(glm::vec3(0, 1, 0) *nodeMoveSpeed * second_since_lastFrame);
+	if (!gKeyPressed &&_windowInput->IsKeyDown(GLFW_KEY_G))
+	{
+		gKeyPressed = true;
+		CreatePointLight(m_editorCamera->CamLocation() + m_editorCamera->Transform.Forward() * 100.f, Color::White() * 0.5f, 250.f, true);
+		printf("Current Point Light Count: %d\n", m_createdPLightCount);
 	}
-	if (_windowInput->IsKeyDown(GLFW_KEY_H)) {
-		ClothSim::MoveFixedNode(glm::vec3(0, -1, 0) *nodeMoveSpeed * second_since_lastFrame);
-	}
-	if (_windowInput->IsKeyDown(GLFW_KEY_Z)) {
-		ClothSim::ScaleFixedNode(glm::vec3(-1, 0, 0) *nodeMoveSpeed * second_since_lastFrame);
-	}
-	if (_windowInput->IsKeyDown(GLFW_KEY_X)) {
-		ClothSim::ScaleFixedNode(glm::vec3(1, 0, 0) *nodeMoveSpeed * second_since_lastFrame);
+	if (gKeyPressed && _windowInput->IsKeyUp(GLFW_KEY_G))
+	{
+		gKeyPressed = false;
 	}
 
 	for (int i = 0; i < m_renderingTeapotCount; ++i)
@@ -339,11 +402,9 @@ void Assignment::Tick(float second_since_lastFrame)
 		m_teapots[i]->Transform.Update();
 	}
 
-	if (pLight1)
-		pLight1->Transform.Update();
-	if (pLight2)
+	for (int i = 0; i < m_createdPLightCount; ++i)
 	{
-		pLight2->Transform.Update();
+		m_pLights[i]->Transform.Update();
 	}
 
 	if (dLight)
@@ -353,7 +414,6 @@ void Assignment::Tick(float second_since_lastFrame)
 	if (spLight2)
 		spLight2->Transform.Update();
 
-
 }
 
 void Assignment::SubmitLightingData()
@@ -361,17 +421,14 @@ void Assignment::SubmitLightingData()
 
 	std::vector<Graphics::cPointLight> _pLights;
 	std::vector<Graphics::cSpotLight> _spLights;
-	if (pLight1)
+
+	for (int i = 0; i < m_createdPLightCount; ++i)
 	{
-		pLight1->UpdateLightIndex(_pLights.size());
-		_pLights.push_back(*pLight1);
+		m_pLights[i]->UpdateLightIndex(_pLights.size());
+		m_pLights[i]->CalculateDistToEye(m_editorCamera->CamLocation());
+		_pLights.push_back(*m_pLights[i]);
 	}
 
-	if (pLight2)
-	{
-		pLight2->UpdateLightIndex(_pLights.size());
-		_pLights.push_back(*pLight2);
-	}
 	if (spLight)
 	{
 		spLight->UpdateLightIndex(_spLights.size());
@@ -382,6 +439,7 @@ void Assignment::SubmitLightingData()
 		spLight2->UpdateLightIndex(_spLights.size());
 		_spLights.push_back(*spLight2);
 	}
+	
 	Graphics::SubmitLightingData(_pLights, _spLights, *aLight, *dLight);
 }
 
@@ -469,6 +527,13 @@ void Assignment::SubmitShadowData()
 		// directional light shadow map pass
 		Graphics::SubmitDataToBeRendered(_frameData_Shadow, _renderingMap, &Graphics::DirectionalShadowMap_Pass);
 	}
+
+}
+
+void Assignment::CreatePointLight(const glm::vec3& i_initialLocation, const Color& i_color, const GLfloat& i_radius, bool i_enableShadow)
+{
+	if (m_createdPLightCount < s_maxPLightCount)
+		Graphics::CreatePointLight(i_initialLocation, i_color, i_radius, i_enableShadow, m_pLights[m_createdPLightCount++]);
 
 }
 

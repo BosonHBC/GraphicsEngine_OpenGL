@@ -26,7 +26,8 @@ namespace Graphics {
 class Assignment : public Application::cApplication
 {
 public:
-	static const int s_teapotCount = 12;
+	static const int s_maxTeapotCount = 8;
+	static const int s_maxPLightCount = 80;
 
 	bool Initialize(GLuint i_width, GLuint i_height, const char* i_windowName = "Default Window");
 	void Run();
@@ -46,20 +47,22 @@ private:
 	void SubmitSceneDataForEnvironmentCapture(Graphics::UniformBufferFormats::sFrame* const i_frameData);
 	void SubmitShadowData();
 
+	void CreatePointLight(const glm::vec3& i_initialLocation, const Color& i_color, const GLfloat& i_radius, bool i_enableShadow);
 
 	Color m_clearColor = Color(0,0,0);
 	cEditorCamera* m_editorCamera;
 
-	Graphics::cPointLight* pLight1;
-	Graphics::cPointLight* pLight2;
+	int m_createdPLightCount = 1;
+	Graphics::cPointLight* m_pLights[s_maxPLightCount] = {nullptr};
+
 	Graphics::cAmbientLight* aLight;
 	Graphics::cDirectionalLight* dLight;
 	Graphics::cSpotLight* spLight;
 	Graphics::cSpotLight* spLight2;
 
 
-	int m_renderingTeapotCount = 8;
-	cActor* m_teapots[s_teapotCount] = {nullptr};
+	int m_renderingTeapotCount = 1;
+	cActor* m_teapots[s_maxTeapotCount] = {nullptr};
 	cActor* m_cubemap;
 	cActor* m_spaceHolder;
 	cActor* m_collisionSphere;

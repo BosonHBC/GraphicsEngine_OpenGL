@@ -27,7 +27,8 @@ namespace Graphics {
 		virtual void CleanUp();
 		/** Pure virtual functions*/
 		virtual void Illuminate() {};
-
+		void SetColor(const Color& i_c) { m_color = i_c; }
+		const Color& GetColor() const { return m_color; }
 		/** Getters */
 
 		/** Shadow map related*/

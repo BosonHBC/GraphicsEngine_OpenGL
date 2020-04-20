@@ -55,8 +55,9 @@ namespace Graphics {
 					assert(GL_NO_ERROR == glGetError());
 				}
 				break;
-			case ETT_FRAMEBUFFER_CUBEMAP:
+			case ETT_FRAMEBUFFER_OMNI_SHADOWMAP:
 				glFramebufferTexture(GL_FRAMEBUFFER, GL_DEPTH_ATTACHMENT, _texture->GetTextureID(), mipMapLevel);
+				
 				glDrawBuffer(GL_NONE);
 				glReadBuffer(GL_NONE);
 				assert(GL_NO_ERROR == glGetError());
@@ -139,6 +140,26 @@ namespace Graphics {
 		// Change view port size first
 		Application::cApplication* _app = Application::GetCurrentApplication();
 		if (_app) { _app->GetCurrentWindow()->SetViewportSize(m_width, m_height); }
+
+		// right now, it will write current buffer to this frame buffer 
+		glGetIntegerv(GL_FRAMEBUFFER_BINDING, &m_prevFbo);
+		glBindFramebuffer(GL_FRAMEBUFFER, m_fbo);
+		if (m_rbo > 0 && m_rbo < static_cast<GLuint>(-1))
+			glBindRenderbuffer(GL_RENDERBUFFER, m_rbo);
+
+		assert(GL_NO_ERROR == glGetError());
+
+		// Execute capture function
+		captureFunction();
+
+		UnWrite();
+	}
+
+	void cFrameBuffer::WriteSubArea(const std::function<void()>& captureFunction, const sRect& i_offsetArea)
+	{
+		// Change view port size first
+		Application::cApplication* _app = Application::GetCurrentApplication();
+		if (_app) { _app->GetCurrentWindow()->SetViewPort(i_offsetArea); }
 
 		// right now, it will write current buffer to this frame buffer 
 		glGetIntegerv(GL_FRAMEBUFFER_BINDING, &m_prevFbo);

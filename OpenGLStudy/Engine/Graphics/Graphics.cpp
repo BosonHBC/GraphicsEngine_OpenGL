@@ -56,6 +56,7 @@ namespace Graphics {
 	UniformBufferFormats::sSSAO g_ssaoData;
 	// Frame buffers
 	// ------------------------------------------------------------------------------------------------------------------------------------
+	cFrameBuffer g_omniShadowMaps[OMNI_SHADOW_MAP_COUNT];
 	// Rectangular HDR map to cubemap
 	cEnvProbe s_cubemapProbe;
 	// the brdfLUTTexture for integrating the brdf
@@ -99,7 +100,11 @@ namespace Graphics {
 	}
 
 	void Gizmo_DrawDebugCaptureVolume();
-	void RenderQuad(const UniformBufferFormats::sFrame& i_frameData = UniformBufferFormats::sFrame());
+	void RenderQuad(const UniformBufferFormats::sFrame& i_frameData = UniformBufferFormats::sFrame(), const UniformBufferFormats::sDrawCall& i_drawCallData = UniformBufferFormats::sDrawCall());
+	void RenderCube(const UniformBufferFormats::sFrame& i_frameData = UniformBufferFormats::sFrame(), const UniformBufferFormats::sDrawCall& i_drawCallData = UniformBufferFormats::sDrawCall());
+	void RenderPointLightPosition();
+	void RenderOmniShadowMap();
+
 	void HDR_Pass();
 	void GBuffer_Pass();
 	void Deferred_Lighting_Pass();
@@ -129,14 +134,14 @@ namespace Graphics {
 			snprintf(_charBuffer, sizeof(_charBuffer), "PrefilterMap[%d]", i);
 			_effect->SetInteger(_charBuffer, cubemapStartID + maxCubemapMixing + i);
 		}
-		for (int i = 0; i < MAX_COUNT_PER_LIGHT; ++i)
+		for (int i = 0; i < OMNI_SHADOW_MAP_COUNT; ++i)
 		{
 			snprintf(_charBuffer, sizeof(_charBuffer), "spotlightShadowMap[%d]", i);
 			_effect->SetInteger(_charBuffer, SHADOWMAP_START_TEXTURE_UNIT + i);
 			snprintf(_charBuffer, sizeof(_charBuffer), "pointLightShadowMap[%d]", i);
-			_effect->SetInteger(_charBuffer, SHADOWMAP_START_TEXTURE_UNIT + MAX_COUNT_PER_LIGHT + i);
+			_effect->SetInteger(_charBuffer, SHADOWMAP_START_TEXTURE_UNIT + OMNI_SHADOW_MAP_COUNT + i);
 		}
-		_effect->SetInteger("directionalShadowMap", SHADOWMAP_START_TEXTURE_UNIT + MAX_COUNT_PER_LIGHT * 2);
+		_effect->SetInteger("directionalShadowMap", SHADOWMAP_START_TEXTURE_UNIT + OMNI_SHADOW_MAP_COUNT * 2);
 		assert(GL_NO_ERROR == glGetError());
 		_effect->UnUseEffect();
 	}
@@ -173,7 +178,7 @@ namespace Graphics {
 					return result;
 				}
 			}
-			// Create OmniShadowmap display effect
+			// Create OmniShadowmap effect
 			{
 				if (!(result = CreateEffect(EET_OmniShadowMap,
 					"shadowmaps/omniShadowMap/omni_shadow_map_vert.glsl",
@@ -357,7 +362,7 @@ namespace Graphics {
 				dLighting->SetInteger("gNormalRoughness", 1);
 				dLighting->SetInteger("gIOR", 2);
 				dLighting->SetInteger("gDepth", 3);
-				dLighting->SetInteger("gSSAOMap", SHADOWMAP_START_TEXTURE_UNIT + MAX_COUNT_PER_LIGHT * 2 + 1);
+				dLighting->SetInteger("gSSAOMap", SHADOWMAP_START_TEXTURE_UNIT + OMNI_SHADOW_MAP_COUNT * 2 + 1);
 				dLighting->UnUseEffect();
 				FixSamplerProblem(EET_DeferredLighting);
 			}
@@ -390,6 +395,17 @@ namespace Graphics {
 				ssaoEffect->SetInteger("ssaoInput", 0);
 				ssaoEffect->UnUseEffect();
 			}
+
+			// Create cubemap displayer
+			{
+				if (!(result = CreateEffect(EET_CubemapDisplayer,
+					"cubemap/cuebmapDisplay_vert.glsl",
+					"cubemap/cubemapDisplay_frag.glsl"
+				))) {
+					printf("Fail to create Cubemap displayer effect.\n");
+					return result;
+				}
+			}
 			// validate all programs
 			for (auto it : s_KeyToEffect_map)
 			{
@@ -403,6 +419,17 @@ namespace Graphics {
 		result = CreateUniformBuffer(UBT_PostProcessing);
 		result = CreateUniformBuffer(UBT_SSAO);
 		assert(result);
+		
+		// Initialize omni shadow maps
+		{
+			for (int i = 0; i < OMNI_SHADOW_MAP_COUNT; ++i)
+			{
+				if (!(result = g_omniShadowMaps[i].Initialize(2048, 2048, ETT_FRAMEBUFFER_OMNI_SHADOWMAP))) {
+					printf("Fail to create omni shadow map[%d].\n", i);
+					return result;
+				}
+			}
+		}
 		// Initialize environment probes
 		{
 			// This is for changing rect hdr map to cubemap
@@ -437,19 +464,13 @@ namespace Graphics {
 				printf("Fail to create SSAO-Blur-Buffer.\n");
 				return result;
 			}
-			/*
-			EnvironmentCaptureManager::AddCaptureProbes(cSphere(glm::vec3(-450, 10, 0), 600.f), 50.f, envMapResolution);
-			EnvironmentCaptureManager::AddCaptureProbes(cSphere(glm::vec3(-225, 10, 0), 600.f), 50.f, envMapResolution);
-			EnvironmentCaptureManager::AddCaptureProbes(cSphere(glm::vec3(-450, 290, 0), 600.f), 50.f, envMapResolution);
-			EnvironmentCaptureManager::AddCaptureProbes(cSphere(glm::vec3(-225, 290, 0), 600.f), 50.f, envMapResolution);*/
+			
+			EnvironmentCaptureManager::AddCaptureProbes(cSphere(glm::vec3(-225, 230, 0), 600.f), 50.f, envMapResolution);
 
-			EnvironmentCaptureManager::AddCaptureProbes(cSphere(glm::vec3(0, 130, 0), 600.f), 50.f, envMapResolution);
+			EnvironmentCaptureManager::AddCaptureProbes(cSphere(glm::vec3(0, 230, 0), 600.f), 50.f, envMapResolution);
 
-			/*
-			EnvironmentCaptureManager::AddCaptureProbes(cSphere(glm::vec3(225, 290, 0), 600.f), 50.f, envMapResolution);
-			EnvironmentCaptureManager::AddCaptureProbes(cSphere(glm::vec3(450, 290, 0), 600.f), 50.f, envMapResolution);
-			EnvironmentCaptureManager::AddCaptureProbes(cSphere(glm::vec3(225, 10, 0), 600.f), 50.f, envMapResolution);
-			EnvironmentCaptureManager::AddCaptureProbes(cSphere(glm::vec3(450, 10, 0), 600.f), 50.f, envMapResolution);*/
+			EnvironmentCaptureManager::AddCaptureProbes(cSphere(glm::vec3(225, 230, 0), 600.f), 50.f, envMapResolution);
+		
 			EnvironmentCaptureManager::BuildAccelerationStructure();
 
 		}
@@ -681,7 +702,7 @@ namespace Graphics {
 		}
 		//renderCount++;
 		//printf("Render thread count: %d\n", renderCount);
-		//Gizmo_DrawDebugCaptureVolume();
+		Gizmo_DrawDebugCaptureVolume();
 	}
 
 	void SubmitClipPlaneData(const glm::vec4& i_plane0, const glm::vec4& i_plane1 /*= glm::vec4(0,0,0,0)*/, const glm::vec4& i_plane2 /*= glm::vec4(0, 0, 0, 0)*/, const glm::vec4& i_plane3 /*= glm::vec4(0, 0, 0, 0)*/)
@@ -778,7 +799,6 @@ namespace Graphics {
 		}
 		s_pointLight_list.clear();
 		for (auto it = s_spotLight_list.begin(); it != s_spotLight_list.end(); ++it) {
-			(*it)->CleanUpShadowMap();
 			safe_delete(*it);
 		}
 		s_spotLight_list.clear();
@@ -790,7 +810,10 @@ namespace Graphics {
 		if (s_directionalLight)
 			s_directionalLight->CleanUpShadowMap();
 		safe_delete(s_directionalLight);
-
+		for (int i = 0; i < OMNI_SHADOW_MAP_COUNT; ++i)
+		{
+			g_omniShadowMaps[i].CleanUp();
+		}
 		s_cubemapProbe.CleanUp();
 		s_brdfLUTTexture.CleanUp();
 		g_hdrBuffer.CleanUp();
@@ -815,6 +838,12 @@ namespace Graphics {
 	Graphics::cUniformBuffer* GetUniformBuffer(const eUniformBufferType& i_uniformBufferType)
 	{
 		return &g_uniformBufferMap[i_uniformBufferType];
+	}
+
+	Graphics::cFrameBuffer* GetOmniShadowMapAt(int i_idx)
+	{
+		assert(i_idx < OMNI_SHADOW_MAP_COUNT);
+		return &g_omniShadowMaps[i_idx];
 	}
 
 	Graphics::cModel::HANDLE GetPrimitive(const EPrimitiveType& i_primitiveType)
@@ -895,7 +924,7 @@ namespace Graphics {
 		// TODO: lighting, range should be passed in
 		cPointLight* newPointLight = new cPointLight(i_color, i_initialLocation, i_radius);
 		newPointLight->SetEnableShadow(i_enableShadow);
-		newPointLight->CreateShadowMap(1024, 1024);
+		newPointLight->CreateShadowMap(2048, 2048);
 		o_pointLight = newPointLight;
 		s_pointLight_list.push_back(newPointLight);
 		return result;

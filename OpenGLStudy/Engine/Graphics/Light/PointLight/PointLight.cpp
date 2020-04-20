@@ -16,6 +16,8 @@ namespace Graphics {
 		gLighting.pointLights[m_lightIndex].base.enableShadow = m_enableShadow;
 		gLighting.pointLights[m_lightIndex].position = Transform.Position();
 		gLighting.pointLights[m_lightIndex].radius = m_range;
+		gLighting.pointLights[m_lightIndex].ShadowMapIdx = m_shadowMapIdx;
+		gLighting.pointLights[m_lightIndex].ResolutionIdx = m_resolutionIdx;
 	}
 
 	void cPointLight::SetupLight(const GLuint& i_programID, GLuint i_lightIndex)
@@ -26,18 +28,13 @@ namespace Graphics {
 		m_lightTransformID = glGetUniformLocation(i_programID, "lightMatrices");
 		m_farPlaneID = glGetUniformLocation(i_programID, "farPlane");
 
-		// Shading pass
-		char _charBuffer[64] = { '\0' };
-		snprintf(_charBuffer, sizeof(_charBuffer), "pointLightShadowMap[%d]", m_lightIndex);
-		m_lightShadowMapID = glGetUniformLocation(i_programID, _charBuffer);
-
 		assert(GL_NO_ERROR == glGetError());
 	}
 
 	void cPointLight::CreateShadowMap(GLuint i_width, GLuint i_height)
 	{
-		m_shadowMap = new cFrameBuffer();
-		m_shadowMap->Initialize(i_width, i_height, ETextureType::ETT_FRAMEBUFFER_CUBEMAP);
+	//	m_shadowMap = new cFrameBuffer();
+	//	m_shadowMap->Initialize(i_width, i_height, ETextureType::ETT_FRAMEBUFFER_OMNI_SHADOWMAP);
 
 		m_lightPrjectionMatrix = glm::perspective(glm::radians(90.f), 1.f, 1.f, m_range);
 	}
@@ -65,6 +62,11 @@ namespace Graphics {
 		glUniform1i(m_lightShadowMapID, i_textureUnit);
 	}
 
+
+	void cPointLight::CalculateDistToEye(const glm::vec3& i_eyePos)
+	{
+		m_distToEye = glm::distance(Transform.Position(), i_eyePos);
+	}
 
 	glm::mat4 cPointLight::GetViewMatrix() const
 	{

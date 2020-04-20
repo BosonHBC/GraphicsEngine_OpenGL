@@ -43,12 +43,12 @@ namespace Graphics {
 
 	void cGenLight::SetupLight(const GLuint& i_programID, GLuint i_lightIndex)
 	{
-		m_lightIndex = (i_lightIndex < MAX_COUNT_PER_LIGHT) ? i_lightIndex : MAX_COUNT_PER_LIGHT - 1;
+		UpdateLightIndex(i_lightIndex);
 	}
 
 	void cGenLight::UpdateLightIndex(GLuint i_lightIndex)
 	{
-		m_lightIndex = (i_lightIndex < MAX_COUNT_PER_LIGHT) ? i_lightIndex : MAX_COUNT_PER_LIGHT - 1;
+		m_lightIndex = i_lightIndex;
 	}
 
 	void cGenLight::CleanUp()
