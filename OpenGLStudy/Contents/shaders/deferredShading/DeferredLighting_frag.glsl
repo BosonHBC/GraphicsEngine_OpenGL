@@ -138,10 +138,8 @@ float GeometrySchlickGGX(float NdotV, float roughness)
     return nom / denom;
 }
 //k is a remapping of α based on whether we're using the geometry function for either direct lighting or IBL lighting
-float GeometrySmith(vec3 N, vec3 V, vec3 L, float roughness)
+float GeometrySmith(float NdotV,float NdotL, float roughness)
 {
-    float NdotV = max(dot(N, V), 0.0);
-    float NdotL = max(dot(N, L), 0.0);
     float ggx1 	= GeometrySchlickGGX(NdotV, roughness);
     float ggx2 	= GeometrySchlickGGX(NdotL, roughness);
 	
@@ -293,9 +291,11 @@ float CalcPointLightShadowMap(PointLight pLight, vec3 worldPos, float dist_vV)
 // irrandance of this light
  vec3 CookTorranceBrdf(vec3 radiance, vec3 albedoColor, float metalness, float roughness, vec3 f0 ,vec3 vN, vec3 vH, vec3 vL, vec3 vV)
  {
-	// 
+	float NdotV = max(dot(vN, vV), 0.0);
+	// geometry component
+    float NdotL = max(dot(vN, vL), 0.0);
 	float NDF = DistributionGGX(vN, vH, roughness);
-	float G = GeometrySmith(vN, vV, vL, roughness);
+	float G = GeometrySmith(NdotV, NdotL, roughness);
 	vec3 F = fresnelSchlick(max(dot(vH, vV), 0.0), f0);
 
 	vec3 kS = F;
@@ -303,15 +303,13 @@ float CalcPointLightShadowMap(PointLight pLight, vec3 worldPos, float dist_vV)
 	kD *= (1.0 - metalness);
 
 	vec3 numerator = NDF * G * F;
-	float denominator = 4.0 * max(dot(vN, vV), 0.0) * max(dot(vN, vL), 0.0);
+	float denominator = 4.0 * NdotV * NdotL;
 	// specular component
 	vec3 specular = numerator / max(denominator, 0.001);
 	// diffuse component
 	vec3 diffuse = kD * albedoColor / PI;
-	// geometry component
-	float vLDotvN = max(dot(vL, vN), 0.0);
 
-	return (diffuse + specular) * radiance * vLDotvN;
+	return (diffuse + specular) * radiance * NdotL;
  }
 
 //-------------------------------------------------------------------------
