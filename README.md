@@ -1,4 +1,8 @@
-# OpenGL
+# Graphic Engine
+
+### Environments:
+ - VS2017 x86
+ - All external libs are in $(SolutionDir)Externals
 
 ### Featues:
 - Physically Based Rendering
