@@ -26,7 +26,7 @@ namespace Graphics {
 class Assignment : public Application::cApplication
 {
 public:
-	static const int s_teapotCount = 12;
+	static const int s_maxTeapotCount = 8;
 	static const int s_maxPLightCount = 80;
 
 	bool Initialize(GLuint i_width, GLuint i_height, const char* i_windowName = "Default Window");
@@ -51,7 +51,7 @@ private:
 	Color m_clearColor = Color(0,0,0);
 	cEditorCamera* m_editorCamera;
 
-	int m_createdPLightCount = 2;
+	int m_createdPLightCount = 80;
 	Graphics::cPointLight* m_pLights[s_maxPLightCount] = {nullptr};
 
 	Graphics::cAmbientLight* aLight;
@@ -60,8 +60,8 @@ private:
 	Graphics::cSpotLight* spLight2;
 
 
-	int m_renderingTeapotCount = 1;
-	cActor* m_teapots[s_teapotCount] = {nullptr};
+	int m_renderingTeapotCount = 8;
+	cActor* m_teapots[s_maxTeapotCount] = {nullptr};
 	cActor* m_cubemap;
 	cActor* m_spaceHolder;
 	cActor* m_collisionSphere;

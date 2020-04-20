@@ -48,12 +48,14 @@ bool Assignment::Initialize(GLuint i_width, GLuint i_height, const char* i_windo
 
 	//Graphics::cMatPBRMR* _spaceHolderMat = dynamic_cast<Graphics::cMatPBRMR*>(Graphics::cModel::s_manager.Get(m_spaceHolder->GetModelHandle())->GetMaterialAt());
 
+	m_renderingTeapotCount = glm::clamp(m_renderingTeapotCount, 1, s_maxTeapotCount);
+	m_createdPLightCount = glm::clamp(m_createdPLightCount, 1, s_maxPLightCount);
 
 	printf("---------------------------------Game initialization done.---------------------------------\n");
 	return result;
 }
 
-const char* g_teapotPaths[Assignment::s_teapotCount] = 
+const char* g_teapotPaths[Assignment::s_maxTeapotCount] = 
 {
 	"Contents/models/pbrTeapot.model",
 	"Contents/models/pbrTeapot_rustedIron.model",
@@ -111,14 +113,11 @@ void Assignment::CreateLight()
 	const int lightPerRow = 4;
 	const float horiDist = 150;
 	const float vertDist = 50 * 40.f / m_createdPLightCount;
-
 	Graphics::CreateAmbientLight(Color(0.01f, 0.01f, 0.01f), aLight);
 	for (int i = 0; i < m_createdPLightCount; ++i)
 	{
 		//Color randomColor = Color(randomFloats(generator), randomFloats(generator), randomFloats(generator));
-		bool enableShadow = false;
-		if (i < MAX_COUNT_PER_LIGHT)
-			enableShadow = true;
+		bool enableShadow = true;
 		Graphics::CreatePointLight(glm::vec3(-250 + (i % lightPerRow) * horiDist, 100, 300 - (i / lightPerRow) * vertDist), Color::White() * 0.5f, 250.f, enableShadow, m_pLights[i]);
 	}
 

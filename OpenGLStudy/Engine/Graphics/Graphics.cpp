@@ -134,14 +134,14 @@ namespace Graphics {
 			snprintf(_charBuffer, sizeof(_charBuffer), "PrefilterMap[%d]", i);
 			_effect->SetInteger(_charBuffer, cubemapStartID + maxCubemapMixing + i);
 		}
-		for (int i = 0; i < MAX_COUNT_PER_LIGHT; ++i)
+		for (int i = 0; i < OMNI_SHADOW_MAP_COUNT; ++i)
 		{
 			snprintf(_charBuffer, sizeof(_charBuffer), "spotlightShadowMap[%d]", i);
 			_effect->SetInteger(_charBuffer, SHADOWMAP_START_TEXTURE_UNIT + i);
 			snprintf(_charBuffer, sizeof(_charBuffer), "pointLightShadowMap[%d]", i);
-			_effect->SetInteger(_charBuffer, SHADOWMAP_START_TEXTURE_UNIT + MAX_COUNT_PER_LIGHT + i);
+			_effect->SetInteger(_charBuffer, SHADOWMAP_START_TEXTURE_UNIT + OMNI_SHADOW_MAP_COUNT + i);
 		}
-		_effect->SetInteger("directionalShadowMap", SHADOWMAP_START_TEXTURE_UNIT + MAX_COUNT_PER_LIGHT * 2);
+		_effect->SetInteger("directionalShadowMap", SHADOWMAP_START_TEXTURE_UNIT + OMNI_SHADOW_MAP_COUNT * 2);
 		assert(GL_NO_ERROR == glGetError());
 		_effect->UnUseEffect();
 	}
@@ -362,7 +362,7 @@ namespace Graphics {
 				dLighting->SetInteger("gNormalRoughness", 1);
 				dLighting->SetInteger("gIOR", 2);
 				dLighting->SetInteger("gDepth", 3);
-				dLighting->SetInteger("gSSAOMap", SHADOWMAP_START_TEXTURE_UNIT + MAX_COUNT_PER_LIGHT * 2 + 1);
+				dLighting->SetInteger("gSSAOMap", SHADOWMAP_START_TEXTURE_UNIT + OMNI_SHADOW_MAP_COUNT * 2 + 1);
 				dLighting->UnUseEffect();
 				FixSamplerProblem(EET_DeferredLighting);
 			}

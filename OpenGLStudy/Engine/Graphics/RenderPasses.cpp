@@ -116,7 +116,7 @@ namespace Graphics
 			auto* it = &s_dataRenderingByGraphicThread->s_pointLights[i];
 			it->Illuminate();
 
-			g_omniShadowMaps[it->ShadowMapIdx()].Read(GL_TEXTURE0 + MAX_COUNT_PER_LIGHT + SHADOWMAP_START_TEXTURE_UNIT + it->ShadowMapIdx());
+			g_omniShadowMaps[it->ShadowMapIdx()].Read(GL_TEXTURE0 + OMNI_SHADOW_MAP_COUNT + SHADOWMAP_START_TEXTURE_UNIT + it->ShadowMapIdx());
 		}
 
 		// Directional Light
@@ -126,10 +126,10 @@ namespace Graphics
 			_directionalLight->Illuminate();
 			_directionalLight->SetLightUniformTransform();
 			if (_directionalLight->IsShadowEnabled()) {
-				constexpr GLuint _uniformID = SHADOWMAP_START_TEXTURE_UNIT + MAX_COUNT_PER_LIGHT * 2;
+				constexpr GLuint _uniformID = SHADOWMAP_START_TEXTURE_UNIT + OMNI_SHADOW_MAP_COUNT * 2;
 				_directionalLight->UseShadowMap(_uniformID);
 				// GL_TEXTURE0 + POINT_LIGHT_COUNT + SPOT_LIGHT_COUNT + SHADOWMAP_OFFSET
-				constexpr auto _textureID = GL_TEXTURE0 + SHADOWMAP_START_TEXTURE_UNIT + MAX_COUNT_PER_LIGHT * 2;
+				constexpr auto _textureID = GL_TEXTURE0 + SHADOWMAP_START_TEXTURE_UNIT + OMNI_SHADOW_MAP_COUNT * 2;
 				_directionalLight->GetShadowMap()->Read(_textureID);
 			}
 		}
@@ -515,7 +515,7 @@ namespace Graphics
 
 		GLenum _textureUnits[4] = { GL_TEXTURE0 , GL_TEXTURE1 ,GL_TEXTURE2, GL_TEXTURE3 };
 		g_GBuffer.Read(_textureUnits);
-		g_ssao_blur_Buffer.Read(GL_TEXTURE0 + SHADOWMAP_START_TEXTURE_UNIT + MAX_COUNT_PER_LIGHT * 2 + 1);
+		g_ssao_blur_Buffer.Read(GL_TEXTURE0 + SHADOWMAP_START_TEXTURE_UNIT + OMNI_SHADOW_MAP_COUNT * 2 + 1);
 		UpdateInfoForPBR();
 
 		RenderQuad(s_dataRenderingByGraphicThread->s_renderPasses[s_currentRenderPass].FrameData);
