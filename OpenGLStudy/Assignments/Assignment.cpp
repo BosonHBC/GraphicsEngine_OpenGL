@@ -55,7 +55,7 @@ bool Assignment::Initialize(GLuint i_width, GLuint i_height, const char* i_windo
 	return result;
 }
 
-const char* g_teapotPaths[Assignment::s_maxTeapotCount] = 
+const char* g_teapotPaths[Assignment::s_maxTeapotCount] =
 {
 	"Contents/models/pbrTeapot.model",
 	"Contents/models/pbrTeapot_rustedIron.model",
@@ -113,7 +113,7 @@ void Assignment::CreateLight()
 	const int lightPerRow = 4;
 	const float horiDist = 150;
 	const float vertDist = 50 * 40.f / m_createdPLightCount;
-	Graphics::CreateAmbientLight(Color(0.01f, 0.01f, 0.01f), aLight);
+	Graphics::CreateAmbientLight(Color(0.1f, 0.1f, 0.1f), aLight);
 	for (int i = 0; i < m_createdPLightCount; ++i)
 	{
 		//Color randomColor = Color(randomFloats(generator), randomFloats(generator), randomFloats(generator));
@@ -217,7 +217,8 @@ void Assignment::Run()
 		m_window->SwapBuffers();
 	}
 }
-
+bool gKeyPressed = false;
+float ambientIntensity = 1.0f;
 void Assignment::Tick(float second_since_lastFrame)
 {
 	sWindowInput* _windowInput = m_window->GetWindowInput();
@@ -332,31 +333,55 @@ void Assignment::Tick(float second_since_lastFrame)
 		}
 
 	}
+	// ClothSim
+	{
+		float nodeMoveSpeed = 50.f;
+		if (_windowInput->IsKeyDown(GLFW_KEY_LEFT)) {
+			ClothSim::MoveFixedNode(glm::vec3(-1, 0, 0) *nodeMoveSpeed * second_since_lastFrame);
+		}
+		if (_windowInput->IsKeyDown(GLFW_KEY_RIGHT)) {
+			ClothSim::MoveFixedNode(glm::vec3(1, 0, 0) *nodeMoveSpeed * second_since_lastFrame);
+		}
+		if (_windowInput->IsKeyDown(GLFW_KEY_UP)) {
+			ClothSim::MoveFixedNode(glm::vec3(0, 0, -1) *nodeMoveSpeed * second_since_lastFrame);
+		}
+		if (_windowInput->IsKeyDown(GLFW_KEY_DOWN)) {
+			ClothSim::MoveFixedNode(glm::vec3(0, 0, 1) *nodeMoveSpeed * second_since_lastFrame);
+		}
+		if (_windowInput->IsKeyDown(GLFW_KEY_Y)) {
+			ClothSim::MoveFixedNode(glm::vec3(0, 1, 0) *nodeMoveSpeed * second_since_lastFrame);
+		}
+		if (_windowInput->IsKeyDown(GLFW_KEY_H)) {
+			ClothSim::MoveFixedNode(glm::vec3(0, -1, 0) *nodeMoveSpeed * second_since_lastFrame);
+		}
+		if (_windowInput->IsKeyDown(GLFW_KEY_Z)) {
+			ClothSim::ScaleFixedNode(glm::vec3(-1, 0, 0) *nodeMoveSpeed * second_since_lastFrame);
+		}
+		if (_windowInput->IsKeyDown(GLFW_KEY_X)) {
+			ClothSim::ScaleFixedNode(glm::vec3(1, 0, 0) *nodeMoveSpeed * second_since_lastFrame);
+		}
+	}
 
-	float nodeMoveSpeed = 50.f;
-	if (_windowInput->IsKeyDown(GLFW_KEY_LEFT)) {
-		ClothSim::MoveFixedNode(glm::vec3(-1, 0, 0) *nodeMoveSpeed * second_since_lastFrame);
+	if (_windowInput->IsKeyDown(GLFW_KEY_C)) {
+		ambientIntensity -= second_since_lastFrame * 5.f;
+		ambientIntensity = glm::clamp(ambientIntensity, 1.f, 10.f);
+		aLight->SetColor(Color(0.1f ,0.1f, 0.1f) * ambientIntensity);
 	}
-	if (_windowInput->IsKeyDown(GLFW_KEY_RIGHT)) {
-		ClothSim::MoveFixedNode(glm::vec3(1, 0, 0) *nodeMoveSpeed * second_since_lastFrame);
+	if (_windowInput->IsKeyDown(GLFW_KEY_V)) {
+		ambientIntensity += second_since_lastFrame * 5.f;
+		ambientIntensity = glm::clamp(ambientIntensity, 1.f, 10.f);
+		aLight->SetColor(Color(0.1f, 0.1f, 0.1f) * ambientIntensity);
 	}
-	if (_windowInput->IsKeyDown(GLFW_KEY_UP)) {
-		ClothSim::MoveFixedNode(glm::vec3(0, 0, -1) *nodeMoveSpeed * second_since_lastFrame);
+
+	if (!gKeyPressed &&_windowInput->IsKeyDown(GLFW_KEY_G))
+	{
+		gKeyPressed = true;
+		CreatePointLight(m_editorCamera->CamLocation() + m_editorCamera->Transform.Forward() * 100.f, Color::White() * 0.5f, 250.f, true);
+		printf("Current Point Light Count: %d\n", m_createdPLightCount);
 	}
-	if (_windowInput->IsKeyDown(GLFW_KEY_DOWN)) {
-		ClothSim::MoveFixedNode(glm::vec3(0, 0, 1) *nodeMoveSpeed * second_since_lastFrame);
-	}
-	if (_windowInput->IsKeyDown(GLFW_KEY_Y)) {
-		ClothSim::MoveFixedNode(glm::vec3(0, 1, 0) *nodeMoveSpeed * second_since_lastFrame);
-	}
-	if (_windowInput->IsKeyDown(GLFW_KEY_H)) {
-		ClothSim::MoveFixedNode(glm::vec3(0, -1, 0) *nodeMoveSpeed * second_since_lastFrame);
-	}
-	if (_windowInput->IsKeyDown(GLFW_KEY_Z)) {
-		ClothSim::ScaleFixedNode(glm::vec3(-1, 0, 0) *nodeMoveSpeed * second_since_lastFrame);
-	}
-	if (_windowInput->IsKeyDown(GLFW_KEY_X)) {
-		ClothSim::ScaleFixedNode(glm::vec3(1, 0, 0) *nodeMoveSpeed * second_since_lastFrame);
+	if (gKeyPressed && _windowInput->IsKeyUp(GLFW_KEY_G))
+	{
+		gKeyPressed = false;
 	}
 
 	for (int i = 0; i < m_renderingTeapotCount; ++i)
@@ -372,7 +397,7 @@ void Assignment::Tick(float second_since_lastFrame)
 	if (dLight)
 		dLight->Transform.Update();
 	if (spLight)
-		spLight->Transform.Update();	
+		spLight->Transform.Update();
 	if (spLight2)
 		spLight2->Transform.Update();
 
@@ -401,6 +426,7 @@ void Assignment::SubmitLightingData()
 		spLight2->UpdateLightIndex(_spLights.size());
 		_spLights.push_back(*spLight2);
 	}
+	
 	Graphics::SubmitLightingData(_pLights, _spLights, *aLight, *dLight);
 }
 
@@ -488,6 +514,13 @@ void Assignment::SubmitShadowData()
 		// directional light shadow map pass
 		Graphics::SubmitDataToBeRendered(_frameData_Shadow, _renderingMap, &Graphics::DirectionalShadowMap_Pass);
 	}
+
+}
+
+void Assignment::CreatePointLight(const glm::vec3& i_initialLocation, const Color& i_color, const GLfloat& i_radius, bool i_enableShadow)
+{
+	if (m_createdPLightCount < s_maxPLightCount)
+		Graphics::CreatePointLight(i_initialLocation, i_color, i_radius, i_enableShadow, m_pLights[m_createdPLightCount++]);
 
 }
 

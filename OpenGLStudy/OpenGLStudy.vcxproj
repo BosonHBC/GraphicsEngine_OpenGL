@@ -110,7 +110,7 @@
       <SubSystem>Console</SubSystem>
       <GenerateDebugInformation>true</GenerateDebugInformation>
       <AdditionalLibraryDirectories>$(OutputDir);$(SolutionDir)Externals\GL\glew\lib\Release\$(Platform);$(SolutionDir)Externals\GL\glfw32\lib-vc2017\</AdditionalLibraryDirectories>
-      <AdditionalDependencies>opengl32.lib;glew32.lib;glfw3.lib;glfw3dll.lib;Cores.lib;Graphics.lib;LuaLib.lib;Application.lib;Assets.lib;Time.lib;Constants.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalDependencies>opengl32.lib;glew32.lib;glfw3.lib;glfw3dll.lib;Cores.lib;Graphics.lib;LuaLib.lib;Application.lib;Assets.lib;Time.lib;Constants.lib;Maths.lib;%(AdditionalDependencies)</AdditionalDependencies>
     </Link>
     <PreBuildEvent>
       <Command>xcopy $(SolutionDir)Externals\GL\glew\bin\$(Platform)\glew32.dll $(targetDir) /Y
@@ -134,7 +134,7 @@ xcopy $(SolutionDir)Contents $(targetDir)Contents /Y /E /I</Command>
       <SubSystem>Console</SubSystem>
       <GenerateDebugInformation>true</GenerateDebugInformation>
       <AdditionalLibraryDirectories>$(OutputDir);$(SolutionDir)Externals\GL\glew\lib\Release\$(Platform);$(SolutionDir)Externals\GL\glfw\lib-vc2017\;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
-      <AdditionalDependencies>opengl32.lib;glew32.lib;glfw3.lib;glfw3dll.lib;Cores.lib;Graphics.lib;LuaLib.lib;Application.lib;Assets.lib;Time.lib;Constants.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalDependencies>opengl32.lib;glew32.lib;glfw3.lib;glfw3dll.lib;Cores.lib;Graphics.lib;LuaLib.lib;Application.lib;Assets.lib;Time.lib;Constants.lib;Maths.lib;%(AdditionalDependencies)</AdditionalDependencies>
     </Link>
     <PreBuildEvent>
       <Command>xcopy $(SolutionDir)Externals\GL\glew\bin\$(Platform)\glew32.dll $(targetDir) /Y
@@ -162,7 +162,7 @@ xcopy $(SolutionDir)Contents $(targetDir)Contents /Y /E /I</Command>
       <OptimizeReferences>true</OptimizeReferences>
       <GenerateDebugInformation>true</GenerateDebugInformation>
       <AdditionalLibraryDirectories>$(OutputDir);$(SolutionDir)Externals\GL\glew\lib\Release\$(Platform);$(SolutionDir)Externals\GL\glfw32\lib-vc2017\</AdditionalLibraryDirectories>
-      <AdditionalDependencies>opengl32.lib;glew32.lib;glfw3.lib;glfw3dll.lib;Cores.lib;Graphics.lib;LuaLib.lib;Application.lib;Assets.lib;Time.lib;Constants.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalDependencies>opengl32.lib;glew32.lib;glfw3.lib;glfw3dll.lib;Cores.lib;Graphics.lib;LuaLib.lib;Application.lib;Assets.lib;Time.lib;Constants.lib;Maths.lib;%(AdditionalDependencies)</AdditionalDependencies>
     </Link>
     <PreBuildEvent>
       <Command>xcopy $(SolutionDir)Externals\GL\glew\bin\$(Platform)\glew32.dll $(targetDir) /Y
@@ -190,7 +190,7 @@ xcopy $(SolutionDir)Contents $(targetDir)Contents /Y /E /I</Command>
       <OptimizeReferences>true</OptimizeReferences>
       <GenerateDebugInformation>true</GenerateDebugInformation>
       <AdditionalLibraryDirectories>$(OutputDir);$(SolutionDir)Externals\GL\glew\lib\Release\$(Platform);$(SolutionDir)Externals\GL\glfw\lib-vc2017\;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
-      <AdditionalDependencies>opengl32.lib;glew32.lib;glfw3.lib;glfw3dll.lib;Cores.lib;Graphics.lib;LuaLib.lib;Application.lib;Assets.lib;Time.lib;Constants.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalDependencies>opengl32.lib;glew32.lib;glfw3.lib;glfw3dll.lib;Cores.lib;Graphics.lib;LuaLib.lib;Application.lib;Assets.lib;Time.lib;Constants.lib;Maths.lib;%(AdditionalDependencies)</AdditionalDependencies>
     </Link>
     <PreBuildEvent>
       <Command>xcopy $(SolutionDir)Externals\GL\glew\bin\$(Platform)\glew32.dll $(targetDir) /Y
@@ -218,6 +218,9 @@ xcopy $(SolutionDir)Contents $(targetDir)Contents /Y /E /I</Command>
     </ProjectReference>
     <ProjectReference Include="Engine\Graphics\Graphics.vcxproj">
       <Project>{b0e1c99a-91d5-4193-ba88-a55244be0c2a}</Project>
+    </ProjectReference>
+    <ProjectReference Include="Engine\Math\Maths.vcxproj">
+      <Project>{2b7eaa37-308e-4d6b-ba43-a36c0f99f6f0}</Project>
     </ProjectReference>
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />

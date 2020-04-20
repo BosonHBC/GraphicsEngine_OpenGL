@@ -47,11 +47,12 @@ private:
 	void SubmitSceneDataForEnvironmentCapture(Graphics::UniformBufferFormats::sFrame* const i_frameData);
 	void SubmitShadowData();
 
+	void CreatePointLight(const glm::vec3& i_initialLocation, const Color& i_color, const GLfloat& i_radius, bool i_enableShadow);
 
 	Color m_clearColor = Color(0,0,0);
 	cEditorCamera* m_editorCamera;
 
-	int m_createdPLightCount = 80;
+	int m_createdPLightCount = 1;
 	Graphics::cPointLight* m_pLights[s_maxPLightCount] = {nullptr};
 
 	Graphics::cAmbientLight* aLight;

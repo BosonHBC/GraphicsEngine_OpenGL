@@ -349,7 +349,7 @@ namespace Graphics
 			}
 			// Update weight data in the GPU
 			g_uniformBuffer_EnvCaptureWeight.Update(&captureWeights);
-			//printf("w1:%f , w2:%f ,w3:%f ,w4:%f. \n", captureWeights.Weights.x, captureWeights.Weights.y, captureWeights.Weights.z, captureWeights.Weights.w);
+		//	printf("w1:%f , w2:%f ,w3:%f ,w4:%f. \n", captureWeights.Weights.x, captureWeights.Weights.y, captureWeights.Weights.z, captureWeights.Weights.w);
 		}
 
 		const Graphics::EnvironmentCaptureManager::sCaptureProbes& GetCaptureProbesAt(int i_idx)

@@ -8,6 +8,8 @@
 #include "Graphics/FrameBuffer/GeometryBuffer.h"
 #include "Assignments/ClothSimulation/SimulationParams.h"
 #include <algorithm>
+#include "Application/Window/WindowInput.h"
+
 namespace Graphics
 {
 	extern unsigned int s_currentRenderPass;
@@ -28,7 +30,7 @@ namespace Graphics
 	extern cMesh::HANDLE g_cloth;
 	extern cTexture::HANDLE g_ssaoNoiseTexture;
 	extern cMatPBRMR g_clothMat;
-
+	bool g_bRenderOmniShaodowMap = false;
 	// clear color
 	Color s_clearColor;
 	// arrow colors
@@ -75,8 +77,21 @@ namespace Graphics
 		s_currentEffect->UnUseEffect();
 	}
 
+	bool rCtrlPressed = false;
 	void RenderOmniShadowMap()
 	{
+		
+		sWindowInput* _windowInput = Application::GetCurrentApplication()->GetCurrentWindow()->GetWindowInput();
+		if (!rCtrlPressed && _windowInput->IsKeyDown(GLFW_KEY_RIGHT_CONTROL))
+		{
+			rCtrlPressed = true;
+			g_bRenderOmniShaodowMap = !g_bRenderOmniShaodowMap;
+		}
+		if (rCtrlPressed && _windowInput->IsKeyUp(GLFW_KEY_RIGHT_CONTROL))
+		{
+			rCtrlPressed = false;
+		}
+		if (!g_bRenderOmniShaodowMap) return;
 		for (int i = 0; i < OMNI_SHADOW_MAP_COUNT; ++i)
 		{
 			s_currentEffect = GetEffectByKey(EET_CubemapDisplayer);
