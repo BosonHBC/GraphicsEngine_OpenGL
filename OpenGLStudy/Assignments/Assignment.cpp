@@ -119,7 +119,7 @@ void Assignment::CreateLight()
 	{
 		//Color randomColor = Color(randomFloats(generator), randomFloats(generator), randomFloats(generator));
 		bool enableShadow = true;
-		Graphics::CreatePointLight(glm::vec3(0 + (i % lightPerRow) * horiDist, 100,0 - (i / lightPerRow) * vertDist), Color::White() * 0.5f, 250.f, enableShadow, m_pLights[i]);
+		Graphics::CreatePointLight(glm::vec3(0 + (i % lightPerRow) * horiDist, 200,0 - (i / lightPerRow) * vertDist), Color::White() * 0.5f, 250.f, enableShadow, m_pLights[i]);
 	}
 
 	//CreatePointLight(glm::vec3(0, 100, 0), Color::White() * 0.5f, 250, true);

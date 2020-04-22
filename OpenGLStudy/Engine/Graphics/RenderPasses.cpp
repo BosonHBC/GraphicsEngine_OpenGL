@@ -275,12 +275,31 @@ namespace Graphics
 
 			// write buffer to the texture
 			sRect subRect = g_subRectRefs[it->ResolutionIdx()];
+		
 			g_omniShadowMaps[it->ShadowMapIdx()].WriteSubArea(
 				[&] {
 					glScissor(subRect.Min.x, subRect.Min.y, subRect.w(), subRect.h()); // set this up with the same inputs as the glViewport function
 					glClear(GL_DEPTH_BUFFER_BIT);
-					// Draw scenes
-					RenderScene(nullptr);
+			
+					// loop through every single model
+					auto& renderMap = s_dataRenderingByGraphicThread->s_renderPasses[s_currentRenderPass].ModelToTransform_map;
+					for (auto it2 = renderMap.begin(); it2 != renderMap.end(); ++it2)
+					{
+						// 1. Transform the sphere to the mesh spaced coordinate, check if they have overlaps
+						glm::mat4 _sphereToMeshMatrix = it2->second.MInv() * it->Transform.M();
+						glm::vec3 tramsformedPosition = _sphereToMeshMatrix * glm::vec4(0,0,0,1);
+						float transformedRadius(_sphereToMeshMatrix[0][0]);
+						cModel* _model = cModel::s_manager.Get(it2->first);
+						// if there is no overlap, don't need to draw
+						if(!_model->IntersectWithSphere(cSphere(tramsformedPosition, transformedRadius))) continue;
+
+						// 2. Update draw call data
+						g_uniformBufferMap[UBT_Drawcall].Update(&UniformBufferFormats::sDrawCall(it2->second.M(), it2->second.TranspostInverse()));
+						// 3. Draw
+						if (_model) {
+							_model->RenderWithoutMaterial(GL_TRIANGLES);
+						}
+					}
 				}
 			, subRect);
 			assert(glGetError() == GL_NO_ERROR);

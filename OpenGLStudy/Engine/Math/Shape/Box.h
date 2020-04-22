@@ -4,20 +4,20 @@
 // forward declaration
 class cSphere;
 
-class cBox : public cShape
+class cAABB : public cShape
 {
 public:
-	cBox() : b(glm::vec3(-4096)), t(glm::vec3(4096)) {};
-	cBox(const glm::vec3& i_b, const glm::vec3& i_t) { b = i_b; t = i_t; }
+	cAABB() : b(glm::vec3(-4096)), t(glm::vec3(4096)) {};
+	cAABB(const glm::vec3& i_b, const glm::vec3& i_t) { b = i_b; t = i_t; }
 	
-	cBox(const cBox& i_ohter) : b(i_ohter.b), t(i_ohter.t) {}
-	cBox& operator = (const cBox& i_ohter) { b = i_ohter.b; t = i_ohter.t; return *this; }
+	cAABB(const cAABB& i_ohter) : b(i_ohter.b), t(i_ohter.t) {}
+	cAABB& operator = (const cAABB& i_ohter) { b = i_ohter.b; t = i_ohter.t; return *this; }
 
-	cBox& operator += (const glm::vec3& i_rhs) { b += i_rhs; t += i_rhs; return *this; } // adding vector3 offset
-	cBox operator + (const glm::vec3& i_rhs) { return cBox(b + i_rhs, t + i_rhs); } // adding vector3 offset
+	cAABB& operator += (const glm::vec3& i_rhs) { b += i_rhs; t += i_rhs; return *this; } // adding vector3 offset
+	cAABB operator + (const glm::vec3& i_rhs) { return cAABB(b + i_rhs, t + i_rhs); } // adding vector3 offset
 	glm::vec3& operator[] (int i);
 
-	~cBox() {};
+	~cAABB() {};
 
 	eCollisionType Intersect(const glm::vec3& i_point)const override;
 	float NDF(const glm::vec3& i_point) const override;
@@ -28,7 +28,7 @@ public:
 	glm::vec3 corner(int i_corner);
 	glm::vec3 diagonal() const { return t - b; }
 	glm::vec3 center() const { return (b + t) / 2.f; }
-	cBox getOctSubBox();
+	cAABB getOctSubBox();
 
 	void PrintCenterAndWidth() const;
 

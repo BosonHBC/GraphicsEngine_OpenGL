@@ -2,7 +2,7 @@
 #include "Graphics/EnvironmentCaptureManager.h"
 
 
-void sOctTree::InitializeTree(const cBox& i_initialVolume, const std::vector<PROBE*>& i_initialProbeList)
+void sOctTree::InitializeTree(const cAABB& i_initialVolume, const std::vector<PROBE*>& i_initialProbeList)
 {
 	Volume = i_initialVolume;
 	m_probeList.reserve(i_initialProbeList.size());
@@ -23,13 +23,13 @@ void sOctTree::BuildTree()
 		return;
 	}
 
-	cBox _8Boxes[8];
+	cAABB _8Boxes[8];
 	std::vector<PROBE*> _childInitialProbeList[8];
 	// 1. generate boxes for child nodes
 	{
 		glm::vec3 _diagonalQuater = Volume.diagonal() / 4.f; // half dimension of sub-divided box
 		glm::vec3 _center = Volume.center();
-		cBox _octSubBox = Volume.getOctSubBox(); // a box with 1/8 size of Volume box and the same center
+		cAABB _octSubBox = Volume.getOctSubBox(); // a box with 1/8 size of Volume box and the same center
 
 		_8Boxes[0] = _octSubBox + _diagonalQuater * glm::vec3(-1, -1, -1);
 		_8Boxes[1] = _octSubBox + _diagonalQuater * glm::vec3(1, -1, -1);

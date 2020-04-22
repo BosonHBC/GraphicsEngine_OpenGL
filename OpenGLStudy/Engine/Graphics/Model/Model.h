@@ -31,6 +31,8 @@ namespace Graphics {
 		void RenderWithoutMaterial(GLenum i_drawMode = GL_TRIANGLES);
 		void CleanUp();
 
+		bool IntersectWithSphere(const cSphere& i_transformedSphere);
+
 		/** Getters */
 		cMaterial* GetMaterialAt(GLuint i_idx = 0);
 	private:
