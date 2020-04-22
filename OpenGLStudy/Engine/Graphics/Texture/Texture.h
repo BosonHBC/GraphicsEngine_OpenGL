@@ -73,7 +73,7 @@ namespace Graphics {
 		bool LoadRGBA16Texture(const std::string& i_type_id, const GLuint& i_width, const GLuint& i_height);		// deferred shading buffers
 		bool LoadRGBA8Texture(const std::string& i_type_id, const GLuint& i_width, const GLuint& i_height);		// 8-bit rgba color buffer
 		bool LoadRGB16Texture(const std::string& i_type_id, const GLuint& i_width, const GLuint& i_height);		// hdr buffer
-		bool LoadDepth16Texture(const std::string& i_type_id, const GLuint& i_width, const GLuint& i_height);		// depth buffer
+		bool LoadDepth24Texture(const std::string& i_type_id, const GLuint& i_width, const GLuint& i_height);		// depth buffer
 		bool LoadR16Texture(const std::string& i_type_id, const GLuint& i_width, const GLuint& i_height);				// ssao textures
 		bool LoadRGB32Texture(const std::string& i_type_id, const GLuint& i_width, const GLuint& i_height);		// noise texture
 		// Load color format texture from frame buffer
