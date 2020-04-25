@@ -17,8 +17,9 @@
 #include "glm/glm.hpp"
 #include "glm/gtc/matrix_transform.hpp"
 
-#define SIM_PARAMS_DEFINED
 
+#define SIM_PARAMS_DEFINED
+class cSphere;
 namespace ClothSim
 {
 	// rendering data
@@ -120,7 +121,7 @@ namespace ClothSim
 	extern bool g_bDrawNodes;
 	void InitializeNeghbors();
 // Using discrete time step
-	void UpdateSprings(const float dt);
+	void UpdateSprings(const float dt, cSphere* const i_spheres, const int i_numOfSphere);
 	void MoveFixedNode(const glm::vec3& i_deltaPosition);
 	void ScaleFixedNode(const glm::vec3& i_deltaPosition);
 	void CleanUpData();

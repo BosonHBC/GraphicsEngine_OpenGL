@@ -4,6 +4,7 @@
 #include "Color/Color.h"
 #include "glm/glm.hpp"
 #include "glm/gtc/matrix_transform.hpp"
+#include "Math/Shape/Sphere.h"
 
 /** Forward deceleration*/
 //----------------------------------------------
@@ -54,6 +55,7 @@ private:
 
 	int m_createdPLightCount = 1;
 	Graphics::cPointLight* m_pLights[s_maxPLightCount] = {nullptr};
+	cSphere m_collisionSpheres[Assignment::s_maxPLightCount];
 
 	Graphics::cAmbientLight* aLight;
 	Graphics::cDirectionalLight* dLight;

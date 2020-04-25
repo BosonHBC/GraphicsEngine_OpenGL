@@ -21,13 +21,13 @@ namespace ClothSim
 
 	glm::vec3 g_positionData[VC] = { glm::vec3(0) };
 
-#define FRICTION_COEFFICENT 0.95f
+#define FRICTION_COEFFICENT 0.25f
 #define TOUCH_DIST_THRESHOLD 1.f
 #define SPHERE_COLLISION_BIAS 1.1f
 #define FRICTION_BIAS 0.5f
 	const glm::vec3 g_floorPlane = glm::vec3(0, 5, 0);
 	cSphere g_sphere(glm::vec3(0, 0, -150), 100.f);
-	const float inSphereDist = sqrt(pow(g_sphere.r(), 2) + pow(g_structRestLen / 2, 2));
+	
 	bool g_bEnableClothSim = true;
 	bool g_bDrawNodes = false;
 
@@ -112,7 +112,18 @@ namespace ClothSim
 		return glm::dot(n, glmWindForce) * glmWindForce;
 	}
 
-	void UpdateSprings(const float dt)
+	void HandleFirctionForSphere(int idx, const cSphere& i_sphere, glm::vec3& io_force, const glm::vec3& i_velocity)
+	{
+		glm::vec3 centerToP = g_particles[idx].P - i_sphere.c();
+		float dist = glm::length(centerToP);
+		float inSphereDist = sqrt(pow(i_sphere.r(), 2) + pow(g_structRestLen / 2, 2));
+		if (dist <= inSphereDist + FRICTION_BIAS)
+		{
+			HandleFriction(io_force, centerToP / dist, i_velocity);
+		}
+	}
+
+	void UpdateSprings(const float dt, cSphere* const i_spheres, const int i_numOfSphere)
 	{
 		for (int i = 0; i < VC; ++i)
 		{
@@ -191,11 +202,12 @@ namespace ClothSim
 
 			// handle friction for spheres
 			{
-				glm::vec3 centerToP = g_particles[i].P - g_sphere.c();
-				float dist = glm::length(centerToP);
-				if (dist <= inSphereDist + FRICTION_BIAS)
+				// Big Sphere
+				HandleFirctionForSphere(i, g_sphere, force, currentV);
+				// Light spheres
+				for (int j = 0; j < i_numOfSphere; ++j)
 				{
-					HandleFriction(force, centerToP / dist, currentV);
+					HandleFirctionForSphere(i, i_spheres[j], force, currentV);
 				}
 			}
 			// Handle friction for floor
@@ -215,10 +227,10 @@ namespace ClothSim
 			glm::vec3 nextPosition = g_particles[i].P + currentV * dt + a * dt * dt;
 
 			// Handle sphere collision
-			float nextPosToCenter_dist = glm::distance(nextPosition, g_sphere.c());
-			if (nextPosToCenter_dist < g_sphere.r())
+			HandleSphereCollision(g_sphere, i, nextPosition);
+			for (int j = 0; j < i_numOfSphere; ++j)
 			{
-				HandleSphereCollision(g_sphere, i, nextPosition);
+				HandleSphereCollision(i_spheres[j], i, nextPosition);
 			}
 
 			g_positionData[i] = nextPosition;
@@ -342,19 +354,23 @@ namespace ClothSim
 
 	void HandleSphereCollision(const cSphere& i_sph, int idx, glm::vec3& io_nextPos)
 	{
-		io_nextPos = i_sph.c() + glm::normalize(io_nextPos - i_sph.c()) * i_sph.r();
-/*
-		glm::vec3 rayOrigin = g_particles[idx].P;
-		glm::vec3 rayDir = io_nextPos - rayOrigin;
-		glm::vec3 rayDir_Norm = glm::normalize(rayDir);
-		float t1 = 0, t2 = 0; // t1 is smaller
-		if (eCollisionType::ECT_Overlap == i_sph.IntersectRay(rayOrigin, rayDir_Norm, t1, t2))
+		float nextPosToCenter_dist = glm::distance(io_nextPos, i_sph.c());
+		if (nextPosToCenter_dist < i_sph.r())
 		{
-			glm::vec3 interectionPoint = rayOrigin + t1 * rayDir_Norm;
-			float offsetDist = 0.1f; // inSphereDist - g_sphere.r();
-			io_nextPos = interectionPoint + offsetDist * glm::normalize(interectionPoint - g_sphere.c());
-			
-		}*/
+			io_nextPos = i_sph.c() + glm::normalize(io_nextPos - i_sph.c()) * i_sph.r();
+		}
+		/*
+				glm::vec3 rayOrigin = g_particles[idx].P;
+				glm::vec3 rayDir = io_nextPos - rayOrigin;
+				glm::vec3 rayDir_Norm = glm::normalize(rayDir);
+				float t1 = 0, t2 = 0; // t1 is smaller
+				if (eCollisionType::ECT_Overlap == i_sph.IntersectRay(rayOrigin, rayDir_Norm, t1, t2))
+				{
+					glm::vec3 interectionPoint = rayOrigin + t1 * rayDir_Norm;
+					float offsetDist = 0.1f; // inSphereDist - g_sphere.r();
+					io_nextPos = interectionPoint + offsetDist * glm::normalize(interectionPoint - g_sphere.c());
+
+				}*/
 	}
 
 	void HandleFriction(glm::vec3& io_force, const glm::vec3& i_normal, const glm::vec3& i_velocity)

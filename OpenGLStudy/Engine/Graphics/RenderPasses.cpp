@@ -67,7 +67,7 @@ namespace Graphics
 		{
 			float ratio = 1.0 - (float)(s_dataRenderingByGraphicThread->s_pointLights[i].ImportanceOrder) / s_dataRenderingByGraphicThread->s_pointLights.size();
 			cMesh* _Point = cMesh::s_manager.Get(s_point);
-			s_currentEffect->SetFloat("radius", 5);
+			s_currentEffect->SetFloat("radius", s_dataRenderingByGraphicThread->s_pointLights[i].Transform.Scale().x / 8.f);
 			glm::vec3 sphereColor = glm::vec3(1.0f, 0.0f, 0.0f) * pow( ratio, 5);
 
 			s_currentEffect->SetVec3("color", sphereColor);
