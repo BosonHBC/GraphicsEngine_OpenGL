@@ -51,6 +51,9 @@ bool Assignment::Initialize(GLuint i_width, GLuint i_height, const char* i_windo
 	m_renderingTeapotCount = glm::clamp(m_renderingTeapotCount, 1, s_maxTeapotCount);
 	m_createdPLightCount = glm::clamp(m_createdPLightCount, 1, s_maxPLightCount);
 
+	aLight->SetColor(Color(0.1f) * m_ambientIntensity);
+	dLight->SetColor(Color(0.6f, 0.6f, 0.5f)* m_directionalIntensity);
+
 	printf("---------------------------------Game initialization done.---------------------------------\n");
 	return result;
 }
@@ -103,7 +106,7 @@ void Assignment::CreateActor()
 void Assignment::CreateCamera()
 {
 	//m_editorCamera = new  cEditorCamera(glm::vec3(0, 250, 150), 20, 0, 300, 10.f);
-	m_editorCamera = new  cEditorCamera(glm::vec3(0, 250, 300), 35, 0, 300, 10.f);
+	m_editorCamera = new  cEditorCamera(glm::vec3(0, 250, 200), 5, 0, 300, 10.f);
 	float _aspect = (float)(GetCurrentWindow()->GetBufferWidth()) / (float)(GetCurrentWindow()->GetBufferHeight());
 	m_editorCamera->CreateProjectionMatrix(glm::radians(60.f), _aspect, 10.f, 2000.0f);
 }
@@ -220,9 +223,8 @@ void Assignment::Run()
 		m_window->SwapBuffers();
 	}
 }
-bool gKeyPressed = false;
-float ambientIntensity = 0.0f;
-float directionalIntensity = 0.0f;
+
+
 void Assignment::Tick(float second_since_lastFrame)
 {
 	sWindowInput* _windowInput = m_window->GetWindowInput();
@@ -367,34 +369,34 @@ void Assignment::Tick(float second_since_lastFrame)
 	}
 
 	if (_windowInput->IsKeyDown(GLFW_KEY_C)) {
-		ambientIntensity -= second_since_lastFrame * 5.f;
-		ambientIntensity = glm::clamp(ambientIntensity, 0.f, 10.f);
-		aLight->SetColor(Color(0.1f ,0.1f, 0.1f) * ambientIntensity);
+		m_ambientIntensity -= second_since_lastFrame * 5.f;
+		m_ambientIntensity = glm::clamp(m_ambientIntensity, 0.f, 10.f);
+		aLight->SetColor(Color(0.1f ,0.1f, 0.1f) * m_ambientIntensity);
 	}
 	if (_windowInput->IsKeyDown(GLFW_KEY_V)) {
-		ambientIntensity += second_since_lastFrame * 5.f;
-		ambientIntensity = glm::clamp(ambientIntensity, 0.f, 10.f);
-		aLight->SetColor(Color(0.1f, 0.1f, 0.1f) * ambientIntensity);
+		m_ambientIntensity += second_since_lastFrame * 5.f;
+		m_ambientIntensity = glm::clamp(m_ambientIntensity, 0.f, 10.f);
+		aLight->SetColor(Color(0.1f, 0.1f, 0.1f) * m_ambientIntensity);
 	}
 	if (_windowInput->IsKeyDown(GLFW_KEY_B)) {
-		directionalIntensity -= second_since_lastFrame * 2.f;
-		directionalIntensity = glm::clamp(directionalIntensity, 0.f, 3.f);
-		dLight->SetColor(Color(0.6f, 0.6f, 0.5f) * directionalIntensity);
+		m_directionalIntensity -= second_since_lastFrame * 2.f;
+		m_directionalIntensity = glm::clamp(m_directionalIntensity, 0.f, 3.f);
+		dLight->SetColor(Color(0.6f, 0.6f, 0.5f) * m_directionalIntensity);
 	}
 	if (_windowInput->IsKeyDown(GLFW_KEY_N)) {
-		directionalIntensity += second_since_lastFrame * 2.f;
-		directionalIntensity = glm::clamp(directionalIntensity, 0.f, 3.f);
-		dLight->SetColor(Color(0.6f, 0.6f, 0.5f) * directionalIntensity);
+		m_directionalIntensity += second_since_lastFrame * 2.f;
+		m_directionalIntensity = glm::clamp(m_directionalIntensity, 0.f, 3.f);
+		dLight->SetColor(Color(0.6f, 0.6f, 0.5f) * m_directionalIntensity);
 	}
-	if (!gKeyPressed &&_windowInput->IsKeyDown(GLFW_KEY_G))
+	if (!m_gKeyPressed &&_windowInput->IsKeyDown(GLFW_KEY_G))
 	{
-		gKeyPressed = true;
+		m_gKeyPressed = true;
 		CreatePointLight(m_editorCamera->CamLocation() + m_editorCamera->Transform.Forward() * 100.f, Color::White() * 0.5f, 250.f, true);
 		printf("Current Point Light Count: %d\n", m_createdPLightCount);
 	}
-	if (gKeyPressed && _windowInput->IsKeyUp(GLFW_KEY_G))
+	if (m_gKeyPressed && _windowInput->IsKeyUp(GLFW_KEY_G))
 	{
-		gKeyPressed = false;
+		m_gKeyPressed = false;
 	}
 
 	for (int i = 0; i < m_renderingTeapotCount; ++i)

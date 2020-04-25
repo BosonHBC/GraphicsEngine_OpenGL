@@ -61,12 +61,15 @@ private:
 	Graphics::cSpotLight* spLight2;
 
 
-	int m_renderingTeapotCount = 8;
+	int m_renderingTeapotCount = 1;
 	cActor* m_teapots[s_maxTeapotCount] = {nullptr};
 	cActor* m_cubemap;
 	cActor* m_spaceHolder;
 	cActor* m_collisionSphere;
 
 	float m_exposureOffset = 3.0f;
+	float m_ambientIntensity = 1.0f;
+	float m_directionalIntensity = 1.0f;
+	bool m_gKeyPressed = false;
 };
 

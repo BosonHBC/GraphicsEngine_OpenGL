@@ -21,13 +21,14 @@ namespace ClothSim
 
 	glm::vec3 g_positionData[VC] = { glm::vec3(0) };
 
-#define FRICTION_COEFFICENT 0.1f
+#define FRICTION_COEFFICENT 0.95f
 #define TOUCH_DIST_THRESHOLD 1.f
 #define SPHERE_COLLISION_BIAS 1.1f
+#define FRICTION_BIAS 0.5f
 	const glm::vec3 g_floorPlane = glm::vec3(0, 5, 0);
 	cSphere g_sphere(glm::vec3(0, 0, -150), 100.f);
 	const float inSphereDist = sqrt(pow(g_sphere.r(), 2) + pow(g_structRestLen / 2, 2));
-	bool g_bEnableClothSim = false;
+	bool g_bEnableClothSim = true;
 	bool g_bDrawNodes = false;
 
 	void InitializeNeghbors()
@@ -188,16 +189,22 @@ namespace ClothSim
 			// Add gravity force
 			force += GRAVITY * MASS + GRAVITY_DAMPING * currentV;
 
-			// handle friction for sphere
+			// handle friction for spheres
 			{
 				glm::vec3 centerToP = g_particles[i].P - g_sphere.c();
 				float dist = glm::length(centerToP);
-				if (dist <= inSphereDist)
+				if (dist <= inSphereDist + FRICTION_BIAS)
 				{
 					HandleFriction(force, centerToP / dist, currentV);
 				}
 			}
-
+			// Handle friction for floor
+			{
+				if (g_positionData[i].y <= g_floorPlane.y + FRICTION_BIAS)
+				{
+					HandleFriction(force, glm::vec3(0, 1, 0), currentV);
+				}
+			}
 
 			// Verlet integration
 			glm::vec3 a = glm::vec3(0); // a stands for acceleration
@@ -335,24 +342,19 @@ namespace ClothSim
 
 	void HandleSphereCollision(const cSphere& i_sph, int idx, glm::vec3& io_nextPos)
 	{
-
+		io_nextPos = i_sph.c() + glm::normalize(io_nextPos - i_sph.c()) * i_sph.r();
+/*
 		glm::vec3 rayOrigin = g_particles[idx].P;
 		glm::vec3 rayDir = io_nextPos - rayOrigin;
 		glm::vec3 rayDir_Norm = glm::normalize(rayDir);
 		float t1 = 0, t2 = 0; // t1 is smaller
-		if (eCollisionType::ECT_NoIntersect == i_sph.IntersectRay(rayOrigin, rayDir_Norm, t1, t2))
+		if (eCollisionType::ECT_Overlap == i_sph.IntersectRay(rayOrigin, rayDir_Norm, t1, t2))
 		{
 			glm::vec3 interectionPoint = rayOrigin + t1 * rayDir_Norm;
-			float offsetDist = inSphereDist;
-			if (idx / CLOTH_RESOLUTION > 0)
-			{
-				float distToUpNode = glm::distance(g_particles[idx - CLOTH_RESOLUTION].P, interectionPoint);
-				offsetDist = sqrt(pow(g_sphere.r(), 2) + pow(distToUpNode / 2.f, 2));
-			}
-				
-			io_nextPos = interectionPoint + (offsetDist - g_sphere.r()) * glm::normalize(interectionPoint - g_sphere.c()) * SPHERE_COLLISION_BIAS;
-			//i_sph.c() + SPHERE_COLLISION_BIAS * (interectionPoint - i_sph.c());
-		}
+			float offsetDist = 0.1f; // inSphereDist - g_sphere.r();
+			io_nextPos = interectionPoint + offsetDist * glm::normalize(interectionPoint - g_sphere.c());
+			
+		}*/
 	}
 
 	void HandleFriction(glm::vec3& io_force, const glm::vec3& i_normal, const glm::vec3& i_velocity)
@@ -361,14 +363,15 @@ namespace ClothSim
 		glm::vec3 fNorm = i_normal;
 		glm::vec3 fTangent = glm::normalize(glm::cross(glm::cross(fNorm, io_force), fNorm));
 
+
 		float fVertical = glm::dot(io_force, -fNorm);
 		float fHori = glm::dot(io_force, fTangent);
 		int frictionDir = (glm::dot(i_velocity, fTangent) > 0) ? 1 : -1;
-		// if the overall force is going down, calculate friction
+		// if there is vertical force going towards center of the sphere , calculate friction
 		if (fVertical > 0.0f)
 		{
-			float fFriction = fVertical * FRICTION_COEFFICENT;
-			io_force = (fHori + frictionDir * fFriction) * fTangent/* + i_velocity * -0.75f*/;
+			float fFrictionSize = fVertical * FRICTION_COEFFICENT;
+			io_force = glm::max((fHori - frictionDir * fFrictionSize), 0.0f) * fTangent;
 		}
 
 	}
