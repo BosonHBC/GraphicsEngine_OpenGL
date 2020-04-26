@@ -106,7 +106,7 @@ void Assignment::CreateActor()
 void Assignment::CreateCamera()
 {
 	//m_editorCamera = new  cEditorCamera(glm::vec3(0, 250, 150), 20, 0, 300, 10.f);
-	m_editorCamera = new  cEditorCamera(glm::vec3(0, 250, 200), 5, 0, 300, 10.f);
+	m_editorCamera = new  cEditorCamera(glm::vec3(0, 250, 100), 15, 0, 300, 10.f);
 	float _aspect = (float)(GetCurrentWindow()->GetBufferWidth()) / (float)(GetCurrentWindow()->GetBufferHeight());
 	m_editorCamera->CreateProjectionMatrix(glm::radians(60.f), _aspect, 10.f, 2000.0f);
 }
@@ -122,7 +122,7 @@ void Assignment::CreateLight()
 	{
 		//Color randomColor = Color(randomFloats(generator), randomFloats(generator), randomFloats(generator));
 		bool enableShadow = true;
-		Graphics::CreatePointLight(glm::vec3(0 + (i % lightPerRow) * horiDist, 200,50 - (i / lightPerRow) * vertDist), Color::White() * 0.5f, 250.f, enableShadow, m_pLights[i]);
+		Graphics::CreatePointLight(glm::vec3(0 + (i % lightPerRow) * horiDist, 200,100 - (i / lightPerRow) * vertDist), Color::White() * 0.5f, 250.f, enableShadow, m_pLights[i]);
 	}
 
 	//CreatePointLight(glm::vec3(0, 100, 0), Color::White() * 0.5f, 250, true);
@@ -416,6 +416,16 @@ void Assignment::Tick(float second_since_lastFrame)
 	if (spLight2)
 		spLight2->Transform.Update();
 
+
+	if (ClothSim::g_bEnableClothSim)
+	{
+		for (int i = 0; i < m_createdPLightCount; ++i)
+		{
+			m_collisionSpheres[i].SetCenter(m_pLights[i]->Transform.Position());
+			m_collisionSpheres[i].SetRadius(m_pLights[i]->Transform.Scale().x / 8.f);
+		}
+		ClothSim::UpdateSprings(0.05f, m_collisionSpheres, m_createdPLightCount);
+	}
 }
 
 void Assignment::SubmitLightingData()
@@ -541,15 +551,7 @@ void Assignment::CreatePointLight(const glm::vec3& i_initialLocation, const Colo
 
 void Assignment::FixedTick()
 {
-	if (ClothSim::g_bEnableClothSim)
-	{
-		for (int i = 0; i < m_createdPLightCount; ++i)
-		{
-			m_collisionSpheres[i].SetCenter(m_pLights[i]->Transform.Position());
-			m_collisionSpheres[i].SetRadius(m_pLights[i]->Transform.Scale().x / 8.f);
-		}
-		ClothSim::UpdateSprings(0.05f, m_collisionSpheres, m_createdPLightCount);
-	}
+
 		
 }
 

@@ -25,7 +25,7 @@ namespace ClothSim
 	// rendering data
 // --------------------------------------------
 // Vertices per cloth edge
-#define CLOTH_RESOLUTION 50
+#define CLOTH_RESOLUTION 100
 	// cloth length in meters
 #define CLOTH_LENGTH 200.0
 	const int VC = CLOTH_RESOLUTION * CLOTH_RESOLUTION;
@@ -37,14 +37,14 @@ namespace ClothSim
 
 	// stiff and damping for spring particles
 #define STRUCT_STIFF 80
-#define STRUCT_DAMP	-0.5f
+#define STRUCT_DAMP	 -0.5f
 #define SHEAR_STIFF 50
-#define SHEAR_DAMP	-0.5f
-#define BEND_STIFF 50
+#define SHEAR_DAMP -0.5f
+#define BEND_STIFF 30
 #define BEND_DAMP	-0.5f
 
-#define MASS 1.f // 1 kg
-#define GRAVITY glm::vec3(0, -9.8f *  50.f / CLOTH_RESOLUTION , 0)
+#define MASS 1.f // 1 kg per node
+#define GRAVITY glm::vec3(0, -9.8f * 20.f /CLOTH_RESOLUTION , 0)
 #define GRAVITY_DAMPING -0.30f
 #define DEFAULT_DAMPING - 0.20f
 	// Clock wise from struct-shear-bend

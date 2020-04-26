@@ -155,6 +155,7 @@ xcopy $(SolutionDir)Contents $(targetDir)Contents /Y /E /I</Command>
       <PrecompiledHeaderFile>
       </PrecompiledHeaderFile>
       <AdditionalIncludeDirectories>$(SolutionDir);$(SolutionDir)Engine;$(SolutionDir)Engine\Math;$(SolutionDir)Engine\Cores;$(SolutionDir)Engine\Graphics;$(SolutionDir)Externals\GL\;$(SolutionDir)Externals\GL\glew\include;$(SolutionDir)Externals\GL\glfw32\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <OpenMPSupport>true</OpenMPSupport>
     </ClCompile>
     <Link>
       <SubSystem>Console</SubSystem>
@@ -183,6 +184,7 @@ xcopy $(SolutionDir)Contents $(targetDir)Contents /Y /E /I</Command>
       <PrecompiledHeaderFile>
       </PrecompiledHeaderFile>
       <AdditionalIncludeDirectories>$(SolutionDir);$(SolutionDir)Engine;$(SolutionDir)Engine\Math;$(SolutionDir)Engine\Cores;$(SolutionDir)Engine\Graphics;$(SolutionDir)Externals\GL\;$(SolutionDir)Externals\GL\glew\include;$(SolutionDir)Externals\GL\glfw\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <OpenMPSupport>true</OpenMPSupport>
     </ClCompile>
     <Link>
       <SubSystem>Console</SubSystem>

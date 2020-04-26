@@ -2,6 +2,13 @@
 #include "SimulationParams.h"
 #include "Math/Shape/Sphere.h"
 
+//#define USING_OPENMP
+
+#ifdef USING_OPENMP
+#include <omp.h>
+#endif // USING_OPENMP
+
+
 namespace ClothSim
 {
 	float * g_vertexData;
@@ -105,13 +112,6 @@ namespace ClothSim
 		memcpy(g_vertexData + vertSIze * idx + stride, i_data, sizeof(float) * 2);
 	}
 
-	glm::vec3 glmWindForce = glm::vec3(0, 0, -10.f);
-	glm::vec3 windForce(glm::vec3 normal)
-	{
-		glm::vec3 n = normal;
-		return glm::dot(n, glmWindForce) * glmWindForce;
-	}
-
 	void HandleFirctionForSphere(int idx, const cSphere& i_sphere, glm::vec3& io_force, const glm::vec3& i_velocity)
 	{
 		glm::vec3 centerToP = g_particles[idx].P - i_sphere.c();
@@ -125,6 +125,9 @@ namespace ClothSim
 
 	void UpdateSprings(const float dt, cSphere* const i_spheres, const int i_numOfSphere)
 	{
+#ifdef USING_OPENMP
+		#pragma omp parallel for
+#endif // DEBUG
 		for (int i = 0; i < VC; ++i)
 		{
 			const int r = i / R; // current row
