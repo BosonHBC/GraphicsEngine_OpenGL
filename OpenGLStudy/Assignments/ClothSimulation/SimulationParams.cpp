@@ -28,10 +28,7 @@ namespace ClothSim
 
 	glm::vec3 g_positionData[VC] = { glm::vec3(0) };
 
-#define FRICTION_COEFFICENT 0.25f
-#define TOUCH_DIST_THRESHOLD 1.f
-#define SPHERE_COLLISION_BIAS 1.1f
-#define FRICTION_BIAS 0.5f
+
 	const glm::vec3 g_floorPlane = glm::vec3(0, 5, 0);
 	cSphere g_sphere(glm::vec3(0, 0, -150), 100.f);
 	
@@ -389,7 +386,7 @@ namespace ClothSim
 		if (fVertical > 0.0f)
 		{
 			float fFrictionSize = fVertical * FRICTION_COEFFICENT;
-			io_force = glm::max((glm::max(fHori,0.0f) - fFrictionSize), 0.0f) * fTangent - i_velocity;
+			io_force = glm::max((glm::max(fHori,0.0f) - fFrictionSize), 0.0f) * fTangent + i_velocity * FRICTION_DAMPING;
 		}
 
 	}
