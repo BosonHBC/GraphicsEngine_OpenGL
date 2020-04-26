@@ -217,13 +217,13 @@ namespace ClothSim
 					HandleFriction(force, glm::vec3(0, 1, 0), currentV);
 				}
 			}
-
-			// Verlet integration
 			glm::vec3 a = glm::vec3(0); // a stands for acceleration
 			if (!g_particles[i].isFixed)
 			{
 				a = force / MASS;
 			}
+			// Verlet integration
+			// x(t + dt) = x(t) + v(t)·dt + a(t)·dt^2;
 			glm::vec3 nextPosition = g_particles[i].P + currentV * dt + a * dt * dt;
 
 			// Handle sphere collision
@@ -244,6 +244,7 @@ namespace ClothSim
 			{
 				g_particles[i].P = g_positionData[i];
 			}
+			// v(t) = (x(t)-x(t-dt)) / dt;
 			g_particles[i].V = (g_particles[i].P - g_particles[i].pP) / dt;
 
 			UpdateV3Data(i, &g_particles[i].P, 0);
