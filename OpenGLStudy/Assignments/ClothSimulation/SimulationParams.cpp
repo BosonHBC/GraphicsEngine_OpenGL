@@ -382,12 +382,11 @@ namespace ClothSim
 
 		float fVertical = glm::dot(io_force, -fNorm);
 		float fHori = glm::dot(io_force, fTangent);
-		int frictionDir = (glm::dot(i_velocity, fTangent) > 0) ? 1 : -1;
 		// if there is vertical force going towards center of the sphere , calculate friction
 		if (fVertical > 0.0f)
 		{
 			float fFrictionSize = fVertical * FRICTION_COEFFICENT;
-			io_force = glm::max((fHori - frictionDir * fFrictionSize), 0.0f) * fTangent;
+			io_force = glm::max((glm::max(fHori,0.0f) - fFrictionSize), 0.0f) * fTangent - i_velocity;
 		}
 
 	}
