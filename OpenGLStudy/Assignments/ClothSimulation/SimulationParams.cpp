@@ -1,3 +1,15 @@
+/*
+* Some math formula(calculate normal,verlet integration) and physics formula(internal spring force) are from the following references:
+Verlet integration
+https://en.wikipedia.org/wiki/Verlet_integration
+Cloth simulation project
+https://github.com/dayeol/clothsimulation/blob/master/CLOTH%20SIMULATION(FINAL).pdf
+Simulate Tearable Cloth and Ragdolls With Simple Verlet Integration
+https://gamedevelopment.tutsplus.com/tutorials/simulate-tearable-cloth-and-ragdolls-with-simple-verlet-integration--gamedev-519
+Cloth Simulation
+https://steven.codes/blog/cloth-simulation/
+*/
+
 #include "Cores/Core.h"
 #include "SimulationParams.h"
 #include "Math/Shape/Sphere.h"
@@ -250,52 +262,6 @@ namespace ClothSim
 			UpdateV3Data(i, &g_particles[i].P, 0);
 		}
 
-
-		// Inverse dynamic procedural
-		if (false)
-		{
-			for (int i = 0; i < VC; ++i)
-			{
-				glm::vec3 adjustedPos = g_particles[i].P;
-				if (!g_particles[i].isFixed)
-				{
-					const auto structUpIdx = g_particles[i].neighbor[Struct_Up].idx;
-					if (structUpIdx != NO_Neighbor)
-						fixStretchConstrain(structUpIdx, adjustedPos, g_structRestLen * 1.1f, 1.0f);
-
-					const auto structRightIdx = g_particles[i].neighbor[Struct_Right].idx;
-					if (structRightIdx != NO_Neighbor)
-						fixStretchConstrain(structRightIdx, adjustedPos, g_structRestLen * 1.1f, 2.0f);
-
-					const auto structLeftIdx = g_particles[i].neighbor[Struct_Left].idx;
-					if (structLeftIdx != NO_Neighbor)
-						fixStretchConstrain(structLeftIdx, adjustedPos, g_structRestLen * 1.1f, 2.0f);
-
-					const auto Shear0Idx = g_particles[i].neighbor[Shear_0].idx;
-					if (Shear0Idx != NO_Neighbor)
-						fixStretchConstrain(Shear0Idx, adjustedPos, g_shearRestLen * 1.2f, 1.0f);
-
-					const auto Shear1Idx = g_particles[i].neighbor[Shear_1].idx;
-					if (Shear1Idx != NO_Neighbor)
-						fixStretchConstrain(Shear1Idx, adjustedPos, g_shearRestLen * 1.2f, 1.0f);
-
-					g_positionData[i] = adjustedPos;
-				}
-			}
-
-			// update position info and velocity info
-			for (int i = 0; i < VC; ++i)
-			{
-				if (!g_particles[i].isFixed)
-				{
-					g_particles[i].P = g_positionData[i];
-					g_particles[i].V = (g_particles[i].P - g_particles[i].pP) / dt;
-					UpdateV3Data(i, &g_particles[i].P, 0);
-				}
-			}
-		}
-
-
 	}
 
 	void MoveFixedNode(const glm::vec3& i_deltaPosition)
@@ -335,11 +301,12 @@ namespace ClothSim
 	glm::vec3 springForce(glm::vec3 myVel, glm::vec3 neiVel, glm::vec3 myPosition, glm::vec3 neiPosition, float restLength, float stiffness, float damping)
 	{
 		glm::vec3 deltaP = myPosition - neiPosition;
+		glm::vec3 norm_dP = normalize(deltaP);
 		glm::vec3 deltaV = myVel - neiVel;
 		float dist = glm::length(deltaP);
 		float stiff = (restLength - dist) *stiffness;
-		float damp = damping * (dot(deltaV, deltaP) / dist);
-		return (stiff + damp) * normalize(deltaP);
+		float damp = damping * dot(deltaV, norm_dP);
+		return (stiff + damp) *norm_dP;
 	}
 
 	void fixStretchConstrain(const int vertexIdx, glm::vec3& io_adjustedPos, const float threshold, const float divider)
@@ -360,18 +327,6 @@ namespace ClothSim
 		{
 			io_nextPos = i_sph.c() + glm::normalize(io_nextPos - i_sph.c()) * i_sph.r();
 		}
-		/*
-				glm::vec3 rayOrigin = g_particles[idx].P;
-				glm::vec3 rayDir = io_nextPos - rayOrigin;
-				glm::vec3 rayDir_Norm = glm::normalize(rayDir);
-				float t1 = 0, t2 = 0; // t1 is smaller
-				if (eCollisionType::ECT_Overlap == i_sph.IntersectRay(rayOrigin, rayDir_Norm, t1, t2))
-				{
-					glm::vec3 interectionPoint = rayOrigin + t1 * rayDir_Norm;
-					float offsetDist = 0.1f; // inSphereDist - g_sphere.r();
-					io_nextPos = interectionPoint + offsetDist * glm::normalize(interectionPoint - g_sphere.c());
-
-				}*/
 	}
 
 	void HandleFriction(glm::vec3& io_force, const glm::vec3& i_normal, const glm::vec3& i_velocity)
@@ -379,7 +334,6 @@ namespace ClothSim
 		// Add friction 
 		glm::vec3 fNorm = i_normal;
 		glm::vec3 fTangent = glm::normalize(glm::cross(glm::cross(fNorm, io_force), fNorm));
-
 
 		float fVertical = glm::dot(io_force, -fNorm);
 		float fHori = glm::dot(io_force, fTangent);

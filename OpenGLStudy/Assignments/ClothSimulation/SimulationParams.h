@@ -48,7 +48,7 @@ namespace ClothSim
 #define GRAVITY glm::vec3(0, -9.8f * 40.f /CLOTH_RESOLUTION , 0)
 #define GRAVITY_DAMPING -0.3f
 
-#define FRICTION_COEFFICENT 0.00f
+#define FRICTION_COEFFICENT 0.25f
 #define FRICTION_DAMPING - 0.50f
 #define TOUCH_DIST_THRESHOLD 1.f
 #define FRICTION_BIAS 0.5f
