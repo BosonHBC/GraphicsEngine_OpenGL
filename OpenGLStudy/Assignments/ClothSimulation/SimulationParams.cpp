@@ -166,49 +166,6 @@ namespace ClothSim
 				force += springForce(currentV, neiVel, g_particles[i].P, neiPosition, _neighbor.restLength, _neighbor.stiff, _neighbor.damp);
 			}
 
-			// calculate normal
-			glm::vec3 normal;
-			glm::vec3 tangent;
-			glm::vec3 bitangent;
-			{
-				const auto rightIdx = g_particles[i].neighbor[Struct_Right].idx;
-				const auto leftIdx = g_particles[i].neighbor[Struct_Left].idx;
-				const auto upIdx = g_particles[i].neighbor[Struct_Up].idx;
-				const auto downIdx = g_particles[i].neighbor[Struct_Down].idx;
-				if (c < CLOTH_RESOLUTION - 1)
-				{
-					tangent = glm::normalize(g_particles[rightIdx].P - g_particles[i].P);
-					if (r < CLOTH_RESOLUTION - 1)
-					{
-						bitangent = glm::normalize(g_particles[downIdx].P - g_particles[i].P);
-						normal += glm::normalize(glm::cross(bitangent, tangent));
-					}
-					if (r > 0)
-					{
-						bitangent = glm::normalize((g_particles[i].P - g_particles[upIdx].P));
-						normal += glm::normalize(glm::cross(bitangent, tangent));
-					}
-				}
-				if (c > 0)
-				{
-					tangent = glm::normalize(g_particles[leftIdx].P - g_particles[i].P);
-					if (r < CLOTH_RESOLUTION - 1)
-					{
-						bitangent = glm::normalize(g_particles[downIdx].P - g_particles[i].P);
-						normal += glm::normalize(glm::cross(bitangent, tangent));
-					}
-					if (r > 0)
-					{
-						bitangent = glm::normalize((g_particles[i].P - g_particles[upIdx].P));
-						normal += glm::normalize(glm::cross(bitangent, tangent));
-					}
-				}
-				UpdateV3Data(i, &normal, 5);
-				UpdateV3Data(i, &tangent, 8);
-				UpdateV3Data(i, &bitangent, 11);
-			}
-			normal = glm::normalize(normal);
-
 			// Add gravity force
 			force += GRAVITY * MASS + GRAVITY_DAMPING * currentV;
 
@@ -260,8 +217,58 @@ namespace ClothSim
 			g_particles[i].V = (g_particles[i].P - g_particles[i].pP) / dt;
 
 			UpdateV3Data(i, &g_particles[i].P, 0);
-		}
 
+
+		}
+		for (int i = 0; i < VC; ++i)
+		{
+			const int r = i / R; // current row
+			const int c = i % R; // current Column
+
+			// calculate normal
+			glm::vec3 normal;
+			glm::vec3 tangent;
+			glm::vec3 bitangent;
+			{
+				const auto rightIdx = g_particles[i].neighbor[Struct_Right].idx;
+				const auto leftIdx = g_particles[i].neighbor[Struct_Left].idx;
+				const auto upIdx = g_particles[i].neighbor[Struct_Up].idx;
+				const auto downIdx = g_particles[i].neighbor[Struct_Down].idx;
+				if (c < CLOTH_RESOLUTION - 1)
+				{
+					tangent = glm::normalize(g_particles[rightIdx].P - g_particles[i].P);
+					if (r < CLOTH_RESOLUTION - 1)
+					{
+						bitangent = glm::normalize(g_particles[downIdx].P - g_particles[i].P);
+						normal += glm::normalize(glm::cross(bitangent, tangent));
+					}
+					if (r > 0)
+					{
+						bitangent = glm::normalize((g_particles[i].P - g_particles[upIdx].P));
+						normal += glm::normalize(glm::cross(bitangent, tangent));
+					}
+				}
+				if (c > 0)
+				{
+					tangent = glm::normalize(g_particles[leftIdx].P - g_particles[i].P);
+					if (r < CLOTH_RESOLUTION - 1)
+					{
+						bitangent = glm::normalize(g_particles[downIdx].P - g_particles[i].P);
+						normal += glm::normalize(glm::cross(bitangent, tangent));
+					}
+					if (r > 0)
+					{
+						bitangent = glm::normalize((g_particles[i].P - g_particles[upIdx].P));
+						normal += glm::normalize(glm::cross(bitangent, tangent));
+					}
+				}
+				normal = glm::normalize(normal);
+				UpdateV3Data(i, &normal, 5);
+				UpdateV3Data(i, &tangent, 8);
+				UpdateV3Data(i, &bitangent, 11);
+			}
+			
+		}
 	}
 
 	void MoveFixedNode(const glm::vec3& i_deltaPosition)
