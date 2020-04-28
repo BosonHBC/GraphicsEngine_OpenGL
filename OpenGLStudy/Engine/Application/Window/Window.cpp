@@ -3,6 +3,9 @@
 #include "Window.h"
 #include "WindowInput.h"
 
+#include "Application/imgui/imgui.h"
+#include "Application/imgui/imgui_impl_glfw.h"
+#include "Application/imgui/imgui_impl_opengl3.h"
 
 cWindow::~cWindow()
 {
@@ -25,6 +28,10 @@ bool cWindow::Initialzation()
 		if (!SetupGLFWWindow(m_glfwWindow, m_windowName)) return false;
 	}
 
+	// 1.5 Setup IMGUI
+	{
+		if (!SetupImGUI()) return false;
+	}
 	//02. Set buffer size information
 	{
 		glfwGetFramebufferSize(m_glfwWindow, &m_bufferWidth, &m_bufferHeight);
@@ -71,6 +78,10 @@ bool cWindow::Initialzation()
 
 void cWindow::CleanUp()
 {
+	ImGui_ImplOpenGL3_Shutdown();
+	ImGui_ImplGlfw_Shutdown();
+	ImGui::DestroyContext();
+
 	if (m_windowInput) {
 		delete m_windowInput;
 		m_windowInput = nullptr;
@@ -97,6 +108,8 @@ bool cWindow::SetupGLFWWindow(GLFWwindow*& o_mainWindow, const char* i_windowNam
 	// Allow forward compatibility
 	glfwWindowHint(GLFW_OPENGL_FORWARD_COMPAT, GL_TRUE);
 
+	glfwWindowHint(GLFW_RESIZABLE, GL_FALSE);
+
 	o_mainWindow = glfwCreateWindow(m_bufferWidth, m_bufferHeight, i_windowName, i_monitor, i_sharedWindow);
 	if (!o_mainWindow) {
 		printf("Create GLFW window failed!");
@@ -104,6 +117,35 @@ bool cWindow::SetupGLFWWindow(GLFWwindow*& o_mainWindow, const char* i_windowNam
 		return false;
 	}
 	return true;
+}
+
+bool cWindow::SetupImGUI()
+{
+	auto result = true;
+	// Setup Dear ImGui context
+	IMGUI_CHECKVERSION();
+	ImGui::CreateContext();
+	ImGuiIO& io = ImGui::GetIO(); (void)io;
+	//io.ConfigFlags |= ImGuiConfigFlags_NavEnableKeyboard;     // Enable Keyboard Controls
+	//io.ConfigFlags |= ImGuiConfigFlags_NavEnableGamepad;      // Enable Gamepad Controls
+
+	// Setup Dear ImGui style
+	ImGui::StyleColorsDark();
+	//ImGui::StyleColorsClassic();
+
+	// Setup Platform/Renderer bindings
+	if (!(result = ImGui_ImplGlfw_InitForOpenGL(m_glfwWindow, true)))
+	{
+		printf("Fail to Init glfw for ImGUI.\n");
+		return result;
+	}
+		
+	const char* glsl_version = "#version 430";
+	if (!(result = ImGui_ImplOpenGL3_Init(glsl_version)))
+	{
+		printf("Fail to Init opengl3 for ImGUI.\n");
+		return result;
+	}
 }
 
 void cWindow::CreateCallbacks()
@@ -114,6 +156,7 @@ void cWindow::CreateCallbacks()
 	glfwSetKeyCallback(m_glfwWindow, &cWindow::HandleKeys);
 	glfwSetCursorPosCallback(m_glfwWindow, &cWindow::HandleMouse);
 	glfwSetMouseButtonCallback(m_glfwWindow, &cWindow::HandleMouseButton);
+	glfwSetWindowSizeCallback(m_glfwWindow, &cWindow::OnWindowSizeChanged);
 }
 
 void cWindow::HandleKeys(GLFWwindow* i_window, int i_key, int i_code, int i_action, int i_mode)
@@ -174,6 +217,14 @@ void cWindow::HandleMouseButton(GLFWwindow* i_window, int i_button, int i_action
 			_input->SetButton(i_button, false);
 		}
 	}
+
+}
+
+void cWindow::OnWindowSizeChanged(GLFWwindow* window, int width, int height)
+{
+	cWindow* thisWindow = static_cast<cWindow*>(glfwGetWindowUserPointer(window));
+	thisWindow->m_bufferWidth = width;
+	thisWindow->m_bufferHeight = height;
 
 }
 

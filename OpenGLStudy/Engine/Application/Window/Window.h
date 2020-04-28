@@ -46,13 +46,16 @@ private:
 	GLint m_bufferWidth, m_bufferHeight;
 	const char* m_windowName;
 	sWindowInput* m_windowInput;
+	bool m_windowMaximumed = false;
 
 	/** private helper functions*/
 	bool SetupGLFWWindow(GLFWwindow*& o_mainWindow, const char* i_windowName, GLFWmonitor* i_monitor = nullptr, GLFWwindow* i_sharedWindow = nullptr);
+	bool SetupImGUI();
 	virtual void CreateCallbacks();
 
 	/** static private functions*/
 	static void HandleKeys(GLFWwindow* i_window, int i_key, int i_code, int i_action, int i_mode);
 	static void HandleMouse(GLFWwindow* i_window, double i_xPos, double i_yPos);
 	static void HandleMouseButton(GLFWwindow* i_window, int i_button, int i_action, int i_mods);
+	static void OnWindowSizeChanged(GLFWwindow* window, int width, int height);
 };
