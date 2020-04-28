@@ -21,6 +21,10 @@
 
 #include "Assignments/ClothSimulation/SimulationParams.h"
 #include <random>
+#include "Application/imgui/imgui.h"
+#include "Application/imgui/imgui_impl_glfw.h"
+#include "Application/imgui/imgui_impl_opengl3.h"
+
 
 Graphics::ERenderMode g_renderMode = Graphics::ERenderMode::ERM_ForwardShading;
 
@@ -116,13 +120,13 @@ void Assignment::CreateLight()
 	const int lightPerRow = 4;
 	const float horiDist = 150;
 	const float vertDist = 50 * 40.f / m_createdPLightCount;
-	Graphics::CreateAmbientLight(Color(0,0,0), aLight);
+	Graphics::CreateAmbientLight(Color(0, 0, 0), aLight);
 
 	for (int i = 0; i < m_createdPLightCount; ++i)
 	{
 		//Color randomColor = Color(randomFloats(generator), randomFloats(generator), randomFloats(generator));
 		bool enableShadow = true;
-		Graphics::CreatePointLight(glm::vec3(0 + (i % lightPerRow) * horiDist, 200,100 - (i / lightPerRow) * vertDist), Color::White() * 0.5f, 250.f, enableShadow, m_pLights[i]);
+		Graphics::CreatePointLight(glm::vec3(0 + (i % lightPerRow) * horiDist, 200, 100 - (i / lightPerRow) * vertDist), Color::White() * 0.5f, 250.f, enableShadow, m_pLights[i]);
 	}
 
 	//CreatePointLight(glm::vec3(0, 100, 0), Color::White() * 0.5f, 250, true);
@@ -218,6 +222,34 @@ void Assignment::Run()
 
 		// Render frame
 		Graphics::RenderFrame();
+		
+		// imgui 
+		{
+			ImGui_ImplOpenGL3_NewFrame();
+			ImGui_ImplGlfw_NewFrame();
+			ImGui::NewFrame();
+			// 2. Show a simple window that we create ourselves. We use a Begin/End pair to created a named window.
+			{
+				static float f = 0.0f;
+				static int counter = 0;
+
+				ImGui::Begin("Hello, world!");                          // Create a window called "Hello, world!" and append into it.
+
+				ImGui::Text("This is some useful text.");               // Display some text (you can use a format strings too)
+
+				ImGui::SliderFloat("float", &f, 0.0f, 1.0f);            // Edit 1 float using a slider from 0.0f to 1.0f
+
+				if (ImGui::Button("Button"))                            // Buttons return true when clicked (most widgets return true when edited/activated)
+					counter++;
+				ImGui::SameLine();
+				ImGui::Text("counter = %d", counter);
+
+				ImGui::Text("Application average %.3f ms/frame (%.1f FPS)", 1000.0f / ImGui::GetIO().Framerate, ImGui::GetIO().Framerate);
+				ImGui::End();
+			}
+			ImGui::Render();
+			ImGui_ImplOpenGL3_RenderDrawData(ImGui::GetDrawData());
+		}
 
 		// Swap buffers
 		m_window->SwapBuffers();
@@ -371,7 +403,7 @@ void Assignment::Tick(float second_since_lastFrame)
 	if (_windowInput->IsKeyDown(GLFW_KEY_C)) {
 		m_ambientIntensity -= second_since_lastFrame * 5.f;
 		m_ambientIntensity = glm::clamp(m_ambientIntensity, 0.f, 10.f);
-		aLight->SetColor(Color(0.1f ,0.1f, 0.1f) * m_ambientIntensity);
+		aLight->SetColor(Color(0.1f, 0.1f, 0.1f) * m_ambientIntensity);
 	}
 	if (_windowInput->IsKeyDown(GLFW_KEY_V)) {
 		m_ambientIntensity += second_since_lastFrame * 5.f;
@@ -451,7 +483,7 @@ void Assignment::SubmitLightingData()
 		spLight2->UpdateLightIndex(_spLights.size());
 		_spLights.push_back(*spLight2);
 	}
-	
+
 	Graphics::SubmitLightingData(_pLights, _spLights, *aLight, *dLight);
 }
 
@@ -552,7 +584,7 @@ void Assignment::CreatePointLight(const glm::vec3& i_initialLocation, const Colo
 void Assignment::FixedTick()
 {
 
-		
+
 }
 
 void Assignment::CleanUp()
