@@ -119,7 +119,7 @@ namespace Graphics
 			GLuint _halfWidth = g_octTreeMaxVolumeWidth / 2;
 			glm::vec3 _posHalfDimension = glm::vec3(_halfWidth, _halfWidth, _halfWidth);
 
-			g_EnvironmentCaptureAccelerationTree.InitializeTree(cBox(-_posHalfDimension, _posHalfDimension), g_CaptureProbesReferences);
+			g_EnvironmentCaptureAccelerationTree.InitializeTree(cAABB(-_posHalfDimension, _posHalfDimension), g_CaptureProbesReferences);
 		}
 
 		const std::vector<sCaptureProbes*>& GetCapturesReferences()

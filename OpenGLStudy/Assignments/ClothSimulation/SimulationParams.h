@@ -17,14 +17,15 @@
 #include "glm/glm.hpp"
 #include "glm/gtc/matrix_transform.hpp"
 
-#define SIM_PARAMS_DEFINED
 
+#define SIM_PARAMS_DEFINED
+class cSphere;
 namespace ClothSim
 {
 	// rendering data
 // --------------------------------------------
 // Vertices per cloth edge
-#define CLOTH_RESOLUTION 50
+#define CLOTH_RESOLUTION 100
 	// cloth length in meters
 #define CLOTH_LENGTH 200.0
 	const int VC = CLOTH_RESOLUTION * CLOTH_RESOLUTION;
@@ -36,16 +37,21 @@ namespace ClothSim
 
 	// stiff and damping for spring particles
 #define STRUCT_STIFF 80
-#define STRUCT_DAMP	-0.5f
-#define SHEAR_STIFF 50
-#define SHEAR_DAMP	-0.5f
-#define BEND_STIFF 50
-#define BEND_DAMP	-0.5f
+#define STRUCT_DAMP	 -2.0
+#define SHEAR_STIFF 56
+#define SHEAR_DAMP -1.0
+#define BEND_STIFF 40
+#define BEND_DAMP	-0.5
+#define STIFF_DIFFERENCE 0.4f
 
-#define MASS 1.f // 1 kg
-#define GRAVITY glm::vec3(0, -9.8f *  50.f / CLOTH_RESOLUTION , 0)
-#define GRAVITY_DAMPING -0.30f
-#define DEFAULT_DAMPING - 0.20f
+#define MASS 1.f // 1 kg per node
+#define GRAVITY glm::vec3(0, -9.8f * 40.f /CLOTH_RESOLUTION , 0)
+#define GRAVITY_DAMPING -0.3f
+
+#define FRICTION_COEFFICENT 0.25f
+#define FRICTION_DAMPING - 0.50f
+#define TOUCH_DIST_THRESHOLD 1.f
+#define FRICTION_BIAS 0.5f
 	// Clock wise from struct-shear-bend
 // --------------------------------------------
 #define NO_Neighbor -1
@@ -73,6 +79,8 @@ namespace ClothSim
 			if (constrainIndex != NO_Neighbor)
 			{
 				idx = i_vertexIndex;
+				int row = idx / CLOTH_RESOLUTION;
+				float ratio = static_cast<float>(row) / CLOTH_RESOLUTION;
 				if (constrainIndex >= 0 && constrainIndex < 4)
 				{
 					restLength = g_structRestLen;
@@ -91,7 +99,7 @@ namespace ClothSim
 					stiff = BEND_STIFF;
 					damp = BEND_DAMP;
 				}
-
+				stiff += (1 - ratio) * STIFF_DIFFERENCE * stiff;
 			}
 			else
 				assert(false);
@@ -120,7 +128,7 @@ namespace ClothSim
 	extern bool g_bDrawNodes;
 	void InitializeNeghbors();
 // Using discrete time step
-	void UpdateSprings(const float dt);
+	void UpdateSprings(const float dt, cSphere* const i_spheres, const int i_numOfSphere);
 	void MoveFixedNode(const glm::vec3& i_deltaPosition);
 	void ScaleFixedNode(const glm::vec3& i_deltaPosition);
 	void CleanUpData();

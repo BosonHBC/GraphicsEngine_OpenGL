@@ -64,7 +64,7 @@ namespace Graphics {
 				result = _texture->LoadRGBA16Texture(i_path, i_override_width, i_override_height);
 				break;
 			case ETT_FRAMEBUFFER_DEPTH16:
-				result = _texture->LoadDepth16Texture(i_path, i_override_width, i_override_height);
+				result = _texture->LoadDepth24Texture(i_path, i_override_width, i_override_height);
 				break;
 			case ETT_FRAMEBUFFER_R16:
 				result = _texture->LoadR16Texture(i_path, i_override_width, i_override_height);
@@ -522,7 +522,7 @@ namespace Graphics {
 		return result;
 	}
 
-	bool cTexture::LoadDepth16Texture(const std::string& i_type_id, const GLuint& i_width, const GLuint& i_height)
+	bool cTexture::LoadDepth24Texture(const std::string& i_type_id, const GLuint& i_width, const GLuint& i_height)
 	{
 		auto result = true;
 		m_width = i_width;
@@ -532,7 +532,7 @@ namespace Graphics {
 		glBindTexture(GL_TEXTURE_2D, m_textureID);
 
 		// allocate space for the texture with null data fill in
-		glTexImage2D(GL_TEXTURE_2D, 0, GL_DEPTH_COMPONENT24, m_width, m_height, 0, GL_DEPTH_COMPONENT, GL_FLOAT, nullptr);
+		glTexImage2D(GL_TEXTURE_2D, 0, GL_DEPTH_COMPONENT24, m_width, m_height, 0, GL_DEPTH_COMPONENT, GL_UNSIGNED_INT, nullptr);
 
 		// Set up texture wrapping in s,t axis
 		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);

@@ -18,10 +18,10 @@ struct sOctTree
 	typedef Graphics::EnvironmentCaptureManager::sCaptureProbes PROBE; // for simplicity
 
 	// The volume of this node, radius should be the exponent of 2, the root radius is predefined
-	cBox Volume;
+	cAABB Volume;
 
 	/** Construction functions */
-	void InitializeTree(const cBox& i_initialVolume, const std::vector<PROBE*>& i_initialProbeList);
+	void InitializeTree(const cAABB& i_initialVolume, const std::vector<PROBE*>& i_initialProbeList);
 	void BuildTree();
 	void CleanUp();
 

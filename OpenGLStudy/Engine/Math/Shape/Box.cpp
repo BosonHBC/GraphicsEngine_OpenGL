@@ -1,21 +1,21 @@
 #include "Box.h"
 #include "Sphere.h"
 
-glm::vec3& cBox::operator[](int i)
+glm::vec3& cAABB::operator[](int i)
 {
 	assert(i >= 0 && i <= 1);
 	if (i == 0) return this->b;
 	else return this->t;
 }
 
-eCollisionType cBox::Intersect(const glm::vec3& i_point) const
+eCollisionType cAABB::Intersect(const glm::vec3& i_point) const
 {
 	if (i_point.x >= b.x && i_point.y >= b.y && i_point.z >= b.z
 		&& i_point.x <= t.x && i_point.y <= t.y && i_point.z <= t.z) return ECT_Contain;
 	else return ECT_NoIntersect;
 }
 
-eCollisionType cBox::Intersect(const cSphere* const i_sphere) const
+eCollisionType cAABB::Intersect(const cSphere* const i_sphere) const
 {
 	double rr = i_sphere->r() * i_sphere->r(); // radius squared
 	glm::vec3 sc = i_sphere->c(); // sphere center
@@ -33,14 +33,14 @@ eCollisionType cBox::Intersect(const cSphere* const i_sphere) const
 	else return ECT_NoIntersect;
 }
 
-float cBox::NDF(const glm::vec3& i_point) const
+float cAABB::NDF(const glm::vec3& i_point) const
 {
 	glm::vec3 _center = center();
 
 	return 0;
 }
 
-glm::vec3 cBox::corner(int i_corner)
+glm::vec3 cAABB::corner(int i_corner)
 {
 	return glm::vec3(
 		(*this)[(i_corner & 1)].x,
@@ -49,14 +49,14 @@ glm::vec3 cBox::corner(int i_corner)
 	);
 }
 
-cBox cBox::getOctSubBox()
+cAABB cAABB::getOctSubBox()
 {
 	glm::vec3 _center = center();
-	return cBox(_center + (b - _center) / 2.f, _center + (t - _center) / 2.f);
+	return cAABB(_center + (b - _center) / 2.f, _center + (t - _center) / 2.f);
 }
 
 #include "stdio.h"
-void cBox::PrintCenterAndWidth() const
+void cAABB::PrintCenterAndWidth() const
 {
 	glm::vec3 _center = center();
 	printf("center: %d, %d, %d; width: %d.\n", (int)_center.x, (int)_center.y, (int)_center.z, (int)(t.x - b.x));

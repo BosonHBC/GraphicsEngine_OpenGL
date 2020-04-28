@@ -1,6 +1,25 @@
+/*
+* Some math formula(calculate normal,verlet integration) and physics formula(internal spring force) are from the following references:
+Verlet integration
+https://en.wikipedia.org/wiki/Verlet_integration
+Cloth simulation project
+https://github.com/dayeol/clothsimulation/blob/master/CLOTH%20SIMULATION(FINAL).pdf
+Simulate Tearable Cloth and Ragdolls With Simple Verlet Integration
+https://gamedevelopment.tutsplus.com/tutorials/simulate-tearable-cloth-and-ragdolls-with-simple-verlet-integration--gamedev-519
+Cloth Simulation
+https://steven.codes/blog/cloth-simulation/
+*/
+
 #include "Cores/Core.h"
 #include "SimulationParams.h"
 #include "Math/Shape/Sphere.h"
+
+//#define USING_OPENMP
+
+#ifdef USING_OPENMP
+#include <omp.h>
+#endif // USING_OPENMP
+
 
 namespace ClothSim
 {
@@ -21,13 +40,11 @@ namespace ClothSim
 
 	glm::vec3 g_positionData[VC] = { glm::vec3(0) };
 
-#define FRICTION_COEFFICENT 0.1f
-#define TOUCH_DIST_THRESHOLD 1.f
-#define SPHERE_COLLISION_BIAS 1.1f
+
 	const glm::vec3 g_floorPlane = glm::vec3(0, 5, 0);
 	cSphere g_sphere(glm::vec3(0, 0, -150), 100.f);
-	const float inSphereDist = sqrt(pow(g_sphere.r(), 2) + pow(g_structRestLen / 2, 2));
-	bool g_bEnableClothSim = false;
+	
+	bool g_bEnableClothSim = true;
 	bool g_bDrawNodes = false;
 
 	void InitializeNeghbors()
@@ -104,15 +121,22 @@ namespace ClothSim
 		memcpy(g_vertexData + vertSIze * idx + stride, i_data, sizeof(float) * 2);
 	}
 
-	glm::vec3 glmWindForce = glm::vec3(0, 0, -10.f);
-	glm::vec3 windForce(glm::vec3 normal)
+	void HandleFirctionForSphere(int idx, const cSphere& i_sphere, glm::vec3& io_force, const glm::vec3& i_velocity)
 	{
-		glm::vec3 n = normal;
-		return glm::dot(n, glmWindForce) * glmWindForce;
+		glm::vec3 centerToP = g_particles[idx].P - i_sphere.c();
+		float dist = glm::length(centerToP);
+		float inSphereDist = sqrt(pow(i_sphere.r(), 2) + pow(g_structRestLen / 2, 2));
+		if (dist <= inSphereDist + FRICTION_BIAS)
+		{
+			HandleFriction(io_force, centerToP / dist, i_velocity);
+		}
 	}
 
-	void UpdateSprings(const float dt)
+	void UpdateSprings(const float dt, cSphere* const i_spheres, const int i_numOfSphere)
 	{
+#ifdef USING_OPENMP
+		#pragma omp parallel for
+#endif // DEBUG
 		for (int i = 0; i < VC; ++i)
 		{
 			const int r = i / R; // current row
@@ -141,6 +165,65 @@ namespace ClothSim
 
 				force += springForce(currentV, neiVel, g_particles[i].P, neiPosition, _neighbor.restLength, _neighbor.stiff, _neighbor.damp);
 			}
+
+			// Add gravity force
+			force += GRAVITY * MASS + GRAVITY_DAMPING * currentV;
+
+			// handle friction for spheres
+			{
+				// Big Sphere
+				HandleFirctionForSphere(i, g_sphere, force, currentV);
+				// Light spheres
+				for (int j = 0; j < i_numOfSphere; ++j)
+				{
+					HandleFirctionForSphere(i, i_spheres[j], force, currentV);
+				}
+			}
+			// Handle friction for floor
+			{
+				if (g_positionData[i].y <= g_floorPlane.y + FRICTION_BIAS)
+				{
+					HandleFriction(force, glm::vec3(0, 1, 0), currentV);
+				}
+			}
+			glm::vec3 a = glm::vec3(0); // a stands for acceleration
+			if (!g_particles[i].isFixed)
+			{
+				a = force / MASS;
+			}
+			// Verlet integration
+			// x(t + dt) = x(t) + v(t)·dt + a(t)·dt^2;
+			glm::vec3 nextPosition = g_particles[i].P + currentV * dt + a * dt * dt;
+
+			// Handle sphere collision
+			HandleSphereCollision(g_sphere, i, nextPosition);
+			for (int j = 0; j < i_numOfSphere; ++j)
+			{
+				HandleSphereCollision(i_spheres[j], i, nextPosition);
+			}
+
+			g_positionData[i] = nextPosition;
+		}
+
+		// update position info
+		for (int i = 0; i < VC; ++i)
+		{
+			g_particles[i].pP = g_particles[i].P;
+			if (!g_particles[i].isFixed && g_positionData[i].y > g_floorPlane.y)
+			{
+				g_particles[i].P = g_positionData[i];
+			}
+			// v(t) = (x(t)-x(t-dt)) / dt;
+			g_particles[i].V = (g_particles[i].P - g_particles[i].pP) / dt;
+
+			UpdateV3Data(i, &g_particles[i].P, 0);
+
+
+		}
+		for (int i = 0; i < VC; ++i)
+		{
+			const int r = i / R; // current row
+			const int c = i % R; // current Column
 
 			// calculate normal
 			glm::vec3 normal;
@@ -179,103 +262,13 @@ namespace ClothSim
 						normal += glm::normalize(glm::cross(bitangent, tangent));
 					}
 				}
+				normal = glm::normalize(normal);
 				UpdateV3Data(i, &normal, 5);
 				UpdateV3Data(i, &tangent, 8);
 				UpdateV3Data(i, &bitangent, 11);
 			}
-			normal = glm::normalize(normal);
-
-			// Add gravity force
-			force += GRAVITY * MASS + GRAVITY_DAMPING * currentV;
-
-			// handle friction for sphere
-			{
-				glm::vec3 centerToP = g_particles[i].P - g_sphere.c();
-				float dist = glm::length(centerToP);
-				if (dist <= inSphereDist)
-				{
-					HandleFriction(force, centerToP / dist, currentV);
-				}
-			}
-
-
-			// Verlet integration
-			glm::vec3 a = glm::vec3(0); // a stands for acceleration
-			if (!g_particles[i].isFixed)
-			{
-				a = force / MASS;
-			}
-			glm::vec3 nextPosition = g_particles[i].P + currentV * dt + a * dt * dt;
-
-			// Handle sphere collision
-			float nextPosToCenter_dist = glm::distance(nextPosition, g_sphere.c());
-			if (nextPosToCenter_dist < g_sphere.r())
-			{
-				HandleSphereCollision(g_sphere, i, nextPosition);
-			}
-
-			g_positionData[i] = nextPosition;
+			
 		}
-
-		// update position info
-		for (int i = 0; i < VC; ++i)
-		{
-			g_particles[i].pP = g_particles[i].P;
-			if (!g_particles[i].isFixed && g_positionData[i].y > g_floorPlane.y)
-			{
-				g_particles[i].P = g_positionData[i];
-			}
-			g_particles[i].V = (g_particles[i].P - g_particles[i].pP) / dt;
-
-			UpdateV3Data(i, &g_particles[i].P, 0);
-		}
-
-
-		// Inverse dynamic procedural
-		if (false)
-		{
-			for (int i = 0; i < VC; ++i)
-			{
-				glm::vec3 adjustedPos = g_particles[i].P;
-				if (!g_particles[i].isFixed)
-				{
-					const auto structUpIdx = g_particles[i].neighbor[Struct_Up].idx;
-					if (structUpIdx != NO_Neighbor)
-						fixStretchConstrain(structUpIdx, adjustedPos, g_structRestLen * 1.1f, 1.0f);
-
-					const auto structRightIdx = g_particles[i].neighbor[Struct_Right].idx;
-					if (structRightIdx != NO_Neighbor)
-						fixStretchConstrain(structRightIdx, adjustedPos, g_structRestLen * 1.1f, 2.0f);
-
-					const auto structLeftIdx = g_particles[i].neighbor[Struct_Left].idx;
-					if (structLeftIdx != NO_Neighbor)
-						fixStretchConstrain(structLeftIdx, adjustedPos, g_structRestLen * 1.1f, 2.0f);
-
-					const auto Shear0Idx = g_particles[i].neighbor[Shear_0].idx;
-					if (Shear0Idx != NO_Neighbor)
-						fixStretchConstrain(Shear0Idx, adjustedPos, g_shearRestLen * 1.2f, 1.0f);
-
-					const auto Shear1Idx = g_particles[i].neighbor[Shear_1].idx;
-					if (Shear1Idx != NO_Neighbor)
-						fixStretchConstrain(Shear1Idx, adjustedPos, g_shearRestLen * 1.2f, 1.0f);
-
-					g_positionData[i] = adjustedPos;
-				}
-			}
-
-			// update position info and velocity info
-			for (int i = 0; i < VC; ++i)
-			{
-				if (!g_particles[i].isFixed)
-				{
-					g_particles[i].P = g_positionData[i];
-					g_particles[i].V = (g_particles[i].P - g_particles[i].pP) / dt;
-					UpdateV3Data(i, &g_particles[i].P, 0);
-				}
-			}
-		}
-
-
 	}
 
 	void MoveFixedNode(const glm::vec3& i_deltaPosition)
@@ -315,11 +308,12 @@ namespace ClothSim
 	glm::vec3 springForce(glm::vec3 myVel, glm::vec3 neiVel, glm::vec3 myPosition, glm::vec3 neiPosition, float restLength, float stiffness, float damping)
 	{
 		glm::vec3 deltaP = myPosition - neiPosition;
+		glm::vec3 norm_dP = normalize(deltaP);
 		glm::vec3 deltaV = myVel - neiVel;
 		float dist = glm::length(deltaP);
 		float stiff = (restLength - dist) *stiffness;
-		float damp = damping * (dot(deltaV, deltaP) / dist);
-		return (stiff + damp) * normalize(deltaP);
+		float damp = damping * dot(deltaV, norm_dP);
+		return (stiff + damp) *norm_dP;
 	}
 
 	void fixStretchConstrain(const int vertexIdx, glm::vec3& io_adjustedPos, const float threshold, const float divider)
@@ -335,23 +329,10 @@ namespace ClothSim
 
 	void HandleSphereCollision(const cSphere& i_sph, int idx, glm::vec3& io_nextPos)
 	{
-
-		glm::vec3 rayOrigin = g_particles[idx].P;
-		glm::vec3 rayDir = io_nextPos - rayOrigin;
-		glm::vec3 rayDir_Norm = glm::normalize(rayDir);
-		float t1 = 0, t2 = 0; // t1 is smaller
-		if (eCollisionType::ECT_NoIntersect == i_sph.IntersectRay(rayOrigin, rayDir_Norm, t1, t2))
+		float nextPosToCenter_dist = glm::distance(io_nextPos, i_sph.c());
+		if (nextPosToCenter_dist < i_sph.r())
 		{
-			glm::vec3 interectionPoint = rayOrigin + t1 * rayDir_Norm;
-			float offsetDist = inSphereDist;
-			if (idx / CLOTH_RESOLUTION > 0)
-			{
-				float distToUpNode = glm::distance(g_particles[idx - CLOTH_RESOLUTION].P, interectionPoint);
-				offsetDist = sqrt(pow(g_sphere.r(), 2) + pow(distToUpNode / 2.f, 2));
-			}
-				
-			io_nextPos = interectionPoint + (offsetDist - g_sphere.r()) * glm::normalize(interectionPoint - g_sphere.c()) * SPHERE_COLLISION_BIAS;
-			//i_sph.c() + SPHERE_COLLISION_BIAS * (interectionPoint - i_sph.c());
+			io_nextPos = i_sph.c() + glm::normalize(io_nextPos - i_sph.c()) * i_sph.r();
 		}
 	}
 
@@ -363,12 +344,11 @@ namespace ClothSim
 
 		float fVertical = glm::dot(io_force, -fNorm);
 		float fHori = glm::dot(io_force, fTangent);
-		int frictionDir = (glm::dot(i_velocity, fTangent) > 0) ? 1 : -1;
-		// if the overall force is going down, calculate friction
+		// if there is vertical force going towards center of the sphere , calculate friction
 		if (fVertical > 0.0f)
 		{
-			float fFriction = fVertical * FRICTION_COEFFICENT;
-			io_force = (fHori + frictionDir * fFriction) * fTangent/* + i_velocity * -0.75f*/;
+			float fFrictionSize = fVertical * FRICTION_COEFFICENT;
+			io_force = glm::max((glm::max(fHori,0.0f) - fFrictionSize), 0.0f) * fTangent + i_velocity * FRICTION_DAMPING;
 		}
 
 	}

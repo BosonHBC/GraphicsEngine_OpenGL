@@ -5,7 +5,7 @@ namespace Graphics {
 
 	Assets::cAssetManager <cMesh> cMesh::s_manager;
 
-	bool cMesh::Load(const std::string& i_path, cMesh*& o_mesh, const EMeshType& i_meshType, std::vector<float>& i_vertices, std::vector<unsigned int>& i_indices)
+	bool cMesh::Load(const std::string& i_path, cMesh*& o_mesh, const EMeshType& i_meshType, std::vector<float>& i_vertices, std::vector<unsigned int>& i_indices, const glm::vec3& i_aabbMin, const glm::vec3& i_aabbMax)
 	{
 		auto result = true;
 
@@ -39,6 +39,7 @@ namespace Graphics {
 		
 		o_mesh = _mesh;
 		o_mesh->m_meshType = i_meshType;
+		o_mesh->CreateAABB(i_aabbMin, i_aabbMax);
 
 		//TODO: Loading information succeed!
 		printf("Succeed! Loading mesh: %s. Vertices: %d, Indices: %d \n", i_path.c_str(), i_vertices.size(), i_indices.size());
@@ -48,6 +49,7 @@ namespace Graphics {
 
 	cMesh::cMesh()
 	{
+		m_aabb = cAABB(glm::vec3(0), glm::vec3(0));
 		m_meshType = EMT_Mesh;
 		m_vao = 0;
 		m_vbo = 0;
@@ -130,6 +132,7 @@ namespace Graphics {
 
 	void cMesh::CreatePoint(GLfloat* i_vertices, GLuint i_numOfVertices)
 	{
+		
 		m_indexCount = i_numOfVertices / 3; // this record how many points in this vertices arrays
 		// Use a Vertex Array Object
 		glGenVertexArrays(1, &m_vao);
@@ -183,6 +186,17 @@ namespace Graphics {
 
 		// clear VAO
 		glBindVertexArray(0);
+	}
+
+	void cMesh::CreateAABB(const glm::vec3& i_min, const glm::vec3& i_max)
+	{
+		m_aabb.b = i_min;
+		m_aabb.t = i_max;
+	}
+
+	bool cMesh::IntersectWithSphere(const cSphere& i_transformedSphere)
+	{
+		return m_aabb.Intersect(&i_transformedSphere);
 	}
 
 	void cMesh::CleanUp()

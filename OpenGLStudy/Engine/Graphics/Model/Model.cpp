@@ -33,6 +33,7 @@ namespace Graphics {
 			| aiProcess_GenSmoothNormals
 			| aiProcess_JoinIdenticalVertices
 			| aiProcess_CalcTangentSpace // this operation will ask assimp calculate the tangent space for us automatically
+			| aiProcess_GenBoundingBoxes
 		);
 
 		if (!_scene) {
@@ -140,6 +141,17 @@ namespace Graphics {
 		m_meshList.~vector();
 	}
 
+	bool cModel::IntersectWithSphere(const cSphere& i_transformedSphere)
+	{
+		for (auto it : m_meshList)
+		{
+			cMesh* _mesh = cMesh::s_manager.Get(it);
+			if (_mesh && _mesh->IntersectWithSphere(i_transformedSphere))
+				return true;
+		}
+		return false;
+	}
+
 	Graphics::cMaterial* cModel::GetMaterialAt(GLuint i_idx /*= 0*/)
 	{
 		if (i_idx < m_materialList.size()) {
@@ -241,9 +253,13 @@ namespace Graphics {
 				_indices.push_back(_face->mIndices[j]);
 			}
 		}
+		glm::vec3 _aabbMin, _aabbMax;
+		_aabbMin.x = i_mesh->mAABB.mMin.x; _aabbMin.y = i_mesh->mAABB.mMin.y; _aabbMin.z = i_mesh->mAABB.mMin.z;
+		_aabbMax.x = i_mesh->mAABB.mMax.x; _aabbMax.y = i_mesh->mAABB.mMax.y; _aabbMax.z = i_mesh->mAABB.mMax.z;
+
 		cMesh::HANDLE _newMeshHandle;
 		std::string meshKey = std::string(i_path).append("_" + std::to_string(m_meshList.size()));
-		if (cMesh::s_manager.Load(meshKey, _newMeshHandle, EMT_Mesh, _vertices, _indices))
+		if (cMesh::s_manager.Load(meshKey, _newMeshHandle, EMT_Mesh, _vertices, _indices, _aabbMin, _aabbMax))
 		{
 			// Stored new mesh to the list and store its index to material
 			m_meshList.push_back(_newMeshHandle);

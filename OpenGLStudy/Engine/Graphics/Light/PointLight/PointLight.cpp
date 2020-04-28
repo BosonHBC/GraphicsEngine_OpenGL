@@ -7,7 +7,7 @@ namespace Graphics {
 	cPointLight::cPointLight(Color i_color, const glm::vec3 & i_position, GLfloat i_range) :
 		m_range(i_range), cGenLight(i_color)
 	{
-		Transform.SetTransform(i_position, glm::quat(1, 0, 0, 0), glm::vec3(1, 1, 1));
+		Transform.SetTransform(i_position, glm::quat(1, 0, 0, 0), glm::vec3(i_range, i_range, i_range));
 	}
 	void cPointLight::Illuminate()
 	{
