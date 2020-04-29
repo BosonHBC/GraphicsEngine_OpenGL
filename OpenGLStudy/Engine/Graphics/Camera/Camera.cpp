@@ -2,6 +2,8 @@
 #include "glfw/glfw3.h"
 #include "Application/Window/WindowInput.h"
 #include "Cores/Core.h"
+#include "Application/imgui/imgui.h"
+
 void cCamera::Update()
 {
 	// Clamp the domain of pitch and yaw
@@ -42,19 +44,19 @@ cCamera::~cCamera()
 
 void cCamera::CameraControl(sWindowInput* const i_windowInput, float i_dt)
 {
-	if (i_windowInput->IsKeyDown(GLFW_KEY_W))
+	if (ImGui::IsKeyDown(GLFW_KEY_W))
 	{
 		Transform.Translate(Transform.Forward() * m_translationSpeed * i_dt);
 	}
-	if (i_windowInput->IsKeyDown(GLFW_KEY_S))
+	if (ImGui::IsKeyDown(GLFW_KEY_S))
 	{
 		Transform.Translate(-Transform.Forward() * m_translationSpeed * i_dt);
 	}
-	if (i_windowInput->IsKeyDown(GLFW_KEY_A))
+	if (ImGui::IsKeyDown(GLFW_KEY_A))
 	{
 		Transform.Translate(Transform.Right() * m_translationSpeed * i_dt);
 	}
-	if (i_windowInput->IsKeyDown(GLFW_KEY_D))
+	if (ImGui::IsKeyDown(GLFW_KEY_D))
 	{
 		Transform.Translate(-Transform.Right() * m_translationSpeed * i_dt);
 	}

@@ -22,6 +22,9 @@ namespace Application {
 		virtual bool PostInitialization();
 		virtual void CleanUp();
 		virtual void Render() {};
+		
+		void RenderEditorGUI();
+		virtual void EditorGUI() {};
 
 		// Real time update, call as much as possible
 		virtual void Tick(float second_since_lastFrame) {}

@@ -30,6 +30,19 @@ namespace Graphics
 	extern cMesh::HANDLE g_cloth;
 	extern cTexture::HANDLE g_ssaoNoiseTexture;
 	extern cMatPBRMR g_clothMat;
+	const std::map<uint8_t, const char*> g_renderModeNameMap =
+	{
+		std::pair<ERenderMode, const char*>(ERM_ForwardShading, "ForwardShading"),
+		std::pair<ERenderMode, const char*>(ERM_DeferredShading, "DeferredShading"),
+		std::pair<ERenderMode, const char*>(ERM_Deferred_Albede, "Albedo"),
+		std::pair<ERenderMode, const char*>(ERM_Deferred_Metallic, "Metallic"),
+		std::pair<ERenderMode, const char*>(ERM_Deferred_Roughness, "Roughness"),
+		std::pair<ERenderMode, const char*>(ERM_Deferred_Normal, "Normal"),
+		std::pair<ERenderMode, const char*>(ERM_Deferred_IOR, "IOR"),
+		std::pair<ERenderMode, const char*>(ERM_Deferred_Depth, "Depth"),
+		std::pair<ERenderMode, const char*>(ERM_Deferred_WorldPos, "WorldPosition"),
+		std::pair<ERenderMode, const char*>(ERM_SSAO, "SSAO")
+	};
 	bool g_bRenderOmniShaodowMap = false;
 	// clear color
 	Color s_clearColor;
@@ -68,7 +81,7 @@ namespace Graphics
 			float ratio = 1.0 - (float)(s_dataRenderingByGraphicThread->s_pointLights[i].ImportanceOrder) / s_dataRenderingByGraphicThread->s_pointLights.size();
 			cMesh* _Point = cMesh::s_manager.Get(s_point);
 			s_currentEffect->SetFloat("radius", s_dataRenderingByGraphicThread->s_pointLights[i].Transform.Scale().x / 20.f);
-			glm::vec3 sphereColor = glm::vec3(1.0f, 0.0f, 0.0f) * pow( ratio, 5);
+			glm::vec3 sphereColor = glm::vec3(1.0f, 0.0f, 0.0f) * pow(ratio, 5);
 
 			s_currentEffect->SetVec3("color", sphereColor);
 			g_uniformBufferMap[UBT_Drawcall].Update(&UniformBufferFormats::sDrawCall(s_dataRenderingByGraphicThread->s_pointLights[i].Transform.M(), s_dataRenderingByGraphicThread->s_pointLights[i].Transform.TranspostInverse()));
@@ -80,7 +93,7 @@ namespace Graphics
 	bool rCtrlPressed = false;
 	void RenderOmniShadowMap()
 	{
-		
+
 		sWindowInput* _windowInput = Application::GetCurrentApplication()->GetCurrentWindow()->GetWindowInput();
 		if (!rCtrlPressed && _windowInput->IsKeyDown(GLFW_KEY_RIGHT_CONTROL))
 		{
@@ -96,11 +109,11 @@ namespace Graphics
 		{
 			s_currentEffect = GetEffectByKey(EET_CubemapDisplayer);
 			s_currentEffect->UseEffect();
-		
+
 			s_currentEffect->SetInteger("cubemapTex", 0);
 			g_omniShadowMaps[i].Read(GL_TEXTURE0);
 
-			cTransform tempTr(glm::vec3(-300, 200, 300 - 150 * i ), glm::quat(1,0,0,0), glm::vec3(5,5, 5));
+			cTransform tempTr(glm::vec3(-300, 200, 300 - 150 * i), glm::quat(1, 0, 0, 0), glm::vec3(5, 5, 5));
 			RenderCube(s_dataRenderingByGraphicThread->s_renderPasses[3].FrameData, UniformBufferFormats::sDrawCall(tempTr.M(), tempTr.TranspostInverse()));
 
 			s_currentEffect->UnUseEffect();
@@ -275,23 +288,23 @@ namespace Graphics
 
 			// write buffer to the texture
 			sRect subRect = g_subRectRefs[it->ResolutionIdx()];
-		
+
 			g_omniShadowMaps[it->ShadowMapIdx()].WriteSubArea(
 				[&] {
 					glScissor(subRect.Min.x, subRect.Min.y, subRect.w(), subRect.h()); // set this up with the same inputs as the glViewport function
 					glClear(GL_DEPTH_BUFFER_BIT);
-			
+
 					// loop through every single model
 					auto& renderMap = s_dataRenderingByGraphicThread->s_renderPasses[s_currentRenderPass].ModelToTransform_map;
 					for (auto it2 = renderMap.begin(); it2 != renderMap.end(); ++it2)
 					{
 						// 1. Transform the sphere to the mesh spaced coordinate, check if they have overlaps
 						glm::mat4 _sphereToMeshMatrix = it2->second.MInv() * it->Transform.M();
-						glm::vec3 tramsformedPosition = _sphereToMeshMatrix * glm::vec4(0,0,0,1);
+						glm::vec3 tramsformedPosition = _sphereToMeshMatrix * glm::vec4(0, 0, 0, 1);
 						float transformedRadius(_sphereToMeshMatrix[0][0]);
 						cModel* _model = cModel::s_manager.Get(it2->first);
 						// if there is no overlap, don't need to draw
-						if(!_model->IntersectWithSphere(cSphere(tramsformedPosition, transformedRadius))) continue;
+						if (!_model->IntersectWithSphere(cSphere(tramsformedPosition, transformedRadius))) continue;
 
 						// 2. Update draw call data
 						g_uniformBufferMap[UBT_Drawcall].Update(&UniformBufferFormats::sDrawCall(it2->second.M(), it2->second.TranspostInverse()));
@@ -510,7 +523,7 @@ namespace Graphics
 				RenderOmniShadowMap();
 			}
 		);
-		
+
 		HDR_Pass();
 	}
 

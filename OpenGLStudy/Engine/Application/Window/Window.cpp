@@ -153,7 +153,6 @@ void cWindow::CreateCallbacks()
 	// According to glfw website: https://www.glfw.org/docs/latest/group__keys.html
 	// Supported key numbers are 350+, so I set it to 360
 	m_windowInput = new sWindowInput(GLFW_MAX_KEY_COUNT);
-	glfwSetKeyCallback(m_glfwWindow, &cWindow::HandleKeys);
 	glfwSetCursorPosCallback(m_glfwWindow, &cWindow::HandleMouse);
 	glfwSetMouseButtonCallback(m_glfwWindow, &cWindow::HandleMouseButton);
 	glfwSetWindowSizeCallback(m_glfwWindow, &cWindow::OnWindowSizeChanged);
@@ -170,15 +169,6 @@ void cWindow::HandleKeys(GLFWwindow* i_window, int i_key, int i_code, int i_acti
 		glfwSetWindowShouldClose(i_window, GL_TRUE);
 	}
 
-	if (i_key >= 0 && i_key <= GLFW_MAX_KEY_COUNT) {
-
-		if (i_action == GLFW_PRESS) {
-			_input->SetKey(i_key, true);
-		}
-		else if (i_action == GLFW_RELEASE) {
-			_input->SetKey(i_key, false);
-		}
-	}
 }
 
 void cWindow::HandleMouse(GLFWwindow* i_window, double i_xPos, double i_yPos)

@@ -2,7 +2,7 @@
 #include "Engine/Application/Window/WindowInput.h"
 #include "glfw/glfw3.h"
 #include "stdio.h"
-
+#include "Application/imgui/imgui.h"
 cEditorCamera::cEditorCamera(const cEditorCamera& i_other) 
 	: cCamera(i_other)
 {
@@ -22,6 +22,7 @@ void cEditorCamera::CameraControl(sWindowInput* const i_windowInput, float i_dt)
 
 void cEditorCamera::MouseControl(sWindowInput* const i_windowInput, float i_dt)
 {
+	if (ImGui::GetIO().WantCaptureMouse) return;
 	if (i_windowInput->IsButtonDown(GLFW_MOUSE_BUTTON_LEFT)) {
 
 		//m_yaw += -i_windowInput->DX() * m_turnSpeed * i_dt;

@@ -4,9 +4,11 @@
 #include "Engine/Application/Window/Window.h"
 #include "Time/Time.h"
 #include "Graphics/Graphics.h"
+#include "Application/imgui/imgui.h"
+#include "Application/imgui/imgui_impl_glfw.h"
+#include "Application/imgui/imgui_impl_opengl3.h"
 
 namespace Application {
-
 
 	bool cApplication::Initialize(GLuint i_width, GLuint i_height, const char* i_windowName)
 	{
@@ -139,6 +141,22 @@ namespace Application {
 	}
 
 	
+	void cApplication::RenderEditorGUI()
+	{
+
+			ImGui_ImplOpenGL3_NewFrame();
+			ImGui_ImplGlfw_NewFrame();
+			ImGui::NewFrame();
+			// 2. Show a simple window that we create ourselves. We use a Begin/End pair to created a named window.
+			{
+				EditorGUI();
+			}
+			ImGui::Render();
+
+			ImGui_ImplOpenGL3_RenderDrawData(ImGui::GetDrawData());
+
+	}
+
 	cApplication* s_currentApplication = nullptr;
 
 
