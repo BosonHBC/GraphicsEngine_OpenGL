@@ -12,7 +12,8 @@
 #include "Assets/PathProcessor.h"
 
 namespace Graphics {
-	uint32_t cModel::s_allModelCount = 0;
+	// 0 should be background, or cubemap
+	uint32_t cModel::s_allModelCount = 1;
 
 	bool cModel::LoadModel(const char* i_path)
 	{
