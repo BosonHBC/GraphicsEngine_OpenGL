@@ -870,7 +870,8 @@ namespace Graphics {
 	const Graphics::sDataReturnToApplicationThread& GetDataFromRenderThread()
 	{
 		std::unique_lock<std::mutex> lck(Application::GetCurrentApplication()->GetApplicationMutex());
-		g_whenDataReturnToApplicationThreadHasSwaped.wait(lck);
+		constexpr unsigned int timeToWait_inMilliseconds = 10;
+		g_whenDataReturnToApplicationThreadHasSwaped.wait_for(lck, std::chrono::milliseconds(timeToWait_inMilliseconds));
 		return *g_dataUsedByApplicationThread;
 	}
 
