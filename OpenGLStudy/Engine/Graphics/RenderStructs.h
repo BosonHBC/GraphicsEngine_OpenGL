@@ -53,6 +53,11 @@ namespace Graphics{
 #endif // ENABLE_CLOTH_SIM
 	};
 
+	struct sDataReturnToApplicationThread
+	{
+		uint32_t g_selectionID;
+	};
+
 	// Primitive types
 	enum EPrimitiveType : uint8_t
 	{

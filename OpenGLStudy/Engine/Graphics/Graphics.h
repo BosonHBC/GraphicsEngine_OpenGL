@@ -73,4 +73,7 @@ namespace Graphics {
 	cFrameBuffer* GetOmniShadowMapAt(int i_idx);
 	/** Predefined model and textures*/
 	const cModel& GetPrimitive(const EPrimitiveType& i_primitiveType);
+
+	/** Return data related*/
+	const sDataReturnToApplicationThread& GetDataFromRenderThread();
 }

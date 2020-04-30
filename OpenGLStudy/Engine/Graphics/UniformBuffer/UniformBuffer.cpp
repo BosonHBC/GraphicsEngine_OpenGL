@@ -177,7 +177,7 @@ namespace Graphics {
 
 	bool cUniformBuffer::CleanUp()
 	{
-		if (m_bufferID != 0)
+		if (m_bufferID != 0 && m_bufferID != -1)
 		{
 			glDeleteBuffers(1, &m_bufferID);
 			const auto errorCode = glGetError();

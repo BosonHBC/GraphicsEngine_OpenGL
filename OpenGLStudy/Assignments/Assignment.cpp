@@ -320,6 +320,12 @@ void Assignment::Tick(float second_since_lastFrame)
 		printf("Current Point Light Count: %d\n", m_createdPLightCount);
 	}
 
+	if (ImGui::IsMouseClicked(0))
+	{
+		auto dataFromRenderThread = Graphics::GetDataFromRenderThread();
+		printf("Random Number: %d\n", dataFromRenderThread.g_selectionID);
+	}
+
 	for (int i = 0; i < m_renderingTeapotCount; ++i)
 	{
 		m_teapots[i]->Transform.Update();
