@@ -47,10 +47,13 @@ namespace Graphics {
 	cModel s_arrowHandle;
 	cModel s_quadHandle;
 	cMesh::HANDLE s_point;
+#ifdef ENABLE_CLOTH_SIM
 	cMesh::HANDLE g_cloth;
+	cMatPBRMR g_clothMat;
+#endif // ENABLE_CLOTH_SIM
 	cTexture::HANDLE s_spruitSunRise_HDR;
 	cTexture::HANDLE g_ssaoNoiseTexture;
-	cMatPBRMR g_clothMat;
+
 	// Lighting data
 	UniformBufferFormats::sLighting s_globalLightingData;
 	UniformBufferFormats::sSSAO g_ssaoData;
@@ -78,8 +81,8 @@ namespace Graphics {
 	// Lighting
 	// ------------------------------------------------------------------------------------------------------------------------------------
 	// There are only one ambient and directional light
-	cAmbientLight* s_ambientLight;
-	cDirectionalLight* s_directionalLight;
+	cAmbientLight* g_ambientLight;
+	cDirectionalLight* g_directionalLight;
 	std::vector<cPointLight*> s_pointLight_list;
 	std::vector<cSpotLight*> s_spotLight_list;
 
@@ -557,6 +560,7 @@ namespace Graphics {
 			g_ssaoData.radius = 20.f;
 		}
 
+#ifdef ENABLE_CLOTH_SIM
 		// Initialize Cloth simulation progress
 		{
 			// Set up initial position for cloths
@@ -588,6 +592,7 @@ namespace Graphics {
 				return result;
 			}
 		}
+#endif // ENABLE_CLOTH_SIM
 		return result;
 	}
 
@@ -668,11 +673,13 @@ namespace Graphics {
 		s_whenDataHasBeenSwappedInRenderThread.notify_one();
 
 		// Update cubemap weights before rendering, actually, this step should be done at the application thread
-		EnvironmentCaptureManager::UpdatePointOfInterest(s_dataRenderingByGraphicThread->s_renderPasses[3].FrameData.GetViewPosition());
+		EnvironmentCaptureManager::UpdatePointOfInterest(s_dataRenderingByGraphicThread->g_renderPasses[3].FrameData.GetViewPosition());
 		g_uniformBufferMap[UBT_ClipPlane].Update(&s_dataRenderingByGraphicThread->s_ClipPlane);
 		g_uniformBufferMap[UBT_PostProcessing].Update(&s_dataRenderingByGraphicThread->s_PostProcessing);
 		g_uniformBufferMap[UBT_SSAO].Update(&g_ssaoData);
+#ifdef ENABLE_CLOTH_SIM
 		cMesh::s_manager.Get(g_cloth)->UpdateBufferData(s_dataRenderingByGraphicThread->clothVertexData, ClothSim::VC * 14);
+#endif // ENABLE_CLOTH_SIM
 		/** 2. Start to render pass one by one */
 		if (s_dataRenderingByGraphicThread->g_renderMode == ERM_ForwardShading)
 		{
@@ -699,18 +706,20 @@ namespace Graphics {
 
 	void SubmitLightingData(const std::vector<cPointLight>& i_pointLights, const std::vector<cSpotLight>& i_spotLights, const cAmbientLight& i_ambientLight, const cDirectionalLight& i_directionalLight)
 	{
-		s_dataSubmittedByApplicationThread->s_pointLights = i_pointLights;
-		s_dataSubmittedByApplicationThread->s_spotLights = i_spotLights;
-		s_dataSubmittedByApplicationThread->s_directionalLight = i_directionalLight;
-		s_dataSubmittedByApplicationThread->s_ambientLight = i_ambientLight;
+		s_dataSubmittedByApplicationThread->g_pointLights = i_pointLights;
+		s_dataSubmittedByApplicationThread->g_spotLights = i_spotLights;
+		s_dataSubmittedByApplicationThread->g_directionalLight = i_directionalLight;
+		s_dataSubmittedByApplicationThread->g_ambientLight = i_ambientLight;
 
 	}
 
+#ifdef ENABLE_CLOTH_SIM
 	void SubmitParticleData()
 	{
 		memcpy(s_dataSubmittedByApplicationThread->particles, ClothSim::g_positionData, sizeof(glm::vec3) * ClothSim::VC);
 		memcpy(s_dataSubmittedByApplicationThread->clothVertexData, ClothSim::GetVertexData(), sizeof(float) * ClothSim::VC * 14);
 	}
+#endif // ENABLE_CLOTH_SIM
 
 	void SubmitGraphicSettings(const ERenderMode& i_renderMode)
 	{
@@ -723,7 +732,7 @@ namespace Graphics {
 		inComingPasses.FrameData = i_frameData;
 		inComingPasses.ModelToTransform_map = i_modelToTransform_map;
 		inComingPasses.RenderPassFunction = func_ptr;
-		s_dataSubmittedByApplicationThread->s_renderPasses.push_back(inComingPasses);
+		s_dataSubmittedByApplicationThread->g_renderPasses.push_back(inComingPasses);
 	}
 
 	void SetCurrentPass(int i_currentPass)
@@ -734,7 +743,7 @@ namespace Graphics {
 	void RenderScene(cEffect* const i_effect, GLenum i_drawMode /*= GL_TRIANGLES*/)
 	{
 		// loop through every single model
-		auto& renderMap = s_dataRenderingByGraphicThread->s_renderPasses[s_currentRenderPass].ModelToTransform_map;
+		auto& renderMap = s_dataRenderingByGraphicThread->g_renderPasses[s_currentRenderPass].ModelToTransform_map;
 		for (auto it = renderMap.begin(); it != renderMap.end(); ++it)
 		{
 			// 1. Update draw call data
@@ -764,8 +773,10 @@ namespace Graphics {
 		cTexture::s_manager.Release(s_spruitSunRise_HDR);
 		cTexture::s_manager.Release(g_ssaoNoiseTexture);
 		cMesh::s_manager.Release(s_point);
+#ifdef ENABLE_CLOTH_SIM
 		cMesh::s_manager.Release(g_cloth);
 		g_clothMat.CleanUp();
+#endif // ENABLE_CLOTH_SIM
 		// Clean up effect
 		for (auto it = s_KeyToEffect_map.begin(); it != s_KeyToEffect_map.end(); ++it)
 			safe_delete(it->second);
@@ -783,12 +794,12 @@ namespace Graphics {
 		s_spotLight_list.clear();
 
 		// Clean up ambient light
-		if (s_ambientLight)
-			s_ambientLight->CleanUpShadowMap();
-		safe_delete(s_ambientLight);
-		if (s_directionalLight)
-			s_directionalLight->CleanUpShadowMap();
-		safe_delete(s_directionalLight);
+		if (g_ambientLight)
+			g_ambientLight->CleanUpShadowMap();
+		safe_delete(g_ambientLight);
+		if (g_directionalLight)
+			g_directionalLight->CleanUpShadowMap();
+		safe_delete(g_directionalLight);
 		for (int i = 0; i < OMNI_SHADOW_MAP_COUNT; ++i)
 		{
 			g_omniShadowMaps[i].CleanUp();
@@ -887,13 +898,13 @@ namespace Graphics {
 	{
 		auto result = true;
 
-		if (!(result = (s_ambientLight == nullptr))) {
+		if (!(result = (g_ambientLight == nullptr))) {
 			printf("Can not create duplicated ambient light.\n");
 			return result;
 		}
-		s_ambientLight = new  cAmbientLight(i_color);
-		s_ambientLight->SetupLight(0, 0);
-		o_ambientLight = s_ambientLight;
+		g_ambientLight = new  cAmbientLight(i_color);
+		g_ambientLight->SetupLight(0, 0);
+		o_ambientLight = g_ambientLight;
 		return result;
 	}
 
@@ -929,7 +940,7 @@ namespace Graphics {
 		newDirectionalLight->CreateShadowMap(2048, 2048);
 
 		o_directionalLight = newDirectionalLight;
-		s_directionalLight = newDirectionalLight;
+		g_directionalLight = newDirectionalLight;
 		return result;
 	}
 
@@ -956,8 +967,8 @@ namespace Graphics {
 
 	void ClearApplicationThreadData()
 	{
-		s_dataSubmittedByApplicationThread->s_renderPasses.clear();
-		s_dataSubmittedByApplicationThread->s_pointLights.clear();
-		s_dataSubmittedByApplicationThread->s_spotLights.clear();
+		s_dataSubmittedByApplicationThread->g_renderPasses.clear();
+		s_dataSubmittedByApplicationThread->g_pointLights.clear();
+		s_dataSubmittedByApplicationThread->g_spotLights.clear();
 	}
 }

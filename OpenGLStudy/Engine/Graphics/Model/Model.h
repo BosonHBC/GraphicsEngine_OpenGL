@@ -13,10 +13,10 @@ namespace Graphics {
 	class cModel
 	{
 	public:
+		static uint32_t s_allModelCount;
 		cModel() { m_meshList.reserve(1); m_materialList.reserve(1); }
 		cModel(const std::string& i_path);
-		cModel(const cModel& i_other) : m_meshList(i_other.m_meshList), m_materialList(i_other.m_materialList)
-		{}
+		cModel(const cModel& i_other) : m_meshList(i_other.m_meshList), m_materialList(i_other.m_materialList) { }
 		cModel& operator = (const cModel& i_rhs)
 		{
 			m_meshList = i_rhs.m_meshList;
@@ -56,6 +56,8 @@ namespace Graphics {
 
 		// actual loading function
 		bool LoadModel(const char* i_path);
+
+		uint32_t m_ModelID = -1;
 	};
 
 

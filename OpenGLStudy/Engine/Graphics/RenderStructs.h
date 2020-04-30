@@ -39,15 +39,18 @@ namespace Graphics{
 		ERenderMode g_renderMode = ERM_ForwardShading;
 		UniformBufferFormats::sClipPlane s_ClipPlane;
 		UniformBufferFormats::sPostProcessing s_PostProcessing;
-		std::vector<sPass> s_renderPasses;
+		std::vector<sPass> g_renderPasses;
 		// Lighting data
-		std::vector<cPointLight> s_pointLights;
-		std::vector<cSpotLight> s_spotLights;
-		cAmbientLight s_ambientLight;
-		cDirectionalLight s_directionalLight;
+		std::vector<cPointLight> g_pointLights;
+		std::vector<cSpotLight> g_spotLights;
+		cAmbientLight g_ambientLight;
+		cDirectionalLight g_directionalLight;
+
+#ifdef ENABLE_CLOTH_SIM
 		// for simulation specifically
 		glm::vec3 particles[ClothSim::VC];
 		float clothVertexData[ClothSim::VC * 14];
+#endif // ENABLE_CLOTH_SIM
 	};
 
 	// Primitive types

@@ -152,8 +152,9 @@ void Assignment::SubmitDataToBeRender(const float i_seconds_elapsedSinceLastLoop
 	// Submit geometry data
 	SubmitSceneData(&_frameData_Camera);
 
-	if (ClothSim::g_bEnableClothSim)
+#ifdef ENABLE_CLOTH_SIM
 		Graphics::SubmitParticleData();
+#endif // ENABLE_CLOTH_SIM
 	// Gizmos
 	{
 		// Transform Gizmo
@@ -282,6 +283,7 @@ void Assignment::Tick(float second_since_lastFrame)
 		}
 
 	}
+#ifdef ENABLE_CLOTH_SIM
 	// ClothSim
 	{
 		float nodeMoveSpeed = 50.f;
@@ -310,6 +312,7 @@ void Assignment::Tick(float second_since_lastFrame)
 			ClothSim::ScaleFixedNode(glm::vec3(1, 0, 0) *nodeMoveSpeed * second_since_lastFrame);
 		}
 	}
+#endif // ENABLE_CLOTH_SIM
 
 	if (ImGui::IsKeyPressed(GLFW_KEY_G))
 	{
@@ -334,16 +337,15 @@ void Assignment::Tick(float second_since_lastFrame)
 	if (spLight2)
 		spLight2->Transform.Update();
 
-
-	if (ClothSim::g_bEnableClothSim)
-	{
+#ifdef ENABLE_CLOTH_SIM
 		for (int i = 0; i < m_createdPLightCount; ++i)
 		{
 			m_collisionSpheres[i].SetCenter(m_pLights[i]->Transform.Position());
 			m_collisionSpheres[i].SetRadius(m_pLights[i]->Transform.Scale().x / 8.f);
 		}
 		ClothSim::UpdateSprings(0.05f, m_collisionSpheres, m_createdPLightCount);
-	}
+#endif // ENABLE_CLOTH_SIM
+	
 }
 
 void Assignment::SubmitLightingData()
@@ -387,8 +389,9 @@ void Assignment::SubmitSceneData(Graphics::UniformBufferFormats::sFrame* const i
 			_renderingMap.push_back({ m_teapots[i]->GetModelHandle(), m_teapots[i]->Transform });
 		}
 
-		if (ClothSim::g_bEnableClothSim)
-			_renderingMap.push_back({ m_collisionSphere->GetModelHandle(), m_collisionSphere->Transform });
+#ifdef ENABLE_CLOTH_SIM
+		_renderingMap.push_back({ m_collisionSphere->GetModelHandle(), m_collisionSphere->Transform });
+#endif // ENABLE_CLOTH_SIM
 
 		Graphics::SubmitDataToBeRendered(*i_frameData, _renderingMap, &Graphics::PBR_Pass);
 	}
@@ -414,8 +417,10 @@ void Assignment::SubmitSceneDataForEnvironmentCapture(Graphics::UniformBufferFor
 		{
 			_renderingMap.push_back({ m_teapots[i]->GetModelHandle(), m_teapots[i]->Transform });
 		}
-		if (ClothSim::g_bEnableClothSim)
-			_renderingMap.push_back({ m_collisionSphere->GetModelHandle(), m_collisionSphere->Transform });
+
+#ifdef ENABLE_CLOTH_SIM
+		_renderingMap.push_back({ m_collisionSphere->GetModelHandle(), m_collisionSphere->Transform });
+#endif // ENABLE_CLOTH_SIM
 
 		Graphics::SubmitDataToBeRendered(*i_frameData, _renderingMap, &Graphics::PBR_Pass);
 	}
@@ -440,8 +445,11 @@ void Assignment::SubmitShadowData()
 	}
 	_renderingMap.push_back({ m_spaceHolder->GetModelHandle(), m_spaceHolder->Transform });
 
-	if (ClothSim::g_bEnableClothSim)
-		_renderingMap.push_back({ m_collisionSphere->GetModelHandle(), m_collisionSphere->Transform });
+#ifdef ENABLE_CLOTH_SIM
+	_renderingMap.push_back({ m_collisionSphere->GetModelHandle(), m_collisionSphere->Transform });
+#endif //  ENABLE_CLOTH_SIM
+
+
 
 	{// Spot light shadow map pass
 		Graphics::SubmitDataToBeRendered(Graphics::UniformBufferFormats::sFrame(), _renderingMap, &Graphics::SpotLightShadowMap_Pass);
@@ -481,7 +489,7 @@ void Assignment::EditorGUI()
 	ImGui::End();
 
 	ImGui::Begin("Control");
-	const Graphics::ERenderMode rendermodes[] = {Graphics::ERM_ForwardShading, Graphics::ERM_DeferredShading, Graphics::ERM_Deferred_Albede, Graphics::ERM_Deferred_Metallic, Graphics::ERM_Deferred_Roughness, 
+	const Graphics::ERenderMode rendermodes[] = { Graphics::ERM_ForwardShading, Graphics::ERM_DeferredShading, Graphics::ERM_Deferred_Albede, Graphics::ERM_Deferred_Metallic, Graphics::ERM_Deferred_Roughness,
 		Graphics::ERM_Deferred_Normal, Graphics::ERM_Deferred_Depth, Graphics::ERM_SSAO };
 	static bool toggles[] = { false, true, false, false, false, false, false, false };
 
@@ -502,9 +510,9 @@ void Assignment::EditorGUI()
 	}
 
 
-	if(ImGui::DragFloat("Ambient", &m_ambientIntensity,0.1f, 0.0f, 10.0f))
+	if (ImGui::DragFloat("Ambient", &m_ambientIntensity, 0.1f, 0.0f, 10.0f))
 		aLight->SetColor(Color(0.1f, 0.1f, 0.1f) * m_ambientIntensity);
-	if(ImGui::DragFloat("Directional", &m_directionalIntensity, 0.1f, 0.0f, 3.0f))
+	if (ImGui::DragFloat("Directional", &m_directionalIntensity, 0.1f, 0.0f, 3.0f))
 		dLight->SetColor(Color(0.6f, 0.6f, 0.5f) * m_directionalIntensity);
 	ImGui::DragFloat("Exposure", &m_exposureOffset, 0.1f, 0.0001f, 50.0f);
 	if (ImGui::Button("Reset"))
@@ -527,5 +535,7 @@ void Assignment::CleanUp()
 	}
 	safe_delete(m_cubemap);
 	safe_delete(m_spaceHolder);
+#ifdef ENABLE_CLOTH_SIM
 	ClothSim::CleanUpData();
+#endif
 }

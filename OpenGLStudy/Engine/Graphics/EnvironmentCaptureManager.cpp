@@ -140,9 +140,9 @@ namespace Graphics
 					{
 						int _currentPass = i;
 						Graphics::SetCurrentPass(_currentPass);
-						_uniformBuffer_frame->Update(&i_renderThreadData->s_renderPasses[_currentPass].FrameData);
+						_uniformBuffer_frame->Update(&i_renderThreadData->g_renderPasses[_currentPass].FrameData);
 						// Execute pass function
-						i_renderThreadData->s_renderPasses[_currentPass].RenderPassFunction();
+						i_renderThreadData->g_renderPasses[_currentPass].RenderPassFunction();
 					}
 				}
 
@@ -150,7 +150,7 @@ namespace Graphics
 				{
 					g_CaptureProbesList[k].EnvironmentProbe.StartCapture(
 						[&] {
-							GLuint passesPerFace = static_cast<GLuint>((i_renderThreadData->s_renderPasses.size() - shadowmapPassesCount) / 6.f);
+							GLuint passesPerFace = static_cast<GLuint>((i_renderThreadData->g_renderPasses.size() - shadowmapPassesCount) / 6.f);
 							for (size_t i = 0; i < 6; ++i)
 							{
 								glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_CUBE_MAP_POSITIVE_X + i, g_CaptureProbesList[k].EnvironmentProbe.GetCubemapTextureID(), 0);
@@ -164,7 +164,7 @@ namespace Graphics
 									Graphics::UniformBufferFormats::sFrame _frame(g_CaptureProbesList[k].EnvironmentProbe.GetProjectionMat4(), g_CaptureProbesList[k].EnvironmentProbe.GetViewMat4(i));
 									_uniformBuffer_frame->Update(&_frame);
 									// Execute pass function
-									i_renderThreadData->s_renderPasses[_currentRenderPass].RenderPassFunction();
+									i_renderThreadData->g_renderPasses[_currentRenderPass].RenderPassFunction();
 								}
 
 							}

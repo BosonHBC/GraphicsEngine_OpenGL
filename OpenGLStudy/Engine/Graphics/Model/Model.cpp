@@ -12,6 +12,7 @@
 #include "Assets/PathProcessor.h"
 
 namespace Graphics {
+	uint32_t cModel::s_allModelCount = 0;
 
 	bool cModel::LoadModel(const char* i_path)
 	{
@@ -43,7 +44,8 @@ namespace Graphics {
 		LoadNode(_modelPath.c_str(), _scene->mRootNode, _scene);
 		//  Load materials
 		LoadMaterials(_scene, _materialPath.c_str());
-
+		
+		m_ModelID = s_allModelCount++;
 		return true;
 	}
 
@@ -126,9 +128,12 @@ namespace Graphics {
 		return cMaterial::HANDLE();
 	}
 
+
+
 	cModel::cModel(const std::string& i_path)
 	{
 		LoadModel(i_path.c_str());
+		
 	}
 
 	bool cModel::LoadFileFromLua(const char* i_path, std::string& o_modelPath, std::string& o_materialPath)
