@@ -6,7 +6,7 @@
 #include "Assignments/Assignment.h"
 #include "Application/Application.h"
 
-const GLint WIDTH = 800, HEIGHT = 600; // 1280:1024 || 1024:768 || 1366 : 768
+const GLint WIDTH = 1280, HEIGHT = 720; // 1280:1024 || 1024:768 || 1366 : 768
 
 int main()
 {

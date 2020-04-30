@@ -21,6 +21,8 @@
 
 #include "Assignments/ClothSimulation/SimulationParams.h"
 #include <random>
+#include "Application/imgui/imgui.h"
+
 
 Graphics::ERenderMode g_renderMode = Graphics::ERenderMode::ERM_ForwardShading;
 
@@ -106,7 +108,7 @@ void Assignment::CreateActor()
 void Assignment::CreateCamera()
 {
 	//m_editorCamera = new  cEditorCamera(glm::vec3(0, 250, 150), 20, 0, 300, 10.f);
-	m_editorCamera = new  cEditorCamera(glm::vec3(170, 250, 70), 15, 35, 300, 10.f);
+	m_editorCamera = new  cEditorCamera(glm::vec3(0, 200, 350), 25, 0, 300, 10.f);
 	float _aspect = (float)(GetCurrentWindow()->GetBufferWidth()) / (float)(GetCurrentWindow()->GetBufferHeight());
 	m_editorCamera->CreateProjectionMatrix(glm::radians(60.f), _aspect, 10.f, 2000.0f);
 }
@@ -116,13 +118,13 @@ void Assignment::CreateLight()
 	const int lightPerRow = 4;
 	const float horiDist = 150;
 	const float vertDist = 50 * 40.f / m_createdPLightCount;
-	Graphics::CreateAmbientLight(Color(0,0,0), aLight);
+	Graphics::CreateAmbientLight(Color(0, 0, 0), aLight);
 
 	for (int i = 0; i < m_createdPLightCount; ++i)
 	{
 		//Color randomColor = Color(randomFloats(generator), randomFloats(generator), randomFloats(generator));
 		bool enableShadow = true;
-		Graphics::CreatePointLight(glm::vec3(0 + (i % lightPerRow) * horiDist, 200,100 - (i / lightPerRow) * vertDist), Color::White() * 0.5f, 250.f, enableShadow, m_pLights[i]);
+		Graphics::CreatePointLight(glm::vec3(0 + (i % lightPerRow) * horiDist, 200, 100 - (i / lightPerRow) * vertDist), Color::White() * 0.5f, 250.f, enableShadow, m_pLights[i]);
 	}
 
 	//CreatePointLight(glm::vec3(0, 100, 0), Color::White() * 0.5f, 250, true);
@@ -218,6 +220,7 @@ void Assignment::Run()
 
 		// Render frame
 		Graphics::RenderFrame();
+		RenderEditorGUI();
 
 		// Swap buffers
 		m_window->SwapBuffers();
@@ -227,111 +230,52 @@ void Assignment::Run()
 
 void Assignment::Tick(float second_since_lastFrame)
 {
-	sWindowInput* _windowInput = m_window->GetWindowInput();
-
+	sWindowInput* _windowInput = GetCurrentWindow()->GetWindowInput();
+	if (ImGui::IsKeyDown(GLFW_KEY_ESCAPE)) {
+		// tell glfw window that it is time to close
+		glfwSetWindowShouldClose(GetCurrentWindow()->GetWindow(), GL_TRUE);
+	}
 	// get + handle user input events
 	{
 		m_editorCamera->CameraControl(_windowInput, second_since_lastFrame);
 
 		m_editorCamera->MouseControl(_windowInput, 0.01667f);
 	}
-
-	//dLight->Transform()->Rotate(-cTransform::WorldUp, 0.01677f);
-	if (m_teapots[0]) {
-		//m_teapot->Transform.gRotate(glm::vec3(0, 1.f, 0), second_since_lastFrame);
-	}
-	// Changing exposure
-	{
-		const float exposureChangeSpeed = 10.f;
-		if (_windowInput->IsKeyDown(GLFW_KEY_EQUAL))
-		{
-			m_exposureOffset += second_since_lastFrame * exposureChangeSpeed;
-		}
-		if (_windowInput->IsKeyDown(GLFW_KEY_MINUS))
-		{
-			m_exposureOffset -= second_since_lastFrame * exposureChangeSpeed;
-			m_exposureOffset = m_exposureOffset < 0.0001f ? 0.0001f : m_exposureOffset;
-		}
-	}
-	// Changing render mode
-	{
-		if (_windowInput->IsKeyDown(GLFW_KEY_1))
-		{
-			g_renderMode = Graphics::ERM_ForwardShading;
-		}
-		if (_windowInput->IsKeyDown(GLFW_KEY_2))
-		{
-			g_renderMode = Graphics::ERM_DeferredShading;
-		}
-		if (_windowInput->IsKeyDown(GLFW_KEY_3))
-		{
-			g_renderMode = Graphics::ERM_Deferred_Albede;
-		}
-		if (_windowInput->IsKeyDown(GLFW_KEY_4))
-		{
-			g_renderMode = Graphics::ERM_Deferred_Metallic;
-		}
-		if (_windowInput->IsKeyDown(GLFW_KEY_5))
-		{
-			g_renderMode = Graphics::ERM_Deferred_Roughness;
-		}
-		if (_windowInput->IsKeyDown(GLFW_KEY_6))
-		{
-			g_renderMode = Graphics::ERM_Deferred_Normal;
-		}
-		if (_windowInput->IsKeyDown(GLFW_KEY_7))
-		{
-			g_renderMode = Graphics::ERM_Deferred_IOR;
-		}
-		if (_windowInput->IsKeyDown(GLFW_KEY_8))
-		{
-			g_renderMode = Graphics::ERM_Deferred_Depth;
-		}
-		if (_windowInput->IsKeyDown(GLFW_KEY_9))
-		{
-			g_renderMode = Graphics::ERM_Deferred_WorldPos;
-		}
-		if (_windowInput->IsKeyDown(GLFW_KEY_0))
-		{
-			g_renderMode = Graphics::ERM_SSAO;
-		}
-	}
-
 	cTransform* controledActor = nullptr;
 	controledActor = &m_pLights[0]->Transform;
 	//controledActor = m_sphere->Transform();
 	if (controledActor) {
-		if (_windowInput->IsKeyDown(GLFW_KEY_J)) {
+		if (ImGui::IsKeyDown(GLFW_KEY_J)) {
 			for (int i = 0; i < m_createdPLightCount; ++i)
 			{
 				m_pLights[i]->Transform.Translate(-cTransform::WorldRight * 100.f * second_since_lastFrame);
 			}
 		}
-		if (_windowInput->IsKeyDown(GLFW_KEY_L)) {
+		if (ImGui::IsKeyDown(GLFW_KEY_L)) {
 			for (int i = 0; i < m_createdPLightCount; ++i)
 			{
 				m_pLights[i]->Transform.Translate(cTransform::WorldRight* 100.f  * second_since_lastFrame);
 			}
 		}
-		if (_windowInput->IsKeyDown(GLFW_KEY_I)) {
+		if (ImGui::IsKeyDown(GLFW_KEY_I)) {
 			for (int i = 0; i < m_createdPLightCount; ++i)
 			{
 				m_pLights[i]->Transform.Translate(-cTransform::WorldForward* 100.f  * second_since_lastFrame);
 			}
 		}
-		if (_windowInput->IsKeyDown(GLFW_KEY_K)) {
+		if (ImGui::IsKeyDown(GLFW_KEY_K)) {
 			for (int i = 0; i < m_createdPLightCount; ++i)
 			{
 				m_pLights[i]->Transform.Translate(cTransform::WorldForward* 100.f  * second_since_lastFrame);
 			}
 		}
-		if (_windowInput->IsKeyDown(GLFW_KEY_SPACE)) {
+		if (ImGui::IsKeyDown(GLFW_KEY_SPACE)) {
 			for (int i = 0; i < m_createdPLightCount; ++i)
 			{
 				m_pLights[i]->Transform.Translate(cTransform::WorldUp* 100.f* second_since_lastFrame);
 			}
 		}
-		if (_windowInput->IsKeyDown(GLFW_KEY_LEFT_CONTROL)) {
+		if (ImGui::IsKeyDown(GLFW_KEY_LEFT_CONTROL)) {
 			for (int i = 0; i < m_createdPLightCount; ++i)
 			{
 				m_pLights[i]->Transform.Translate(-cTransform::WorldUp* 100.f * second_since_lastFrame);
@@ -342,61 +286,36 @@ void Assignment::Tick(float second_since_lastFrame)
 	// ClothSim
 	{
 		float nodeMoveSpeed = 50.f;
-		if (_windowInput->IsKeyDown(GLFW_KEY_LEFT)) {
+		if (ImGui::IsKeyDown(GLFW_KEY_LEFT)) {
 			ClothSim::MoveFixedNode(glm::vec3(-1, 0, 0) *nodeMoveSpeed * second_since_lastFrame);
 		}
-		if (_windowInput->IsKeyDown(GLFW_KEY_RIGHT)) {
+		if (ImGui::IsKeyDown(GLFW_KEY_RIGHT)) {
 			ClothSim::MoveFixedNode(glm::vec3(1, 0, 0) *nodeMoveSpeed * second_since_lastFrame);
 		}
-		if (_windowInput->IsKeyDown(GLFW_KEY_UP)) {
+		if (ImGui::IsKeyDown(GLFW_KEY_UP)) {
 			ClothSim::MoveFixedNode(glm::vec3(0, 0, -1) *nodeMoveSpeed * second_since_lastFrame);
 		}
-		if (_windowInput->IsKeyDown(GLFW_KEY_DOWN)) {
+		if (ImGui::IsKeyDown(GLFW_KEY_DOWN)) {
 			ClothSim::MoveFixedNode(glm::vec3(0, 0, 1) *nodeMoveSpeed * second_since_lastFrame);
 		}
-		if (_windowInput->IsKeyDown(GLFW_KEY_Y)) {
+		if (ImGui::IsKeyDown(GLFW_KEY_Y)) {
 			ClothSim::MoveFixedNode(glm::vec3(0, 1, 0) *nodeMoveSpeed * second_since_lastFrame);
 		}
-		if (_windowInput->IsKeyDown(GLFW_KEY_H)) {
+		if (ImGui::IsKeyDown(GLFW_KEY_H)) {
 			ClothSim::MoveFixedNode(glm::vec3(0, -1, 0) *nodeMoveSpeed * second_since_lastFrame);
 		}
-		if (_windowInput->IsKeyDown(GLFW_KEY_Z)) {
+		if (ImGui::IsKeyDown(GLFW_KEY_Z)) {
 			ClothSim::ScaleFixedNode(glm::vec3(-1, 0, 0) *nodeMoveSpeed * second_since_lastFrame);
 		}
-		if (_windowInput->IsKeyDown(GLFW_KEY_X)) {
+		if (ImGui::IsKeyDown(GLFW_KEY_X)) {
 			ClothSim::ScaleFixedNode(glm::vec3(1, 0, 0) *nodeMoveSpeed * second_since_lastFrame);
 		}
 	}
 
-	if (_windowInput->IsKeyDown(GLFW_KEY_C)) {
-		m_ambientIntensity -= second_since_lastFrame * 5.f;
-		m_ambientIntensity = glm::clamp(m_ambientIntensity, 0.f, 10.f);
-		aLight->SetColor(Color(0.1f ,0.1f, 0.1f) * m_ambientIntensity);
-	}
-	if (_windowInput->IsKeyDown(GLFW_KEY_V)) {
-		m_ambientIntensity += second_since_lastFrame * 5.f;
-		m_ambientIntensity = glm::clamp(m_ambientIntensity, 0.f, 10.f);
-		aLight->SetColor(Color(0.1f, 0.1f, 0.1f) * m_ambientIntensity);
-	}
-	if (_windowInput->IsKeyDown(GLFW_KEY_B)) {
-		m_directionalIntensity -= second_since_lastFrame * 2.f;
-		m_directionalIntensity = glm::clamp(m_directionalIntensity, 0.f, 3.f);
-		dLight->SetColor(Color(0.6f, 0.6f, 0.5f) * m_directionalIntensity);
-	}
-	if (_windowInput->IsKeyDown(GLFW_KEY_N)) {
-		m_directionalIntensity += second_since_lastFrame * 2.f;
-		m_directionalIntensity = glm::clamp(m_directionalIntensity, 0.f, 3.f);
-		dLight->SetColor(Color(0.6f, 0.6f, 0.5f) * m_directionalIntensity);
-	}
-	if (!m_gKeyPressed &&_windowInput->IsKeyDown(GLFW_KEY_G))
+	if (ImGui::IsKeyPressed(GLFW_KEY_G))
 	{
-		m_gKeyPressed = true;
 		CreatePointLight(m_editorCamera->CamLocation() + m_editorCamera->Transform.Forward() * 100.f, Color::White() * 0.5f, 250.f, true);
 		printf("Current Point Light Count: %d\n", m_createdPLightCount);
-	}
-	if (m_gKeyPressed && _windowInput->IsKeyUp(GLFW_KEY_G))
-	{
-		m_gKeyPressed = false;
 	}
 
 	for (int i = 0; i < m_renderingTeapotCount; ++i)
@@ -451,7 +370,7 @@ void Assignment::SubmitLightingData()
 		spLight2->UpdateLightIndex(_spLights.size());
 		_spLights.push_back(*spLight2);
 	}
-	
+
 	Graphics::SubmitLightingData(_pLights, _spLights, *aLight, *dLight);
 }
 
@@ -552,7 +471,51 @@ void Assignment::CreatePointLight(const glm::vec3& i_initialLocation, const Colo
 void Assignment::FixedTick()
 {
 
-		
+
+}
+
+void Assignment::EditorGUI()
+{
+	ImGui::Begin("Status");
+	ImGui::Text("Application average %.3f ms/frame (%.1f FPS)", 1000.0f / ImGui::GetIO().Framerate, ImGui::GetIO().Framerate);
+	ImGui::Text("Point light count: %d", m_createdPLightCount);
+	ImGui::End();
+
+	ImGui::Begin("Control");
+	const Graphics::ERenderMode rendermodes[] = {Graphics::ERM_ForwardShading, Graphics::ERM_DeferredShading, Graphics::ERM_Deferred_Albede, Graphics::ERM_Deferred_Metallic, Graphics::ERM_Deferred_Roughness, 
+		Graphics::ERM_Deferred_Normal, Graphics::ERM_Deferred_Depth, Graphics::ERM_SSAO };
+	static bool toggles[] = { false, true, false, false, false, false, false, false };
+
+	if (ImGui::Button("ChooseRenderMode.."))
+		ImGui::OpenPopup("shading_mode_popup");
+	ImGui::SameLine();
+	ImGui::TextUnformatted(Graphics::g_renderModeNameMap.at(static_cast<uint8_t>(g_renderMode)));
+	if (ImGui::BeginPopup("shading_mode_popup"))
+	{
+		ImGui::Text("Shading Modes:");
+		ImGui::Separator();
+		for (int i = 0; i < IM_ARRAYSIZE(rendermodes); i++)
+			if (ImGui::Selectable(Graphics::g_renderModeNameMap.at(static_cast<uint8_t>(rendermodes[i]))))
+			{
+				g_renderMode = rendermodes[i];
+			}
+		ImGui::EndPopup();
+	}
+
+
+	if(ImGui::DragFloat("Ambient", &m_ambientIntensity,0.1f, 0.0f, 10.0f))
+		aLight->SetColor(Color(0.1f, 0.1f, 0.1f) * m_ambientIntensity);
+	if(ImGui::DragFloat("Directional", &m_directionalIntensity, 0.1f, 0.0f, 3.0f))
+		dLight->SetColor(Color(0.6f, 0.6f, 0.5f) * m_directionalIntensity);
+	ImGui::DragFloat("Exposure", &m_exposureOffset, 0.1f, 0.0001f, 50.0f);
+	if (ImGui::Button("Reset"))
+	{
+		g_renderMode = Graphics::ERM_DeferredShading;
+		m_ambientIntensity = 1.0f;
+		m_directionalIntensity = 1.0f;
+		m_exposureOffset = 3.0f;
+	}
+	ImGui::End();
 }
 
 void Assignment::CleanUp()

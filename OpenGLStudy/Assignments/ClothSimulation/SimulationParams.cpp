@@ -44,7 +44,7 @@ namespace ClothSim
 	const glm::vec3 g_floorPlane = glm::vec3(0, 5, 0);
 	cSphere g_sphere(glm::vec3(0, 0, -150), 100.f);
 	
-	bool g_bEnableClothSim = true;
+	bool g_bEnableClothSim = false;
 	bool g_bDrawNodes = false;
 
 	void InitializeNeghbors()

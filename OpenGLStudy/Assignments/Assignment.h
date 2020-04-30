@@ -37,6 +37,7 @@ public:
 
 	void Tick(float second_since_lastFrame);
 	void FixedTick();
+	void EditorGUI() override;
 private:
 	void CreateActor();
 	void CreateCamera();

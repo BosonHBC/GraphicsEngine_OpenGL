@@ -22,6 +22,7 @@ namespace Graphics{
 		ERM_Deferred_WorldPos,
 		ERM_SSAO,
 	};
+	extern const std::map<uint8_t, const char*> g_renderModeNameMap;
 
 	// Rendering thread data and data structures
 	// ------------------------------------------------------------------------------------------------------------------------------------
