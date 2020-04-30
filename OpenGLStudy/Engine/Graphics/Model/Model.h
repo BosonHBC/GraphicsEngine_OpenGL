@@ -13,22 +13,27 @@ namespace Graphics {
 	class cModel
 	{
 	public:
-		//--------------------------
-		// Asset management
-		using HANDLE = Assets::cHandle<cModel>;
-		static Assets::cAssetManager < cModel > s_manager;
-		static bool Load(const std::string& i_path, cModel*& o_model);
-		//--------------------------
+		cModel() { m_meshList.reserve(1); m_materialList.reserve(1); }
+		cModel(const std::string& i_path);
+		cModel(const cModel& i_other) : m_meshList(i_other.m_meshList), m_materialList(i_other.m_materialList)
+		{}
+		cModel& operator = (const cModel& i_rhs)
+		{
+			m_meshList = i_rhs.m_meshList;
+			m_materialList = i_rhs.m_materialList;
+			return *this;
+		}
 
+		//--------------------------
 		/** Destructor*/
-		~cModel() { CleanUp(); }
+		~cModel() { }
 
 		/** Usage functions*/
 		void UpdateUniformVariables(GLuint i_programID);
-		void Render(GLenum i_drawMode = GL_TRIANGLES);
+		void Render(GLenum i_drawMode = GL_TRIANGLES) const;
 		// This rendering only draw elements without using material data
 		// Usually is used for shadow map
-		void RenderWithoutMaterial(GLenum i_drawMode = GL_TRIANGLES);
+		void RenderWithoutMaterial(GLenum i_drawMode = GL_TRIANGLES) const;
 		void CleanUp();
 
 		bool IntersectWithSphere(const cSphere& i_transformedSphere);
@@ -36,10 +41,6 @@ namespace Graphics {
 		/** Getters */
 		cMaterial* GetMaterialAt(GLuint i_idx = 0);
 	private:
-
-		/** private default constructor, that can not be used by others*/
-		cModel() {
-		}
 
 		/** Mesh list and texture list should not be stored here,
 			but for the sake of simplicity, put it here first

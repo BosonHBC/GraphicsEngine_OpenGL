@@ -43,9 +43,9 @@ namespace Graphics {
 	std::map<eUniformBufferType, cUniformBuffer> g_uniformBufferMap;
 
 	// Pre-defined mesh & textures
-	cModel::HANDLE s_cubeHandle;
-	cModel::HANDLE s_arrowHandle;
-	cModel::HANDLE s_quadHandle;
+	cModel s_cubeHandle;
+	cModel s_arrowHandle;
+	cModel s_quadHandle;
 	cMesh::HANDLE s_point;
 	cMesh::HANDLE g_cloth;
 	cTexture::HANDLE s_spruitSunRise_HDR;
@@ -419,7 +419,7 @@ namespace Graphics {
 		result = CreateUniformBuffer(UBT_PostProcessing);
 		result = CreateUniformBuffer(UBT_SSAO);
 		assert(result);
-		
+
 		// Initialize omni shadow maps
 		{
 			for (int i = 0; i < OMNI_SHADOW_MAP_COUNT; ++i)
@@ -464,39 +464,22 @@ namespace Graphics {
 				printf("Fail to create SSAO-Blur-Buffer.\n");
 				return result;
 			}
-			
+
 			//EnvironmentCaptureManager::AddCaptureProbes(cSphere(glm::vec3(-225, 230, 0), 600.f), 50.f, envMapResolution);
 
 			EnvironmentCaptureManager::AddCaptureProbes(cSphere(glm::vec3(0, 230, 0), 600.f), 50.f, envMapResolution);
 
 			//EnvironmentCaptureManager::AddCaptureProbes(cSphere(glm::vec3(225, 230, 0), 600.f), 50.f, envMapResolution);
-		
+
 			EnvironmentCaptureManager::BuildAccelerationStructure();
 
 		}
 
 		// Load models & textures
 		{
-			std::string _path = "Contents/models/arrow.model";
-			if (!(result = Graphics::cModel::s_manager.Load(_path, s_arrowHandle)))
-			{
-				printf("Failed to Load arrow model!\n");
-				return result;
-			}
-
-			_path = "Contents/models/cube.model";
-			if (!(result = Graphics::cModel::s_manager.Load(_path, s_cubeHandle)))
-			{
-				printf("Failed to Load cube model!\n");
-				return result;
-			}
-
-			_path = "Contents/models/quad.model";
-			if (!(result = Graphics::cModel::s_manager.Load(_path, s_quadHandle)))
-			{
-				printf("Failed to Load quad model!\n");
-				return result;
-			}
+			s_cubeHandle = cModel("Contents/models/cube.model");
+			s_arrowHandle = cModel("Contents/models/arrow.model");
+			s_quadHandle = cModel("Contents/models/quad.model");
 			std::vector<float> _points;
 			_points.push_back(0.0f); _points.push_back(0.0f); _points.push_back(0.0f);
 			std::vector<GLuint> _indices;
@@ -556,7 +539,7 @@ namespace Graphics {
 				// scale samples s.t. they're more aligned to center of kernel
 				scale = lerp(0.1f, 1.0f, scale * scale);
 				sample *= scale;
-				g_ssaoData.Samples[i] = glm::vec4(sample,0.0);
+				g_ssaoData.Samples[i] = glm::vec4(sample, 0.0);
 			}
 			const int noiseSampleCount = noiseResolution * noiseResolution;
 			glm::vec3 ssaoNoise[noiseSampleCount];
@@ -594,7 +577,7 @@ namespace Graphics {
 			auto _indices = ClothSim::GetIndexData();
 			std::vector<float> _vertices;
 			_vertices.resize(ClothSim::VC * 14);
-			if (!(result == cMesh::s_manager.Load("Cloth", g_cloth, EMT_Mesh, _vertices,_indices)))
+			if (!(result == cMesh::s_manager.Load("Cloth", g_cloth, EMT_Mesh, _vertices, _indices)))
 			{
 				printf("Failed to Load Cloth!\n");
 				return result;
@@ -637,8 +620,7 @@ namespace Graphics {
 						g_uniformBufferMap[UBT_Frame].Update(&_cubemapFrameData);
 
 						// Render cube
-						cModel* _cube = cModel::s_manager.Get(s_cubeHandle);
-						if (_cube) { _cube->RenderWithoutMaterial(); }
+						s_cubeHandle.RenderWithoutMaterial();
 					}
 				}
 			);
@@ -656,7 +638,7 @@ namespace Graphics {
 			s_currentEffect = Graphics::GetEffectByKey(EET_BrdfIntegration);
 			s_currentEffect->UseEffect();
 			s_brdfLUTTexture.Write(
-				[]{
+				[] {
 					glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 					RenderQuad();
 					s_brdfLUTTexture.UnWrite();
@@ -735,7 +717,7 @@ namespace Graphics {
 		s_dataSubmittedByApplicationThread->g_renderMode = i_renderMode;
 	}
 
-	void SubmitDataToBeRendered(const UniformBufferFormats::sFrame& i_frameData, const std::vector<std::pair<Graphics::cModel::HANDLE, cTransform>>& i_modelToTransform_map, void(*func_ptr)())
+	void SubmitDataToBeRendered(const UniformBufferFormats::sFrame& i_frameData, const std::vector<std::pair<Graphics::cModel, cTransform>>& i_modelToTransform_map, void(*func_ptr)())
 	{
 		sPass inComingPasses;
 		inComingPasses.FrameData = i_frameData;
@@ -758,14 +740,11 @@ namespace Graphics {
 			// 1. Update draw call data
 			g_uniformBufferMap[UBT_Drawcall].Update(&UniformBufferFormats::sDrawCall(it->second.M(), it->second.TranspostInverse()));
 			// 2. Draw
-			cModel* _model = cModel::s_manager.Get(it->first);
-			if (_model) {
-				if (i_effect) {
-					_model->UpdateUniformVariables(i_effect->GetProgramID());
-					_model->Render(i_drawMode);
-				}
-				else _model->RenderWithoutMaterial(i_drawMode);
+			if (i_effect) {
+				it->first.UpdateUniformVariables(i_effect->GetProgramID());
+				it->first.Render(i_drawMode);
 			}
+			else it->first.RenderWithoutMaterial(i_drawMode);
 		}
 
 	}
@@ -779,9 +758,9 @@ namespace Graphics {
 			it.second.CleanUp();
 		}
 
-		cModel::s_manager.Release(s_arrowHandle);
-		cModel::s_manager.Release(s_cubeHandle);
-		cModel::s_manager.Release(s_quadHandle);
+		s_arrowHandle.CleanUp();
+		s_cubeHandle.CleanUp();
+		s_quadHandle.CleanUp();
 		cTexture::s_manager.Release(s_spruitSunRise_HDR);
 		cTexture::s_manager.Release(g_ssaoNoiseTexture);
 		cMesh::s_manager.Release(s_point);
@@ -846,9 +825,8 @@ namespace Graphics {
 		return &g_omniShadowMaps[i_idx];
 	}
 
-	Graphics::cModel::HANDLE GetPrimitive(const EPrimitiveType& i_primitiveType)
+	const Graphics::cModel& GetPrimitive(const EPrimitiveType& i_primitiveType)
 	{
-		cModel::HANDLE _invalidHandle;
 		switch (i_primitiveType)
 		{
 		case EPT_Cube:
@@ -861,7 +839,8 @@ namespace Graphics {
 			return s_quadHandle;
 			break;
 		default:
-			return _invalidHandle;
+			assert(false);
+			return cModel();
 			break;
 		}
 	}

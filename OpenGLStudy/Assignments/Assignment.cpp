@@ -89,8 +89,7 @@ void Assignment::CreateActor()
 	m_cubemap->Initialize();
 	m_cubemap->SetModel("Contents/models/cubemap.model");
 
-	Graphics::cModel* _cubeMap = Graphics::cModel::s_manager.Get(m_cubemap->GetModelHandle());
-	Graphics::cMatCubemap* _matCubemap = dynamic_cast<Graphics::cMatCubemap*>(_cubeMap->GetMaterialAt());
+	Graphics::cMatCubemap* _matCubemap = dynamic_cast<Graphics::cMatCubemap*>(m_cubemap->GetModelHandle().GetMaterialAt());
 	if (_matCubemap)
 		_matCubemap->UpdateCubemap(Graphics::GetHDRtoCubemap()->GetCubemapTextureHandle());
 
@@ -138,7 +137,7 @@ void Assignment::CreateLight()
 
 void Assignment::SubmitDataToBeRender(const float i_seconds_elapsedSinceLastLoop)
 {
-	std::vector<std::pair<Graphics::cModel::HANDLE, cTransform>> _renderingMap = std::vector<std::pair<Graphics::cModel::HANDLE, cTransform>>();
+	std::vector<std::pair<Graphics::cModel, cTransform>> _renderingMap = std::vector<std::pair<Graphics::cModel, cTransform>>();
 	// Submit render setting
 	Graphics::SubmitGraphicSettings(g_renderMode);
 	// Submit lighting data
@@ -376,7 +375,7 @@ void Assignment::SubmitLightingData()
 
 void Assignment::SubmitSceneData(Graphics::UniformBufferFormats::sFrame* const i_frameData)
 {
-	std::vector<std::pair<Graphics::cModel::HANDLE, cTransform>> _renderingMap;
+	std::vector<std::pair<Graphics::cModel, cTransform>> _renderingMap;
 
 	// PBR pass
 	{
@@ -405,7 +404,7 @@ void Assignment::SubmitSceneData(Graphics::UniformBufferFormats::sFrame* const i
 
 void Assignment::SubmitSceneDataForEnvironmentCapture(Graphics::UniformBufferFormats::sFrame* const i_frameData)
 {
-	std::vector<std::pair<Graphics::cModel::HANDLE, cTransform>> _renderingMap;
+	std::vector<std::pair<Graphics::cModel, cTransform>> _renderingMap;
 	// PBR pass
 	{
 		_renderingMap.clear();
@@ -432,7 +431,7 @@ void Assignment::SubmitSceneDataForEnvironmentCapture(Graphics::UniformBufferFor
 
 void Assignment::SubmitShadowData()
 {
-	std::vector<std::pair<Graphics::cModel::HANDLE, cTransform>> _renderingMap;
+	std::vector<std::pair<Graphics::cModel, cTransform>> _renderingMap;
 
 	_renderingMap.reserve(m_renderingTeapotCount + 2);
 	for (int i = 0; i < m_renderingTeapotCount; ++i)

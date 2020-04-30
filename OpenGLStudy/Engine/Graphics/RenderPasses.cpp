@@ -23,9 +23,9 @@ namespace Graphics
 	extern cGBuffer g_GBuffer;
 	extern cFrameBuffer g_ssaoBuffer;
 	extern cFrameBuffer g_ssao_blur_Buffer;
-	extern cModel::HANDLE s_cubeHandle;
-	extern cModel::HANDLE s_arrowHandle;
-	extern cModel::HANDLE s_quadHandle;
+	extern cModel s_cubeHandle;
+	extern cModel s_arrowHandle;
+	extern cModel s_quadHandle;
 	extern cMesh::HANDLE s_point;
 	extern cMesh::HANDLE g_cloth;
 	extern cTexture::HANDLE g_ssaoNoiseTexture;
@@ -53,11 +53,8 @@ namespace Graphics
 		g_uniformBufferMap[UBT_Frame].Update(&i_frameData);
 		g_uniformBufferMap[UBT_Drawcall].Update(&i_drawCallData);
 
-		// Render quad
-		cModel* _quad = cModel::s_manager.Get(s_quadHandle);
-		if (_quad) {
-			_quad->RenderWithoutMaterial();
-		}
+
+		s_quadHandle.RenderWithoutMaterial();
 	}
 
 	void RenderCube(const UniformBufferFormats::sFrame& i_frameData = UniformBufferFormats::sFrame(), const UniformBufferFormats::sDrawCall& i_drawCallData = UniformBufferFormats::sDrawCall())
@@ -65,10 +62,8 @@ namespace Graphics
 		g_uniformBufferMap[UBT_Frame].Update(&i_frameData);
 		g_uniformBufferMap[UBT_Drawcall].Update(&i_drawCallData);
 
-		cModel* _cube = cModel::s_manager.Get(s_cubeHandle);
-		if (_cube) {
-			_cube->RenderWithoutMaterial();
-		}
+		s_cubeHandle.RenderWithoutMaterial();
+
 	}
 
 	void RenderPointLightPosition()
@@ -302,16 +297,14 @@ namespace Graphics
 						glm::mat4 _sphereToMeshMatrix = it2->second.MInv() * it->Transform.M();
 						glm::vec3 tramsformedPosition = _sphereToMeshMatrix * glm::vec4(0, 0, 0, 1);
 						float transformedRadius(_sphereToMeshMatrix[0][0]);
-						cModel* _model = cModel::s_manager.Get(it2->first);
 						// if there is no overlap, don't need to draw
-						if (!_model->IntersectWithSphere(cSphere(tramsformedPosition, transformedRadius))) continue;
+						if (!it2->first.IntersectWithSphere(cSphere(tramsformedPosition, transformedRadius))) continue;
 
 						// 2. Update draw call data
 						g_uniformBufferMap[UBT_Drawcall].Update(&UniformBufferFormats::sDrawCall(it2->second.M(), it2->second.TranspostInverse()));
 						// 3. Draw
-						if (_model) {
-							_model->RenderWithoutMaterial(GL_TRIANGLES);
-						}
+						it2->first.RenderWithoutMaterial(GL_TRIANGLES);
+
 					}
 				}
 			, subRect);
@@ -669,8 +662,7 @@ namespace Graphics
 				arrowTransform[2].SetRotation(it->second.Rotation() * glm::quat(glm::vec3(0, glm::radians(90.f), 0)));
 			}
 
-			cModel* _model = cModel::s_manager.Get(s_arrowHandle);
-			cMatUnlit* _arrowMat = dynamic_cast<cMatUnlit*>(_model->GetMaterialAt());
+			cMatUnlit* _arrowMat = dynamic_cast<cMatUnlit*>(s_arrowHandle.GetMaterialAt());
 
 			for (int i = 0; i < 3; ++i)
 			{
@@ -679,11 +671,9 @@ namespace Graphics
 				arrowTransform[i].Update();
 				g_uniformBufferMap[UBT_Drawcall].Update(&UniformBufferFormats::sDrawCall(arrowTransform[i].M(), arrowTransform[i].TranspostInverse()));
 
-				if (_model) {
-					_arrowMat->SetUnlitColor(s_arrowColor[i]);
-					_model->UpdateUniformVariables(s_currentEffect->GetProgramID());
-					_model->Render();
-				}
+				_arrowMat->SetUnlitColor(s_arrowColor[i]);
+				s_arrowHandle.UpdateUniformVariables(s_currentEffect->GetProgramID());
+				s_arrowHandle.Render();
 			}
 		}
 

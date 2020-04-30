@@ -90,7 +90,7 @@ namespace Graphics
 				printf("Inner sphere is not contained by the outer sphere.\n");
 				return result;
 			}
-			g_CaptureProbesList.push_back(sCaptureProbes(i_outerSphere, _innerSphere,1.0, i_environmentCubemapSize));
+			g_CaptureProbesList.push_back(sCaptureProbes(i_outerSphere, _innerSphere, 1.0, i_environmentCubemapSize));
 			GLuint _lastIdx = g_CaptureProbesList.size() - 1;
 			assert(i_environmentCubemapSize > 512);
 
@@ -149,7 +149,7 @@ namespace Graphics
 				// ii. start to capture the environment cube map
 				{
 					g_CaptureProbesList[k].EnvironmentProbe.StartCapture(
-						[&]{
+						[&] {
 							GLuint passesPerFace = static_cast<GLuint>((i_renderThreadData->s_renderPasses.size() - shadowmapPassesCount) / 6.f);
 							for (size_t i = 0; i < 6; ++i)
 							{
@@ -200,11 +200,10 @@ namespace Graphics
 								_uniformBuffer_frame->Update(&_cubemapFrameData);
 
 								// Render cube
-								cModel* _cube = cModel::s_manager.Get(Graphics::GetPrimitive(EPT_Cube));
-								if (_cube) { _cube->RenderWithoutMaterial(); }
+								Graphics::GetPrimitive(EPT_Cube).RenderWithoutMaterial();
 							}
 						}
-					);
+						);
 
 					_currentEffct->UnUseEffect();
 
@@ -247,8 +246,7 @@ namespace Graphics
 									_uniformBuffer_frame->Update(&_cubemapFrameData);
 
 									// Render cube
-									cModel* _cube = cModel::s_manager.Get(Graphics::GetPrimitive(EPT_Cube));
-									if (_cube) { _cube->RenderWithoutMaterial(); }
+									Graphics::GetPrimitive(EPT_Cube).RenderWithoutMaterial();
 								}
 							}
 						}
@@ -282,9 +280,9 @@ namespace Graphics
 
 						assert(it->Influence >= 0.0f); // Make sure the POI is inside the outer sphere
 						// Only record the first InnerBV 
-						if (it->Influence > 1.0 ) { 
-							if(_POI_inInnerBV_captureProbesRef == nullptr)
-								_POI_inInnerBV_captureProbesRef = it; 
+						if (it->Influence > 1.0) {
+							if (_POI_inInnerBV_captureProbesRef == nullptr)
+								_POI_inInnerBV_captureProbesRef = it;
 							else
 							{
 								// if POI is closer to the center of the new one, update the inner BV
@@ -306,13 +304,13 @@ namespace Graphics
 						float sumBlendWeight = 0;
 						// sort the intersecting probes by most influential, the bigger CaptureProbes->Influence is, the closer to the center, the more important
 						std::sort(_intersectProbes.begin(), _intersectProbes.end(), [](const sCaptureProbes* a, const sCaptureProbes* b) { return a->Influence > b->Influence; });
-/*
-						for (int i = 0; i < _intersectProbes.size(); ++i)
-						{
-							printf("IW%d:%f ", i, _intersectProbes[i]->Influence);
-						}
-						printf("_____");*/
-						// Calculate sumIW and InvSumIW
+						/*
+												for (int i = 0; i < _intersectProbes.size(); ++i)
+												{
+													printf("IW%d:%f ", i, _intersectProbes[i]->Influence);
+												}
+												printf("_____");*/
+												// Calculate sumIW and InvSumIW
 						float sumIW = 0;
 						float invSumIW = 0;
 						for (size_t i = 0; i < numOfShape; ++i) {
@@ -327,7 +325,7 @@ namespace Graphics
 							//float _ndf = _intersectProbes[i]->BV.NDF(i_position);
 							float _ndf = _intersectProbes[i]->Influence;
 							blendWeights[i] = (_ndf / sumIW) / (numOfShape - 1);
-							blendWeights[i] *=  _ndf / invSumIW;
+							blendWeights[i] *= _ndf / invSumIW;
 							sumBlendWeight += blendWeights[i];
 						}
 						assert(sumBlendWeight > 0);
@@ -349,7 +347,7 @@ namespace Graphics
 			}
 			// Update weight data in the GPU
 			g_uniformBuffer_EnvCaptureWeight.Update(&captureWeights);
-		//	printf("w1:%f , w2:%f ,w3:%f ,w4:%f. \n", captureWeights.Weights.x, captureWeights.Weights.y, captureWeights.Weights.z, captureWeights.Weights.w);
+			//	printf("w1:%f , w2:%f ,w3:%f ,w4:%f. \n", captureWeights.Weights.x, captureWeights.Weights.y, captureWeights.Weights.z, captureWeights.Weights.w);
 		}
 
 		const Graphics::EnvironmentCaptureManager::sCaptureProbes& GetCaptureProbesAt(int i_idx)

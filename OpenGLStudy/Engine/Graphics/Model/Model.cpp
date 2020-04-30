@@ -10,8 +10,6 @@
 
 #include "Assets/LoadTableFromLuaFile.h"
 #include "Assets/PathProcessor.h"
-// Static variable definition
-Assets::cAssetManager<Graphics::cModel> Graphics::cModel::s_manager;
 
 namespace Graphics {
 
@@ -49,38 +47,6 @@ namespace Graphics {
 		return true;
 	}
 
-	bool cModel::Load(const std::string& i_path, cModel*& o_model)
-	{
-		auto result = true;
-
-		cModel* _model = nullptr;
-
-		// make sure there is enough memory to allocate a model
-		_model = new (std::nothrow) cModel();
-		if (!(result = _model)) {
-			// Run out of memory
-			// TODO: LogError: Out of memory
-
-			return result;
-		}
-		else {
-			if (!(result = _model->LoadModel(i_path.c_str()))) {
-				// TODO: LogError: fail to log
-
-				delete _model;
-
-				return result;
-			}
-		}
-
-		o_model = _model;
-
-		//TODO: Loading information succeed!
-		//printf("Succeed! Loading model: %s. Mesh size: %d, texture size: %d\n", i_path.c_str(), o_model->m_meshList.size(), o_model->m_materialList.size());
-
-		return result;
-	}
-
 	void cModel::UpdateUniformVariables(GLuint i_programID)
 	{
 		for (auto item : m_materialList)
@@ -92,7 +58,7 @@ namespace Graphics {
 		}
 	}
 
-	void cModel::Render(GLenum i_drawMode/* = GL_TRIANGLES*/)
+	void cModel::Render(GLenum i_drawMode/* = GL_TRIANGLES*/) const
 	{
 
 		for (size_t i = 0; i < m_meshList.size(); ++i)
@@ -113,7 +79,7 @@ namespace Graphics {
 		}
 	}
 
-	void cModel::RenderWithoutMaterial(GLenum i_drawMode/* = GL_TRIANGLES*/)
+	void cModel::RenderWithoutMaterial(GLenum i_drawMode/* = GL_TRIANGLES*/) const
 	{
 		for (size_t i = 0; i < m_meshList.size(); ++i)
 		{
@@ -158,6 +124,11 @@ namespace Graphics {
 			return m_materialList[i_idx];
 		}
 		return nullptr;
+	}
+
+	cModel::cModel(const std::string& i_path)
+	{
+		LoadModel(i_path.c_str());
 	}
 
 	bool cModel::LoadFileFromLua(const char* i_path, std::string& o_modelPath, std::string& o_materialPath)

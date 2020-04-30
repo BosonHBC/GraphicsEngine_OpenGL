@@ -29,7 +29,7 @@ namespace Graphics{
 	struct sPass
 	{
 		UniformBufferFormats::sFrame FrameData;
-		std::vector<std::pair<Graphics::cModel::HANDLE, cTransform>> ModelToTransform_map;
+		std::vector<std::pair<Graphics::cModel, cTransform>> ModelToTransform_map;
 		void(*RenderPassFunction) ();
 		sPass() {}
 	};

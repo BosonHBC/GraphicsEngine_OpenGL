@@ -16,13 +16,11 @@ void cActor::Initialize()
 void cActor::CleanUp()
 {
 	// Release the handle
-	Graphics::cModel::s_manager.Release(m_modelHandle);
+	m_modelHandle.CleanUp();
 
 }
 
 void cActor::SetModel(std::string i_modelPath)
 {
-	if (!Graphics::cModel::s_manager.Load(i_modelPath, m_modelHandle)) {
-		// TODO: print fail to load model
-	}
+	m_modelHandle = Graphics::cModel(i_modelPath);
 }
