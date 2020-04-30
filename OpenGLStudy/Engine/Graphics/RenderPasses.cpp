@@ -662,7 +662,7 @@ namespace Graphics
 				arrowTransform[2].SetRotation(it->second.Rotation() * glm::quat(glm::vec3(0, glm::radians(90.f), 0)));
 			}
 
-			cMatUnlit* _arrowMat = dynamic_cast<cMatUnlit*>(s_arrowHandle.GetMaterialAt());
+			cMatUnlit* _arrowMat = dynamic_cast<cMatUnlit*>(cMaterial::s_manager.Get(s_arrowHandle.GetMaterialAt()));
 
 			for (int i = 0; i < 3; ++i)
 			{

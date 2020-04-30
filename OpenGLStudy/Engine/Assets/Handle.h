@@ -32,7 +32,7 @@ namespace Assets {
 		void InvalidateIndex() { m_index = s_InvalidIndex; }
 		/** Getters */
 		uint16_t GetIndex() const { return m_index; }
-
+		bool IsValidIndex() const { return m_index != s_InvalidIndex; }
 	private:
 		// The index in the m_assetList in cAssetManager<tAsset>
 		static const uint16_t s_InvalidIndex = 0xffff;

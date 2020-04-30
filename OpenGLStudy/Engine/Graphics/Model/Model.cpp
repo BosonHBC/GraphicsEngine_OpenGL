@@ -51,7 +51,7 @@ namespace Graphics {
 	{
 		for (auto item : m_materialList)
 		{
-			cMaterial* _matInst = item;
+			cMaterial* _matInst = cMaterial::s_manager.Get(item);
 			if (_matInst) {
 				_matInst->UpdateUniformVariables(i_programID);
 			}
@@ -63,7 +63,7 @@ namespace Graphics {
 
 		for (size_t i = 0; i < m_meshList.size(); ++i)
 		{
-			cMaterial* _material = m_materialList[0];
+			cMaterial* _material = cMaterial::s_manager.Get(m_materialList[0]);
 			// if _maxIndex is in range and the texture is not a nullptr
 			if (_material) {
 				_material->UseMaterial();
@@ -93,8 +93,7 @@ namespace Graphics {
 	{
 		for (size_t i = 0; i < m_materialList.size(); ++i)
 		{
-			m_materialList[i]->CleanUp();
-			safe_delete(m_materialList[i]);
+			cMaterial::s_manager.Release(m_materialList[i]);
 		}
 		m_materialList.clear();
 		m_materialList.~vector();
@@ -118,12 +117,13 @@ namespace Graphics {
 		return false;
 	}
 
-	Graphics::cMaterial* cModel::GetMaterialAt(GLuint i_idx /*= 0*/)
+	Graphics::cMaterial::HANDLE cModel::GetMaterialAt(GLuint i_idx /*= 0*/)
 	{
 		if (i_idx < m_materialList.size()) {
 			return m_materialList[i_idx];
 		}
-		return nullptr;
+		assert(false);
+		return cMaterial::HANDLE();
 	}
 
 	cModel::cModel(const std::string& i_path)
@@ -244,9 +244,9 @@ namespace Graphics {
 	void cModel::LoadMaterials(const aiScene* i_scene, const char* i_matName)
 	{
 
-		cMaterial* _newMat = nullptr;
+		cMaterial::HANDLE _newMat;
 		std::string _path = Assets::ProcessPathMat(i_matName);
-		if (!cMaterial::Load(_path, _newMat)) {
+		if (!cMaterial::s_manager.Load(_path, _newMat)) {
 			printf("Fail to load material file[%s]\n", _path.c_str());
 			return;
 		}

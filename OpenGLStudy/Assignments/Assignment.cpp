@@ -89,7 +89,7 @@ void Assignment::CreateActor()
 	m_cubemap->Initialize();
 	m_cubemap->SetModel("Contents/models/cubemap.model");
 
-	Graphics::cMatCubemap* _matCubemap = dynamic_cast<Graphics::cMatCubemap*>(m_cubemap->GetModelHandle().GetMaterialAt());
+	Graphics::cMatCubemap* _matCubemap = dynamic_cast<Graphics::cMatCubemap*>(Graphics::cMaterial::s_manager.Get(m_cubemap->GetModelHandle().GetMaterialAt()));
 	if (_matCubemap)
 		_matCubemap->UpdateCubemap(Graphics::GetHDRtoCubemap()->GetCubemapTextureHandle());
 

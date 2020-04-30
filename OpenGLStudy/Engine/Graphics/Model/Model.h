@@ -39,14 +39,14 @@ namespace Graphics {
 		bool IntersectWithSphere(const cSphere& i_transformedSphere);
 
 		/** Getters */
-		cMaterial* GetMaterialAt(GLuint i_idx = 0);
+		cMaterial::HANDLE GetMaterialAt(GLuint i_idx = 0);
 	private:
 
 		/** Mesh list and texture list should not be stored here,
 			but for the sake of simplicity, put it here first
 		*/
 		std::vector<cMesh::HANDLE> m_meshList;
-		std::vector<cMaterial*> m_materialList;
+		std::vector<cMaterial::HANDLE> m_materialList;
 
 		/** private helper functions*/
 		bool LoadFileFromLua(const char* i_path, std::string& o_modelPath, std::string& o_materialPath);

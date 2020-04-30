@@ -6,7 +6,7 @@ namespace Graphics {
 	{
 	public:
 		static cUniformBuffer& GetUniformBuffer() { return s_BlinnPhongUniformBlock; }
-		~cMatBlinn() { CleanUp(); };
+		virtual ~cMatBlinn() { CleanUp(); };
 
 		bool Initialize(const std::string& i_path) override;
 		bool UpdateUniformVariables(GLuint i_programID) override;
