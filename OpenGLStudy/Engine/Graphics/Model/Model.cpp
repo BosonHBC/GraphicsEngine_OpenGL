@@ -62,7 +62,6 @@ namespace Graphics {
 
 	void cModel::Render(GLenum i_drawMode/* = GL_TRIANGLES*/) const
 	{
-
 		for (size_t i = 0; i < m_meshList.size(); ++i)
 		{
 			cMaterial* _material = cMaterial::s_manager.Get(m_materialList[0]);
@@ -106,6 +105,9 @@ namespace Graphics {
 		}
 		m_meshList.clear();
 		m_meshList.~vector();
+		
+		m_ModelID = -1;
+		s_allModelCount--;
 	}
 
 	bool cModel::IntersectWithSphere(const cSphere& i_transformedSphere)

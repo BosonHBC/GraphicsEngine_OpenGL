@@ -3,7 +3,7 @@
 #include "glfw/glfw3.h"
 #include "stdio.h"
 #include "Application/imgui/imgui.h"
-cEditorCamera::cEditorCamera(const cEditorCamera& i_other) 
+cEditorCamera::cEditorCamera(const cEditorCamera& i_other)
 	: cCamera(i_other)
 {
 
@@ -23,13 +23,11 @@ void cEditorCamera::CameraControl(sWindowInput* const i_windowInput, float i_dt)
 void cEditorCamera::MouseControl(sWindowInput* const i_windowInput, float i_dt)
 {
 	if (ImGui::GetIO().WantCaptureMouse) return;
-	if (i_windowInput->IsButtonDown(GLFW_MOUSE_BUTTON_LEFT)) {
 
-		//m_yaw += -i_windowInput->DX() * m_turnSpeed * i_dt;
-		Transform.Translate(Transform.Forward() *i_windowInput->DY() * 100.f *i_dt);
+	//m_yaw += -i_windowInput->DX() * m_turnSpeed * i_dt;
+	//Transform.Translate(Transform.Forward() *ImGui:: * 100.f *i_dt);
 
-	}
-	else if (i_windowInput->IsButtonDown(GLFW_MOUSE_BUTTON_RIGHT)) {
+	if (i_windowInput->IsButtonDown(GLFW_MOUSE_BUTTON_RIGHT)) {
 		m_yaw += -i_windowInput->DX() * m_turnSpeed * i_dt;
 		m_pitch += -i_windowInput->DY() * m_turnSpeed * i_dt;
 	}

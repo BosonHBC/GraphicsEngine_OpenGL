@@ -39,7 +39,7 @@ namespace Graphics {
 	std::condition_variable g_whenAllDataHasBeenSubmittedFromApplicationThread;
 	std::condition_variable g_whenDataHasBeenSwappedInRenderThread;
 	std::condition_variable g_whenPreRenderFinish;
-	std::condition_variable g_whenDataReturnToApplicationThreadHasSwaped;
+	std::condition_variable g_whenDataReturnToApplicationThreadHasSwapped;
 	std::mutex g_graphicMutex;
 
 	// Global data
@@ -700,9 +700,15 @@ namespace Graphics {
 
 		/** 4. After all render of this frame is done*/
 		// For example calculate something here
-		g_dataGetFromRenderThread->g_selectionID = static_cast<uint32_t>(((float)rand() / RAND_MAX) * 100);
+		auto& _IO = g_dataSubmittedByApplicationThread->g_IO;
+		if (_IO.IsButtonDown(0))
+		{
+			printf("Pos: %.1f, %.1f, dPos: %f, %f \n", _IO.MousePos.x, _IO.MousePos.y, _IO.dMousePos.x, _IO.dMousePos.y);
+			g_dataGetFromRenderThread->g_selectionID = static_cast<uint32_t>(((float)rand() / RAND_MAX) * 100);
+		}
+		// swap data and notify data has been swapped.
 		std::swap(g_dataGetFromRenderThread, g_dataUsedByApplicationThread);
-		g_whenDataReturnToApplicationThreadHasSwaped.notify_one();
+		g_whenDataReturnToApplicationThreadHasSwapped.notify_one();
 	}
 
 	void SubmitClipPlaneData(const glm::vec4& i_plane0, const glm::vec4& i_plane1 /*= glm::vec4(0,0,0,0)*/, const glm::vec4& i_plane2 /*= glm::vec4(0, 0, 0, 0)*/, const glm::vec4& i_plane3 /*= glm::vec4(0, 0, 0, 0)*/)
@@ -724,12 +730,23 @@ namespace Graphics {
 
 	}
 
+	void SubmitIOData(const glm::vec2 & i_mousePos, const glm::vec2& i_mousePoseDelta, bool* i_buttonDowns)
+	{
+		sIO& _IO = g_dataSubmittedByApplicationThread->g_IO;
+		_IO.MousePos = i_mousePos;
+		_IO.dMousePos = i_mousePoseDelta;
+		for (int i = 0; i < 3; ++i)
+		{
+			_IO.SetButton(i_buttonDowns[i], i);
+		}
+	}
+
 #ifdef ENABLE_CLOTH_SIM
 	void SubmitParticleData()
 	{
 		memcpy(g_dataSubmittedByApplicationThread->particles, ClothSim::g_positionData, sizeof(glm::vec3) * ClothSim::VC);
 		memcpy(g_dataSubmittedByApplicationThread->clothVertexData, ClothSim::GetVertexData(), sizeof(float) * ClothSim::VC * 14);
-	}
+}
 #endif // ENABLE_CLOTH_SIM
 
 	void SubmitGraphicSettings(const ERenderMode& i_renderMode)
@@ -871,7 +888,7 @@ namespace Graphics {
 	{
 		std::unique_lock<std::mutex> lck(Application::GetCurrentApplication()->GetApplicationMutex());
 		constexpr unsigned int timeToWait_inMilliseconds = 10;
-		g_whenDataReturnToApplicationThreadHasSwaped.wait_for(lck, std::chrono::milliseconds(timeToWait_inMilliseconds));
+		g_whenDataReturnToApplicationThreadHasSwapped.wait_for(lck, std::chrono::milliseconds(timeToWait_inMilliseconds));
 		return *g_dataUsedByApplicationThread;
 	}
 

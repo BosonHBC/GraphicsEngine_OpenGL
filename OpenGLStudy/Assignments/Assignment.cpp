@@ -146,7 +146,13 @@ void Assignment::SubmitDataToBeRender(const float i_seconds_elapsedSinceLastLoop
 	SubmitShadowData();
 	// Submit post processing data
 	Graphics::SubmitPostProcessingData(m_exposureOffset);
-
+	// Submit IO Data
+	glm::vec2 mousePos = glm::vec2(ImGui::GetMousePos().x, ImGui::GetMousePos().y);
+	const auto& dragDelta = ImGui::GetMouseDragDelta();
+	glm::vec2 mouseDelta(dragDelta.x, dragDelta.y);
+	bool downs[3] = {false};
+	for (int i = 0; i < 3; ++i) downs[i] = ImGui::IsMouseDown(i);
+	Graphics::SubmitIOData(mousePos, mouseDelta, downs);
 	// Frame data from camera
 	Graphics::UniformBufferFormats::sFrame _frameData_Camera(m_editorCamera->GetProjectionMatrix(), m_editorCamera->GetViewMatrix());
 	// Submit geometry data
@@ -366,7 +372,6 @@ void Assignment::SubmitLightingData()
 		m_pLights[i]->CalculateDistToEye(m_editorCamera->CamLocation());
 		_pLights.push_back(*m_pLights[i]);
 	}
-
 	if (spLight)
 	{
 		spLight->UpdateLightIndex(_spLights.size());

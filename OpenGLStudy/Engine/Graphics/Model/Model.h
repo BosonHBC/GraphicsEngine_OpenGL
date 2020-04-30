@@ -14,15 +14,10 @@ namespace Graphics {
 	{
 	public:
 		static uint32_t s_allModelCount;
-		cModel() { m_meshList.reserve(1); m_materialList.reserve(1); }
+		cModel() { }
 		cModel(const std::string& i_path);
-		cModel(const cModel& i_other) : m_meshList(i_other.m_meshList), m_materialList(i_other.m_materialList) { }
-		cModel& operator = (const cModel& i_rhs)
-		{
-			m_meshList = i_rhs.m_meshList;
-			m_materialList = i_rhs.m_materialList;
-			return *this;
-		}
+		cModel(const cModel& i_other) : m_meshList(i_other.m_meshList), m_materialList(i_other.m_materialList), m_ModelID(i_other.m_ModelID) { }
+		cModel& operator = (const cModel& i_rhs) { m_meshList = i_rhs.m_meshList; m_materialList = i_rhs.m_materialList; m_ModelID = i_rhs.m_ModelID; return *this; }
 
 		//--------------------------
 		/** Destructor*/

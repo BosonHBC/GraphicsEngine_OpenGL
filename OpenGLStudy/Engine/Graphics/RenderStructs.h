@@ -7,7 +7,7 @@
 #include "Model/Model.h"
 #include "vector"
 #include "Assignments/ClothSimulation/SimulationParams.h"
-namespace Graphics{
+namespace Graphics {
 	// render mode
 	enum ERenderMode : uint8_t
 	{
@@ -33,6 +33,27 @@ namespace Graphics{
 		void(*RenderPassFunction) ();
 		sPass() {}
 	};
+	// IO struct
+	// ------------------------------------------------------------------------------------------------------------------------------------
+	struct sIO
+	{
+		glm::vec2 MousePos = glm::vec2(0.0f); // current mouse position
+		glm::vec2 dMousePos = glm::vec2(0.0f); // mouse position delta
+		uint8_t g_mouseDown = 0;						// no button is down
+
+		// i_button: (0=left, 1=right, 2=middle)
+		void SetButton(bool i_down, int i_button)
+		{
+			if (i_down)
+				g_mouseDown |= (1 << i_button);
+			else
+				g_mouseDown &= ~(1 << i_button);
+		}
+		bool IsButtonDown(int i_button)
+		{
+			return (g_mouseDown >> i_button) & 1;
+		}
+	};
 	// Data required to render a frame, right now do not support switching effect(shader)
 	struct sDataRequiredToRenderAFrame
 	{
@@ -45,7 +66,7 @@ namespace Graphics{
 		std::vector<cSpotLight> g_spotLights;
 		cAmbientLight g_ambientLight;
 		cDirectionalLight g_directionalLight;
-
+		sIO g_IO;
 #ifdef ENABLE_CLOTH_SIM
 		// for simulation specifically
 		glm::vec3 particles[ClothSim::VC];
@@ -56,6 +77,7 @@ namespace Graphics{
 	struct sDataReturnToApplicationThread
 	{
 		uint32_t g_selectionID;
+
 	};
 
 	// Primitive types
