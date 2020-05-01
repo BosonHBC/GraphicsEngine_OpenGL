@@ -4,20 +4,20 @@
 #include "Engine/Graphics/Mesh/Mesh.h"
 #include "Engine/Assets/AssetManager.h"
 #include "Engine/Assets/Handle.h"
-
+#include "Cores/Utility/ISelectable.h"
 struct aiScene;
 struct aiNode;
 struct aiMesh;
 namespace Graphics {
 	/** Model stores information of meshes group and related textures*/
-	class cModel
+	class cModel : public ISelectable
 	{
 	public:
-		static uint32_t s_allModelCount;
+
 		cModel() { }
 		cModel(const std::string& i_path);
-		cModel(const cModel& i_other) : m_meshList(i_other.m_meshList), m_materialList(i_other.m_materialList), m_ModelID(i_other.m_ModelID) { }
-		cModel& operator = (const cModel& i_rhs) { m_meshList = i_rhs.m_meshList; m_materialList = i_rhs.m_materialList; m_ModelID = i_rhs.m_ModelID; return *this; }
+		cModel(const cModel& i_other) : ISelectable(i_other), m_meshList(i_other.m_meshList), m_materialList(i_other.m_materialList) { }
+		cModel& operator = (const cModel& i_rhs) { ISelectable::operator=(i_rhs); m_meshList = i_rhs.m_meshList; m_materialList = i_rhs.m_materialList; return *this; }
 
 		//--------------------------
 		/** Destructor*/
@@ -32,7 +32,6 @@ namespace Graphics {
 		void CleanUp();
 
 		bool IntersectWithSphere(const cSphere& i_transformedSphere);
-		uint32_t GetModelID() const { return m_ModelID; }
 		/** Getters */
 		cMaterial::HANDLE GetMaterialAt(GLuint i_idx = 0);
 	private:
@@ -52,7 +51,6 @@ namespace Graphics {
 		// actual loading function
 		bool LoadModel(const char* i_path);
 
-		uint32_t m_ModelID = -1;
 	};
 
 

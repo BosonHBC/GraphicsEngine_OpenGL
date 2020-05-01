@@ -28,6 +28,7 @@
     <ClInclude Include="BitArray\BitArray.h" />
     <ClInclude Include="Core.h" />
     <ClInclude Include="DataStructure\OctTree.h" />
+    <ClInclude Include="Utility\ISelectable.h" />
   </ItemGroup>
   <PropertyGroup Label="Globals">
     <VCProjectVersion>15.0</VCProjectVersion>

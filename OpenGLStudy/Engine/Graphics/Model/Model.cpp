@@ -12,8 +12,6 @@
 #include "Assets/PathProcessor.h"
 
 namespace Graphics {
-	// 0 should be background, or cubemap
-	uint32_t cModel::s_allModelCount = 1;
 
 	bool cModel::LoadModel(const char* i_path)
 	{
@@ -46,7 +44,7 @@ namespace Graphics {
 		//  Load materials
 		LoadMaterials(_scene, _materialPath.c_str());
 		
-		m_ModelID = s_allModelCount++;
+		IncreamentSelectableCount();
 		return true;
 	}
 
@@ -107,8 +105,7 @@ namespace Graphics {
 		m_meshList.clear();
 		m_meshList.~vector();
 		
-		m_ModelID = -1;
-		s_allModelCount--;
+		DecreamentSelectableCount();
 	}
 
 	bool cModel::IntersectWithSphere(const cSphere& i_transformedSphere)

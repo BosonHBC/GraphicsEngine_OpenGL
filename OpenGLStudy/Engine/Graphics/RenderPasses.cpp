@@ -9,6 +9,7 @@
 #include "Assignments/ClothSimulation/SimulationParams.h"
 #include <algorithm>
 #include "Application/Window/WindowInput.h"
+#include "Application/imgui/imgui.h"
 
 namespace Graphics
 {
@@ -25,6 +26,7 @@ namespace Graphics
 	extern cFrameBuffer g_ssaoBuffer;
 	extern cFrameBuffer g_ssao_blur_Buffer;
 	extern 	cFrameBuffer g_selectionBuffer;
+	extern cFrameBuffer g_depthStoreBuffer;
 	extern cModel g_cubeHandle;
 	extern cModel g_arrowHandle;
 	extern cModel g_quadHandle;
@@ -90,20 +92,14 @@ namespace Graphics
 		g_currentEffect->UnUseEffect();
 	}
 
-	bool rCtrlPressed = false;
+
 	void RenderOmniShadowMap()
 	{
-
-		sWindowInput* _windowInput = Application::GetCurrentApplication()->GetCurrentWindow()->GetWindowInput();
-		if (!rCtrlPressed && _windowInput->IsKeyDown(GLFW_KEY_RIGHT_CONTROL))
+		if (ImGui::IsKeyPressed(GLFW_KEY_RIGHT_CONTROL))
 		{
-			rCtrlPressed = true;
 			g_bRenderOmniShaodowMap = !g_bRenderOmniShaodowMap;
 		}
-		if (rCtrlPressed && _windowInput->IsKeyUp(GLFW_KEY_RIGHT_CONTROL))
-		{
-			rCtrlPressed = false;
-		}
+
 		if (!g_bRenderOmniShaodowMap) return;
 		for (int i = 0; i < OMNI_SHADOW_MAP_COUNT; ++i)
 		{
@@ -520,12 +516,12 @@ namespace Graphics
 				}
 #endif // ENABLE_CLOTH_SIM
 
-				RenderPointLightPosition();
-				RenderOmniShadowMap();
+
+
 			}
 		);
 
-		HDR_Pass();
+		
 	}
 
 	void GBuffer_Pass()
@@ -633,21 +629,18 @@ namespace Graphics
 
 					/** 3.2. Display cubemap at the end */
 					{
-						glBindFramebuffer(GL_READ_FRAMEBUFFER, g_GBuffer.fbo());
-						glBindFramebuffer(GL_DRAW_FRAMEBUFFER, g_hdrBuffer.fbo()); // write to default frame buffer
-						glBlitFramebuffer(
-							0, 0, g_GBuffer.GetWidth(), g_GBuffer.GetHeight(), 0, 0, g_GBuffer.GetWidth(), g_GBuffer.GetHeight(), GL_DEPTH_BUFFER_BIT, GL_NEAREST
+						glBlitNamedFramebuffer(
+							g_GBuffer.fbo(), g_hdrBuffer.fbo(), 0, 0, g_GBuffer.GetWidth(), g_GBuffer.GetHeight(), 0, 0, g_GBuffer.GetWidth(), g_GBuffer.GetHeight(), GL_DEPTH_BUFFER_BIT, GL_NEAREST
 						);
-						glBindFramebuffer(GL_FRAMEBUFFER, g_hdrBuffer.fbo());
 						g_currentRenderPass = 4; // Cubemap pass
 						g_uniformBufferMap[UBT_Frame].Update(&g_dataRenderingByGraphicThread->g_renderPasses[g_currentRenderPass].FrameData);
 						CubeMap_Pass();
-						RenderPointLightPosition();
-						RenderOmniShadowMap();
+
+
 					}
 				}
 			);
-			HDR_Pass();
+			
 		}
 	}
 
@@ -758,7 +751,7 @@ namespace Graphics
 					// 1. Update draw call data
 					g_uniformBufferMap[UBT_Drawcall].Update(&UniformBufferFormats::sDrawCall(it->second.M(), it->second.TranspostInverse()));
 					// 2. Draw
-					uint32_t modelID = it->first.GetModelID();
+					uint32_t modelID = it->first.SelectableID;
 					int r = (modelID & 0x000000FF) >> 0;
 					int g = (modelID & 0x0000FF00) >> 8;
 					int b = (modelID & 0x00FF0000) >> 16;

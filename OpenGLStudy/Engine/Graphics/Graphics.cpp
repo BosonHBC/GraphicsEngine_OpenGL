@@ -491,6 +491,7 @@ namespace Graphics {
 				printf("Fail to create selection-Buffer.\n");
 				return result;
 			}
+
 			//EnvironmentCaptureManager::AddCaptureProbes(cSphere(glm::vec3(-225, 230, 0), 600.f), 50.f, envMapResolution);
 
 			EnvironmentCaptureManager::AddCaptureProbes(cSphere(glm::vec3(0, 230, 0), 600.f), 50.f, envMapResolution);
@@ -695,6 +696,12 @@ namespace Graphics {
 		// Notify the application thread that data is swapped and it is ready for receiving new data
 		g_whenDataHasBeenSwappedInRenderThread.notify_one();
 
+		// For example calculate something here
+		auto& _IO = g_dataSubmittedByApplicationThread->g_IO;
+		// Handle selection
+		SelctionBuffer_Pass();
+
+
 		// Update cubemap weights before rendering, actually, this step should be done at the application thread
 		EnvironmentCaptureManager::UpdatePointOfInterest(g_dataRenderingByGraphicThread->g_renderPasses[3].FrameData.GetViewPosition());
 		g_uniformBufferMap[UBT_ClipPlane].Update(&g_dataRenderingByGraphicThread->s_ClipPlane);
@@ -712,17 +719,25 @@ namespace Graphics {
 		{
 			DeferredShading();
 		}
-		//renderCount++;
-		//printf("Render thread count: %d\n", renderCount);
-		Gizmo_DrawDebugCaptureVolume();
 
-		/** 4. After all render of this frame is done*/
-		// For example calculate something here
-		auto& _IO = g_dataSubmittedByApplicationThread->g_IO;
-		if (_IO.IsButtonDown(0))
+		if (g_dataRenderingByGraphicThread->g_renderMode == ERM_DeferredShading || g_dataRenderingByGraphicThread->g_renderMode == ERM_ForwardShading)
 		{
-			SelctionBuffer_Pass();
+			HDR_Pass();
+
+			// Clear the default buffer bit and copy hdr frame buffer's depth to the default frame buffer
+			glClear(GL_DEPTH_BUFFER_BIT);
+			glBlitNamedFramebuffer(g_hdrBuffer.fbo(), 0, 0, 0, g_hdrBuffer.GetWidth(), g_hdrBuffer.GetHeight(), 0, 0, g_hdrBuffer.GetWidth(), g_hdrBuffer.GetHeight(), GL_DEPTH_BUFFER_BIT, GL_NEAREST);
+			assert(GL_NO_ERROR == glGetError());
+
+			// Render stuffs that needs depth info and needs not HDR info
+			RenderPointLightPosition();
+			//Gizmo_DrawDebugCaptureVolume();
+			RenderOmniShadowMap();
+
 		}
+			
+		/** 4. After all render of this frame is done*/
+
 		// swap data and notify data has been swapped.
 		std::swap(g_dataGetFromRenderThread, g_dataUsedByApplicationThread);
 		g_whenDataReturnToApplicationThreadHasSwapped.notify_one();
@@ -763,7 +778,7 @@ namespace Graphics {
 	{
 		memcpy(g_dataSubmittedByApplicationThread->particles, ClothSim::g_positionData, sizeof(glm::vec3) * ClothSim::VC);
 		memcpy(g_dataSubmittedByApplicationThread->clothVertexData, ClothSim::GetVertexData(), sizeof(float) * ClothSim::VC * 14);
-	}
+}
 #endif // ENABLE_CLOTH_SIM
 
 
