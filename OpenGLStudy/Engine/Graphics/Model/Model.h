@@ -32,7 +32,7 @@ namespace Graphics {
 		void CleanUp();
 
 		bool IntersectWithSphere(const cSphere& i_transformedSphere);
-
+		uint32_t GetModelID() const { return m_ModelID; }
 		/** Getters */
 		cMaterial::HANDLE GetMaterialAt(GLuint i_idx = 0);
 	private:

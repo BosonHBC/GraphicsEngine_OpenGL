@@ -15,6 +15,7 @@ namespace Graphics
 	extern unsigned int g_currentRenderPass;
 	extern cEffect* g_currentEffect;
 	extern sDataRequiredToRenderAFrame* g_dataRenderingByGraphicThread;
+	extern 	sDataReturnToApplicationThread * g_dataGetFromRenderThread;
 	extern 	std::map<eUniformBufferType, cUniformBuffer> g_uniformBufferMap;
 	extern UniformBufferFormats::sLighting g_globalLightingData;
 	extern cFrameBuffer g_omniShadowMaps[OMNI_SHADOW_MAP_COUNT];
@@ -23,6 +24,7 @@ namespace Graphics
 	extern cGBuffer g_GBuffer;
 	extern cFrameBuffer g_ssaoBuffer;
 	extern cFrameBuffer g_ssao_blur_Buffer;
+	extern 	cFrameBuffer g_selectionBuffer;
 	extern cModel g_cubeHandle;
 	extern cModel g_arrowHandle;
 	extern cModel g_quadHandle;
@@ -739,5 +741,50 @@ namespace Graphics
 		glClear(GL_DEPTH_BUFFER_BIT);
 		RenderScene(nullptr);
 		g_currentEffect->UnUseEffect();
+	}
+
+	void SelctionBuffer_Pass()
+	{
+		g_currentEffect = GetEffectByKey(EET_SelectionBuffer);
+		g_currentEffect->UseEffect();
+		g_uniformBufferMap[UBT_Frame].Update(&g_dataRenderingByGraphicThread->g_renderPasses[3].FrameData);
+
+		g_selectionBuffer.Write([]
+			{
+				glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+				auto& renderMap = g_dataRenderingByGraphicThread->g_renderPasses[3].ModelToTransform_map;
+				for (auto it = renderMap.begin(); it != renderMap.end(); ++it)
+				{
+					// 1. Update draw call data
+					g_uniformBufferMap[UBT_Drawcall].Update(&UniformBufferFormats::sDrawCall(it->second.M(), it->second.TranspostInverse()));
+					// 2. Draw
+					uint32_t modelID = it->first.GetModelID();
+					int r = (modelID & 0x000000FF) >> 0;
+					int g = (modelID & 0x0000FF00) >> 8;
+					int b = (modelID & 0x00FF0000) >> 16;
+					it->first.UpdateUniformVariables(g_currentEffect->GetProgramID());
+					g_currentEffect->SetVec3("selectionColor", glm::vec3(r / 255.f, g / 255.f, b / 255.f));
+					it->first.RenderWithoutMaterial();
+				}
+			});
+		g_currentEffect->UnUseEffect();
+
+		// bind the frame buffer and ready to read pixel from the texture
+		int _prevFbo;
+		glGetIntegerv(GL_FRAMEBUFFER_BINDING, &_prevFbo);
+		glBindFramebuffer(GL_FRAMEBUFFER, g_selectionBuffer.fbo());
+
+		glFlush();
+		glFinish();
+		glPixelStorei(GL_UNPACK_ALIGNMENT, 1);
+		unsigned char data[3];
+		sIO& _IO = g_dataRenderingByGraphicThread->g_IO;
+		int mouseX = glm::clamp(static_cast<int>(_IO.MousePos.x), 0, Application::GetCurrentApplication()->GetCurrentWindow()->GetBufferWidth());
+		int mouseY = glm::clamp(static_cast<int>(Application::GetCurrentApplication()->GetCurrentWindow()->GetBufferHeight() - _IO.MousePos.y), 0, Application::GetCurrentApplication()->GetCurrentWindow()->GetBufferHeight());
+		glReadPixels(mouseX, mouseY, 1, 1, GL_RGB, GL_UNSIGNED_BYTE, data);
+		uint32_t pickedID = data[0] + data[1] * 256 + data[2] * 256 * 256;
+		g_dataGetFromRenderThread->g_selectionID = pickedID;
+
+		glBindFramebuffer(GL_FRAMEBUFFER, _prevFbo);
 	}
 }

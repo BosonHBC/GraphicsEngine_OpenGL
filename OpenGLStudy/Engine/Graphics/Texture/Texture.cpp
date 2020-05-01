@@ -75,6 +75,9 @@ namespace Graphics {
 			case ETT_FILE_HDR_IMAGE:
 				result = _texture->LoadHDRImageFromFile(i_path);
 				break;
+			case ETT_FRAMEBUFFER_RGB8:
+				result = _texture->LoadRGB8Texture(i_path, i_override_width, i_override_height);
+				break;
 			case Graphics::ETT_INVALID:
 				result = false;
 				printf("Load texture error: Invalid texture type: %d in\n", i_ett);
@@ -586,6 +589,25 @@ namespace Graphics {
 		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
 		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
 
+		assert(GL_NO_ERROR == glGetError());
+
+		// unbind texture
+		glBindTexture(GL_TEXTURE_2D, 0);
+		return result;
+	}
+
+	bool cTexture::LoadRGB8Texture(const std::string& i_type_id, const GLuint& i_width, const GLuint& i_height)
+	{
+		auto result = true;
+		m_width = i_width;
+		m_height = i_height;
+
+		glGenTextures(1, &m_textureID);
+		glBindTexture(GL_TEXTURE_2D, m_textureID);
+		glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, i_width, i_height, 0, GL_RGB, GL_UNSIGNED_BYTE, nullptr);
+
+		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
 		assert(GL_NO_ERROR == glGetError());
 
 		// unbind texture

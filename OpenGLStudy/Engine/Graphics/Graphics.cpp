@@ -78,6 +78,9 @@ namespace Graphics {
 	// SSAO blur frame buffer
 	cFrameBuffer g_ssao_blur_Buffer;
 	const int g_noiseResolution = 4;
+	// selection buffer
+	cFrameBuffer g_selectionBuffer;
+
 	// Effect
 	// ------------------------------------------------------------------------------------------------------------------------------------
 	std::map<eEffectType, cEffect*> g_KeyToEffect_map;
@@ -414,6 +417,16 @@ namespace Graphics {
 					return result;
 				}
 			}
+			// Create cubemap displayer
+			{
+				if (!(result = CreateEffect(EET_SelectionBuffer,
+					"selection/selection_vert.glsl",
+					"selection/selection_frag.glsl"
+				))) {
+					printf("Fail to create selection buffer effect.\n");
+					return result;
+				}
+			}
 			// validate all programs
 			for (auto it : g_KeyToEffect_map)
 			{
@@ -473,6 +486,11 @@ namespace Graphics {
 				return result;
 			}
 
+			if (!(result = g_selectionBuffer.Initialize(_window->GetBufferWidth(), _window->GetBufferHeight(), ETT_FRAMEBUFFER_RGB8)))
+			{
+				printf("Fail to create selection-Buffer.\n");
+				return result;
+			}
 			//EnvironmentCaptureManager::AddCaptureProbes(cSphere(glm::vec3(-225, 230, 0), 600.f), 50.f, envMapResolution);
 
 			EnvironmentCaptureManager::AddCaptureProbes(cSphere(glm::vec3(0, 230, 0), 600.f), 50.f, envMapResolution);
@@ -703,8 +721,7 @@ namespace Graphics {
 		auto& _IO = g_dataSubmittedByApplicationThread->g_IO;
 		if (_IO.IsButtonDown(0))
 		{
-			printf("Pos: %.1f, %.1f, dPos: %f, %f \n", _IO.MousePos.x, _IO.MousePos.y, _IO.dMousePos.x, _IO.dMousePos.y);
-			g_dataGetFromRenderThread->g_selectionID = static_cast<uint32_t>(((float)rand() / RAND_MAX) * 100);
+			SelctionBuffer_Pass();
 		}
 		// swap data and notify data has been swapped.
 		std::swap(g_dataGetFromRenderThread, g_dataUsedByApplicationThread);
@@ -746,8 +763,9 @@ namespace Graphics {
 	{
 		memcpy(g_dataSubmittedByApplicationThread->particles, ClothSim::g_positionData, sizeof(glm::vec3) * ClothSim::VC);
 		memcpy(g_dataSubmittedByApplicationThread->clothVertexData, ClothSim::GetVertexData(), sizeof(float) * ClothSim::VC * 14);
-}
+	}
 #endif // ENABLE_CLOTH_SIM
+
 
 	void SubmitGraphicSettings(const ERenderMode& i_renderMode)
 	{
@@ -838,6 +856,7 @@ namespace Graphics {
 		g_GBuffer.CleanUp();
 		g_ssaoBuffer.CleanUp();
 		g_ssao_blur_Buffer.CleanUp();
+		g_selectionBuffer.CleanUp();
 		if (!(result = EnvironmentCaptureManager::CleanUp()))
 			printf("Fail to clean up Environment Capture Manager.\n");
 
@@ -887,7 +906,7 @@ namespace Graphics {
 	const Graphics::sDataReturnToApplicationThread& GetDataFromRenderThread()
 	{
 		std::unique_lock<std::mutex> lck(Application::GetCurrentApplication()->GetApplicationMutex());
-		constexpr unsigned int timeToWait_inMilliseconds = 10;
+		constexpr unsigned int timeToWait_inMilliseconds = 100;
 		g_whenDataReturnToApplicationThreadHasSwapped.wait_for(lck, std::chrono::milliseconds(timeToWait_inMilliseconds));
 		return *g_dataUsedByApplicationThread;
 	}

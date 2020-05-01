@@ -34,6 +34,7 @@ namespace Graphics {
 	void BlinnPhong_Pass();
 	void PBR_Pass();
 	void CubeMap_Pass();
+	void SelctionBuffer_Pass();
 
 	void Gizmo_RenderTransform();
 	void Gizmo_RenderVertexNormal();

@@ -326,10 +326,10 @@ void Assignment::Tick(float second_since_lastFrame)
 		printf("Current Point Light Count: %d\n", m_createdPLightCount);
 	}
 
-	if (ImGui::IsMouseClicked(0))
+	if (!ImGui::GetIO().WantCaptureMouse && ImGui::IsMouseReleased(0))
 	{
 		auto dataFromRenderThread = Graphics::GetDataFromRenderThread();
-		printf("Random Number: %d\n", dataFromRenderThread.g_selectionID);
+		printf("Selected model ID: %d\n", dataFromRenderThread.g_selectionID);
 	}
 
 	for (int i = 0; i < m_renderingTeapotCount; ++i)

@@ -85,6 +85,7 @@ namespace Graphics {
 
 				assert(GL_NO_ERROR == glGetError());
 				break;
+			case ETT_FRAMEBUFFER_RGB8:
 			case ETT_FRAMEBUFFER_RGBA16:
 				glGenRenderbuffers(1, &m_rbo);
 				glBindRenderbuffer(GL_RENDERBUFFER, m_rbo);
