@@ -16,11 +16,12 @@ void cActor::Initialize()
 void cActor::CleanUp()
 {
 	// Release the handle
-	m_modelHandle.CleanUp();
+	m_model.CleanUp();
 
 }
 
 void cActor::SetModel(std::string i_modelPath)
 {
-	m_modelHandle = Graphics::cModel(i_modelPath);
+	m_model = Graphics::cModel(i_modelPath);
+	m_model.SetOwner(this);
 }

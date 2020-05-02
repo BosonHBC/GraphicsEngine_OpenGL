@@ -698,9 +698,6 @@ namespace Graphics {
 
 		// For example calculate something here
 		auto& _IO = g_dataSubmittedByApplicationThread->g_IO;
-		// Handle selection
-		SelctionBuffer_Pass();
-
 
 		// Update cubemap weights before rendering, actually, this step should be done at the application thread
 		EnvironmentCaptureManager::UpdatePointOfInterest(g_dataRenderingByGraphicThread->g_renderPasses[3].FrameData.GetViewPosition());
@@ -734,6 +731,11 @@ namespace Graphics {
 			//Gizmo_DrawDebugCaptureVolume();
 			RenderOmniShadowMap();
 
+			// Handle selection
+			SelctionBuffer_Pass();
+
+			// Render transform id according to the selection buffer
+			Gizmo_RenderSelectingTransform();
 		}
 			
 		/** 4. After all render of this frame is done*/
@@ -771,6 +773,11 @@ namespace Graphics {
 		{
 			_IO.SetButton(i_buttonDowns[i], i);
 		}
+	}
+
+	void SubmitSelectedItem(uint32_t i_selectionID)
+	{
+		g_dataSubmittedByApplicationThread->g_selectingItemID = i_selectionID;
 	}
 
 #ifdef ENABLE_CLOTH_SIM

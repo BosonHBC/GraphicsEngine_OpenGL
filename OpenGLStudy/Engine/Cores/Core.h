@@ -6,6 +6,7 @@
 #define safe_delete(x) if(x){delete x; x = nullptr;}
 #define MAX_COUNT_PER_LIGHT 5
 #define OMNI_SHADOW_MAP_COUNT 5
+#define IsFloatZero(x) (x > -0.0001f && x < 0.0001f)
 
 /** Check memory leak*/
 #ifdef _DEBUG

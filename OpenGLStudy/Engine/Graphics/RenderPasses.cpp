@@ -10,6 +10,7 @@
 #include <algorithm>
 #include "Application/Window/WindowInput.h"
 #include "Application/imgui/imgui.h"
+#include "Cores/Actor/Actor.h"
 
 namespace Graphics
 {
@@ -635,8 +636,6 @@ namespace Graphics
 						g_currentRenderPass = 4; // Cubemap pass
 						g_uniformBufferMap[UBT_Frame].Update(&g_dataRenderingByGraphicThread->g_renderPasses[g_currentRenderPass].FrameData);
 						CubeMap_Pass();
-
-
 					}
 				}
 			);
@@ -644,30 +643,35 @@ namespace Graphics
 		}
 	}
 
-	void Gizmo_RenderTransform()
+	void Gizmo_RenderSelectingTransform()
 	{
-		g_currentEffect = GetEffectByKey(EET_Unlit);
-		g_currentEffect->UseEffect();
+		auto& selectionID = g_dataRenderingByGraphicThread->g_selectingItemID;
 
-		for (auto it = g_dataRenderingByGraphicThread->g_renderPasses[g_currentRenderPass].ModelToTransform_map.begin();
-			it != g_dataRenderingByGraphicThread->g_renderPasses[g_currentRenderPass].ModelToTransform_map.end(); ++it)
+		if (ISelectable::IsValid(selectionID))
 		{
+			const cModel* _model = dynamic_cast<cModel*>(ISelectable::s_selectableList[selectionID]);
+			if (!_model) return;
+
+			glDisable(GL_DEPTH_TEST);
+			g_currentEffect = GetEffectByKey(EET_Unlit);
+			g_currentEffect->UseEffect();
+			cTransform modelTransform = _model->GetOwner()->Transform;
 			// Get forward transform
 			cTransform arrowTransform[3];
 			{
 				// Forward
-				arrowTransform[0].SetRotation(it->second.Rotation() * glm::quat(glm::vec3(glm::radians(90.f), 0, 0)));
+				arrowTransform[0].SetRotation(modelTransform.Rotation() * glm::quat(glm::vec3(glm::radians(90.f), 0, 0)));
 				// Right									  
-				arrowTransform[1].SetRotation(it->second.Rotation() * glm::quat(glm::vec3(0, 0, glm::radians(90.f))));
+				arrowTransform[1].SetRotation(modelTransform.Rotation() * glm::quat(glm::vec3(0, 0, glm::radians(90.f))));
 				// Up											
-				arrowTransform[2].SetRotation(it->second.Rotation() * glm::quat(glm::vec3(0, glm::radians(90.f), 0)));
+				arrowTransform[2].SetRotation(modelTransform.Rotation() * glm::quat(glm::vec3(0, glm::radians(90.f), 0)));
 			}
 
 			cMatUnlit* _arrowMat = dynamic_cast<cMatUnlit*>(cMaterial::s_manager.Get(g_arrowHandle.GetMaterialAt()));
 
 			for (int i = 0; i < 3; ++i)
 			{
-				arrowTransform[i].SetPosition(it->second.Position());
+				arrowTransform[i].SetPosition(modelTransform.Position());
 				arrowTransform[i].SetScale(glm::vec3(2, 10, 2));
 				arrowTransform[i].Update();
 				g_uniformBufferMap[UBT_Drawcall].Update(&UniformBufferFormats::sDrawCall(arrowTransform[i].M(), arrowTransform[i].TranspostInverse()));
@@ -676,10 +680,11 @@ namespace Graphics
 				g_arrowHandle.UpdateUniformVariables(g_currentEffect->GetProgramID());
 				g_arrowHandle.Render();
 			}
+			g_currentEffect->UnUseEffect();
+			glEnable(GL_DEPTH_TEST);
 		}
 
 
-		g_currentEffect->UnUseEffect();
 	}
 
 	void Gizmo_DrawDebugCaptureVolume() {
@@ -738,6 +743,7 @@ namespace Graphics
 
 	void SelctionBuffer_Pass()
 	{
+		glDisable(GL_CULL_FACE);
 		g_currentEffect = GetEffectByKey(EET_SelectionBuffer);
 		g_currentEffect->UseEffect();
 		g_uniformBufferMap[UBT_Frame].Update(&g_dataRenderingByGraphicThread->g_renderPasses[3].FrameData);
@@ -779,5 +785,6 @@ namespace Graphics
 		g_dataGetFromRenderThread->g_selectionID = pickedID;
 
 		glBindFramebuffer(GL_FRAMEBUFFER, _prevFbo);
+		glEnable(GL_CULL_FACE);
 	}
 }

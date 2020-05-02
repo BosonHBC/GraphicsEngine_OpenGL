@@ -67,6 +67,7 @@ namespace Graphics {
 		cAmbientLight g_ambientLight;
 		cDirectionalLight g_directionalLight;
 		sIO g_IO;
+		uint32_t g_selectingItemID;
 #ifdef ENABLE_CLOTH_SIM
 		// for simulation specifically
 		glm::vec3 particles[ClothSim::VC];

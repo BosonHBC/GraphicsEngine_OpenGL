@@ -26,9 +26,9 @@ public:
 
 	/** Getters*/
 	cTransform Transform;
-	Graphics::cModel GetModelHandle() const { return m_modelHandle; }
+	Graphics::cModel GetModelHandle() const { return m_model; }
 private:
-	Graphics::cModel m_modelHandle;
+	Graphics::cModel m_model;
 
 
 };

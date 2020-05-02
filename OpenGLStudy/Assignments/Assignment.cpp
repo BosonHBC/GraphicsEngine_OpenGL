@@ -22,7 +22,7 @@
 #include "Assignments/ClothSimulation/SimulationParams.h"
 #include <random>
 #include "Application/imgui/imgui.h"
-
+#include "Editor/Editor.h"
 
 Graphics::ERenderMode g_renderMode = Graphics::ERenderMode::ERM_ForwardShading;
 
@@ -140,12 +140,16 @@ void Assignment::SubmitDataToBeRender(const float i_seconds_elapsedSinceLastLoop
 	std::vector<std::pair<Graphics::cModel, cTransform>> _renderingMap = std::vector<std::pair<Graphics::cModel, cTransform>>();
 	// Submit render setting
 	Graphics::SubmitGraphicSettings(g_renderMode);
+
 	// Submit lighting data
 	SubmitLightingData();
+
 	// Submit geometry data for shadow map
 	SubmitShadowData();
+
 	// Submit post processing data
 	Graphics::SubmitPostProcessingData(m_exposureOffset);
+
 	// Submit IO Data
 	glm::vec2 mousePos = glm::vec2(ImGui::GetMousePos().x, ImGui::GetMousePos().y);
 	const auto& dragDelta = ImGui::GetMouseDragDelta();
@@ -153,6 +157,10 @@ void Assignment::SubmitDataToBeRender(const float i_seconds_elapsedSinceLastLoop
 	bool downs[3] = {false};
 	for (int i = 0; i < 3; ++i) downs[i] = ImGui::IsMouseDown(i);
 	Graphics::SubmitIOData(mousePos, mouseDelta, downs);
+
+	// Submit Selection data
+	Graphics::SubmitSelectedItem(Editor::SelectingItemID);
+
 	// Frame data from camera
 	Graphics::UniformBufferFormats::sFrame _frameData_Camera(m_editorCamera->GetProjectionMatrix(), m_editorCamera->GetViewMatrix());
 	// Submit geometry data
@@ -163,18 +171,6 @@ void Assignment::SubmitDataToBeRender(const float i_seconds_elapsedSinceLastLoop
 #endif // ENABLE_CLOTH_SIM
 	// Gizmos
 	{
-		// Transform Gizmo
-		if (false)
-		{
-			_renderingMap.clear();
-			_renderingMap.reserve(8);
-			Assets::cHandle<Graphics::cModel> unneccessaryHandle;
-			//cTransform _worldTransform;
-			//_renderingMap.push_back({ unneccessaryHandle, _worldTransform });
-			//_renderingMap.push_back({ unneccessaryHandle, *m_teapot->Transform() });
-
-			Graphics::SubmitDataToBeRendered(_frameData_Camera, _renderingMap, &Graphics::Gizmo_RenderTransform);
-		}
 		// Normal Gizmo
 /*
 		if (false)
@@ -330,6 +326,8 @@ void Assignment::Tick(float second_since_lastFrame)
 	{
 		auto dataFromRenderThread = Graphics::GetDataFromRenderThread();
 		printf("Selected model ID: %d\n", dataFromRenderThread.g_selectionID);
+		
+		Editor::SelectingItemID = dataFromRenderThread.g_selectionID;
 	}
 
 	for (int i = 0; i < m_renderingTeapotCount; ++i)

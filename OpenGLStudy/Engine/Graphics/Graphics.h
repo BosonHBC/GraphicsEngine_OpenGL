@@ -36,7 +36,7 @@ namespace Graphics {
 	void CubeMap_Pass();
 	void SelctionBuffer_Pass();
 
-	void Gizmo_RenderTransform();
+	void Gizmo_RenderSelectingTransform();
 	void Gizmo_RenderVertexNormal();
 	void Gizmo_RenderTriangulation();
 	void Gizmo_DrawDebugCaptureVolume();
@@ -48,6 +48,8 @@ namespace Graphics {
 	void SubmitPostProcessingData(const float i_exposure);
 	void SubmitLightingData(const std::vector<cPointLight>& i_pointLights, const std::vector<cSpotLight>& i_spotLights, const cAmbientLight& i_ambientLight, const cDirectionalLight& i_directionalLight);
 	void SubmitIOData(const glm::vec2 & i_mousePos, const glm::vec2& i_mousePoseDelta, bool* i_buttonDowns);
+	void SubmitSelectedItem(uint32_t i_selectionID);
+
 #ifdef ENABLE_CLOTH_SIM
 	void SubmitParticleData();
 #endif // ENABLE_CLOTH_SIM

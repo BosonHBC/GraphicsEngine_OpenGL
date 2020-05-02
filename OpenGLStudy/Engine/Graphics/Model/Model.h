@@ -8,6 +8,7 @@
 struct aiScene;
 struct aiNode;
 struct aiMesh;
+class cActor;
 namespace Graphics {
 	/** Model stores information of meshes group and related textures*/
 	class cModel : public ISelectable
@@ -16,8 +17,8 @@ namespace Graphics {
 
 		cModel() { }
 		cModel(const std::string& i_path);
-		cModel(const cModel& i_other) : ISelectable(i_other), m_meshList(i_other.m_meshList), m_materialList(i_other.m_materialList) { }
-		cModel& operator = (const cModel& i_rhs) { ISelectable::operator=(i_rhs); m_meshList = i_rhs.m_meshList; m_materialList = i_rhs.m_materialList; return *this; }
+		cModel(const cModel& i_other) : ISelectable(i_other), m_meshList(i_other.m_meshList), m_materialList(i_other.m_materialList), m_owner(i_other.m_owner) { }
+		cModel& operator = (const cModel& i_rhs) { ISelectable::operator=(i_rhs); m_meshList = i_rhs.m_meshList; m_materialList = i_rhs.m_materialList; m_owner = i_rhs.m_owner; return *this; }
 
 		//--------------------------
 		/** Destructor*/
@@ -30,7 +31,8 @@ namespace Graphics {
 		// Usually is used for shadow map
 		void RenderWithoutMaterial(GLenum i_drawMode = GL_TRIANGLES) const;
 		void CleanUp();
-
+		void SetOwner(cActor* i_owner) { m_owner = i_owner; }
+		cActor* GetOwner() const { return m_owner; }
 		bool IntersectWithSphere(const cSphere& i_transformedSphere);
 		/** Getters */
 		cMaterial::HANDLE GetMaterialAt(GLuint i_idx = 0);
@@ -50,7 +52,7 @@ namespace Graphics {
 
 		// actual loading function
 		bool LoadModel(const char* i_path);
-
+		cActor* m_owner = nullptr;
 	};
 
 
