@@ -122,24 +122,27 @@ namespace Assets {
 		{
 			std::lock_guard<std::mutex> autoLock(m_mutex);
 			const auto index = io_handle.GetIndex();
-			if (index < m_assetList.size()) {
-				sAssetRecord& _record = m_assetList[index];
-				uint16_t _newReferenceCount = --_record.ReferenceCount;
-				if (_newReferenceCount == 0) {
-					// need to destroy the asset since no one is referencing the asset
-					// In this case, the application should be closed?
-					safe_delete(_record.pAsset);
-					_record.ReferenceCount = 0;
+			if (io_handle.IsValidIndex())
+			{
+				if (index < m_assetList.size()) {
+					sAssetRecord& _record = m_assetList[index];
+					uint16_t _newReferenceCount = --_record.ReferenceCount;
+					if (_newReferenceCount == 0) {
+						// need to destroy the asset since no one is referencing the asset
+						// In this case, the application should be closed?
+						safe_delete(_record.pAsset);
+						_record.ReferenceCount = 0;
+					}
+					else {
+						// Still some other objects are referencing this asset, should not destroy
+						_record.ReferenceCount = _newReferenceCount;
+					}
 				}
 				else {
-					// Still some other objects are referencing this asset, should not destroy
-					_record.ReferenceCount = _newReferenceCount;
+					// index wrong
+					result = false;
+					printf("A handle has an index (%d) that's too big for the number of assets (%u) during releasing \n", index, m_assetList.size());
 				}
-			}
-			else {
-				// index wrong
-				result = false;
-				printf("A handle has an index (%d) that's too big for the number of assets (%u) during releasing \n", index, m_assetList.size());
 			}
 		}
 		// Clean up o_handle

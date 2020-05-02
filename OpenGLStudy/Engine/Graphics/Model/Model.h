@@ -4,48 +4,45 @@
 #include "Engine/Graphics/Mesh/Mesh.h"
 #include "Engine/Assets/AssetManager.h"
 #include "Engine/Assets/Handle.h"
-
+#include "Cores/Utility/ISelectable.h"
 struct aiScene;
 struct aiNode;
 struct aiMesh;
+class cActor;
 namespace Graphics {
 	/** Model stores information of meshes group and related textures*/
-	class cModel
+	class cModel : public ISelectable
 	{
 	public:
-		//--------------------------
-		// Asset management
-		using HANDLE = Assets::cHandle<cModel>;
-		static Assets::cAssetManager < cModel > s_manager;
-		static bool Load(const std::string& i_path, cModel*& o_model);
-		//--------------------------
 
+		cModel() { }
+		cModel(const std::string& i_path);
+		cModel(const cModel& i_other) : ISelectable(i_other), m_meshList(i_other.m_meshList), m_materialList(i_other.m_materialList), m_owner(i_other.m_owner) { }
+		cModel& operator = (const cModel& i_rhs) { ISelectable::operator=(i_rhs); m_meshList = i_rhs.m_meshList; m_materialList = i_rhs.m_materialList; m_owner = i_rhs.m_owner; return *this; }
+
+		//--------------------------
 		/** Destructor*/
-		~cModel() { CleanUp(); }
+		~cModel() { }
 
 		/** Usage functions*/
 		void UpdateUniformVariables(GLuint i_programID);
-		void Render(GLenum i_drawMode = GL_TRIANGLES);
+		void Render(GLenum i_drawMode = GL_TRIANGLES) const;
 		// This rendering only draw elements without using material data
 		// Usually is used for shadow map
-		void RenderWithoutMaterial(GLenum i_drawMode = GL_TRIANGLES);
+		void RenderWithoutMaterial(GLenum i_drawMode = GL_TRIANGLES) const;
 		void CleanUp();
-
+		void SetOwner(cActor* i_owner) { m_owner = i_owner; }
+		cActor* GetOwner() const { return m_owner; }
 		bool IntersectWithSphere(const cSphere& i_transformedSphere);
-
 		/** Getters */
-		cMaterial* GetMaterialAt(GLuint i_idx = 0);
+		cMaterial::HANDLE GetMaterialAt(GLuint i_idx = 0);
 	private:
-
-		/** private default constructor, that can not be used by others*/
-		cModel() {
-		}
 
 		/** Mesh list and texture list should not be stored here,
 			but for the sake of simplicity, put it here first
 		*/
 		std::vector<cMesh::HANDLE> m_meshList;
-		std::vector<cMaterial*> m_materialList;
+		std::vector<cMaterial::HANDLE> m_materialList;
 
 		/** private helper functions*/
 		bool LoadFileFromLua(const char* i_path, std::string& o_modelPath, std::string& o_materialPath);
@@ -55,6 +52,7 @@ namespace Graphics {
 
 		// actual loading function
 		bool LoadModel(const char* i_path);
+		cActor* m_owner = nullptr;
 	};
 
 

@@ -27,6 +27,7 @@ namespace Application {
 		{
 			m_window = new cWindow(i_width, i_height, i_windowName);
 			if (!(result = m_window->Initialzation())) {
+				assert(result);
 				printf("Failed to initialize openGL window!\n");
 				return result;
 			}

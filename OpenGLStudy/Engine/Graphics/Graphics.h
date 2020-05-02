@@ -34,18 +34,25 @@ namespace Graphics {
 	void BlinnPhong_Pass();
 	void PBR_Pass();
 	void CubeMap_Pass();
+	void SelctionBuffer_Pass();
 
-	void Gizmo_RenderTransform();
+	void Gizmo_RenderSelectingTransform();
 	void Gizmo_RenderVertexNormal();
 	void Gizmo_RenderTriangulation();
+	void Gizmo_DrawDebugCaptureVolume();
 
 	/** Submit function*/
 	void SubmitGraphicSettings(const ERenderMode& i_renderMode);
-	void SubmitDataToBeRendered(const UniformBufferFormats::sFrame& i_frameData, const std::vector<std::pair<Graphics::cModel::HANDLE, cTransform>>& i_modelToTransform_map, void(*func_ptr)());
+	void SubmitDataToBeRendered(const UniformBufferFormats::sFrame& i_frameData, const std::vector<std::pair<Graphics::cModel, cTransform>>& i_modelToTransform_map, void(*func_ptr)());
 	void SubmitClipPlaneData(const glm::vec4& i_plane0, const glm::vec4& i_plane1 = glm::vec4(0, 0, 0, 0), const glm::vec4& i_plane2 = glm::vec4(0, 0, 0, 0), const glm::vec4& i_plane3 = glm::vec4(0, 0, 0, 0));
 	void SubmitPostProcessingData(const float i_exposure);
 	void SubmitLightingData(const std::vector<cPointLight>& i_pointLights, const std::vector<cSpotLight>& i_spotLights, const cAmbientLight& i_ambientLight, const cDirectionalLight& i_directionalLight);
+	void SubmitIOData(const glm::vec2 & i_mousePos, const glm::vec2& i_mousePoseDelta, bool* i_buttonDowns);
+	void SubmitSelectedItem(uint32_t i_selectionID);
+
+#ifdef ENABLE_CLOTH_SIM
 	void SubmitParticleData();
+#endif // ENABLE_CLOTH_SIM
 	void ClearApplicationThreadData();
 	void SetCurrentPass(int i_currentPass);
 
@@ -70,5 +77,8 @@ namespace Graphics {
 	cUniformBuffer* GetUniformBuffer(const eUniformBufferType& i_uniformBufferType);
 	cFrameBuffer* GetOmniShadowMapAt(int i_idx);
 	/** Predefined model and textures*/
-	 cModel::HANDLE GetPrimitive(const EPrimitiveType& i_primitiveType);
+	const cModel& GetPrimitive(const EPrimitiveType& i_primitiveType);
+
+	/** Return data related*/
+	const sDataReturnToApplicationThread& GetDataFromRenderThread();
 }

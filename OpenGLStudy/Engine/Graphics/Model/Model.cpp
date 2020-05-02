@@ -10,8 +10,6 @@
 
 #include "Assets/LoadTableFromLuaFile.h"
 #include "Assets/PathProcessor.h"
-// Static variable definition
-Assets::cAssetManager<Graphics::cModel> Graphics::cModel::s_manager;
 
 namespace Graphics {
 
@@ -45,59 +43,27 @@ namespace Graphics {
 		LoadNode(_modelPath.c_str(), _scene->mRootNode, _scene);
 		//  Load materials
 		LoadMaterials(_scene, _materialPath.c_str());
-
+		
+		IncreamentSelectableCount();
 		return true;
-	}
-
-	bool cModel::Load(const std::string& i_path, cModel*& o_model)
-	{
-		auto result = true;
-
-		cModel* _model = nullptr;
-
-		// make sure there is enough memory to allocate a model
-		_model = new (std::nothrow) cModel();
-		if (!(result = _model)) {
-			// Run out of memory
-			// TODO: LogError: Out of memory
-
-			return result;
-		}
-		else {
-			if (!(result = _model->LoadModel(i_path.c_str()))) {
-				// TODO: LogError: fail to log
-
-				delete _model;
-
-				return result;
-			}
-		}
-
-		o_model = _model;
-
-		//TODO: Loading information succeed!
-		//printf("Succeed! Loading model: %s. Mesh size: %d, texture size: %d\n", i_path.c_str(), o_model->m_meshList.size(), o_model->m_materialList.size());
-
-		return result;
 	}
 
 	void cModel::UpdateUniformVariables(GLuint i_programID)
 	{
 		for (auto item : m_materialList)
 		{
-			cMaterial* _matInst = item;
+			cMaterial* _matInst = cMaterial::s_manager.Get(item);
 			if (_matInst) {
 				_matInst->UpdateUniformVariables(i_programID);
 			}
 		}
 	}
 
-	void cModel::Render(GLenum i_drawMode/* = GL_TRIANGLES*/)
+	void cModel::Render(GLenum i_drawMode/* = GL_TRIANGLES*/) const
 	{
-
 		for (size_t i = 0; i < m_meshList.size(); ++i)
 		{
-			cMaterial* _material = m_materialList[0];
+			cMaterial* _material = cMaterial::s_manager.Get(m_materialList[0]);
 			// if _maxIndex is in range and the texture is not a nullptr
 			if (_material) {
 				_material->UseMaterial();
@@ -113,7 +79,7 @@ namespace Graphics {
 		}
 	}
 
-	void cModel::RenderWithoutMaterial(GLenum i_drawMode/* = GL_TRIANGLES*/)
+	void cModel::RenderWithoutMaterial(GLenum i_drawMode/* = GL_TRIANGLES*/) const
 	{
 		for (size_t i = 0; i < m_meshList.size(); ++i)
 		{
@@ -127,8 +93,7 @@ namespace Graphics {
 	{
 		for (size_t i = 0; i < m_materialList.size(); ++i)
 		{
-			m_materialList[i]->CleanUp();
-			safe_delete(m_materialList[i]);
+			cMaterial::s_manager.Release(m_materialList[i]);
 		}
 		m_materialList.clear();
 		m_materialList.~vector();
@@ -139,6 +104,8 @@ namespace Graphics {
 		}
 		m_meshList.clear();
 		m_meshList.~vector();
+		
+		DecreamentSelectableCount();
 	}
 
 	bool cModel::IntersectWithSphere(const cSphere& i_transformedSphere)
@@ -152,12 +119,21 @@ namespace Graphics {
 		return false;
 	}
 
-	Graphics::cMaterial* cModel::GetMaterialAt(GLuint i_idx /*= 0*/)
+	Graphics::cMaterial::HANDLE cModel::GetMaterialAt(GLuint i_idx /*= 0*/)
 	{
 		if (i_idx < m_materialList.size()) {
 			return m_materialList[i_idx];
 		}
-		return nullptr;
+		assert(false);
+		return cMaterial::HANDLE();
+	}
+
+
+
+	cModel::cModel(const std::string& i_path)
+	{
+		LoadModel(i_path.c_str());
+		
 	}
 
 	bool cModel::LoadFileFromLua(const char* i_path, std::string& o_modelPath, std::string& o_materialPath)
@@ -273,9 +249,9 @@ namespace Graphics {
 	void cModel::LoadMaterials(const aiScene* i_scene, const char* i_matName)
 	{
 
-		cMaterial* _newMat = nullptr;
+		cMaterial::HANDLE _newMat;
 		std::string _path = Assets::ProcessPathMat(i_matName);
-		if (!cMaterial::Load(_path, _newMat)) {
+		if (!cMaterial::s_manager.Load(_path, _newMat)) {
 			printf("Fail to load material file[%s]\n", _path.c_str());
 			return;
 		}

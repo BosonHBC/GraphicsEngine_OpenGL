@@ -22,6 +22,9 @@
     <Filter Include="Source Files\DataStructure">
       <UniqueIdentifier>{08bfa901-26a0-4f6a-8eac-9645c0516012}</UniqueIdentifier>
     </Filter>
+    <Filter Include="Source Files\Utility">
+      <UniqueIdentifier>{461046db-309c-4358-8653-bc7d96fc33c3}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="Actor\Actor.cpp">
@@ -46,6 +49,9 @@
     </ClInclude>
     <ClInclude Include="DataStructure\OctTree.h">
       <Filter>Source Files\DataStructure</Filter>
+    </ClInclude>
+    <ClInclude Include="Utility\ISelectable.h">
+      <Filter>Source Files\Utility</Filter>
     </ClInclude>
   </ItemGroup>
 </Project>

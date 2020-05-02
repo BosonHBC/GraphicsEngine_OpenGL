@@ -12,6 +12,11 @@
 *	Acceleration unit: m / s^2
 */
 
+// To turn on cloth simulation, enable this line
+//#define ENABLE_CLOTH_SIM
+
+#ifdef ENABLE_CLOTH_SIM
+
 #ifndef SIM_PARAMS_DEFINED
 #include <vector>
 #include "glm/glm.hpp"
@@ -124,7 +129,6 @@ namespace ClothSim
 	// Cloth particles
 	extern sParticle g_particles[VC];
 	extern glm::vec3 g_positionData[VC];
-	extern bool g_bEnableClothSim;
 	extern bool g_bDrawNodes;
 	void InitializeNeghbors();
 // Using discrete time step
@@ -139,3 +143,4 @@ namespace ClothSim
 
 #endif // !SIM_PARAMS_DEFINED
 
+#endif //ENABLE_CLOTH_SIM

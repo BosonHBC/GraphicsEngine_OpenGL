@@ -39,6 +39,7 @@ namespace Application {
 
 		cWindow* GetCurrentWindow() const { return m_window; }
 		void ResetWindowSize();
+		std::mutex& GetApplicationMutex() {return m_applicationMutex;}
 	protected:
 		cApplication(const cApplication& i_other) = delete;
 		cApplication& operator = (const cApplication& i_other) = delete;

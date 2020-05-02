@@ -26,6 +26,7 @@ namespace Graphics {
 		ETT_FRAMEBUFFER_DEPTH16 = 14,
 		ETT_FRAMEBUFFER_R16 = 15,
 		ETT_FRAMEBUFFER_RGB32 = 16,
+		ETT_FRAMEBUFFER_RGB8 = 17,
 		ETT_INVALID = 0xff
 	};
 
@@ -76,6 +77,7 @@ namespace Graphics {
 		bool LoadDepth24Texture(const std::string& i_type_id, const GLuint& i_width, const GLuint& i_height);		// depth buffer
 		bool LoadR16Texture(const std::string& i_type_id, const GLuint& i_width, const GLuint& i_height);				// ssao textures
 		bool LoadRGB32Texture(const std::string& i_type_id, const GLuint& i_width, const GLuint& i_height);		// noise texture
+		bool LoadRGB8Texture(const std::string& i_type_id, const GLuint& i_width, const GLuint& i_height);			// selection buffer
 		// Load color format texture from frame buffer
 		bool LoadPlannerReflectionTexture(const std::string& i_type_id, const GLuint& i_width, const GLuint& i_height);
 

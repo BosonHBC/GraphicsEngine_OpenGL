@@ -9,27 +9,35 @@
 #include "Assignments/ClothSimulation/SimulationParams.h"
 #include <algorithm>
 #include "Application/Window/WindowInput.h"
+#include "Application/imgui/imgui.h"
+#include "Cores/Actor/Actor.h"
 
 namespace Graphics
 {
-	extern unsigned int s_currentRenderPass;
-	extern cEffect* s_currentEffect;
-	extern sDataRequiredToRenderAFrame* s_dataRenderingByGraphicThread;
+	extern unsigned int g_currentRenderPass;
+	extern cEffect* g_currentEffect;
+	extern sDataRequiredToRenderAFrame* g_dataRenderingByGraphicThread;
+	extern 	sDataReturnToApplicationThread * g_dataGetFromRenderThread;
 	extern 	std::map<eUniformBufferType, cUniformBuffer> g_uniformBufferMap;
-	extern UniformBufferFormats::sLighting s_globalLightingData;
+	extern UniformBufferFormats::sLighting g_globalLightingData;
 	extern cFrameBuffer g_omniShadowMaps[OMNI_SHADOW_MAP_COUNT];
 	extern cFrameBuffer s_brdfLUTTexture;
 	extern cFrameBuffer g_hdrBuffer;
 	extern cGBuffer g_GBuffer;
 	extern cFrameBuffer g_ssaoBuffer;
 	extern cFrameBuffer g_ssao_blur_Buffer;
-	extern cModel::HANDLE s_cubeHandle;
-	extern cModel::HANDLE s_arrowHandle;
-	extern cModel::HANDLE s_quadHandle;
+	extern 	cFrameBuffer g_selectionBuffer;
+	extern cFrameBuffer g_depthStoreBuffer;
+	extern cModel g_cubeHandle;
+	extern cModel g_arrowHandle;
+	extern cModel g_quadHandle;
 	extern cMesh::HANDLE s_point;
+#ifdef ENABLE_CLOTH_SIM
 	extern cMesh::HANDLE g_cloth;
-	extern cTexture::HANDLE g_ssaoNoiseTexture;
 	extern cMatPBRMR g_clothMat;
+#endif // ENABLE_CLOTH_SIM
+	extern cTexture::HANDLE g_ssaoNoiseTexture;
+
 	const std::map<uint8_t, const char*> g_renderModeNameMap =
 	{
 		std::pair<ERenderMode, const char*>(ERM_ForwardShading, "ForwardShading"),
@@ -53,11 +61,8 @@ namespace Graphics
 		g_uniformBufferMap[UBT_Frame].Update(&i_frameData);
 		g_uniformBufferMap[UBT_Drawcall].Update(&i_drawCallData);
 
-		// Render quad
-		cModel* _quad = cModel::s_manager.Get(s_quadHandle);
-		if (_quad) {
-			_quad->RenderWithoutMaterial();
-		}
+
+		g_quadHandle.RenderWithoutMaterial();
 	}
 
 	void RenderCube(const UniformBufferFormats::sFrame& i_frameData = UniformBufferFormats::sFrame(), const UniformBufferFormats::sDrawCall& i_drawCallData = UniformBufferFormats::sDrawCall())
@@ -65,71 +70,63 @@ namespace Graphics
 		g_uniformBufferMap[UBT_Frame].Update(&i_frameData);
 		g_uniformBufferMap[UBT_Drawcall].Update(&i_drawCallData);
 
-		cModel* _cube = cModel::s_manager.Get(s_cubeHandle);
-		if (_cube) {
-			_cube->RenderWithoutMaterial();
-		}
+		g_cubeHandle.RenderWithoutMaterial();
+
 	}
 
 	void RenderPointLightPosition()
 	{
-		s_currentEffect = GetEffectByKey(EET_DrawDebugCircles);
-		s_currentEffect->UseEffect();
-		g_uniformBufferMap[UBT_Frame].Update(&s_dataRenderingByGraphicThread->s_renderPasses[3].FrameData);
-		for (size_t i = 0; i < s_dataRenderingByGraphicThread->s_pointLights.size(); ++i)
+		g_currentEffect = GetEffectByKey(EET_DrawDebugCircles);
+		g_currentEffect->UseEffect();
+		g_uniformBufferMap[UBT_Frame].Update(&g_dataRenderingByGraphicThread->g_renderPasses[3].FrameData);
+		for (size_t i = 0; i < g_dataRenderingByGraphicThread->g_pointLights.size(); ++i)
 		{
-			float ratio = 1.0 - (float)(s_dataRenderingByGraphicThread->s_pointLights[i].ImportanceOrder) / s_dataRenderingByGraphicThread->s_pointLights.size();
+			float ratio = 1.0 - (float)(g_dataRenderingByGraphicThread->g_pointLights[i].ImportanceOrder) / g_dataRenderingByGraphicThread->g_pointLights.size();
 			cMesh* _Point = cMesh::s_manager.Get(s_point);
-			s_currentEffect->SetFloat("radius", s_dataRenderingByGraphicThread->s_pointLights[i].Transform.Scale().x / 20.f);
+			g_currentEffect->SetFloat("radius", g_dataRenderingByGraphicThread->g_pointLights[i].Transform.Scale().x / 20.f);
 			glm::vec3 sphereColor = glm::vec3(1.0f, 0.0f, 0.0f) * pow(ratio, 5);
 
-			s_currentEffect->SetVec3("color", sphereColor);
-			g_uniformBufferMap[UBT_Drawcall].Update(&UniformBufferFormats::sDrawCall(s_dataRenderingByGraphicThread->s_pointLights[i].Transform.M(), s_dataRenderingByGraphicThread->s_pointLights[i].Transform.TranspostInverse()));
+			g_currentEffect->SetVec3("color", sphereColor);
+			g_uniformBufferMap[UBT_Drawcall].Update(&UniformBufferFormats::sDrawCall(g_dataRenderingByGraphicThread->g_pointLights[i].Transform.M(), g_dataRenderingByGraphicThread->g_pointLights[i].Transform.TranspostInverse()));
 			_Point->Render();
 		}
-		s_currentEffect->UnUseEffect();
+		g_currentEffect->UnUseEffect();
 	}
 
-	bool rCtrlPressed = false;
+
 	void RenderOmniShadowMap()
 	{
-
-		sWindowInput* _windowInput = Application::GetCurrentApplication()->GetCurrentWindow()->GetWindowInput();
-		if (!rCtrlPressed && _windowInput->IsKeyDown(GLFW_KEY_RIGHT_CONTROL))
+		if (ImGui::IsKeyPressed(GLFW_KEY_RIGHT_CONTROL))
 		{
-			rCtrlPressed = true;
 			g_bRenderOmniShaodowMap = !g_bRenderOmniShaodowMap;
 		}
-		if (rCtrlPressed && _windowInput->IsKeyUp(GLFW_KEY_RIGHT_CONTROL))
-		{
-			rCtrlPressed = false;
-		}
+
 		if (!g_bRenderOmniShaodowMap) return;
 		for (int i = 0; i < OMNI_SHADOW_MAP_COUNT; ++i)
 		{
-			s_currentEffect = GetEffectByKey(EET_CubemapDisplayer);
-			s_currentEffect->UseEffect();
+			g_currentEffect = GetEffectByKey(EET_CubemapDisplayer);
+			g_currentEffect->UseEffect();
 
-			s_currentEffect->SetInteger("cubemapTex", 0);
+			g_currentEffect->SetInteger("cubemapTex", 0);
 			g_omniShadowMaps[i].Read(GL_TEXTURE0);
 
 			cTransform tempTr(glm::vec3(-300, 200, 300 - 150 * i), glm::quat(1, 0, 0, 0), glm::vec3(5, 5, 5));
-			RenderCube(s_dataRenderingByGraphicThread->s_renderPasses[3].FrameData, UniformBufferFormats::sDrawCall(tempTr.M(), tempTr.TranspostInverse()));
+			RenderCube(g_dataRenderingByGraphicThread->g_renderPasses[3].FrameData, UniformBufferFormats::sDrawCall(tempTr.M(), tempTr.TranspostInverse()));
 
-			s_currentEffect->UnUseEffect();
+			g_currentEffect->UnUseEffect();
 		}
 	}
 
 
 	void UpdateLightingData()
 	{
-		s_dataRenderingByGraphicThread->s_ambientLight.Illuminate();
+		g_dataRenderingByGraphicThread->g_ambientLight.Illuminate();
 
-		for (size_t i = 0; i < s_dataRenderingByGraphicThread->s_spotLights.size(); ++i)
+		for (size_t i = 0; i < g_dataRenderingByGraphicThread->g_spotLights.size(); ++i)
 		{
-			auto* it = &s_dataRenderingByGraphicThread->s_spotLights[i];
+			auto* it = &g_dataRenderingByGraphicThread->g_spotLights[i];
 
-			it->SetupLight(s_currentEffect->GetProgramID(), i);
+			it->SetupLight(g_currentEffect->GetProgramID(), i);
 			it->Illuminate();
 			it->SetLightUniformTransform();
 
@@ -139,9 +136,9 @@ namespace Graphics
 			}
 		}
 
-		for (size_t i = 0; i < s_dataRenderingByGraphicThread->s_pointLights.size(); ++i)
+		for (size_t i = 0; i < g_dataRenderingByGraphicThread->g_pointLights.size(); ++i)
 		{
-			auto* it = &s_dataRenderingByGraphicThread->s_pointLights[i];
+			auto* it = &g_dataRenderingByGraphicThread->g_pointLights[i];
 			it->Illuminate();
 
 			g_omniShadowMaps[it->ShadowMapIdx()].Read(GL_TEXTURE0 + OMNI_SHADOW_MAP_COUNT + SHADOWMAP_START_TEXTURE_UNIT + it->ShadowMapIdx());
@@ -149,8 +146,8 @@ namespace Graphics
 
 		// Directional Light
 		{
-			cDirectionalLight* _directionalLight = &s_dataRenderingByGraphicThread->s_directionalLight;
-			s_dataRenderingByGraphicThread->s_directionalLight.SetupLight(s_currentEffect->GetProgramID(), 0);
+			cDirectionalLight* _directionalLight = &g_dataRenderingByGraphicThread->g_directionalLight;
+			g_dataRenderingByGraphicThread->g_directionalLight.SetupLight(g_currentEffect->GetProgramID(), 0);
 			_directionalLight->Illuminate();
 			_directionalLight->SetLightUniformTransform();
 			if (_directionalLight->IsShadowEnabled()) {
@@ -162,23 +159,23 @@ namespace Graphics
 			}
 		}
 
-		s_globalLightingData.pointLightCount = s_dataRenderingByGraphicThread->s_pointLights.size();
-		s_globalLightingData.spotLightCount = s_dataRenderingByGraphicThread->s_spotLights.size();
-		g_uniformBufferMap[UBT_Lighting].Update(&s_globalLightingData);
+		g_globalLightingData.pointLightCount = g_dataRenderingByGraphicThread->g_pointLights.size();
+		g_globalLightingData.spotLightCount = g_dataRenderingByGraphicThread->g_spotLights.size();
+		g_uniformBufferMap[UBT_Lighting].Update(&g_globalLightingData);
 
 	}
 
 	void DirectionalShadowMap_Pass()
 	{
-		cDirectionalLight* _directionalLight = &s_dataRenderingByGraphicThread->s_directionalLight;
+		cDirectionalLight* _directionalLight = &g_dataRenderingByGraphicThread->g_directionalLight;
 
 		if (!_directionalLight || !_directionalLight->IsShadowEnabled()) return;
 
 		glDisable(GL_CULL_FACE);
-		s_currentEffect = GetEffectByKey(EET_ShadowMap);
-		s_currentEffect->UseEffect();
+		g_currentEffect = GetEffectByKey(EET_ShadowMap);
+		g_currentEffect->UseEffect();
 
-		_directionalLight->SetupLight(s_currentEffect->GetProgramID(), 0);
+		_directionalLight->SetupLight(g_currentEffect->GetProgramID(), 0);
 		cFrameBuffer* _directionalLightFBO = _directionalLight->GetShadowMap();
 		if (_directionalLightFBO && _directionalLight->IsShadowEnabled()) {
 
@@ -188,16 +185,18 @@ namespace Graphics
 					glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 					// Draw scenes
 					RenderScene(nullptr);
+#ifdef ENABLE_CLOTH_SIM
 					cMesh* _cloth = cMesh::s_manager.Get(g_cloth);
 					cTransform defaultTransform;
 					g_uniformBufferMap[UBT_Drawcall].Update(&UniformBufferFormats::sDrawCall(defaultTransform.M(), defaultTransform.TranspostInverse()));
 					_cloth->Render();
+#endif // ENABLE_CLOTH_SIM
 				}
 			);
 			assert(glGetError() == GL_NO_ERROR);
 		}
 
-		s_currentEffect->UnUseEffect();
+		g_currentEffect->UnUseEffect();
 		glEnable(GL_CULL_FACE);
 		glCullFace(GL_BACK);
 	}
@@ -248,19 +247,19 @@ namespace Graphics
 
 	void PointLightShadowMap_Pass()
 	{
-		if (s_dataRenderingByGraphicThread->s_pointLights.size() <= 0) return;
+		if (g_dataRenderingByGraphicThread->g_pointLights.size() <= 0) return;
 		glDisable(GL_CULL_FACE);
-		s_currentEffect = GetEffectByKey(EET_OmniShadowMap);
-		s_currentEffect->UseEffect();
+		g_currentEffect = GetEffectByKey(EET_OmniShadowMap);
+		g_currentEffect->UseEffect();
 		glClear(GL_DEPTH_BUFFER_BIT);
 		glEnable(GL_SCISSOR_TEST);
 
-		std::sort(s_dataRenderingByGraphicThread->s_pointLights.begin(), s_dataRenderingByGraphicThread->s_pointLights.end(), [](cPointLight& const l1, cPointLight&  const l2) {
+		std::sort(g_dataRenderingByGraphicThread->g_pointLights.begin(), g_dataRenderingByGraphicThread->g_pointLights.end(), [](cPointLight& const l1, cPointLight&  const l2) {
 			return l1.Importance() > l2.Importance(); });
 		// Now the point light list is sorted depends on their importance
-		for (size_t i = 0; i < s_dataRenderingByGraphicThread->s_pointLights.size(); ++i)
+		for (size_t i = 0; i < g_dataRenderingByGraphicThread->g_pointLights.size(); ++i)
 		{
-			auto* it = &s_dataRenderingByGraphicThread->s_pointLights[i];
+			auto* it = &g_dataRenderingByGraphicThread->g_pointLights[i];
 			int shadowMapIdx = -1; int resolutionIdx = -1;
 			if (RetriveShadowMapIndexAndSubRect(i, shadowMapIdx, resolutionIdx))
 			{
@@ -270,20 +269,20 @@ namespace Graphics
 			else
 				assert(false);
 		}
-		std::sort(s_dataRenderingByGraphicThread->s_pointLights.begin(), s_dataRenderingByGraphicThread->s_pointLights.end(), [](cPointLight& const l1, cPointLight&  const l2) {
+		std::sort(g_dataRenderingByGraphicThread->g_pointLights.begin(), g_dataRenderingByGraphicThread->g_pointLights.end(), [](cPointLight& const l1, cPointLight&  const l2) {
 			return l1.ShadowMapIdx() < l2.ShadowMapIdx(); });
 
 		// Now the point light list is sorted depends on their shadow map index
-		for (size_t i = 0; i < s_dataRenderingByGraphicThread->s_pointLights.size(); ++i)
+		for (size_t i = 0; i < g_dataRenderingByGraphicThread->g_pointLights.size(); ++i)
 		{
-			auto* it = &s_dataRenderingByGraphicThread->s_pointLights[i];
+			auto* it = &g_dataRenderingByGraphicThread->g_pointLights[i];
 
 			// for each light, needs to update the frame data
 			Graphics::UniformBufferFormats::sFrame _frameData_PointLightShadow(it->GetProjectionmatrix(), it->GetViewMatrix());
 			g_uniformBufferMap[UBT_Frame].Update(&_frameData_PointLightShadow);
 
 			// point need extra uniform variables to be passed in to shader
-			it->SetupLight(s_currentEffect->GetProgramID(), i);
+			it->SetupLight(g_currentEffect->GetProgramID(), i);
 			it->SetLightUniformTransform();
 
 			// write buffer to the texture
@@ -295,23 +294,21 @@ namespace Graphics
 					glClear(GL_DEPTH_BUFFER_BIT);
 
 					// loop through every single model
-					auto& renderMap = s_dataRenderingByGraphicThread->s_renderPasses[s_currentRenderPass].ModelToTransform_map;
+					auto& renderMap = g_dataRenderingByGraphicThread->g_renderPasses[g_currentRenderPass].ModelToTransform_map;
 					for (auto it2 = renderMap.begin(); it2 != renderMap.end(); ++it2)
 					{
 						// 1. Transform the sphere to the mesh spaced coordinate, check if they have overlaps
 						glm::mat4 _sphereToMeshMatrix = it2->second.MInv() * it->Transform.M();
 						glm::vec3 tramsformedPosition = _sphereToMeshMatrix * glm::vec4(0, 0, 0, 1);
 						float transformedRadius(_sphereToMeshMatrix[0][0]);
-						cModel* _model = cModel::s_manager.Get(it2->first);
 						// if there is no overlap, don't need to draw
-						if (!_model->IntersectWithSphere(cSphere(tramsformedPosition, transformedRadius))) continue;
+						if (!it2->first.IntersectWithSphere(cSphere(tramsformedPosition, transformedRadius))) continue;
 
 						// 2. Update draw call data
 						g_uniformBufferMap[UBT_Drawcall].Update(&UniformBufferFormats::sDrawCall(it2->second.M(), it2->second.TranspostInverse()));
 						// 3. Draw
-						if (_model) {
-							_model->RenderWithoutMaterial(GL_TRIANGLES);
-						}
+						it2->first.RenderWithoutMaterial(GL_TRIANGLES);
+
 					}
 				}
 			, subRect);
@@ -319,21 +316,21 @@ namespace Graphics
 
 		}
 		glDisable(GL_SCISSOR_TEST);
-		s_currentEffect->UnUseEffect();
+		g_currentEffect->UnUseEffect();
 		glEnable(GL_CULL_FACE);
 		glCullFace(GL_BACK);
 	}
 
 	void SpotLightShadowMap_Pass()
 	{
-		if (s_dataRenderingByGraphicThread->s_spotLights.size() <= 0) return;
+		if (g_dataRenderingByGraphicThread->g_spotLights.size() <= 0) return;
 		glDisable(GL_CULL_FACE);
-		s_currentEffect = GetEffectByKey(EET_ShadowMap);
-		s_currentEffect->UseEffect();
+		g_currentEffect = GetEffectByKey(EET_ShadowMap);
+		g_currentEffect->UseEffect();
 
-		for (size_t i = 0; i < s_dataRenderingByGraphicThread->s_spotLights.size(); ++i)
+		for (size_t i = 0; i < g_dataRenderingByGraphicThread->g_spotLights.size(); ++i)
 		{
-			auto* it = &s_dataRenderingByGraphicThread->s_spotLights[i];
+			auto* it = &g_dataRenderingByGraphicThread->g_spotLights[i];
 
 			cFrameBuffer* _spotLightFB = it->GetShadowMap();
 			if (_spotLightFB) {
@@ -354,22 +351,22 @@ namespace Graphics
 				assert(glGetError() == GL_NO_ERROR);
 			}
 		}
-		s_currentEffect->UnUseEffect();
+		g_currentEffect->UnUseEffect();
 		glEnable(GL_CULL_FACE);
 		glCullFace(GL_BACK);
 	}
 
 	void BlinnPhong_Pass()
 	{
-		s_currentEffect = GetEffectByKey(EET_BlinnPhong);
-		s_currentEffect->UseEffect();
+		g_currentEffect = GetEffectByKey(EET_BlinnPhong);
+		g_currentEffect->UseEffect();
 		glClearColor(s_clearColor.r, s_clearColor.g, s_clearColor.b, 0.f);
 		glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 		// Update Lighting Data
 		UpdateLightingData();
 		// Start a draw call loop
-		RenderScene(s_currentEffect);
-		s_currentEffect->UnUseEffect();
+		RenderScene(g_currentEffect);
+		g_currentEffect->UnUseEffect();
 	}
 
 	// Update lighting data, update BRDF-LUT texture, update environment captures for irradiance and pre-filtering mapping
@@ -426,8 +423,8 @@ namespace Graphics
 
 	void PBR_Pass()
 	{
-		s_currentEffect = GetEffectByKey(EET_PBR_MR);
-		s_currentEffect->UseEffect();
+		g_currentEffect = GetEffectByKey(EET_PBR_MR);
+		g_currentEffect->UseEffect();
 
 		glClearColor(s_clearColor.r, s_clearColor.g, s_clearColor.b, 0.f);
 		// A lot of things can be cleaned like color buffer, depth buffer, so we need to specify what to clear
@@ -435,23 +432,22 @@ namespace Graphics
 
 		UpdateInfoForPBR();
 
-		RenderScene(s_currentEffect);
+		RenderScene(g_currentEffect);
 
-		if (ClothSim::g_bEnableClothSim)
-		{
-			cMesh* _cloth = cMesh::s_manager.Get(g_cloth);
-			cTransform defaultTransform;
-			g_uniformBufferMap[UBT_Drawcall].Update(&UniformBufferFormats::sDrawCall(defaultTransform.M(), defaultTransform.TranspostInverse()));
+#ifdef ENABLE_CLOTH_SIM
+		cMesh* _cloth = cMesh::s_manager.Get(g_cloth);
+		cTransform defaultTransform;
+		g_uniformBufferMap[UBT_Drawcall].Update(&UniformBufferFormats::sDrawCall(defaultTransform.M(), defaultTransform.TranspostInverse()));
 
-			g_clothMat.UpdateUniformVariables(s_currentEffect->GetProgramID());
-			g_clothMat.UseMaterial();
-			glDisable(GL_CULL_FACE);
-			_cloth->Render();
-			glEnable(GL_CULL_FACE);
-			g_clothMat.CleanUpMaterialBind();
-		}
+		g_clothMat.UpdateUniformVariables(g_currentEffect->GetProgramID());
+		g_clothMat.UseMaterial();
+		glDisable(GL_CULL_FACE);
+		_cloth->Render();
+		glEnable(GL_CULL_FACE);
+		g_clothMat.CleanUpMaterialBind();
+#endif // ENABLE_CLOTH_SIM
 
-		s_currentEffect->UnUseEffect();
+		g_currentEffect->UnUseEffect();
 	}
 
 	void CubeMap_Pass()
@@ -459,10 +455,10 @@ namespace Graphics
 		// change depth function so depth test passes when values are equal to depth buffer's content
 		glDisable(GL_CULL_FACE);
 
-		s_currentEffect = GetEffectByKey(EET_Cubemap);
-		s_currentEffect->UseEffect();
-		RenderScene(s_currentEffect);
-		s_currentEffect->UnUseEffect();
+		g_currentEffect = GetEffectByKey(EET_Cubemap);
+		g_currentEffect->UseEffect();
+		RenderScene(g_currentEffect);
+		g_currentEffect->UnUseEffect();
 
 		// set depth function back to default
 		glEnable(GL_CULL_FACE);
@@ -471,12 +467,12 @@ namespace Graphics
 	void HDR_Pass()
 	{
 		glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-		s_currentEffect = GetEffectByKey(EET_HDREffect);
-		s_currentEffect->UseEffect();
+		g_currentEffect = GetEffectByKey(EET_HDREffect);
+		g_currentEffect->UseEffect();
 
 		g_hdrBuffer.Read(GL_TEXTURE0);
 		RenderQuad();
-		s_currentEffect->UnUseEffect();
+		g_currentEffect->UnUseEffect();
 	}
 
 	void ForwardShading()
@@ -484,90 +480,92 @@ namespace Graphics
 		g_hdrBuffer.Write(
 			[] {
 				// 3 shadow map pass, 1 pbr pass, 1 cubemap pass
-				for (size_t i = 0; i < s_dataRenderingByGraphicThread->s_renderPasses.size(); ++i)
+				for (size_t i = 0; i < g_dataRenderingByGraphicThread->g_renderPasses.size(); ++i)
 				{
 					// Update current render pass
-					s_currentRenderPass = i;
+					g_currentRenderPass = i;
 					// Update frame data
-					g_uniformBufferMap[UBT_Frame].Update(&s_dataRenderingByGraphicThread->s_renderPasses[i].FrameData);
+					g_uniformBufferMap[UBT_Frame].Update(&g_dataRenderingByGraphicThread->g_renderPasses[i].FrameData);
 					// Execute pass function
-					s_dataRenderingByGraphicThread->s_renderPasses[i].RenderPassFunction();
+					g_dataRenderingByGraphicThread->g_renderPasses[i].RenderPassFunction();
 				}
 
 				// Render spheres
-				if (ClothSim::g_bEnableClothSim && ClothSim::g_bDrawNodes)
+#ifdef ENABLE_CLOTH_SIM
+				if (ClothSim::g_bDrawNodes)
 				{
-					s_currentEffect = GetEffectByKey(EET_DrawDebugCircles);
-					s_currentEffect->UseEffect();
-					g_uniformBufferMap[UBT_Frame].Update(&s_dataRenderingByGraphicThread->s_renderPasses[3].FrameData);
+					g_currentEffect = GetEffectByKey(EET_DrawDebugCircles);
+					g_currentEffect->UseEffect();
+					g_uniformBufferMap[UBT_Frame].Update(&g_dataRenderingByGraphicThread->g_renderPasses[3].FrameData);
 					for (size_t i = 0; i < ClothSim::VC; ++i)
 					{
 						cMesh* _Point = cMesh::s_manager.Get(s_point);
 						cTransform _tempTransform;
 
-						s_currentEffect->SetFloat("radius", 5 * 5 / static_cast<float>(CLOTH_RESOLUTION));
+						g_currentEffect->SetFloat("radius", 5 * 5 / static_cast<float>(CLOTH_RESOLUTION));
 						glm::vec3 sphereColor = glm::vec3(1.0, 0.0, 0.0);
 						if (ClothSim::g_particles[i].isFixed)
 							sphereColor = glm::vec3(0, 1, 0);
 
-						s_currentEffect->SetVec3("color", sphereColor);
-						_tempTransform.SetPosition(s_dataRenderingByGraphicThread->particles[i]);
+						g_currentEffect->SetVec3("color", sphereColor);
+						_tempTransform.SetPosition(g_dataRenderingByGraphicThread->particles[i]);
 						_tempTransform.Update();
 						g_uniformBufferMap[UBT_Drawcall].Update(&UniformBufferFormats::sDrawCall(_tempTransform.M(), _tempTransform.TranspostInverse()));
 						_Point->Render();
 					}
-					s_currentEffect->UnUseEffect();
+					g_currentEffect->UnUseEffect();
 				}
+#endif // ENABLE_CLOTH_SIM
 
-				RenderPointLightPosition();
-				RenderOmniShadowMap();
+
+
 			}
 		);
 
-		HDR_Pass();
+		
 	}
 
 	void GBuffer_Pass()
 	{
-		s_currentEffect = GetEffectByKey(EET_GBuffer);
-		s_currentEffect->UseEffect();
+		g_currentEffect = GetEffectByKey(EET_GBuffer);
+		g_currentEffect->UseEffect();
 
 		glClearColor(s_clearColor.r, s_clearColor.g, s_clearColor.b, 0.f);
 		// A lot of things can be cleaned like color buffer, depth buffer, so we need to specify what to clear
 		glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
-		RenderScene(s_currentEffect);
-		s_currentEffect->UnUseEffect();
+		RenderScene(g_currentEffect);
+		g_currentEffect->UnUseEffect();
 	}
 
 	void DisplayGBuffer_Pass()
 	{
 		glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-		s_currentEffect = GetEffectByKey(EET_GBufferDisplay);
-		s_currentEffect->UseEffect();
-		const ERenderMode& renderMode = s_dataRenderingByGraphicThread->g_renderMode;
-		s_currentEffect->SetInteger("displayMode", static_cast<GLint>(renderMode) - 2);
+		g_currentEffect = GetEffectByKey(EET_GBufferDisplay);
+		g_currentEffect->UseEffect();
+		const ERenderMode& renderMode = g_dataRenderingByGraphicThread->g_renderMode;
+		g_currentEffect->SetInteger("displayMode", static_cast<GLint>(renderMode) - 2);
 		GLenum _textureUnits[4] = { GL_TEXTURE0 , GL_TEXTURE1 ,GL_TEXTURE2, GL_TEXTURE3 };
 		g_GBuffer.Read(_textureUnits);
 		g_ssao_blur_Buffer.Read(GL_TEXTURE4);
-		RenderQuad(s_dataRenderingByGraphicThread->s_renderPasses[s_currentRenderPass].FrameData);
-		s_currentEffect->UnUseEffect();
+		RenderQuad(g_dataRenderingByGraphicThread->g_renderPasses[g_currentRenderPass].FrameData);
+		g_currentEffect->UnUseEffect();
 	}
 
 	void Deferred_Lighting_Pass()
 	{
 		glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-		s_currentEffect = GetEffectByKey(EET_DeferredLighting);
-		s_currentEffect->UseEffect();
+		g_currentEffect = GetEffectByKey(EET_DeferredLighting);
+		g_currentEffect->UseEffect();
 
 		GLenum _textureUnits[4] = { GL_TEXTURE0 , GL_TEXTURE1 ,GL_TEXTURE2, GL_TEXTURE3 };
 		g_GBuffer.Read(_textureUnits);
 		g_ssao_blur_Buffer.Read(GL_TEXTURE0 + SHADOWMAP_START_TEXTURE_UNIT + OMNI_SHADOW_MAP_COUNT * 2 + 1);
 		UpdateInfoForPBR();
 
-		RenderQuad(s_dataRenderingByGraphicThread->s_renderPasses[s_currentRenderPass].FrameData);
+		RenderQuad(g_dataRenderingByGraphicThread->g_renderPasses[g_currentRenderPass].FrameData);
 
-		s_currentEffect->UnUseEffect();
+		g_currentEffect->UnUseEffect();
 	}
 
 	void DeferredShading()
@@ -576,24 +574,24 @@ namespace Graphics
 		for (size_t i = 0; i < 3; ++i)
 		{
 			// Update current render pass
-			s_currentRenderPass = i;
+			g_currentRenderPass = i;
 			// Update frame data
-			g_uniformBufferMap[UBT_Frame].Update(&s_dataRenderingByGraphicThread->s_renderPasses[i].FrameData);
+			g_uniformBufferMap[UBT_Frame].Update(&g_dataRenderingByGraphicThread->g_renderPasses[i].FrameData);
 			// Execute pass function
-			s_dataRenderingByGraphicThread->s_renderPasses[i].RenderPassFunction();
+			g_dataRenderingByGraphicThread->g_renderPasses[i].RenderPassFunction();
 		}
 		/** 1. Capture the whole scene with PBR material*/
 		g_GBuffer.Write(
 			[] {
-				s_currentRenderPass = 3; // PBR pass
-				g_uniformBufferMap[UBT_Frame].Update(&s_dataRenderingByGraphicThread->s_renderPasses[s_currentRenderPass].FrameData);
+				g_currentRenderPass = 3; // PBR pass
+				g_uniformBufferMap[UBT_Frame].Update(&g_dataRenderingByGraphicThread->g_renderPasses[g_currentRenderPass].FrameData);
 				GBuffer_Pass();
 			});
 		/** 2.1 Capture SSAO buffer*/
 		g_ssaoBuffer.Write(
 			[] {
-				s_currentEffect = GetEffectByKey(EET_SSAO);
-				s_currentEffect->UseEffect();
+				g_currentEffect = GetEffectByKey(EET_SSAO);
+				g_currentEffect->UseEffect();
 				glClear(GL_COLOR_BUFFER_BIT);
 
 				g_GBuffer.ReadNormalRoughness(GL_TEXTURE0);
@@ -601,26 +599,26 @@ namespace Graphics
 				cTexture* _noiseTex = cTexture::s_manager.Get(g_ssaoNoiseTexture);
 				_noiseTex->UseTexture(GL_TEXTURE2);
 
-				RenderQuad(s_dataRenderingByGraphicThread->s_renderPasses[s_currentRenderPass].FrameData);
+				RenderQuad(g_dataRenderingByGraphicThread->g_renderPasses[g_currentRenderPass].FrameData);
 
-				s_currentEffect->UnUseEffect();
+				g_currentEffect->UnUseEffect();
 			}
 		);
 		/** 2.2 Capture SSAO_blur buffer*/
 		g_ssao_blur_Buffer.Write(
 			[] {
-				s_currentEffect = GetEffectByKey(EET_SSAO_Blur);
-				s_currentEffect->UseEffect();
+				g_currentEffect = GetEffectByKey(EET_SSAO_Blur);
+				g_currentEffect->UseEffect();
 				glClear(GL_COLOR_BUFFER_BIT);
 
 				g_ssaoBuffer.Read(GL_TEXTURE0);
-				RenderQuad(s_dataRenderingByGraphicThread->s_renderPasses[s_currentRenderPass].FrameData);
+				RenderQuad(g_dataRenderingByGraphicThread->g_renderPasses[g_currentRenderPass].FrameData);
 
-				s_currentEffect->UnUseEffect();
+				g_currentEffect->UnUseEffect();
 			}
 		);
 		/** 3.1B. Display GBuffer alternatively */
-		if (s_dataRenderingByGraphicThread->g_renderMode != ERM_DeferredShading)
+		if (g_dataRenderingByGraphicThread->g_renderMode != ERM_DeferredShading)
 			DisplayGBuffer_Pass();
 		else
 		{
@@ -632,69 +630,67 @@ namespace Graphics
 
 					/** 3.2. Display cubemap at the end */
 					{
-						glBindFramebuffer(GL_READ_FRAMEBUFFER, g_GBuffer.fbo());
-						glBindFramebuffer(GL_DRAW_FRAMEBUFFER, g_hdrBuffer.fbo()); // write to default frame buffer
-						glBlitFramebuffer(
-							0, 0, g_GBuffer.GetWidth(), g_GBuffer.GetHeight(), 0, 0, g_GBuffer.GetWidth(), g_GBuffer.GetHeight(), GL_DEPTH_BUFFER_BIT, GL_NEAREST
+						glBlitNamedFramebuffer(
+							g_GBuffer.fbo(), g_hdrBuffer.fbo(), 0, 0, g_GBuffer.GetWidth(), g_GBuffer.GetHeight(), 0, 0, g_GBuffer.GetWidth(), g_GBuffer.GetHeight(), GL_DEPTH_BUFFER_BIT, GL_NEAREST
 						);
-						glBindFramebuffer(GL_FRAMEBUFFER, g_hdrBuffer.fbo());
-						s_currentRenderPass = 4; // Cubemap pass
-						g_uniformBufferMap[UBT_Frame].Update(&s_dataRenderingByGraphicThread->s_renderPasses[s_currentRenderPass].FrameData);
+						g_currentRenderPass = 4; // Cubemap pass
+						g_uniformBufferMap[UBT_Frame].Update(&g_dataRenderingByGraphicThread->g_renderPasses[g_currentRenderPass].FrameData);
 						CubeMap_Pass();
-						RenderPointLightPosition();
-						RenderOmniShadowMap();
 					}
 				}
 			);
-			HDR_Pass();
+			
 		}
 	}
 
-	void Gizmo_RenderTransform()
+	void Gizmo_RenderSelectingTransform()
 	{
-		s_currentEffect = GetEffectByKey(EET_Unlit);
-		s_currentEffect->UseEffect();
+		auto& selectionID = g_dataRenderingByGraphicThread->g_selectingItemID;
 
-		for (auto it = s_dataRenderingByGraphicThread->s_renderPasses[s_currentRenderPass].ModelToTransform_map.begin();
-			it != s_dataRenderingByGraphicThread->s_renderPasses[s_currentRenderPass].ModelToTransform_map.end(); ++it)
+		if (ISelectable::IsValid(selectionID))
 		{
+			const cModel* _model = dynamic_cast<cModel*>(ISelectable::s_selectableList[selectionID]);
+			if (!_model) return;
+
+			glDisable(GL_DEPTH_TEST);
+			g_currentEffect = GetEffectByKey(EET_Unlit);
+			g_currentEffect->UseEffect();
+			cTransform modelTransform = _model->GetOwner()->Transform;
 			// Get forward transform
 			cTransform arrowTransform[3];
 			{
 				// Forward
-				arrowTransform[0].SetRotation(it->second.Rotation() * glm::quat(glm::vec3(glm::radians(90.f), 0, 0)));
+				arrowTransform[0].SetRotation(modelTransform.Rotation() * glm::quat(glm::vec3(glm::radians(90.f), 0, 0)));
 				// Right									  
-				arrowTransform[1].SetRotation(it->second.Rotation() * glm::quat(glm::vec3(0, 0, glm::radians(90.f))));
+				arrowTransform[1].SetRotation(modelTransform.Rotation() * glm::quat(glm::vec3(0, 0, glm::radians(90.f))));
 				// Up											
-				arrowTransform[2].SetRotation(it->second.Rotation() * glm::quat(glm::vec3(0, glm::radians(90.f), 0)));
+				arrowTransform[2].SetRotation(modelTransform.Rotation() * glm::quat(glm::vec3(0, glm::radians(90.f), 0)));
 			}
 
-			cModel* _model = cModel::s_manager.Get(s_arrowHandle);
-			cMatUnlit* _arrowMat = dynamic_cast<cMatUnlit*>(_model->GetMaterialAt());
+			cMatUnlit* _arrowMat = dynamic_cast<cMatUnlit*>(cMaterial::s_manager.Get(g_arrowHandle.GetMaterialAt()));
 
 			for (int i = 0; i < 3; ++i)
 			{
-				arrowTransform[i].SetPosition(it->second.Position());
+				arrowTransform[i].SetPosition(modelTransform.Position());
 				arrowTransform[i].SetScale(glm::vec3(2, 10, 2));
 				arrowTransform[i].Update();
 				g_uniformBufferMap[UBT_Drawcall].Update(&UniformBufferFormats::sDrawCall(arrowTransform[i].M(), arrowTransform[i].TranspostInverse()));
 
-				if (_model) {
-					_arrowMat->SetUnlitColor(s_arrowColor[i]);
-					_model->UpdateUniformVariables(s_currentEffect->GetProgramID());
-					_model->Render();
-				}
+				_arrowMat->SetUnlitColor(s_arrowColor[i]);
+				g_arrowHandle.UpdateUniformVariables(g_currentEffect->GetProgramID());
+				g_arrowHandle.Render();
 			}
+			g_currentEffect->UnUseEffect();
+			glEnable(GL_DEPTH_TEST);
 		}
 
 
-		s_currentEffect->UnUseEffect();
 	}
 
 	void Gizmo_DrawDebugCaptureVolume() {
 
-		s_currentEffect = GetEffectByKey(EET_DrawDebugCircles);
-		s_currentEffect->UseEffect();
+		g_currentEffect = GetEffectByKey(EET_DrawDebugCircles);
+		g_currentEffect->UseEffect();
 		auto _capturesRef = EnvironmentCaptureManager::GetCapturesReferences();
 		for (size_t i = 0; i < _capturesRef.size(); ++i)
 		{
@@ -704,32 +700,32 @@ namespace Graphics
 			cTransform _tempTransform;
 
 			// outer
-			s_currentEffect->SetFloat("radius", _outerBV.r());
-			s_currentEffect->SetVec3("color", glm::vec3(1, 1, 1));
+			g_currentEffect->SetFloat("radius", _outerBV.r());
+			g_currentEffect->SetVec3("color", glm::vec3(1, 1, 1));
 			_tempTransform.SetPosition(_outerBV.c());
 			_tempTransform.Update();
 			g_uniformBufferMap[UBT_Drawcall].Update(&UniformBufferFormats::sDrawCall(_tempTransform.M(), _tempTransform.TranspostInverse()));
 			_Point->Render();
 
 			// inner
-			s_currentEffect->SetFloat("radius", _innerBV.r());
-			s_currentEffect->SetVec3("color", glm::vec3(1, 0, 0));
+			g_currentEffect->SetFloat("radius", _innerBV.r());
+			g_currentEffect->SetVec3("color", glm::vec3(1, 0, 0));
 			_tempTransform.SetPosition(_innerBV.c());
 			_tempTransform.Update();
 			g_uniformBufferMap[UBT_Drawcall].Update(&UniformBufferFormats::sDrawCall(_tempTransform.M(), _tempTransform.TranspostInverse()));
 			_Point->Render();
 		}
-		s_currentEffect->UnUseEffect();
+		g_currentEffect->UnUseEffect();
 	}
 
 	void Gizmo_RenderVertexNormal()
 	{
-		s_currentEffect = GetEffectByKey(EET_NormalDisplay);
-		s_currentEffect->UseEffect();
+		g_currentEffect = GetEffectByKey(EET_NormalDisplay);
+		g_currentEffect->UseEffect();
 
 		glClear(GL_DEPTH_BUFFER_BIT);
 		RenderScene(nullptr);
-		s_currentEffect->UnUseEffect();
+		g_currentEffect->UnUseEffect();
 	}
 
 	void Gizmo_RenderTriangulation()
@@ -737,11 +733,58 @@ namespace Graphics
 		sWindowInput* _input = Application::GetCurrentApplication()->GetCurrentWindow()->GetWindowInput();
 		if (!_input->IsKeyDown(GLFW_KEY_T)) return;
 
-		s_currentEffect = GetEffectByKey(EET_TriangulationDisplay);
-		s_currentEffect->UseEffect();
+		g_currentEffect = GetEffectByKey(EET_TriangulationDisplay);
+		g_currentEffect->UseEffect();
 
 		glClear(GL_DEPTH_BUFFER_BIT);
 		RenderScene(nullptr);
-		s_currentEffect->UnUseEffect();
+		g_currentEffect->UnUseEffect();
+	}
+
+	void SelctionBuffer_Pass()
+	{
+		glDisable(GL_CULL_FACE);
+		g_currentEffect = GetEffectByKey(EET_SelectionBuffer);
+		g_currentEffect->UseEffect();
+		g_uniformBufferMap[UBT_Frame].Update(&g_dataRenderingByGraphicThread->g_renderPasses[3].FrameData);
+
+		g_selectionBuffer.Write([]
+			{
+				glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+				auto& renderMap = g_dataRenderingByGraphicThread->g_renderPasses[3].ModelToTransform_map;
+				for (auto it = renderMap.begin(); it != renderMap.end(); ++it)
+				{
+					// 1. Update draw call data
+					g_uniformBufferMap[UBT_Drawcall].Update(&UniformBufferFormats::sDrawCall(it->second.M(), it->second.TranspostInverse()));
+					// 2. Draw
+					uint32_t modelID = it->first.SelectableID;
+					int r = (modelID & 0x000000FF) >> 0;
+					int g = (modelID & 0x0000FF00) >> 8;
+					int b = (modelID & 0x00FF0000) >> 16;
+					it->first.UpdateUniformVariables(g_currentEffect->GetProgramID());
+					g_currentEffect->SetVec3("selectionColor", glm::vec3(r / 255.f, g / 255.f, b / 255.f));
+					it->first.RenderWithoutMaterial();
+				}
+			});
+		g_currentEffect->UnUseEffect();
+
+		// bind the frame buffer and ready to read pixel from the texture
+		int _prevFbo;
+		glGetIntegerv(GL_FRAMEBUFFER_BINDING, &_prevFbo);
+		glBindFramebuffer(GL_FRAMEBUFFER, g_selectionBuffer.fbo());
+
+		glFlush();
+		glFinish();
+		glPixelStorei(GL_UNPACK_ALIGNMENT, 1);
+		unsigned char data[3];
+		sIO& _IO = g_dataRenderingByGraphicThread->g_IO;
+		int mouseX = glm::clamp(static_cast<int>(_IO.MousePos.x), 0, Application::GetCurrentApplication()->GetCurrentWindow()->GetBufferWidth());
+		int mouseY = glm::clamp(static_cast<int>(Application::GetCurrentApplication()->GetCurrentWindow()->GetBufferHeight() - _IO.MousePos.y), 0, Application::GetCurrentApplication()->GetCurrentWindow()->GetBufferHeight());
+		glReadPixels(mouseX, mouseY, 1, 1, GL_RGB, GL_UNSIGNED_BYTE, data);
+		uint32_t pickedID = data[0] + data[1] * 256 + data[2] * 256 * 256;
+		g_dataGetFromRenderThread->g_selectionID = pickedID;
+
+		glBindFramebuffer(GL_FRAMEBUFFER, _prevFbo);
+		glEnable(GL_CULL_FACE);
 	}
 }

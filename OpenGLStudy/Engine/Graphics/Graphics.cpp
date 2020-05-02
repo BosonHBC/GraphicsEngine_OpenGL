@@ -26,16 +26,21 @@
 
 namespace Graphics {
 
-	unsigned int s_currentRenderPass = 0;
-	sDataRequiredToRenderAFrame s_dataRequiredToRenderAFrame[2];
-	auto* s_dataSubmittedByApplicationThread = &s_dataRequiredToRenderAFrame[0];
-	auto* s_dataRenderingByGraphicThread = &s_dataRequiredToRenderAFrame[1];
+	unsigned int g_currentRenderPass = 0;
+	sDataRequiredToRenderAFrame g_dataRequiredToRenderAFrame[2];
+	auto* g_dataSubmittedByApplicationThread = &g_dataRequiredToRenderAFrame[0];
+	auto* g_dataRenderingByGraphicThread = &g_dataRequiredToRenderAFrame[1];
+
+	sDataReturnToApplicationThread g_dataReturnToApplicationThread[2];
+	auto * g_dataGetFromRenderThread = &g_dataReturnToApplicationThread[0];
+	auto * g_dataUsedByApplicationThread = &g_dataReturnToApplicationThread[1];
 
 	// Threading
-	std::condition_variable s_whenAllDataHasBeenSubmittedFromApplicationThread;
-	std::condition_variable s_whenDataHasBeenSwappedInRenderThread;
-	std::condition_variable s_whenPreRenderFinish;
-	std::mutex s_graphicMutex;
+	std::condition_variable g_whenAllDataHasBeenSubmittedFromApplicationThread;
+	std::condition_variable g_whenDataHasBeenSwappedInRenderThread;
+	std::condition_variable g_whenPreRenderFinish;
+	std::condition_variable g_whenDataReturnToApplicationThreadHasSwapped;
+	std::mutex g_graphicMutex;
 
 	// Global data
 	// ------------------------------------------------------------------------------------------------------------------------------------
@@ -43,16 +48,19 @@ namespace Graphics {
 	std::map<eUniformBufferType, cUniformBuffer> g_uniformBufferMap;
 
 	// Pre-defined mesh & textures
-	cModel::HANDLE s_cubeHandle;
-	cModel::HANDLE s_arrowHandle;
-	cModel::HANDLE s_quadHandle;
+	cModel g_cubeHandle;
+	cModel g_arrowHandle;
+	cModel g_quadHandle;
 	cMesh::HANDLE s_point;
+#ifdef ENABLE_CLOTH_SIM
 	cMesh::HANDLE g_cloth;
+	cMatPBRMR g_clothMat;
+#endif // ENABLE_CLOTH_SIM
 	cTexture::HANDLE s_spruitSunRise_HDR;
 	cTexture::HANDLE g_ssaoNoiseTexture;
-	cMatPBRMR g_clothMat;
+
 	// Lighting data
-	UniformBufferFormats::sLighting s_globalLightingData;
+	UniformBufferFormats::sLighting g_globalLightingData;
 	UniformBufferFormats::sSSAO g_ssaoData;
 	// Frame buffers
 	// ------------------------------------------------------------------------------------------------------------------------------------
@@ -69,19 +77,22 @@ namespace Graphics {
 	cFrameBuffer g_ssaoBuffer;
 	// SSAO blur frame buffer
 	cFrameBuffer g_ssao_blur_Buffer;
-	const int noiseResolution = 4;
+	const int g_noiseResolution = 4;
+	// selection buffer
+	cFrameBuffer g_selectionBuffer;
+
 	// Effect
 	// ------------------------------------------------------------------------------------------------------------------------------------
-	std::map<eEffectType, cEffect*> s_KeyToEffect_map;
-	cEffect* s_currentEffect;
+	std::map<eEffectType, cEffect*> g_KeyToEffect_map;
+	cEffect* g_currentEffect;
 
 	// Lighting
 	// ------------------------------------------------------------------------------------------------------------------------------------
 	// There are only one ambient and directional light
-	cAmbientLight* s_ambientLight;
-	cDirectionalLight* s_directionalLight;
-	std::vector<cPointLight*> s_pointLight_list;
-	std::vector<cSpotLight*> s_spotLight_list;
+	cAmbientLight* g_ambientLight;
+	cDirectionalLight* g_directionalLight;
+	std::vector<cPointLight*> g_pointLight_list;
+	std::vector<cSpotLight*> g_spotLight_list;
 
 
 	// Functions
@@ -406,8 +417,18 @@ namespace Graphics {
 					return result;
 				}
 			}
+			// Create cubemap displayer
+			{
+				if (!(result = CreateEffect(EET_SelectionBuffer,
+					"selection/selection_vert.glsl",
+					"selection/selection_frag.glsl"
+				))) {
+					printf("Fail to create selection buffer effect.\n");
+					return result;
+				}
+			}
 			// validate all programs
-			for (auto it : s_KeyToEffect_map)
+			for (auto it : g_KeyToEffect_map)
 			{
 				it.second->ValidateProgram();
 			}
@@ -419,7 +440,7 @@ namespace Graphics {
 		result = CreateUniformBuffer(UBT_PostProcessing);
 		result = CreateUniformBuffer(UBT_SSAO);
 		assert(result);
-		
+
 		// Initialize omni shadow maps
 		{
 			for (int i = 0; i < OMNI_SHADOW_MAP_COUNT; ++i)
@@ -464,39 +485,28 @@ namespace Graphics {
 				printf("Fail to create SSAO-Blur-Buffer.\n");
 				return result;
 			}
-			
+
+			if (!(result = g_selectionBuffer.Initialize(_window->GetBufferWidth(), _window->GetBufferHeight(), ETT_FRAMEBUFFER_RGB8)))
+			{
+				printf("Fail to create selection-Buffer.\n");
+				return result;
+			}
+
 			//EnvironmentCaptureManager::AddCaptureProbes(cSphere(glm::vec3(-225, 230, 0), 600.f), 50.f, envMapResolution);
 
 			EnvironmentCaptureManager::AddCaptureProbes(cSphere(glm::vec3(0, 230, 0), 600.f), 50.f, envMapResolution);
 
 			//EnvironmentCaptureManager::AddCaptureProbes(cSphere(glm::vec3(225, 230, 0), 600.f), 50.f, envMapResolution);
-		
+
 			EnvironmentCaptureManager::BuildAccelerationStructure();
 
 		}
 
 		// Load models & textures
 		{
-			std::string _path = "Contents/models/arrow.model";
-			if (!(result = Graphics::cModel::s_manager.Load(_path, s_arrowHandle)))
-			{
-				printf("Failed to Load arrow model!\n");
-				return result;
-			}
-
-			_path = "Contents/models/cube.model";
-			if (!(result = Graphics::cModel::s_manager.Load(_path, s_cubeHandle)))
-			{
-				printf("Failed to Load cube model!\n");
-				return result;
-			}
-
-			_path = "Contents/models/quad.model";
-			if (!(result = Graphics::cModel::s_manager.Load(_path, s_quadHandle)))
-			{
-				printf("Failed to Load quad model!\n");
-				return result;
-			}
+			g_cubeHandle = cModel("Contents/models/cube.model");
+			g_arrowHandle = cModel("Contents/models/arrow.model");
+			g_quadHandle = cModel("Contents/models/quad.model");
 			std::vector<float> _points;
 			_points.push_back(0.0f); _points.push_back(0.0f); _points.push_back(0.0f);
 			std::vector<GLuint> _indices;
@@ -516,7 +526,7 @@ namespace Graphics {
 				return result;
 			}
 			_path = "ssaoNoiseTexture";
-			if (!(result = cTexture::s_manager.Load(_path, g_ssaoNoiseTexture, ETT_FRAMEBUFFER_RGB32, noiseResolution, noiseResolution)))
+			if (!(result = cTexture::s_manager.Load(_path, g_ssaoNoiseTexture, ETT_FRAMEBUFFER_RGB32, g_noiseResolution, g_noiseResolution)))
 			{
 				printf("Failed to ssao_NoiseTexture!\n");
 				return result;
@@ -556,9 +566,9 @@ namespace Graphics {
 				// scale samples s.t. they're more aligned to center of kernel
 				scale = lerp(0.1f, 1.0f, scale * scale);
 				sample *= scale;
-				g_ssaoData.Samples[i] = glm::vec4(sample,0.0);
+				g_ssaoData.Samples[i] = glm::vec4(sample, 0.0);
 			}
-			const int noiseSampleCount = noiseResolution * noiseResolution;
+			const int noiseSampleCount = g_noiseResolution * g_noiseResolution;
 			glm::vec3 ssaoNoise[noiseSampleCount];
 			for (unsigned int i = 0; i < noiseSampleCount; i++)
 			{
@@ -567,13 +577,14 @@ namespace Graphics {
 			}
 			GLuint noiseTextureID = cTexture::s_manager.Get(g_ssaoNoiseTexture)->GetTextureID();
 			glBindTexture(GL_TEXTURE_2D, noiseTextureID);
-			glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB32F, noiseResolution, noiseResolution, 0, GL_RGB, GL_FLOAT, ssaoNoise);
+			glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB32F, g_noiseResolution, g_noiseResolution, 0, GL_RGB, GL_FLOAT, ssaoNoise);
 			glBindTexture(GL_TEXTURE_2D, 0);
 
 			g_ssaoData.power = 5;
 			g_ssaoData.radius = 20.f;
 		}
 
+#ifdef ENABLE_CLOTH_SIM
 		// Initialize Cloth simulation progress
 		{
 			// Set up initial position for cloths
@@ -594,7 +605,7 @@ namespace Graphics {
 			auto _indices = ClothSim::GetIndexData();
 			std::vector<float> _vertices;
 			_vertices.resize(ClothSim::VC * 14);
-			if (!(result == cMesh::s_manager.Load("Cloth", g_cloth, EMT_Mesh, _vertices,_indices)))
+			if (!(result == cMesh::s_manager.Load("Cloth", g_cloth, EMT_Mesh, _vertices, _indices)))
 			{
 				printf("Failed to Load Cloth!\n");
 				return result;
@@ -605,22 +616,23 @@ namespace Graphics {
 				return result;
 			}
 		}
+#endif // ENABLE_CLOTH_SIM
 		return result;
 	}
 
 	void PreRenderFrame()
 	{
 		// After data has been submitted, swap the data
-		std::swap(s_dataSubmittedByApplicationThread, s_dataRenderingByGraphicThread);
+		std::swap(g_dataSubmittedByApplicationThread, g_dataRenderingByGraphicThread);
 
-		g_uniformBufferMap[UBT_ClipPlane].Update(&s_dataRenderingByGraphicThread->s_ClipPlane);
+		g_uniformBufferMap[UBT_ClipPlane].Update(&g_dataRenderingByGraphicThread->s_ClipPlane);
 
 		/** 2. Convert all equirectangular HDR maps to cubemap */
 		{
-			s_currentEffect = Graphics::GetEffectByKey(EET_HDRToCubemap);
-			s_currentEffect->UseEffect();
+			g_currentEffect = Graphics::GetEffectByKey(EET_HDRToCubemap);
+			g_currentEffect->UseEffect();
 
-			s_currentEffect->SetInteger("rectangularHDRMap", 0);
+			g_currentEffect->SetInteger("rectangularHDRMap", 0);
 			cTexture* _hdr = cTexture::s_manager.Get(s_spruitSunRise_HDR);
 			_hdr->UseTexture(GL_TEXTURE0);
 
@@ -637,14 +649,13 @@ namespace Graphics {
 						g_uniformBufferMap[UBT_Frame].Update(&_cubemapFrameData);
 
 						// Render cube
-						cModel* _cube = cModel::s_manager.Get(s_cubeHandle);
-						if (_cube) { _cube->RenderWithoutMaterial(); }
+						g_cubeHandle.RenderWithoutMaterial();
 					}
 				}
 			);
 
 			glEnable(GL_CULL_FACE);
-			s_currentEffect->UnUseEffect();
+			g_currentEffect->UnUseEffect();
 			// After capturing the scene, generate the mip map by opengl itself
 			glBindTexture(GL_TEXTURE_CUBE_MAP, s_cubemapProbe.GetCubemapTextureID());
 			glGenerateMipmap(GL_TEXTURE_CUBE_MAP);
@@ -653,22 +664,22 @@ namespace Graphics {
 		//	printf("Finish generate equirectangular HDR maps to cubemap.\n");
 			/** 3. start generate BRDF LUTTexture */
 		{
-			s_currentEffect = Graphics::GetEffectByKey(EET_BrdfIntegration);
-			s_currentEffect->UseEffect();
+			g_currentEffect = Graphics::GetEffectByKey(EET_BrdfIntegration);
+			g_currentEffect->UseEffect();
 			s_brdfLUTTexture.Write(
-				[]{
+				[] {
 					glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 					RenderQuad();
 					s_brdfLUTTexture.UnWrite();
 				});
 
-			s_currentEffect->UnUseEffect();
+			g_currentEffect->UnUseEffect();
 		}
 		//printf("Finish generate BRDF LUT texture.\n");
 		/** 4. Start to render pass one by one */
-		EnvironmentCaptureManager::CaptureEnvironment(s_dataRenderingByGraphicThread);
+		EnvironmentCaptureManager::CaptureEnvironment(g_dataRenderingByGraphicThread);
 		//printf("Finish capture environment.\n");
-		s_whenPreRenderFinish.notify_one();
+		g_whenPreRenderFinish.notify_one();
 		printf("---------------------------------Pre-Rendering stage done.---------------------------------\n");
 	}
 	int renderCount = 0;
@@ -676,23 +687,28 @@ namespace Graphics {
 	{
 		/** 1. Wait for data being submitted here */
 		// Acquire the lock
-		std::unique_lock<std::mutex> _mlock(s_graphicMutex);
-		// Wait until the conditional variable is signaled
-		s_whenAllDataHasBeenSubmittedFromApplicationThread.wait(_mlock);
+		std::unique_lock<std::mutex> _mlock(g_graphicMutex);
+		/** 2.Wait until the conditional variable is signaled */
+		g_whenAllDataHasBeenSubmittedFromApplicationThread.wait(_mlock);
 
 		// After data has been submitted, swap the data
-		std::swap(s_dataSubmittedByApplicationThread, s_dataRenderingByGraphicThread);
+		std::swap(g_dataSubmittedByApplicationThread, g_dataRenderingByGraphicThread);
 		// Notify the application thread that data is swapped and it is ready for receiving new data
-		s_whenDataHasBeenSwappedInRenderThread.notify_one();
+		g_whenDataHasBeenSwappedInRenderThread.notify_one();
+
+		// For example calculate something here
+		auto& _IO = g_dataSubmittedByApplicationThread->g_IO;
 
 		// Update cubemap weights before rendering, actually, this step should be done at the application thread
-		EnvironmentCaptureManager::UpdatePointOfInterest(s_dataRenderingByGraphicThread->s_renderPasses[3].FrameData.GetViewPosition());
-		g_uniformBufferMap[UBT_ClipPlane].Update(&s_dataRenderingByGraphicThread->s_ClipPlane);
-		g_uniformBufferMap[UBT_PostProcessing].Update(&s_dataRenderingByGraphicThread->s_PostProcessing);
+		EnvironmentCaptureManager::UpdatePointOfInterest(g_dataRenderingByGraphicThread->g_renderPasses[3].FrameData.GetViewPosition());
+		g_uniformBufferMap[UBT_ClipPlane].Update(&g_dataRenderingByGraphicThread->s_ClipPlane);
+		g_uniformBufferMap[UBT_PostProcessing].Update(&g_dataRenderingByGraphicThread->s_PostProcessing);
 		g_uniformBufferMap[UBT_SSAO].Update(&g_ssaoData);
-		cMesh::s_manager.Get(g_cloth)->UpdateBufferData(s_dataRenderingByGraphicThread->clothVertexData, ClothSim::VC * 14);
-		/** 2. Start to render pass one by one */
-		if (s_dataRenderingByGraphicThread->g_renderMode == ERM_ForwardShading)
+#ifdef ENABLE_CLOTH_SIM
+		cMesh::s_manager.Get(g_cloth)->UpdateBufferData(g_dataRenderingByGraphicThread->clothVertexData, ClothSim::VC * 14);
+#endif // ENABLE_CLOTH_SIM
+		/** 3. Start to render pass one by one */
+		if (g_dataRenderingByGraphicThread->g_renderMode == ERM_ForwardShading)
 		{
 			ForwardShading();
 		}
@@ -700,72 +716,112 @@ namespace Graphics {
 		{
 			DeferredShading();
 		}
-		//renderCount++;
-		//printf("Render thread count: %d\n", renderCount);
-		Gizmo_DrawDebugCaptureVolume();
+
+		if (g_dataRenderingByGraphicThread->g_renderMode == ERM_DeferredShading || g_dataRenderingByGraphicThread->g_renderMode == ERM_ForwardShading)
+		{
+			HDR_Pass();
+
+			// Clear the default buffer bit and copy hdr frame buffer's depth to the default frame buffer
+			glClear(GL_DEPTH_BUFFER_BIT);
+			glBlitNamedFramebuffer(g_hdrBuffer.fbo(), 0, 0, 0, g_hdrBuffer.GetWidth(), g_hdrBuffer.GetHeight(), 0, 0, g_hdrBuffer.GetWidth(), g_hdrBuffer.GetHeight(), GL_DEPTH_BUFFER_BIT, GL_NEAREST);
+			assert(GL_NO_ERROR == glGetError());
+
+			// Render stuffs that needs depth info and needs not HDR info
+			RenderPointLightPosition();
+			//Gizmo_DrawDebugCaptureVolume();
+			RenderOmniShadowMap();
+
+			// Handle selection
+			SelctionBuffer_Pass();
+
+			// Render transform id according to the selection buffer
+			Gizmo_RenderSelectingTransform();
+		}
+			
+		/** 4. After all render of this frame is done*/
+
+		// swap data and notify data has been swapped.
+		std::swap(g_dataGetFromRenderThread, g_dataUsedByApplicationThread);
+		g_whenDataReturnToApplicationThreadHasSwapped.notify_one();
 	}
 
 	void SubmitClipPlaneData(const glm::vec4& i_plane0, const glm::vec4& i_plane1 /*= glm::vec4(0,0,0,0)*/, const glm::vec4& i_plane2 /*= glm::vec4(0, 0, 0, 0)*/, const glm::vec4& i_plane3 /*= glm::vec4(0, 0, 0, 0)*/)
 	{
-		s_dataSubmittedByApplicationThread->s_ClipPlane = UniformBufferFormats::sClipPlane(i_plane0, i_plane1, i_plane2, i_plane3);
+		g_dataSubmittedByApplicationThread->s_ClipPlane = UniformBufferFormats::sClipPlane(i_plane0, i_plane1, i_plane2, i_plane3);
 	}
 
 	void SubmitPostProcessingData(const float i_exposure)
 	{
-		s_dataSubmittedByApplicationThread->s_PostProcessing.Exposure = i_exposure;
+		g_dataSubmittedByApplicationThread->s_PostProcessing.Exposure = i_exposure;
 	}
 
 	void SubmitLightingData(const std::vector<cPointLight>& i_pointLights, const std::vector<cSpotLight>& i_spotLights, const cAmbientLight& i_ambientLight, const cDirectionalLight& i_directionalLight)
 	{
-		s_dataSubmittedByApplicationThread->s_pointLights = i_pointLights;
-		s_dataSubmittedByApplicationThread->s_spotLights = i_spotLights;
-		s_dataSubmittedByApplicationThread->s_directionalLight = i_directionalLight;
-		s_dataSubmittedByApplicationThread->s_ambientLight = i_ambientLight;
+		g_dataSubmittedByApplicationThread->g_pointLights = i_pointLights;
+		g_dataSubmittedByApplicationThread->g_spotLights = i_spotLights;
+		g_dataSubmittedByApplicationThread->g_directionalLight = i_directionalLight;
+		g_dataSubmittedByApplicationThread->g_ambientLight = i_ambientLight;
 
 	}
 
+	void SubmitIOData(const glm::vec2 & i_mousePos, const glm::vec2& i_mousePoseDelta, bool* i_buttonDowns)
+	{
+		sIO& _IO = g_dataSubmittedByApplicationThread->g_IO;
+		_IO.MousePos = i_mousePos;
+		_IO.dMousePos = i_mousePoseDelta;
+		for (int i = 0; i < 3; ++i)
+		{
+			_IO.SetButton(i_buttonDowns[i], i);
+		}
+	}
+
+	void SubmitSelectedItem(uint32_t i_selectionID)
+	{
+		g_dataSubmittedByApplicationThread->g_selectingItemID = i_selectionID;
+	}
+
+#ifdef ENABLE_CLOTH_SIM
 	void SubmitParticleData()
 	{
-		memcpy(s_dataSubmittedByApplicationThread->particles, ClothSim::g_positionData, sizeof(glm::vec3) * ClothSim::VC);
-		memcpy(s_dataSubmittedByApplicationThread->clothVertexData, ClothSim::GetVertexData(), sizeof(float) * ClothSim::VC * 14);
-	}
+		memcpy(g_dataSubmittedByApplicationThread->particles, ClothSim::g_positionData, sizeof(glm::vec3) * ClothSim::VC);
+		memcpy(g_dataSubmittedByApplicationThread->clothVertexData, ClothSim::GetVertexData(), sizeof(float) * ClothSim::VC * 14);
+}
+#endif // ENABLE_CLOTH_SIM
+
 
 	void SubmitGraphicSettings(const ERenderMode& i_renderMode)
 	{
-		s_dataSubmittedByApplicationThread->g_renderMode = i_renderMode;
+		g_dataSubmittedByApplicationThread->g_renderMode = i_renderMode;
 	}
 
-	void SubmitDataToBeRendered(const UniformBufferFormats::sFrame& i_frameData, const std::vector<std::pair<Graphics::cModel::HANDLE, cTransform>>& i_modelToTransform_map, void(*func_ptr)())
+	void SubmitDataToBeRendered(const UniformBufferFormats::sFrame& i_frameData, const std::vector<std::pair<Graphics::cModel, cTransform>>& i_modelToTransform_map, void(*func_ptr)())
 	{
 		sPass inComingPasses;
 		inComingPasses.FrameData = i_frameData;
 		inComingPasses.ModelToTransform_map = i_modelToTransform_map;
 		inComingPasses.RenderPassFunction = func_ptr;
-		s_dataSubmittedByApplicationThread->s_renderPasses.push_back(inComingPasses);
+		g_dataSubmittedByApplicationThread->g_renderPasses.push_back(inComingPasses);
 	}
 
 	void SetCurrentPass(int i_currentPass)
 	{
-		s_currentRenderPass = i_currentPass;
+		g_currentRenderPass = i_currentPass;
 	}
 
 	void RenderScene(cEffect* const i_effect, GLenum i_drawMode /*= GL_TRIANGLES*/)
 	{
 		// loop through every single model
-		auto& renderMap = s_dataRenderingByGraphicThread->s_renderPasses[s_currentRenderPass].ModelToTransform_map;
+		auto& renderMap = g_dataRenderingByGraphicThread->g_renderPasses[g_currentRenderPass].ModelToTransform_map;
 		for (auto it = renderMap.begin(); it != renderMap.end(); ++it)
 		{
 			// 1. Update draw call data
 			g_uniformBufferMap[UBT_Drawcall].Update(&UniformBufferFormats::sDrawCall(it->second.M(), it->second.TranspostInverse()));
 			// 2. Draw
-			cModel* _model = cModel::s_manager.Get(it->first);
-			if (_model) {
-				if (i_effect) {
-					_model->UpdateUniformVariables(i_effect->GetProgramID());
-					_model->Render(i_drawMode);
-				}
-				else _model->RenderWithoutMaterial(i_drawMode);
+			if (i_effect) {
+				it->first.UpdateUniformVariables(i_effect->GetProgramID());
+				it->first.Render(i_drawMode);
 			}
+			else it->first.RenderWithoutMaterial(i_drawMode);
 		}
 
 	}
@@ -779,37 +835,39 @@ namespace Graphics {
 			it.second.CleanUp();
 		}
 
-		cModel::s_manager.Release(s_arrowHandle);
-		cModel::s_manager.Release(s_cubeHandle);
-		cModel::s_manager.Release(s_quadHandle);
+		g_arrowHandle.CleanUp();
+		g_cubeHandle.CleanUp();
+		g_quadHandle.CleanUp();
 		cTexture::s_manager.Release(s_spruitSunRise_HDR);
 		cTexture::s_manager.Release(g_ssaoNoiseTexture);
 		cMesh::s_manager.Release(s_point);
+#ifdef ENABLE_CLOTH_SIM
 		cMesh::s_manager.Release(g_cloth);
 		g_clothMat.CleanUp();
+#endif // ENABLE_CLOTH_SIM
 		// Clean up effect
-		for (auto it = s_KeyToEffect_map.begin(); it != s_KeyToEffect_map.end(); ++it)
+		for (auto it = g_KeyToEffect_map.begin(); it != g_KeyToEffect_map.end(); ++it)
 			safe_delete(it->second);
-		s_KeyToEffect_map.clear();
+		g_KeyToEffect_map.clear();
 
 		// Clean up point light
-		for (auto it = s_pointLight_list.begin(); it != s_pointLight_list.end(); ++it) {
+		for (auto it = g_pointLight_list.begin(); it != g_pointLight_list.end(); ++it) {
 			(*it)->CleanUpShadowMap();
 			safe_delete(*it);
 		}
-		s_pointLight_list.clear();
-		for (auto it = s_spotLight_list.begin(); it != s_spotLight_list.end(); ++it) {
+		g_pointLight_list.clear();
+		for (auto it = g_spotLight_list.begin(); it != g_spotLight_list.end(); ++it) {
 			safe_delete(*it);
 		}
-		s_spotLight_list.clear();
+		g_spotLight_list.clear();
 
 		// Clean up ambient light
-		if (s_ambientLight)
-			s_ambientLight->CleanUpShadowMap();
-		safe_delete(s_ambientLight);
-		if (s_directionalLight)
-			s_directionalLight->CleanUpShadowMap();
-		safe_delete(s_directionalLight);
+		if (g_ambientLight)
+			g_ambientLight->CleanUpShadowMap();
+		safe_delete(g_ambientLight);
+		if (g_directionalLight)
+			g_directionalLight->CleanUpShadowMap();
+		safe_delete(g_directionalLight);
 		for (int i = 0; i < OMNI_SHADOW_MAP_COUNT; ++i)
 		{
 			g_omniShadowMaps[i].CleanUp();
@@ -820,6 +878,7 @@ namespace Graphics {
 		g_GBuffer.CleanUp();
 		g_ssaoBuffer.CleanUp();
 		g_ssao_blur_Buffer.CleanUp();
+		g_selectionBuffer.CleanUp();
 		if (!(result = EnvironmentCaptureManager::CleanUp()))
 			printf("Fail to clean up Environment Capture Manager.\n");
 
@@ -846,24 +905,32 @@ namespace Graphics {
 		return &g_omniShadowMaps[i_idx];
 	}
 
-	Graphics::cModel::HANDLE GetPrimitive(const EPrimitiveType& i_primitiveType)
+	const Graphics::cModel& GetPrimitive(const EPrimitiveType& i_primitiveType)
 	{
-		cModel::HANDLE _invalidHandle;
 		switch (i_primitiveType)
 		{
 		case EPT_Cube:
-			return s_cubeHandle;
+			return g_cubeHandle;
 			break;
 		case EPT_Arrow:
-			return s_arrowHandle;
+			return g_arrowHandle;
 			break;
 		case EPT_Quad:
-			return s_quadHandle;
+			return g_quadHandle;
 			break;
 		default:
-			return _invalidHandle;
+			assert(false);
+			return cModel();
 			break;
 		}
+	}
+
+	const Graphics::sDataReturnToApplicationThread& GetDataFromRenderThread()
+	{
+		std::unique_lock<std::mutex> lck(Application::GetCurrentApplication()->GetApplicationMutex());
+		constexpr unsigned int timeToWait_inMilliseconds = 100;
+		g_whenDataReturnToApplicationThreadHasSwapped.wait_for(lck, std::chrono::milliseconds(timeToWait_inMilliseconds));
+		return *g_dataUsedByApplicationThread;
 	}
 
 	//----------------------------------------------------------------------------------
@@ -881,16 +948,16 @@ namespace Graphics {
 			return result;
 		}
 
-		s_KeyToEffect_map.insert({ i_key, newEffect });
+		g_KeyToEffect_map.insert({ i_key, newEffect });
 
 		return result;
 	}
 
 	cEffect* GetEffectByKey(const eEffectType& i_key)
 	{
-		//std::lock_guard<std::mutex> autoLock(s_graphicMutex);
-		if (s_KeyToEffect_map.find(i_key) != s_KeyToEffect_map.end()) {
-			return s_KeyToEffect_map.at(i_key);
+		//std::lock_guard<std::mutex> autoLock(g_graphicMutex);
+		if (g_KeyToEffect_map.find(i_key) != g_KeyToEffect_map.end()) {
+			return g_KeyToEffect_map.at(i_key);
 		}
 		return nullptr;
 	}
@@ -901,20 +968,20 @@ namespace Graphics {
 
 	UniformBufferFormats::sLighting& GetGlobalLightingData()
 	{
-		return s_globalLightingData;
+		return g_globalLightingData;
 	}
 
 	bool CreateAmbientLight(const Color& i_color, cAmbientLight*& o_ambientLight)
 	{
 		auto result = true;
 
-		if (!(result = (s_ambientLight == nullptr))) {
+		if (!(result = (g_ambientLight == nullptr))) {
 			printf("Can not create duplicated ambient light.\n");
 			return result;
 		}
-		s_ambientLight = new  cAmbientLight(i_color);
-		s_ambientLight->SetupLight(0, 0);
-		o_ambientLight = s_ambientLight;
+		g_ambientLight = new  cAmbientLight(i_color);
+		g_ambientLight->SetupLight(0, 0);
+		o_ambientLight = g_ambientLight;
 		return result;
 	}
 
@@ -926,7 +993,7 @@ namespace Graphics {
 		newPointLight->SetEnableShadow(i_enableShadow);
 		newPointLight->CreateShadowMap(2048, 2048);
 		o_pointLight = newPointLight;
-		s_pointLight_list.push_back(newPointLight);
+		g_pointLight_list.push_back(newPointLight);
 		return result;
 	}
 
@@ -937,7 +1004,7 @@ namespace Graphics {
 		newSpotLight->SetEnableShadow(i_enableShadow);
 		newSpotLight->CreateShadowMap(1024, 1024);
 		o_spotLight = newSpotLight;
-		s_spotLight_list.push_back(newSpotLight);
+		g_spotLight_list.push_back(newSpotLight);
 
 		return result;
 	}
@@ -950,7 +1017,7 @@ namespace Graphics {
 		newDirectionalLight->CreateShadowMap(2048, 2048);
 
 		o_directionalLight = newDirectionalLight;
-		s_directionalLight = newDirectionalLight;
+		g_directionalLight = newDirectionalLight;
 		return result;
 	}
 
@@ -959,26 +1026,26 @@ namespace Graphics {
 	//----------------------------------------------------------------------------------
 	void Notify_DataHasBeenSubmited()
 	{
-		s_whenAllDataHasBeenSubmittedFromApplicationThread.notify_one();
+		g_whenAllDataHasBeenSubmittedFromApplicationThread.notify_one();
 	}
 
 	void MakeApplicationThreadWaitForSwapingData(std::mutex& i_applicationMutex)
 	{
-		std::unique_lock<std::mutex> lck(s_graphicMutex);
+		std::unique_lock<std::mutex> lck(g_graphicMutex);
 		constexpr unsigned int timeToWait_inMilliseconds = 1;
-		s_whenDataHasBeenSwappedInRenderThread.wait_for(lck, std::chrono::milliseconds(timeToWait_inMilliseconds));
+		g_whenDataHasBeenSwappedInRenderThread.wait_for(lck, std::chrono::milliseconds(timeToWait_inMilliseconds));
 	}
 
 	void MakeApplicationThreadWaitUntilPreRenderFrameDone(std::mutex& i_applicationMutex)
 	{
 		std::unique_lock<std::mutex> lck(i_applicationMutex);
-		s_whenPreRenderFinish.wait(lck);
+		g_whenPreRenderFinish.wait(lck);
 	}
 
 	void ClearApplicationThreadData()
 	{
-		s_dataSubmittedByApplicationThread->s_renderPasses.clear();
-		s_dataSubmittedByApplicationThread->s_pointLights.clear();
-		s_dataSubmittedByApplicationThread->s_spotLights.clear();
+		g_dataSubmittedByApplicationThread->g_renderPasses.clear();
+		g_dataSubmittedByApplicationThread->g_pointLights.clear();
+		g_dataSubmittedByApplicationThread->g_spotLights.clear();
 	}
 }

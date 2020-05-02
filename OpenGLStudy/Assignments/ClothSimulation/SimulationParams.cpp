@@ -10,8 +10,10 @@ Cloth Simulation
 https://steven.codes/blog/cloth-simulation/
 */
 
-#include "Cores/Core.h"
 #include "SimulationParams.h"
+
+#ifdef ENABLE_CLOTH_SIM
+#include "Cores/Core.h"
 #include "Math/Shape/Sphere.h"
 
 //#define USING_OPENMP
@@ -44,7 +46,6 @@ namespace ClothSim
 	const glm::vec3 g_floorPlane = glm::vec3(0, 5, 0);
 	cSphere g_sphere(glm::vec3(0, 0, -150), 100.f);
 	
-	bool g_bEnableClothSim = false;
 	bool g_bDrawNodes = false;
 
 	void InitializeNeghbors()
@@ -353,3 +354,4 @@ namespace ClothSim
 
 	}
 }
+#endif // ENABLE_CLOTH_SIM

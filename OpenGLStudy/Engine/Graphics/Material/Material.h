@@ -28,9 +28,13 @@ namespace Graphics {
 	class cMaterial
 	{
 	public:
-		/** Factory function */
+		//--------------------------
+		// Asset management
+		using HANDLE = Assets::cHandle<cMaterial>;
+		static Assets::cAssetManager < cMaterial > s_manager;
 		static bool Load(const std::string& i_path, cMaterial*& o_material);
-		virtual ~cMaterial() { CleanUp(); };
+
+		virtual ~cMaterial() { m_matType = MT_INVALID; };
 
 		// Actual Initialize function, ready for children class
 		virtual bool Initialize(const std::string& i_path) { return false; }
