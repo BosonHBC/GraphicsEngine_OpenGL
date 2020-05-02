@@ -80,6 +80,8 @@ namespace Graphics {
 	const int g_noiseResolution = 4;
 	// selection buffer
 	cFrameBuffer g_selectionBuffer;
+	// outline buffer
+	cFrameBuffer g_outlineBuffer;
 
 	// Effect
 	// ------------------------------------------------------------------------------------------------------------------------------------
@@ -212,8 +214,8 @@ namespace Graphics {
 			// Create unlit effect
 			{
 				if (!(result = CreateEffect(EET_Unlit,
-					"unlit/arrow_vert.glsl",
-					"unlit/arrow_frag.glsl"))) {
+					"unlit/unlit_vert.glsl",
+					"unlit/unlit_frag.glsl"))) {
 					printf("Fail to create unlit effect.\n");
 					return result;
 				}
@@ -427,6 +429,20 @@ namespace Graphics {
 					return result;
 				}
 			}
+			// Create outline effect
+			{
+				if (!(result = CreateEffect(EET_Outline,
+					"selection/outline/outline_vert.glsl",
+					"unlit/unlit_frag.glsl"))) {
+					printf("Fail to create outline effect.\n");
+					return result;
+				}
+				cEffect* outlineEffect = GetEffectByKey(EET_Outline);
+				outlineEffect->UseEffect();
+				outlineEffect->SetFloat("outlineWidth", 0.15f);
+				outlineEffect->SetVec3("unlitColor", glm::vec3(1.0f, 0.64f, 0.0f));
+				outlineEffect->UnUseEffect();
+			}
 			// validate all programs
 			for (auto it : g_KeyToEffect_map)
 			{
@@ -491,6 +507,12 @@ namespace Graphics {
 				printf("Fail to create selection-Buffer.\n");
 				return result;
 			}
+			if (!(result = g_outlineBuffer.Initialize(_window->GetBufferWidth(), _window->GetBufferHeight(), ETT_FRAMEBUFFER_STENCIL)))
+			{
+				printf("Fail to create outline-Buffer.\n");
+				return result;
+			}
+			
 
 			//EnvironmentCaptureManager::AddCaptureProbes(cSphere(glm::vec3(-225, 230, 0), 600.f), 50.f, envMapResolution);
 
@@ -722,7 +744,7 @@ namespace Graphics {
 			HDR_Pass();
 
 			// Clear the default buffer bit and copy hdr frame buffer's depth to the default frame buffer
-			glClear(GL_DEPTH_BUFFER_BIT);
+			glClear(GL_DEPTH_BUFFER_BIT | GL_STENCIL_BUFFER_BIT);
 			glBlitNamedFramebuffer(g_hdrBuffer.fbo(), 0, 0, 0, g_hdrBuffer.GetWidth(), g_hdrBuffer.GetHeight(), 0, 0, g_hdrBuffer.GetWidth(), g_hdrBuffer.GetHeight(), GL_DEPTH_BUFFER_BIT, GL_NEAREST);
 			assert(GL_NO_ERROR == glGetError());
 
@@ -733,6 +755,10 @@ namespace Graphics {
 
 			// Handle selection
 			SelctionBuffer_Pass();
+
+
+
+			Gizmo_DrawOutline();
 
 			// Render transform id according to the selection buffer
 			Gizmo_RenderSelectingTransform();
@@ -879,6 +905,7 @@ namespace Graphics {
 		g_ssaoBuffer.CleanUp();
 		g_ssao_blur_Buffer.CleanUp();
 		g_selectionBuffer.CleanUp();
+		g_outlineBuffer.CleanUp();
 		if (!(result = EnvironmentCaptureManager::CleanUp()))
 			printf("Fail to clean up Environment Capture Manager.\n");
 

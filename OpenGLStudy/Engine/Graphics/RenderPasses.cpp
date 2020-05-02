@@ -27,7 +27,7 @@ namespace Graphics
 	extern cFrameBuffer g_ssaoBuffer;
 	extern cFrameBuffer g_ssao_blur_Buffer;
 	extern 	cFrameBuffer g_selectionBuffer;
-	extern cFrameBuffer g_depthStoreBuffer;
+	extern cFrameBuffer g_outlineBuffer;
 	extern cModel g_cubeHandle;
 	extern cModel g_arrowHandle;
 	extern cModel g_quadHandle;
@@ -517,12 +517,10 @@ namespace Graphics
 				}
 #endif // ENABLE_CLOTH_SIM
 
-
-
 			}
 		);
 
-		
+
 	}
 
 	void GBuffer_Pass()
@@ -639,9 +637,66 @@ namespace Graphics
 					}
 				}
 			);
-			
+
 		}
 	}
+
+	void Gizmo_DrawOutline()
+	{
+		auto& selectionID = g_dataRenderingByGraphicThread->g_selectingItemID;
+
+		if (ISelectable::IsValid(selectionID))
+		{
+			const cModel* _model = dynamic_cast<cModel*>(ISelectable::s_selectableList[selectionID]);
+			if (!_model) return;
+			cTransform modelTransform = _model->GetOwner()->Transform;
+
+
+			g_uniformBufferMap[UBT_Frame].Update(&g_dataRenderingByGraphicThread->g_renderPasses[3].FrameData);
+			g_uniformBufferMap[UBT_Drawcall].Update(&UniformBufferFormats::sDrawCall(modelTransform.M(), modelTransform.TranspostInverse()));
+
+			glEnable(GL_STENCIL_TEST);
+			glDisable(GL_DEPTH_TEST);
+			{
+				// Get stencil buffer to the g_outline buffer
+				g_outlineBuffer.Write([&]
+					{
+						g_currentEffect = GetEffectByKey(EET_Unlit);
+						g_currentEffect->UseEffect();
+
+						glStencilOp(GL_KEEP, GL_KEEP, GL_REPLACE);
+						glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT | GL_STENCIL_BUFFER_BIT);
+
+						glStencilFunc(GL_ALWAYS, 1, 0xFF);
+						glStencilMask(0xFF);
+						// Draw
+						_model->Render();
+
+						g_currentEffect->UnUseEffect();
+					}
+				);
+
+				// draw the outline now
+				g_currentEffect = GetEffectByKey(EET_Outline);
+				g_currentEffect->UseEffect();
+
+				// Copy stencil buffer data to the default frame buffer
+				glBlitNamedFramebuffer(g_outlineBuffer.fbo(), 0, 0, 0, g_outlineBuffer.GetWidth(), g_outlineBuffer.GetHeight(), 0, 0, g_outlineBuffer.GetWidth(), g_outlineBuffer.GetHeight(), GL_STENCIL_BUFFER_BIT, GL_NEAREST);
+
+				glStencilFunc(GL_NOTEQUAL, 1, 0xFF);
+				glStencilMask(0x00);
+
+				_model->Render();
+
+				glStencilMask(0xFF);
+				glStencilFunc(GL_ALWAYS, 1, 0xFF);
+				g_currentEffect->UnUseEffect();
+			}
+		}
+		glEnable(GL_DEPTH_TEST);
+		glDisable(GL_STENCIL_TEST);
+	}
+
 
 	void Gizmo_RenderSelectingTransform()
 	{

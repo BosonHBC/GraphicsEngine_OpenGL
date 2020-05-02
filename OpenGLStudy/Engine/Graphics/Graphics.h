@@ -40,6 +40,7 @@ namespace Graphics {
 	void Gizmo_RenderVertexNormal();
 	void Gizmo_RenderTriangulation();
 	void Gizmo_DrawDebugCaptureVolume();
+	void Gizmo_DrawOutline();
 
 	/** Submit function*/
 	void SubmitGraphicSettings(const ERenderMode& i_renderMode);

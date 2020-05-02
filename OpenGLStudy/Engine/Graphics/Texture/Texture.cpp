@@ -36,8 +36,8 @@ namespace Graphics {
 			case ETT_FRAMEBUFFER_SHADOWMAP:
 				result = _texture->LoadShadowMapTexture(i_path, i_override_width, i_override_height);
 				break;
-			case ETT_FRAMEBUFFER_PLANNER_REFLECTION:
-				result = _texture->LoadPlannerReflectionTexture(i_path, i_override_width, i_override_height);
+			case ETT_FRAMEBUFFER_STENCIL:
+				result = _texture->LoadStencilTexture(i_path, i_override_width, i_override_height);
 				break;
 			case  ETT_CUBEMAP:
 				// Cube map is loaded in the cube map material, so it will not load here
@@ -615,7 +615,7 @@ namespace Graphics {
 		return result;
 	}
 
-	bool cTexture::LoadPlannerReflectionTexture(const std::string& i_type_id, const GLuint& i_width, const GLuint& i_height)
+	bool cTexture::LoadStencilTexture(const std::string& i_type_id, const GLuint& i_width, const GLuint& i_height)
 	{
 		auto result = true;
 		m_width = i_width;
@@ -626,7 +626,7 @@ namespace Graphics {
 		glBindTexture(GL_TEXTURE_2D, m_textureID);
 
 		// allocate space for the texture with null data fill in
-		glTexImage2D(GL_TEXTURE_2D, mipMapLevel, GL_RGB, m_width, m_height, 0, GL_RGB, GL_FLOAT, nullptr);
+		glTexImage2D(GL_TEXTURE_2D, mipMapLevel, GL_RGB, m_width, m_height, 0, GL_RGB, GL_UNSIGNED_BYTE, nullptr);
 
 		// Set up texture wrapping in s,t axis
 		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_BORDER);
