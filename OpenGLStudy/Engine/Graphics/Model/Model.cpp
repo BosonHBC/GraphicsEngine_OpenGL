@@ -43,8 +43,7 @@ namespace Graphics {
 		LoadNode(_modelPath.c_str(), _scene->mRootNode, _scene);
 		//  Load materials
 		LoadMaterials(_scene, _materialPath.c_str());
-		
-		IncreamentSelectableCount();
+	
 		return true;
 	}
 
@@ -256,6 +255,12 @@ namespace Graphics {
 			return;
 		}
 		m_materialList.push_back(_newMat);
+	}
+
+	void cModel::UpdateMaterial(const cMaterial::HANDLE& i_mat)
+	{
+		cMaterial::s_manager.Release(m_materialList[0]);
+		m_materialList[0] = i_mat;
 	}
 
 }

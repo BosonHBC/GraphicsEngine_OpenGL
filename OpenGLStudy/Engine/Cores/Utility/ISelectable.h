@@ -10,17 +10,9 @@ public:
 
 	ISelectable() {};
 	virtual ~ISelectable() {}
-	ISelectable(const ISelectable& i_rhs)
-	{
-		SelectableID = i_rhs.SelectableID;
-		s_selectableList[SelectableID] = this;
-	}
-	ISelectable& operator = (const ISelectable& i_rhs)
-	{
-		SelectableID = i_rhs.SelectableID;
-		s_selectableList[SelectableID] = this;
-		return *this;
-	}
+	ISelectable(const ISelectable& i_rhs) = default;
+	ISelectable& operator = (const ISelectable& i_rhs) = default;
+
 
 	void IncreamentSelectableCount()
 	{

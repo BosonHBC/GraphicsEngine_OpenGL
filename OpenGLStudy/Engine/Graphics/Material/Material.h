@@ -33,7 +33,10 @@ namespace Graphics {
 		using HANDLE = Assets::cHandle<cMaterial>;
 		static Assets::cAssetManager < cMaterial > s_manager;
 		static bool Load(const std::string& i_path, cMaterial*& o_material);
+		static bool Duplicate(cMaterial* i_src, cMaterial* & o_dest);
 
+		cMaterial(const cMaterial& i_other) : m_matType(i_other.m_matType) {}
+		cMaterial& operator = (const cMaterial& i_rhs) { m_matType = i_rhs.m_matType; return *this; }
 		virtual ~cMaterial() { m_matType = MT_INVALID; };
 
 		// Actual Initialize function, ready for children class
@@ -42,6 +45,7 @@ namespace Graphics {
 		virtual void UseMaterial() {};
 		virtual void CleanUpMaterialBind(){}
 		virtual void CleanUp() {};
+
 
 	protected:
 		/** private constructor*/

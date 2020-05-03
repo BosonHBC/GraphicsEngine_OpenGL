@@ -9,6 +9,40 @@ namespace Graphics
 {
 	Graphics::cUniformBuffer cMatPBRMR::s_PBRMRUniformBlock(eUniformBufferType::UBT_PBRMR);
 
+	Graphics::cMatPBRMR& cMatPBRMR::operator=(const cMatPBRMR& i_rhs)
+	{
+		cMaterial::operator=(i_rhs);
+		cTexture::s_manager.Copy(i_rhs.m_albedoMapHandle, m_albedoMapHandle);
+		cTexture::s_manager.Copy(i_rhs.m_metallicMapHandle, m_metallicMapHandle);
+		cTexture::s_manager.Copy(i_rhs.m_roughnessMapHandle, m_roughnessMapHandle);
+		cTexture::s_manager.Copy(i_rhs.m_normalMapHandle, m_normalMapHandle);
+		cTexture::s_manager.Copy(i_rhs.m_aoMapHandle, m_aoMapHandle);
+
+		m_diffuseIntensity = i_rhs.m_diffuseIntensity;
+		m_metallicIntensity = i_rhs.m_metallicIntensity;
+		m_roughnessIntensity = i_rhs.m_roughnessIntensity;
+		m_ior = i_rhs.m_ior;
+
+		m_albedoID = i_rhs.m_albedoID;
+		m_metallicID = i_rhs.m_metallicID;
+		m_roughnessID = i_rhs.m_roughnessID;
+		m_normalID = i_rhs.m_normalID;
+		m_aoID = i_rhs.m_aoID;
+
+		return *this;
+	}
+
+	cMatPBRMR::cMatPBRMR(const cMatPBRMR& i_other): cMaterial(i_other), m_diffuseIntensity (i_other.m_diffuseIntensity),
+	m_metallicIntensity (i_other.m_metallicIntensity), m_roughnessIntensity(i_other.m_roughnessIntensity), m_ior(i_other.m_ior),
+		m_albedoID(i_other.m_albedoID), m_metallicID(i_other.m_metallicID), m_roughnessID (i_other.m_roughnessID), m_normalID(i_other.m_normalID), m_aoID(i_other.m_aoID)
+	{
+		cTexture::s_manager.Copy(i_other.m_albedoMapHandle, m_albedoMapHandle);
+		cTexture::s_manager.Copy(i_other.m_metallicMapHandle, m_metallicMapHandle);
+		cTexture::s_manager.Copy(i_other.m_roughnessMapHandle, m_roughnessMapHandle);
+		cTexture::s_manager.Copy(i_other.m_normalMapHandle, m_normalMapHandle);
+		cTexture::s_manager.Copy(i_other.m_aoMapHandle, m_aoMapHandle);
+	}
+
 	bool cMatPBRMR::Initialize(const std::string& i_path)
 	{
 		bool result = true;

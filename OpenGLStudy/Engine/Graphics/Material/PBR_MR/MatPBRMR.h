@@ -11,6 +11,10 @@ namespace Graphics
 			: m_diffuseIntensity(Color::White()), m_roughnessIntensity(1.0f), m_ior(1.0f), m_metallicIntensity(1.0f), cMaterial(eMaterialType::MT_PBRMR)
 		{}
 		static cUniformBuffer& GetUniformBuffer() { return s_PBRMRUniformBlock; }
+
+		cMatPBRMR(const cMatPBRMR& i_other);
+		cMatPBRMR& operator = (const cMatPBRMR& i_rhs);
+
 		virtual ~cMatPBRMR() { CleanUp(); };
 
 		bool Initialize(const std::string& i_path) override;

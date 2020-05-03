@@ -5,6 +5,15 @@ namespace Graphics {
 	class cMatUnlit : public cMaterial
 	{
 	public:
+
+		cMatUnlit(const cMatUnlit& i_other) : cMaterial(i_other), m_unlitColor(i_other.m_unlitColor), m_unLitColorID() { }
+		cMatUnlit& operator = (const cMatUnlit& i_rhs)
+		{
+			cMaterial::operator=(i_rhs);
+			m_unlitColor = i_rhs.m_unlitColor;
+			m_unLitColorID = i_rhs.m_unLitColorID;
+			return *this;
+		}
 		virtual ~cMatUnlit() { CleanUp(); };
 
 		bool Initialize(const std::string& i_path) override;

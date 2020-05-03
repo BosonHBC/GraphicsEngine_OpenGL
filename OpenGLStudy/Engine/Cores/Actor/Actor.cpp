@@ -24,4 +24,5 @@ void cActor::SetModel(std::string i_modelPath)
 {
 	m_model = Graphics::cModel(i_modelPath);
 	m_model.SetOwner(this);
+	m_model.IncreamentSelectableCount();
 }
