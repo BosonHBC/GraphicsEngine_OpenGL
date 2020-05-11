@@ -52,27 +52,27 @@ private:
 	void CreatePointLight(const glm::vec3& i_initialLocation, const Color& i_color, const GLfloat& i_radius, bool i_enableShadow);
 
 	Color m_clearColor = Color(0,0,0);
-	cEditorCamera* m_editorCamera;
+	cEditorCamera* m_editorCamera = nullptr;
 
 	int m_createdPLightCount = 1;
 	Graphics::cPointLight* m_pLights[s_maxPLightCount] = {nullptr};
 	cSphere m_collisionSpheres[Assignment::s_maxPLightCount];
 
-	Graphics::cAmbientLight* aLight;
-	Graphics::cDirectionalLight* dLight;
-	Graphics::cSpotLight* spLight;
-	Graphics::cSpotLight* spLight2;
+	Graphics::cAmbientLight* aLight = nullptr;
+	Graphics::cDirectionalLight* dLight = nullptr;
+	Graphics::cSpotLight* spLight = nullptr;
+	Graphics::cSpotLight* spLight2 = nullptr;
+	Color m_pointLightColor = Color::White() * 0.5f;
 
-
-	int m_renderingTeapotCount = 4;
+	int m_renderingTeapotCount = 1;
 	cActor* m_teapots[s_maxTeapotCount] = {nullptr};
-	cActor* m_cubemap;
-	cActor* m_spaceHolder;
-	cActor* m_collisionSphere;
+	cActor* m_cubemap = nullptr;
+	cActor* m_spaceHolder = nullptr;
+	cActor* m_collisionSphere = nullptr;
+	cActor* m_supplyBox = nullptr;
 
 	float m_exposureOffset = 3.0f;
 	float m_ambientIntensity = 1.0f;
-	float m_directionalIntensity = 1.0f;
-	bool m_gKeyPressed = false;
+	float m_directionalIntensity = 0.0f;
 };
 

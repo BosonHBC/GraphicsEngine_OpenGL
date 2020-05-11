@@ -17,16 +17,17 @@ layout(std140, binding = 1) uniform uniformBuffer_drawcall
 	mat4 normalMatrix;
 };
 
-uniform float outlineWidth = 0.15;
+uniform float outlineWidth = 0.75;
 void main()
 {	
-	
 	vec3 ViewPosition = vec3(InvView[3][0], InvView[3][1], InvView[3][2]);
 	vec3 WorldPos = (modelMatrix * vec4(pos, 1.0)).xyz;
 	float dist = distance(ViewPosition, WorldPos);
-	float width = clamp(outlineWidth * abs(dist) / 200.0, 0.05, 0.2);
+	float width = clamp(outlineWidth * abs(dist) / 200.0, 0.5, 1.0);
 
-	vec3 scaledPos = pos + normalize(normal) * width;
+	float sx = length(vec3(modelMatrix[0][0],modelMatrix[0][1],modelMatrix[0][2]));
+
+	vec3 scaledPos = pos + normalize(normal) * width / sx;
 	gl_Position = PVMatrix * modelMatrix * vec4(scaledPos, 1.0);
 
 }

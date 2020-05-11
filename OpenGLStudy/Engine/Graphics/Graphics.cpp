@@ -562,10 +562,11 @@ namespace Graphics {
 		// Load textures
 		{
 			std::string _path = "HDR/spruit_sunrise_2k.png";
+			//std::string _path = "HDR/HDR_ENV_Dynamic_01_s.hdr";
 			_path = Assets::ProcessPathTex(_path);
 			if (!(result = cTexture::s_manager.Load(_path, s_spruitSunRise_HDR)))
 			{
-				printf("Failed to LoadspruitSunRise_HDR texture!\n");
+				printf("Failed to Load spruitSunRise_HDR texture!\n");
 				return result;
 			}
 			_path = "ssaoNoiseTexture";

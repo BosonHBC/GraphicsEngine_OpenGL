@@ -14,6 +14,7 @@ namespace Graphics {
 	}
 
 
+/*
 	cGenLight::cGenLight(const cGenLight& i_other) :
 		m_color(i_other.m_color), m_lightIndex(i_other.m_lightIndex), m_enableShadow(i_other.m_enableShadow),
 		Transform(i_other.Transform), m_lightPrjectionMatrix(i_other.m_lightPrjectionMatrix)
@@ -39,7 +40,7 @@ namespace Graphics {
 			return *this;
 		}
 
-	}
+	}*/
 
 	void cGenLight::SetupLight(const GLuint& i_programID, GLuint i_lightIndex)
 	{

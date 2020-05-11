@@ -11,23 +11,8 @@ namespace Graphics {
 		cPointLight(Color i_color, const glm::vec3& i_position, GLfloat i_range);
 		virtual ~cPointLight() { m_range = 0; }
 
-		cPointLight(const cPointLight& i_other)
-			: cGenLight(i_other), m_range(i_other.m_range),
-			m_lightTransformID(i_other.m_lightTransformID),
-			m_lightShadowMapID(i_other.m_lightShadowMapID), m_farPlaneID(i_other.m_farPlaneID),
-			m_shadowMapIdx(i_other.m_shadowMapIdx), m_resolutionIdx(i_other.m_resolutionIdx), m_distToEye(i_other.m_distToEye), ImportanceOrder(i_other.ImportanceOrder)
-		{}
-		cPointLight& operator =(const cPointLight& i_other)
-		{
-			cGenLight::operator=(i_other);
-			m_range = i_other.m_range;
-			m_farPlaneID = i_other.m_farPlaneID;
-			m_shadowMapIdx = i_other.m_shadowMapIdx;
-			m_resolutionIdx = i_other.m_resolutionIdx;
-			m_distToEye = i_other.m_distToEye;
-			ImportanceOrder = i_other.ImportanceOrder;
-			return *this;
-		}
+		cPointLight(const cPointLight& i_other) = default;
+		cPointLight& operator =(const cPointLight& i_other) = default;
 
 		/** overriding virtual functions*/
 		void Illuminate() override;

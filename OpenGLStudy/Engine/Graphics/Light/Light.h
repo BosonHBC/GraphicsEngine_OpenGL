@@ -17,8 +17,8 @@ namespace Graphics {
 		/** Constructors and destructor */
 		cGenLight();
 		cGenLight(Color i_color);
-		cGenLight(const cGenLight& i_other);
-		cGenLight& operator = (const cGenLight& i_other);
+		cGenLight(const cGenLight& i_other) = default;
+		cGenLight& operator = (const cGenLight& i_other) = default;
 		virtual ~cGenLight() { CleanUp(); }
 
 		/**Usage function*/
@@ -45,6 +45,7 @@ namespace Graphics {
 
 		cTransform Transform;
 	protected:
+		float m_lightIntensity = 1.0f;
 		Color m_color = Color(0,0,0);
 		// record the index of this light
 		GLuint m_lightIndex = 0;

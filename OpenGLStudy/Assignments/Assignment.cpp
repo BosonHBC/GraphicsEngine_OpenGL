@@ -24,10 +24,12 @@
 #include "Application/imgui/imgui.h"
 #include "Editor/Editor.h"
 
-Graphics::ERenderMode g_renderMode = Graphics::ERenderMode::ERM_ForwardShading;
+Graphics::ERenderMode g_renderMode = Graphics::ERenderMode::ERM_DeferredShading;
 
 std::uniform_real_distribution<float> randomFloats(0.0, 1.0); // generates random floats between 0.0 and 1.0
 std::default_random_engine generator;
+
+std::vector<cActor*> g_renderActorList;
 
 bool Assignment::Initialize(GLuint i_width, GLuint i_height, const char* i_windowName /*= "Default Window"*/)
 {
@@ -50,11 +52,8 @@ bool Assignment::Initialize(GLuint i_width, GLuint i_height, const char* i_windo
 
 	//Graphics::cMatPBRMR* _spaceHolderMat = dynamic_cast<Graphics::cMatPBRMR*>(Graphics::cModel::s_manager.Get(m_spaceHolder->GetModelHandle())->GetMaterialAt());
 
-	m_renderingTeapotCount = glm::clamp(m_renderingTeapotCount, 1, s_maxTeapotCount);
+	m_renderingTeapotCount = glm::clamp(m_renderingTeapotCount, 0, s_maxTeapotCount);
 	m_createdPLightCount = glm::clamp(m_createdPLightCount, 1, s_maxPLightCount);
-
-	aLight->SetColor(Color(0.1f) * m_ambientIntensity);
-	dLight->SetColor(Color(0.6f, 0.6f, 0.5f)* m_directionalIntensity);
 
 	printf("---------------------------------Game initialization done.---------------------------------\n");
 	return result;
@@ -97,11 +96,21 @@ void Assignment::CreateActor()
 	m_spaceHolder->Initialize();
 	m_spaceHolder->Transform.SetTransform(glm::vec3(0, 150.f, 0), glm::quat(1, 0, 0, 0), glm::vec3(5, 5, 5));
 	m_spaceHolder->SetModel("Contents/models/spaceHolder.model");
+	g_renderActorList.push_back(m_spaceHolder);
 
+	m_supplyBox = new cActor();
+	m_supplyBox->Initialize();
+	m_supplyBox->Transform.SetTransform(glm::vec3(0, 0, 10), glm::quat(1, 0, 0, 0), glm::vec3(250, 250, 250));
+	m_supplyBox->SetModel("Contents/models/sifiGuns/supplyBox_Close.model");
+	g_renderActorList.push_back(m_supplyBox);
+#ifdef ENABLE_CLOTH_SIM
 	m_collisionSphere = new cActor();
 	m_collisionSphere->Initialize();
 	m_collisionSphere->Transform.SetTransform(glm::vec3(0, 0, -150), glm::quat(1, 0, 0, 0), glm::vec3(10, 10, 10));
 	m_collisionSphere->SetModel("Contents/models/pbrSphere.model");
+	g_renderActorList.push_back(m_collisionSphere);
+#endif // ENABLE_CLOTH_SIM
+
 }
 
 void Assignment::CreateCamera()
@@ -117,13 +126,13 @@ void Assignment::CreateLight()
 	const int lightPerRow = 4;
 	const float horiDist = 150;
 	const float vertDist = 50 * 40.f / m_createdPLightCount;
-	Graphics::CreateAmbientLight(Color(0, 0, 0), aLight);
+	Graphics::CreateAmbientLight(Color::White(), aLight);
 
 	for (int i = 0; i < m_createdPLightCount; ++i)
 	{
 		//Color randomColor = Color(randomFloats(generator), randomFloats(generator), randomFloats(generator));
 		bool enableShadow = true;
-		Graphics::CreatePointLight(glm::vec3(0 + (i % lightPerRow) * horiDist, 200, 100 - (i / lightPerRow) * vertDist), Color::White() * 0.5f, 250.f, enableShadow, m_pLights[i]);
+		Graphics::CreatePointLight(glm::vec3(0 + (i % lightPerRow) * horiDist, 200, 100 - (i / lightPerRow) * vertDist), m_pointLightColor, 250.f, enableShadow, m_pLights[i]);
 	}
 
 	//CreatePointLight(glm::vec3(0, 100, 0), Color::White() * 0.5f, 250, true);
@@ -318,7 +327,7 @@ void Assignment::Tick(float second_since_lastFrame)
 
 	if (ImGui::IsKeyPressed(GLFW_KEY_G))
 	{
-		CreatePointLight(m_editorCamera->CamLocation() + m_editorCamera->Transform.Forward() * 100.f, Color::White() * 0.5f, 250.f, true);
+		CreatePointLight(m_editorCamera->CamLocation() + m_editorCamera->Transform.Forward() * 100.f, m_pointLightColor, 250.f, true);
 		printf("Current Point Light Count: %d\n", m_createdPLightCount);
 	}
 
@@ -384,7 +393,10 @@ void Assignment::Tick(float second_since_lastFrame)
 	}
 
 
-	m_spaceHolder->Transform.Update();
+	for (int i = 0; i < g_renderActorList.size(); ++i)
+	{
+		g_renderActorList[i]->Transform.Update();
+	}
 	for (int i = 0; i < m_renderingTeapotCount; ++i)
 	{
 		m_teapots[i]->Transform.Update();
@@ -446,16 +458,15 @@ void Assignment::SubmitSceneData(Graphics::UniformBufferFormats::sFrame* const i
 	// PBR pass
 	{
 		_renderingMap.clear();
-		_renderingMap.reserve(m_renderingTeapotCount + 2);
-		_renderingMap.push_back({ m_spaceHolder->GetModelHandle(), m_spaceHolder->Transform });
+		_renderingMap.reserve(m_renderingTeapotCount + g_renderActorList.size());
 		for (int i = 0; i < m_renderingTeapotCount; ++i)
 		{
 			_renderingMap.push_back({ m_teapots[i]->GetModelHandle(), m_teapots[i]->Transform });
 		}
-
-#ifdef ENABLE_CLOTH_SIM
-		_renderingMap.push_back({ m_collisionSphere->GetModelHandle(), m_collisionSphere->Transform });
-#endif // ENABLE_CLOTH_SIM
+		for (int i = 0; i < g_renderActorList.size(); ++i)
+		{
+			_renderingMap.push_back({ g_renderActorList[i]->GetModelHandle(), g_renderActorList[i]->Transform });
+		}
 
 		Graphics::SubmitDataToBeRendered(*i_frameData, _renderingMap, &Graphics::PBR_Pass);
 	}
@@ -475,16 +486,15 @@ void Assignment::SubmitSceneDataForEnvironmentCapture(Graphics::UniformBufferFor
 	// PBR pass
 	{
 		_renderingMap.clear();
-		_renderingMap.reserve(m_renderingTeapotCount + 2);
-		_renderingMap.push_back({ m_spaceHolder->GetModelHandle(), m_spaceHolder->Transform });
+		_renderingMap.reserve(m_renderingTeapotCount +g_renderActorList.size());
 		for (int i = 0; i < m_renderingTeapotCount; ++i)
 		{
 			_renderingMap.push_back({ m_teapots[i]->GetModelHandle(), m_teapots[i]->Transform });
 		}
-
-#ifdef ENABLE_CLOTH_SIM
-		_renderingMap.push_back({ m_collisionSphere->GetModelHandle(), m_collisionSphere->Transform });
-#endif // ENABLE_CLOTH_SIM
+		for (int i = 0; i < g_renderActorList.size(); ++i)
+		{
+			_renderingMap.push_back({ g_renderActorList[i]->GetModelHandle(), g_renderActorList[i]->Transform });
+		}
 
 		Graphics::SubmitDataToBeRendered(*i_frameData, _renderingMap, &Graphics::PBR_Pass);
 	}
@@ -502,18 +512,15 @@ void Assignment::SubmitShadowData()
 {
 	std::vector<std::pair<Graphics::cModel, cTransform>> _renderingMap;
 
-	_renderingMap.reserve(m_renderingTeapotCount + 2);
+	_renderingMap.reserve(m_renderingTeapotCount + g_renderActorList.size());
 	for (int i = 0; i < m_renderingTeapotCount; ++i)
 	{
 		_renderingMap.push_back({ m_teapots[i]->GetModelHandle(), m_teapots[i]->Transform });
-}
-	_renderingMap.push_back({ m_spaceHolder->GetModelHandle(), m_spaceHolder->Transform });
-
-#ifdef ENABLE_CLOTH_SIM
-	_renderingMap.push_back({ m_collisionSphere->GetModelHandle(), m_collisionSphere->Transform });
-#endif //  ENABLE_CLOTH_SIM
-
-
+	}
+	for (int i = 0; i < g_renderActorList.size(); ++i)
+	{
+		_renderingMap.push_back({ g_renderActorList[i]->GetModelHandle(), g_renderActorList[i]->Transform });
+	}
 
 	{// Spot light shadow map pass
 		Graphics::SubmitDataToBeRendered(Graphics::UniformBufferFormats::sFrame(), _renderingMap, &Graphics::SpotLightShadowMap_Pass);
@@ -553,38 +560,48 @@ void Assignment::EditorGUI()
 	ImGui::End();
 
 	ImGui::Begin("Control");
-	const Graphics::ERenderMode rendermodes[] = { Graphics::ERM_ForwardShading, Graphics::ERM_DeferredShading, Graphics::ERM_Deferred_Albede, Graphics::ERM_Deferred_Metallic, Graphics::ERM_Deferred_Roughness,
-		Graphics::ERM_Deferred_Normal, Graphics::ERM_Deferred_Depth, Graphics::ERM_SSAO };
-	static bool toggles[] = { false, true, false, false, false, false, false, false };
-
-	if (ImGui::Button("ChooseRenderMode.."))
-		ImGui::OpenPopup("shading_mode_popup");
-	ImGui::SameLine();
-	ImGui::TextUnformatted(Graphics::g_renderModeNameMap.at(static_cast<uint8_t>(g_renderMode)));
-	if (ImGui::BeginPopup("shading_mode_popup"))
 	{
-		ImGui::Text("Shading Modes:");
-		ImGui::Separator();
-		for (int i = 0; i < IM_ARRAYSIZE(rendermodes); i++)
-			if (ImGui::Selectable(Graphics::g_renderModeNameMap.at(static_cast<uint8_t>(rendermodes[i]))))
-			{
-				g_renderMode = rendermodes[i];
-			}
-		ImGui::EndPopup();
+		const Graphics::ERenderMode rendermodes[] = { Graphics::ERM_ForwardShading, Graphics::ERM_DeferredShading, Graphics::ERM_Deferred_Albede, Graphics::ERM_Deferred_Metallic, Graphics::ERM_Deferred_Roughness,
+				Graphics::ERM_Deferred_Normal, Graphics::ERM_Deferred_Depth, Graphics::ERM_SSAO };
+		static bool toggles[] = { false, true, false, false, false, false, false, false };
+
+		if (ImGui::Button("ChooseRenderMode.."))
+			ImGui::OpenPopup("shading_mode_popup");
+		ImGui::SameLine();
+		ImGui::TextUnformatted(Graphics::g_renderModeNameMap.at(static_cast<uint8_t>(g_renderMode)));
+		if (ImGui::BeginPopup("shading_mode_popup"))
+		{
+			ImGui::Text("Shading Modes:");
+			ImGui::Separator();
+			for (int i = 0; i < IM_ARRAYSIZE(rendermodes); i++)
+				if (ImGui::Selectable(Graphics::g_renderModeNameMap.at(static_cast<uint8_t>(rendermodes[i]))))
+				{
+					g_renderMode = rendermodes[i];
+				}
+			ImGui::EndPopup();
+		}
+		if (ImGui::DragFloat("Ambient", &m_ambientIntensity, 0.01f, 0.0f, 10.0f))
+			aLight->SetColor(Color::White() * m_ambientIntensity);
+		if (ImGui::DragFloat("Directional", &m_directionalIntensity, 0.01f, 0.0f, 3.0f))
+			dLight->SetColor(Color(0.6f, 0.6f, 0.5f) * m_directionalIntensity);
+		ImGui::DragFloat("Exposure", &m_exposureOffset, 0.01f, 0.0001f, 50.0f);
+
+		ImGui::ColorEdit3("Point Light Color: ", (float*)&m_pointLightColor);
+
+		if (ImGui::Button("Reset"))
+		{
+			g_renderMode = Graphics::ERM_DeferredShading;
+			m_ambientIntensity = 1.0f;
+			m_directionalIntensity = 1.0f;
+			m_exposureOffset = 3.0f;
+		}
 	}
+	ImGui::End();
 
-
-	if (ImGui::DragFloat("Ambient", &m_ambientIntensity, 0.1f, 0.0f, 10.0f))
-		aLight->SetColor(Color(0.1f, 0.1f, 0.1f) * m_ambientIntensity);
-	if (ImGui::DragFloat("Directional", &m_directionalIntensity, 0.1f, 0.0f, 3.0f))
-		dLight->SetColor(Color(0.6f, 0.6f, 0.5f) * m_directionalIntensity);
-	ImGui::DragFloat("Exposure", &m_exposureOffset, 0.1f, 0.0001f, 50.0f);
-	if (ImGui::Button("Reset"))
+	ImGui::Begin("SelectedActor");
+	if (Editor::SelectingItemID > 0)
 	{
-		g_renderMode = Graphics::ERM_DeferredShading;
-		m_ambientIntensity = 1.0f;
-		m_directionalIntensity = 1.0f;
-		m_exposureOffset = 3.0f;
+		ImGui::Text("Selecting something");
 	}
 	ImGui::End();
 }
@@ -596,9 +613,12 @@ void Assignment::CleanUp()
 	for (int i = 0; i < m_renderingTeapotCount; ++i)
 	{
 		safe_delete(m_teapots[i]);
-}
+	}
 	safe_delete(m_cubemap);
-	safe_delete(m_spaceHolder);
+	for (int i = 0; i < g_renderActorList.size(); ++i)
+	{
+		safe_delete(g_renderActorList[i]);
+	}
 #ifdef ENABLE_CLOTH_SIM
 	ClothSim::CleanUpData();
 #endif
