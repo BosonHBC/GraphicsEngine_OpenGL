@@ -92,6 +92,39 @@ namespace Assets {
 		}
 		return result;
 	}
+	template< class tAsset, class tKey /*= std::string*/>
+	bool Assets::cAssetManager<tAsset, tKey>::Duplicate(const cHandle<tAsset> & i_handle, cHandle<tAsset> & o_handle)
+	{
+		auto result = true;
+
+		tAsset* const _asset = Get(i_handle);
+		if (!(result = (_asset != nullptr))) {
+			// Invalid input handle id
+			return result;
+		}
+		tAsset* outputAsset = nullptr;
+		if (!(result = tAsset::Duplicate(_asset, outputAsset)))
+		{
+			// Fail to duplicate asset
+			return result;
+		}
+		// Scoped lock happens inside this scope
+		{
+			std::lock_guard<std::mutex> autoLock(m_mutex);
+
+			const auto recordCount = m_assetList.size();
+			const uint16_t referenceCount = 1;
+			// Asset load successfully
+
+			// add to the list
+			sAssetRecord _record(outputAsset, referenceCount);
+			m_assetList.push_back(_record);
+
+			// create handle
+			o_handle = cHandle<tAsset>(recordCount);
+		}
+		return result;
+	}
 
 	template< class tAsset, class tKey /*= std::string*/>
 	tAsset* cAssetManager<tAsset, tKey>::Get(const cHandle<tAsset>& i_handle)

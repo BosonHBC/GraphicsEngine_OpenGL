@@ -30,6 +30,8 @@ namespace Assets {
 		bool Load(const tKey& i_key, cHandle<tAsset> & o_asset, ExtraArguments&&... i_arguments);
 		// Copy from i_handle to o_handle, increase reference count;
 		bool Copy(const cHandle<tAsset> & i_handle, cHandle<tAsset> & o_handle);
+		// Duplicate asset from i_handle to o_handle
+		bool Duplicate(const cHandle<tAsset> & i_handle, cHandle<tAsset> & o_handle);
 		// Release the Asset, free the memory
 		bool Release(cHandle<tAsset> & io_handle);
 		
@@ -62,6 +64,8 @@ namespace Assets {
 		std::map<tKey, cHandle<tAsset>> m_keyToAssetHandle_Map;
 		std::mutex m_mutex;
 	};
+
+
 
 }
 

@@ -34,12 +34,13 @@ namespace Graphics {
 	void BlinnPhong_Pass();
 	void PBR_Pass();
 	void CubeMap_Pass();
-	void SelctionBuffer_Pass();
 
-	void Gizmo_RenderSelectingTransform();
+	void EditorPass();
 	void Gizmo_RenderVertexNormal();
 	void Gizmo_RenderTriangulation();
 	void Gizmo_DrawDebugCaptureVolume();
+	bool IsTransformGizmoIsHovered(uint32_t i_selectionID, int& o_direction);
+	void SetArrowBeingSelected(bool i_selected, int i_direction);
 
 	/** Submit function*/
 	void SubmitGraphicSettings(const ERenderMode& i_renderMode);

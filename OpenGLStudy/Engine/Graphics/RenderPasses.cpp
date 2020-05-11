@@ -27,9 +27,9 @@ namespace Graphics
 	extern cFrameBuffer g_ssaoBuffer;
 	extern cFrameBuffer g_ssao_blur_Buffer;
 	extern 	cFrameBuffer g_selectionBuffer;
-	extern cFrameBuffer g_depthStoreBuffer;
+	extern cFrameBuffer g_outlineBuffer;
 	extern cModel g_cubeHandle;
-	extern cModel g_arrowHandle;
+	extern cModel g_arrowHandles[3];
 	extern cModel g_quadHandle;
 	extern cMesh::HANDLE s_point;
 #ifdef ENABLE_CLOTH_SIM
@@ -54,8 +54,8 @@ namespace Graphics
 	bool g_bRenderOmniShaodowMap = false;
 	// clear color
 	Color s_clearColor;
-	// arrow colors
-	Color s_arrowColor[3] = { Color(0, 0, 0.8f), Color(0.8f, 0, 0),Color(0, 0.8f, 0) };
+	extern Color g_outlineColor;
+	extern Color g_arrowColor[3];
 	void RenderQuad(const UniformBufferFormats::sFrame& i_frameData = UniformBufferFormats::sFrame(), const UniformBufferFormats::sDrawCall& i_drawCallData = UniformBufferFormats::sDrawCall())
 	{
 		g_uniformBufferMap[UBT_Frame].Update(&i_frameData);
@@ -517,12 +517,10 @@ namespace Graphics
 				}
 #endif // ENABLE_CLOTH_SIM
 
-
-
 			}
 		);
 
-		
+
 	}
 
 	void GBuffer_Pass()
@@ -639,52 +637,78 @@ namespace Graphics
 					}
 				}
 			);
-			
+
 		}
 	}
 
-	void Gizmo_RenderSelectingTransform()
+	void Gizmo_DrawOutline(const cModel* i_outlineModel, const cTransform& i_modelTransform)
 	{
-		auto& selectionID = g_dataRenderingByGraphicThread->g_selectingItemID;
+		g_uniformBufferMap[UBT_Drawcall].Update(&UniformBufferFormats::sDrawCall(i_modelTransform.M(), i_modelTransform.TranspostInverse()));
 
-		if (ISelectable::IsValid(selectionID))
+		glEnable(GL_STENCIL_TEST);
+		glDisable(GL_DEPTH_TEST);
 		{
-			const cModel* _model = dynamic_cast<cModel*>(ISelectable::s_selectableList[selectionID]);
-			if (!_model) return;
+			// Get stencil buffer to the g_outline buffer
+			g_outlineBuffer.Write([&]
+				{
+					g_currentEffect = GetEffectByKey(EET_Unlit);
+					g_currentEffect->UseEffect();
 
-			glDisable(GL_DEPTH_TEST);
-			g_currentEffect = GetEffectByKey(EET_Unlit);
+					glStencilOp(GL_KEEP, GL_KEEP, GL_REPLACE);
+					glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT | GL_STENCIL_BUFFER_BIT);
+
+					glStencilFunc(GL_ALWAYS, 1, 0xFF);
+					glStencilMask(0xFF);
+					// Draw, need the stencil buffer info only
+					i_outlineModel->RenderWithoutMaterial();
+
+					g_currentEffect->UnUseEffect();
+				}
+			);
+
+			// draw the outline now
+			g_currentEffect = GetEffectByKey(EET_Outline);
 			g_currentEffect->UseEffect();
-			cTransform modelTransform = _model->GetOwner()->Transform;
-			// Get forward transform
-			cTransform arrowTransform[3];
-			{
-				// Forward
-				arrowTransform[0].SetRotation(modelTransform.Rotation() * glm::quat(glm::vec3(glm::radians(90.f), 0, 0)));
-				// Right									  
-				arrowTransform[1].SetRotation(modelTransform.Rotation() * glm::quat(glm::vec3(0, 0, glm::radians(90.f))));
-				// Up											
-				arrowTransform[2].SetRotation(modelTransform.Rotation() * glm::quat(glm::vec3(0, glm::radians(90.f), 0)));
-			}
 
-			cMatUnlit* _arrowMat = dynamic_cast<cMatUnlit*>(cMaterial::s_manager.Get(g_arrowHandle.GetMaterialAt()));
+			// Copy stencil buffer data to the default frame buffer
+			glBlitNamedFramebuffer(g_outlineBuffer.fbo(), 0, 0, 0, g_outlineBuffer.GetWidth(), g_outlineBuffer.GetHeight(), 0, 0, g_outlineBuffer.GetWidth(), g_outlineBuffer.GetHeight(), GL_STENCIL_BUFFER_BIT, GL_NEAREST);
 
-			for (int i = 0; i < 3; ++i)
-			{
-				arrowTransform[i].SetPosition(modelTransform.Position());
-				arrowTransform[i].SetScale(glm::vec3(2, 10, 2));
-				arrowTransform[i].Update();
-				g_uniformBufferMap[UBT_Drawcall].Update(&UniformBufferFormats::sDrawCall(arrowTransform[i].M(), arrowTransform[i].TranspostInverse()));
+			glStencilFunc(GL_NOTEQUAL, 1, 0xFF);
+			glStencilMask(0x00);
 
-				_arrowMat->SetUnlitColor(s_arrowColor[i]);
-				g_arrowHandle.UpdateUniformVariables(g_currentEffect->GetProgramID());
-				g_arrowHandle.Render();
-			}
+			i_outlineModel->RenderWithoutMaterial();
+
+			glStencilMask(0xFF);
+			glStencilFunc(GL_ALWAYS, 1, 0xFF);
 			g_currentEffect->UnUseEffect();
-			glEnable(GL_DEPTH_TEST);
 		}
+		glEnable(GL_DEPTH_TEST);
+		glDisable(GL_STENCIL_TEST);
 
 
+	}
+
+
+	void Gizmo_RenderSelectingTransform(const cTransform* i_arrowTransforms)
+	{
+		glClear(GL_DEPTH_BUFFER_BIT);
+
+		g_currentEffect = GetEffectByKey(EET_Unlit);
+		g_currentEffect->UseEffect();
+		int hoveredArrowDirection = -1;
+		IsTransformGizmoIsHovered(g_dataGetFromRenderThread->g_selectionID, hoveredArrowDirection);
+		for (int i = 0; i < 3; ++i)
+		{
+			g_uniformBufferMap[UBT_Drawcall].Update(&UniformBufferFormats::sDrawCall(i_arrowTransforms[i].M(), i_arrowTransforms[i].TranspostInverse()));
+			if (i == hoveredArrowDirection)
+			{
+				g_currentEffect->SetVec3("unlitColor", 0.8f * glm::vec3(g_outlineColor.r, g_outlineColor.g, g_outlineColor.b));
+				g_arrowHandles[i].RenderWithoutMaterial();
+			}
+			else
+				g_arrowHandles[i].Render();
+		}
+		g_currentEffect->UnUseEffect();
 	}
 
 	void Gizmo_DrawDebugCaptureVolume() {
@@ -741,19 +765,26 @@ namespace Graphics
 		g_currentEffect->UnUseEffect();
 	}
 
-	void SelctionBuffer_Pass()
+	void SelctionBuffer_Pass(const std::vector<std::pair<cModel, cTransform>>& i_renderMap, bool i_needRenderTransformGizmo)
 	{
 		glDisable(GL_CULL_FACE);
 		g_currentEffect = GetEffectByKey(EET_SelectionBuffer);
 		g_currentEffect->UseEffect();
-		g_uniformBufferMap[UBT_Frame].Update(&g_dataRenderingByGraphicThread->g_renderPasses[3].FrameData);
 
-		g_selectionBuffer.Write([]
+		g_selectionBuffer.Write([&]
 			{
 				glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-				auto& renderMap = g_dataRenderingByGraphicThread->g_renderPasses[3].ModelToTransform_map;
-				for (auto it = renderMap.begin(); it != renderMap.end(); ++it)
+				bool depthCleared = false;
+				for (int i = 0; i < i_renderMap.size(); ++i)
 				{
+					// when it is rendering the transform, should clear the depth first
+					if (i_needRenderTransformGizmo && i >= i_renderMap.size() - 3 && !depthCleared)
+					{
+						depthCleared = true;
+						glClear(GL_DEPTH_BUFFER_BIT);
+					}
+
+					auto* it = &i_renderMap[i];
 					// 1. Update draw call data
 					g_uniformBufferMap[UBT_Drawcall].Update(&UniformBufferFormats::sDrawCall(it->second.M(), it->second.TranspostInverse()));
 					// 2. Draw
@@ -761,8 +792,8 @@ namespace Graphics
 					int r = (modelID & 0x000000FF) >> 0;
 					int g = (modelID & 0x0000FF00) >> 8;
 					int b = (modelID & 0x00FF0000) >> 16;
-					it->first.UpdateUniformVariables(g_currentEffect->GetProgramID());
 					g_currentEffect->SetVec3("selectionColor", glm::vec3(r / 255.f, g / 255.f, b / 255.f));
+
 					it->first.RenderWithoutMaterial();
 				}
 			});
@@ -776,7 +807,7 @@ namespace Graphics
 		glFlush();
 		glFinish();
 		glPixelStorei(GL_UNPACK_ALIGNMENT, 1);
-		unsigned char data[3];
+		unsigned char data[3] = { 0 };
 		sIO& _IO = g_dataRenderingByGraphicThread->g_IO;
 		int mouseX = glm::clamp(static_cast<int>(_IO.MousePos.x), 0, Application::GetCurrentApplication()->GetCurrentWindow()->GetBufferWidth());
 		int mouseY = glm::clamp(static_cast<int>(Application::GetCurrentApplication()->GetCurrentWindow()->GetBufferHeight() - _IO.MousePos.y), 0, Application::GetCurrentApplication()->GetCurrentWindow()->GetBufferHeight());
@@ -786,5 +817,96 @@ namespace Graphics
 
 		glBindFramebuffer(GL_FRAMEBUFFER, _prevFbo);
 		glEnable(GL_CULL_FACE);
+		assert(GL_NO_ERROR == glGetError());
 	}
+
+	void EditorPass()
+	{
+		// current selected object in application 
+
+		auto& selectionID = g_dataRenderingByGraphicThread->g_selectingItemID;
+		cTransform arrowTransforms[3];
+		bool needRenderTarnsformGizmo = false;
+		auto renderMapForSelectionBuffer = g_dataRenderingByGraphicThread->g_renderPasses[3].ModelToTransform_map; // original render map
+		// update frame data, from the editor camera
+		g_uniformBufferMap[UBT_Frame].Update(&g_dataRenderingByGraphicThread->g_renderPasses[3].FrameData);
+
+
+		if (ISelectable::IsValid(selectionID))
+		{
+			const cModel* _model = dynamic_cast<cModel*>(ISelectable::s_selectableList[selectionID]);
+			// only draw the outline when the model has owner
+			if (needRenderTarnsformGizmo = (_model && _model->GetOwner()))
+			{
+				cTransform modelTransform = _model->GetOwner()->Transform;
+				Gizmo_DrawOutline(_model, modelTransform);
+
+				// Calculate the transform gizmo's transform and add three arrow models to the render map
+				{
+					// Forward
+					arrowTransforms[0].SetRotation(modelTransform.Rotation() * glm::quat(glm::vec3(glm::radians(90.f), 0, 0)));
+					// Right									  
+					arrowTransforms[1].SetRotation(modelTransform.Rotation() * glm::quat(glm::vec3(0, 0, glm::radians(90.f))));
+					// Up											
+					arrowTransforms[2].SetRotation(modelTransform.Rotation() * glm::quat(glm::vec3(0, glm::radians(90.f), 0)));
+
+					// Get scale according to the camera
+					float distToCamera = glm::distance(g_dataRenderingByGraphicThread->g_renderPasses[3].FrameData.GetViewPosition(), modelTransform.Position());
+					constexpr float scaleOneDistance = 300.f;
+					float _scale = distToCamera / scaleOneDistance;
+
+					// Set position and scale
+					for (int i = 0; i < 3; ++i)
+					{
+						arrowTransforms[i].SetPosition(modelTransform.Position());
+						arrowTransforms[i].SetScale(glm::vec3(_scale));
+						arrowTransforms[i].Update();
+						renderMapForSelectionBuffer.push_back({ g_arrowHandles[i], arrowTransforms[i] });
+					}
+				}
+			}
+		}
+
+		// Handle selection
+		SelctionBuffer_Pass(renderMapForSelectionBuffer, needRenderTarnsformGizmo);
+
+		if (ISelectable::IsValid(selectionID))
+		{
+			const cModel* _model = dynamic_cast<cModel*>(ISelectable::s_selectableList[selectionID]);
+			// Render transform id according to the selection buffer
+			if (_model && _model->GetOwner())
+				Gizmo_RenderSelectingTransform(arrowTransforms);
+		}
+
+	}
+
+	bool IsTransformGizmoIsHovered(uint32_t i_selectionID, int& o_direction)
+	{
+		bool result = false;
+		if (ImGui::GetIO().WantCaptureMouse) return false;
+		for (int i = 0; i < 3; ++i)
+		{
+			if (g_arrowHandles[i].SelectableID == i_selectionID)
+			{
+				result = true;
+				o_direction = i;
+				break;
+			}
+		}
+		return result;
+	}
+
+	void SetArrowBeingSelected(bool i_selected, int i_direction)
+	{
+		if (i_direction >= 0 && i_direction < 3)
+		{
+			cMatUnlit* _arrowMat = dynamic_cast<cMatUnlit*>(cMaterial::s_manager.Get(g_arrowHandles[i_direction].GetMaterialAt()));
+			if (_arrowMat)
+			{
+				_arrowMat->SetUnlitColor(i_selected ? g_outlineColor * 0.8f : g_arrowColor[i_direction]);
+			}
+		}
+	}
+
+
 }

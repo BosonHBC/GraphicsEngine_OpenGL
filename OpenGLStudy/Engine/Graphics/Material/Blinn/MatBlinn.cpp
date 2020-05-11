@@ -87,7 +87,7 @@ namespace Graphics {
 		if (_reflectionTex)
 			_reflectionTex->UseTexture(GL_TEXTURE4);
 		else
-			cTexture::UnBindTexture(GL_TEXTURE4, ETT_FRAMEBUFFER_PLANNER_REFLECTION);
+			cTexture::UnBindTexture(GL_TEXTURE4, ETT_FRAMEBUFFER_STENCIL);
 
 		s_BlinnPhongUniformBlock.Update(&UniformBufferFormats::sBlinnPhongMaterial(m_diffuseIntensity, m_specularIntensity, m_environmentIntensity, m_shininess));
 	}

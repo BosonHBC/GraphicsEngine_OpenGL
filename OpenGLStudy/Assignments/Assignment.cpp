@@ -154,7 +154,7 @@ void Assignment::SubmitDataToBeRender(const float i_seconds_elapsedSinceLastLoop
 	glm::vec2 mousePos = glm::vec2(ImGui::GetMousePos().x, ImGui::GetMousePos().y);
 	const auto& dragDelta = ImGui::GetMouseDragDelta();
 	glm::vec2 mouseDelta(dragDelta.x, dragDelta.y);
-	bool downs[3] = {false};
+	bool downs[3] = { false };
 	for (int i = 0; i < 3; ++i) downs[i] = ImGui::IsMouseDown(i);
 	Graphics::SubmitIOData(mousePos, mouseDelta, downs);
 
@@ -167,7 +167,7 @@ void Assignment::SubmitDataToBeRender(const float i_seconds_elapsedSinceLastLoop
 	SubmitSceneData(&_frameData_Camera);
 
 #ifdef ENABLE_CLOTH_SIM
-		Graphics::SubmitParticleData();
+	Graphics::SubmitParticleData();
 #endif // ENABLE_CLOTH_SIM
 	// Gizmos
 	{
@@ -322,14 +322,69 @@ void Assignment::Tick(float second_since_lastFrame)
 		printf("Current Point Light Count: %d\n", m_createdPLightCount);
 	}
 
-	if (!ImGui::GetIO().WantCaptureMouse && ImGui::IsMouseReleased(0))
+	auto dataFromRenderThread = Graphics::GetDataFromRenderThread();
+
+	int hoverArrowDirection = -1;
+	bool isHoveringTransformGizmo = Graphics::IsTransformGizmoIsHovered(dataFromRenderThread.g_selectionID, hoverArrowDirection);
+	glm::vec4 dragDelta(glm::vec2(_windowInput->DX(), _windowInput->DY()), 0, 0);
+	static bool dragingTransform = false;
+	static int draggingDirection = -1;
+	if (!ImGui::GetIO().WantCaptureMouse)
 	{
-		auto dataFromRenderThread = Graphics::GetDataFromRenderThread();
-		printf("Selected model ID: %d\n", dataFromRenderThread.g_selectionID);
-		
-		Editor::SelectingItemID = dataFromRenderThread.g_selectionID;
+		// Only when 1. release the mouse; 2. not hovering a transform; 3. not on a UI; 4. not dragging
+		if (ImGui::IsMouseReleased(0) && !isHoveringTransformGizmo && !dragingTransform
+			&& IsFloatZero(dragDelta.x) && IsFloatZero(dragDelta.y))
+		{
+			Editor::SelectingItemID = dataFromRenderThread.g_selectionID;
+		}
+		if (isHoveringTransformGizmo && !dragingTransform && ImGui::IsMouseDown(0))
+		{
+			dragingTransform = true;
+			draggingDirection = hoverArrowDirection;
+			Graphics::SetArrowBeingSelected(true, draggingDirection);
+		}
+
+		if (dragingTransform && ImGui::IsMouseDown(0) && ISelectable::IsValid(Editor::SelectingItemID) && (!IsFloatZero(dragDelta.x) || !IsFloatZero(dragDelta.y)))
+		{
+			const Graphics::cModel* _model = dynamic_cast<Graphics::cModel*>(ISelectable::s_selectableList[Editor::SelectingItemID]);
+			cActor* owner = nullptr;
+			if (_model && (owner = _model->GetOwner()))
+			{
+				glm::vec3 dragInWorldSpace = m_editorCamera->GetInvViewMatrix() * dragDelta;
+				float dragVelocity = glm::length(dragInWorldSpace);
+				glm::vec3 dragInWorldSpace_norm = dragInWorldSpace / dragVelocity;
+				glm::vec3 direction(0.0f);
+				switch (draggingDirection)
+				{
+				case 0:
+					direction = owner->Transform.Forward();
+					break;
+				case 1:
+					direction = owner->Transform.Right();
+					break;
+				case 2:
+					direction = owner->Transform.Up();
+					break;
+				default:
+					break;
+				}
+				float directionSign = glm::dot(direction, dragInWorldSpace_norm) > 0 ? 1 : -1;
+
+				owner->Transform.Translate(direction * directionSign * 100.f * dragVelocity * second_since_lastFrame);
+			}
+		}
+
+		if (dragingTransform && ImGui::IsMouseReleased(0))
+		{
+			dragingTransform = false;
+			Graphics::SetArrowBeingSelected(false, draggingDirection);
+			draggingDirection = -1;
+
+		}
 	}
 
+
+	m_spaceHolder->Transform.Update();
 	for (int i = 0; i < m_renderingTeapotCount; ++i)
 	{
 		m_teapots[i]->Transform.Update();
@@ -348,14 +403,14 @@ void Assignment::Tick(float second_since_lastFrame)
 		spLight2->Transform.Update();
 
 #ifdef ENABLE_CLOTH_SIM
-		for (int i = 0; i < m_createdPLightCount; ++i)
-		{
-			m_collisionSpheres[i].SetCenter(m_pLights[i]->Transform.Position());
-			m_collisionSpheres[i].SetRadius(m_pLights[i]->Transform.Scale().x / 8.f);
-		}
-		ClothSim::UpdateSprings(0.05f, m_collisionSpheres, m_createdPLightCount);
+	for (int i = 0; i < m_createdPLightCount; ++i)
+	{
+		m_collisionSpheres[i].SetCenter(m_pLights[i]->Transform.Position());
+		m_collisionSpheres[i].SetRadius(m_pLights[i]->Transform.Scale().x / 8.f);
+	}
+	ClothSim::UpdateSprings(0.05f, m_collisionSpheres, m_createdPLightCount);
 #endif // ENABLE_CLOTH_SIM
-	
+
 }
 
 void Assignment::SubmitLightingData()
@@ -451,7 +506,7 @@ void Assignment::SubmitShadowData()
 	for (int i = 0; i < m_renderingTeapotCount; ++i)
 	{
 		_renderingMap.push_back({ m_teapots[i]->GetModelHandle(), m_teapots[i]->Transform });
-	}
+}
 	_renderingMap.push_back({ m_spaceHolder->GetModelHandle(), m_spaceHolder->Transform });
 
 #ifdef ENABLE_CLOTH_SIM
@@ -541,7 +596,7 @@ void Assignment::CleanUp()
 	for (int i = 0; i < m_renderingTeapotCount; ++i)
 	{
 		safe_delete(m_teapots[i]);
-	}
+}
 	safe_delete(m_cubemap);
 	safe_delete(m_spaceHolder);
 #ifdef ENABLE_CLOTH_SIM

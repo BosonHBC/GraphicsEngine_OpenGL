@@ -60,6 +60,43 @@ namespace Graphics {
 		return result;
 	}
 
+	bool cMaterial::Duplicate(cMaterial* i_src, cMaterial* & o_dest)
+	{
+		bool result = true;
+
+		cMaterial* _mat = nullptr;
+		switch (i_src->m_matType)
+		{
+		case eMaterialType::MT_INVALID:
+			// TODO: invalid material type
+			printf("Material duplicate error: Invalid material type.\n");
+			result = false;
+			return result;
+		case eMaterialType::MT_BLINN_PHONG:
+			_mat = new (std::nothrow) cMatBlinn();
+			break;
+		case eMaterialType::MT_CUBEMAP:
+			_mat = new (std::nothrow) cMatCubemap();
+			break;
+		case  eMaterialType::MT_UNLIT:
+			_mat = new (std::nothrow) cMatUnlit();
+			break;
+		case  eMaterialType::MT_PBRMR:
+			_mat = new (std::nothrow) cMatPBRMR();
+			break;
+		default:
+			printf("Material duplicate error: Invalid material type.\n");
+			result = false;
+			return result;
+			break;
+		}
+		// use assignment operator copy the data
+		*_mat = *i_src;
+		// output the pointer
+		o_dest = _mat;
+		return result;
+	}
+
 	bool cMaterial::LoadMaterialTypeInLUA(const std::string& i_path, eMaterialType& o_matType)
 	{
 		auto result = true;

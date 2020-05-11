@@ -23,7 +23,7 @@ namespace Graphics {
 
 	bool cMatUnlit::UpdateUniformVariables(GLuint i_programID)
 	{
-		m_unLitColorID = glGetUniformLocation(i_programID, "arrowColor");
+		m_unLitColorID = glGetUniformLocation(i_programID, "unlitColor");
 		return true;
 	}
 

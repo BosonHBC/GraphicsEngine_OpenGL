@@ -49,7 +49,7 @@ namespace Graphics {
 
 	// Pre-defined mesh & textures
 	cModel g_cubeHandle;
-	cModel g_arrowHandle;
+	cModel g_arrowHandles[3];
 	cModel g_quadHandle;
 	cMesh::HANDLE s_point;
 #ifdef ENABLE_CLOTH_SIM
@@ -58,7 +58,10 @@ namespace Graphics {
 #endif // ENABLE_CLOTH_SIM
 	cTexture::HANDLE s_spruitSunRise_HDR;
 	cTexture::HANDLE g_ssaoNoiseTexture;
-
+	cMaterial::HANDLE g_arrowMatHandles[2];
+	// arrow colors
+	Color g_arrowColor[3] = { Color(0, 0, 0.8f), Color(0.8f, 0, 0),Color(0, 0.8f, 0) };
+	Color g_outlineColor(1, 0.64f, 0);
 	// Lighting data
 	UniformBufferFormats::sLighting g_globalLightingData;
 	UniformBufferFormats::sSSAO g_ssaoData;
@@ -80,6 +83,8 @@ namespace Graphics {
 	const int g_noiseResolution = 4;
 	// selection buffer
 	cFrameBuffer g_selectionBuffer;
+	// outline buffer
+	cFrameBuffer g_outlineBuffer;
 
 	// Effect
 	// ------------------------------------------------------------------------------------------------------------------------------------
@@ -110,7 +115,7 @@ namespace Graphics {
 		}
 	}
 
-	void Gizmo_DrawDebugCaptureVolume();
+
 	void RenderQuad(const UniformBufferFormats::sFrame& i_frameData = UniformBufferFormats::sFrame(), const UniformBufferFormats::sDrawCall& i_drawCallData = UniformBufferFormats::sDrawCall());
 	void RenderCube(const UniformBufferFormats::sFrame& i_frameData = UniformBufferFormats::sFrame(), const UniformBufferFormats::sDrawCall& i_drawCallData = UniformBufferFormats::sDrawCall());
 	void RenderPointLightPosition();
@@ -212,8 +217,8 @@ namespace Graphics {
 			// Create unlit effect
 			{
 				if (!(result = CreateEffect(EET_Unlit,
-					"unlit/arrow_vert.glsl",
-					"unlit/arrow_frag.glsl"))) {
+					"unlit/unlit_vert.glsl",
+					"unlit/unlit_frag.glsl"))) {
 					printf("Fail to create unlit effect.\n");
 					return result;
 				}
@@ -427,6 +432,20 @@ namespace Graphics {
 					return result;
 				}
 			}
+			// Create outline effect
+			{
+				if (!(result = CreateEffect(EET_Outline,
+					"selection/outline/outline_vert.glsl",
+					"unlit/unlit_frag.glsl"))) {
+					printf("Fail to create outline effect.\n");
+					return result;
+				}
+				cEffect* outlineEffect = GetEffectByKey(EET_Outline);
+				outlineEffect->UseEffect();
+				outlineEffect->SetFloat("outlineWidth", 0.15f);
+				outlineEffect->SetVec3("unlitColor", glm::vec3(g_outlineColor.r, g_outlineColor.g, g_outlineColor.b));
+				outlineEffect->UnUseEffect();
+			}
 			// validate all programs
 			for (auto it : g_KeyToEffect_map)
 			{
@@ -491,6 +510,12 @@ namespace Graphics {
 				printf("Fail to create selection-Buffer.\n");
 				return result;
 			}
+			if (!(result = g_outlineBuffer.Initialize(_window->GetBufferWidth(), _window->GetBufferHeight(), ETT_FRAMEBUFFER_STENCIL)))
+			{
+				printf("Fail to create outline-Buffer.\n");
+				return result;
+			}
+			
 
 			//EnvironmentCaptureManager::AddCaptureProbes(cSphere(glm::vec3(-225, 230, 0), 600.f), 50.f, envMapResolution);
 
@@ -505,7 +530,7 @@ namespace Graphics {
 		// Load models & textures
 		{
 			g_cubeHandle = cModel("Contents/models/cube.model");
-			g_arrowHandle = cModel("Contents/models/arrow.model");
+
 			g_quadHandle = cModel("Contents/models/quad.model");
 			std::vector<float> _points;
 			_points.push_back(0.0f); _points.push_back(0.0f); _points.push_back(0.0f);
@@ -515,6 +540,24 @@ namespace Graphics {
 				printf("Failed to Load point!\n");
 				return result;
 			}
+			// Load arrow models
+			g_arrowHandles[0] = cModel("Contents/models/arrow.model");
+			g_arrowHandles[1] = cModel("Contents/models/arrow.model");
+			g_arrowHandles[2] = cModel("Contents/models/arrow.model");
+			cMaterial::s_manager.Duplicate(g_arrowHandles[0].GetMaterialAt(), g_arrowMatHandles[0]);
+			cMaterial::s_manager.Duplicate(g_arrowHandles[0].GetMaterialAt(), g_arrowMatHandles[1]);
+			g_arrowHandles[1].UpdateMaterial(g_arrowMatHandles[0]);
+			g_arrowHandles[2].UpdateMaterial(g_arrowMatHandles[1]);
+			GetEffectByKey(EET_Unlit)->UseEffect();
+			for (int i = 0; i < 3; ++i)
+			{
+				g_arrowHandles[i].UpdateUniformVariables(GetEffectByKey(EET_Unlit)->GetProgramID());
+				g_arrowHandles[i].IncreamentSelectableCount();
+				cMatUnlit* _arrowMat = dynamic_cast<cMatUnlit*>(cMaterial::s_manager.Get(g_arrowHandles[i].GetMaterialAt()));
+				_arrowMat->SetUnlitColor(g_arrowColor[i]);
+			}
+			GetEffectByKey(EET_Unlit)->UnUseEffect();
+
 		}
 		// Load textures
 		{
@@ -622,6 +665,8 @@ namespace Graphics {
 
 	void PreRenderFrame()
 	{
+
+
 		// After data has been submitted, swap the data
 		std::swap(g_dataSubmittedByApplicationThread, g_dataRenderingByGraphicThread);
 
@@ -722,7 +767,7 @@ namespace Graphics {
 			HDR_Pass();
 
 			// Clear the default buffer bit and copy hdr frame buffer's depth to the default frame buffer
-			glClear(GL_DEPTH_BUFFER_BIT);
+			glClear(GL_DEPTH_BUFFER_BIT | GL_STENCIL_BUFFER_BIT);
 			glBlitNamedFramebuffer(g_hdrBuffer.fbo(), 0, 0, 0, g_hdrBuffer.GetWidth(), g_hdrBuffer.GetHeight(), 0, 0, g_hdrBuffer.GetWidth(), g_hdrBuffer.GetHeight(), GL_DEPTH_BUFFER_BIT, GL_NEAREST);
 			assert(GL_NO_ERROR == glGetError());
 
@@ -731,11 +776,7 @@ namespace Graphics {
 			//Gizmo_DrawDebugCaptureVolume();
 			RenderOmniShadowMap();
 
-			// Handle selection
-			SelctionBuffer_Pass();
-
-			// Render transform id according to the selection buffer
-			Gizmo_RenderSelectingTransform();
+			EditorPass();
 		}
 			
 		/** 4. After all render of this frame is done*/
@@ -835,9 +876,16 @@ namespace Graphics {
 			it.second.CleanUp();
 		}
 
-		g_arrowHandle.CleanUp();
+		for (int i = 0; i < 3; ++i)
+		{
+			g_arrowHandles[i].CleanUp();
+		}
 		g_cubeHandle.CleanUp();
 		g_quadHandle.CleanUp();
+		
+		cMaterial::s_manager.Release(g_arrowMatHandles[0]);
+		cMaterial::s_manager.Release(g_arrowMatHandles[1]);
+
 		cTexture::s_manager.Release(s_spruitSunRise_HDR);
 		cTexture::s_manager.Release(g_ssaoNoiseTexture);
 		cMesh::s_manager.Release(s_point);
@@ -879,6 +927,7 @@ namespace Graphics {
 		g_ssaoBuffer.CleanUp();
 		g_ssao_blur_Buffer.CleanUp();
 		g_selectionBuffer.CleanUp();
+		g_outlineBuffer.CleanUp();
 		if (!(result = EnvironmentCaptureManager::CleanUp()))
 			printf("Fail to clean up Environment Capture Manager.\n");
 
@@ -913,7 +962,7 @@ namespace Graphics {
 			return g_cubeHandle;
 			break;
 		case EPT_Arrow:
-			return g_arrowHandle;
+			return g_arrowHandles[0];
 			break;
 		case EPT_Quad:
 			return g_quadHandle;
@@ -928,7 +977,7 @@ namespace Graphics {
 	const Graphics::sDataReturnToApplicationThread& GetDataFromRenderThread()
 	{
 		std::unique_lock<std::mutex> lck(Application::GetCurrentApplication()->GetApplicationMutex());
-		constexpr unsigned int timeToWait_inMilliseconds = 100;
+		constexpr unsigned int timeToWait_inMilliseconds = 1;
 		g_whenDataReturnToApplicationThreadHasSwapped.wait_for(lck, std::chrono::milliseconds(timeToWait_inMilliseconds));
 		return *g_dataUsedByApplicationThread;
 	}

@@ -12,7 +12,7 @@ namespace Graphics {
 		ETT_FILE = 0,
 		ETT_FILE_ALPHA = 1,
 		ETT_FRAMEBUFFER_SHADOWMAP = 2,
-		ETT_FRAMEBUFFER_PLANNER_REFLECTION = 3,
+		ETT_FRAMEBUFFER_STENCIL = 3,
 		ETT_CUBEMAP = 4,
 		ETT_FRAMEBUFFER_OMNI_SHADOWMAP = 5,
 		ETT_FILE_GRAY = 6,
@@ -79,7 +79,7 @@ namespace Graphics {
 		bool LoadRGB32Texture(const std::string& i_type_id, const GLuint& i_width, const GLuint& i_height);		// noise texture
 		bool LoadRGB8Texture(const std::string& i_type_id, const GLuint& i_width, const GLuint& i_height);			// selection buffer
 		// Load color format texture from frame buffer
-		bool LoadPlannerReflectionTexture(const std::string& i_type_id, const GLuint& i_width, const GLuint& i_height);
+		bool LoadStencilTexture(const std::string& i_type_id, const GLuint& i_width, const GLuint& i_height);
 
 		/** private variables*/
 		GLuint m_textureID;

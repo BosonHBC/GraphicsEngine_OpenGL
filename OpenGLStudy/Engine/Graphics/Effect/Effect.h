@@ -29,6 +29,7 @@ namespace Graphics {
 		EET_SSAO_Blur,
 		EET_CubemapDisplayer,
 		EET_SelectionBuffer,
+		EET_Outline,
 		EET_Invalid = static_cast<uint16_t>(-1),
 	};
 	/** Forward declaration*/
