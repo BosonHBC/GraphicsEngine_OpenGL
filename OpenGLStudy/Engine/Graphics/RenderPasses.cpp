@@ -792,7 +792,6 @@ namespace Graphics
 					int r = (modelID & 0x000000FF) >> 0;
 					int g = (modelID & 0x0000FF00) >> 8;
 					int b = (modelID & 0x00FF0000) >> 16;
-
 					g_currentEffect->SetVec3("selectionColor", glm::vec3(r / 255.f, g / 255.f, b / 255.f));
 
 					it->first.RenderWithoutMaterial();
