@@ -4,10 +4,11 @@
 #define _EDITOR
 
 #ifdef _EDITOR
-
+class cTransform;
 namespace Editor
 {
 	extern uint32_t SelectingItemID;
+
 }
 
 #endif // _EDITOR

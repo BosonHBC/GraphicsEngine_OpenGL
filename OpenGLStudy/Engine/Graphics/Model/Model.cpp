@@ -10,7 +10,8 @@
 
 #include "Assets/LoadTableFromLuaFile.h"
 #include "Assets/PathProcessor.h"
-
+#include "Math/Transform/Transform.h"
+#include "Cores/Actor/Actor.h"
 namespace Graphics {
 
 	bool cModel::LoadModel(const char* i_path)
@@ -129,10 +130,15 @@ namespace Graphics {
 
 
 
+	bool cModel::GetBoundTransform(cTransform *& o_transform)
+	{
+		if (!m_owner) return false;
+		return (o_transform = &(m_owner->Transform));
+	}
+
 	cModel::cModel(const std::string& i_path)
 	{
 		LoadModel(i_path.c_str());
-
 	}
 
 	bool cModel::LoadFileFromLua(const char* i_path, std::string& o_modelPath, std::string& o_materialPath)

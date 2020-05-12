@@ -601,7 +601,20 @@ void Assignment::EditorGUI()
 	ImGui::Begin("SelectedActor");
 	if (Editor::SelectingItemID > 0)
 	{
-		ImGui::Text("Selecting something");
+		ISelectable* _selectable = ISelectable::s_selectableList.at(Editor::SelectingItemID);
+		cTransform* _itemTransform = nullptr;
+		if (_selectable &&_selectable->GetBoundTransform(_itemTransform))
+		{
+			glm::vec3 _location = _itemTransform->Position();
+			if (ImGui::DragFloat3("Location", reinterpret_cast<float*>(&_location), 1.f, -5000.f, 5000.f))
+			{
+				_itemTransform->SetPosition(_location);
+			}
+		}
+	}
+	else
+	{
+		ImGui::Text("No actor is selected.");
 	}
 	ImGui::End();
 }

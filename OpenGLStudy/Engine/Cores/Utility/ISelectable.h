@@ -1,6 +1,6 @@
 #pragma once
 #include <map>
-
+class cTransform;
 class ISelectable
 {
 public:
@@ -34,6 +34,8 @@ public:
 
 	virtual void OnSelected() {};
 	virtual void OnDeSelected() {};
+
+	virtual bool GetBoundTransform(cTransform *& o_transform) { return false; }
 
 	uint32_t SelectableID = -1;
 private:
