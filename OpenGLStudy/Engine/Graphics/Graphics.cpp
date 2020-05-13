@@ -58,6 +58,7 @@ namespace Graphics {
 #endif // ENABLE_CLOTH_SIM
 	cTexture::HANDLE s_spruitSunRise_HDR;
 	cTexture::HANDLE g_ssaoNoiseTexture;
+	cTexture::HANDLE g_pointLightIconTexture;
 	cMaterial::HANDLE g_arrowMatHandles[2];
 	// arrow colors
 	Color g_arrowColor[3] = { Color(0, 0, 0.8f), Color(0.8f, 0, 0),Color(0, 0.8f, 0) };
@@ -98,7 +99,6 @@ namespace Graphics {
 	cDirectionalLight* g_directionalLight;
 	std::vector<cPointLight*> g_pointLight_list;
 	std::vector<cSpotLight*> g_spotLight_list;
-
 
 	// Functions
 	// ------------------------------------------------------------------------------------------------------------------------------------
@@ -446,6 +446,19 @@ namespace Graphics {
 				outlineEffect->SetVec3("unlitColor", glm::vec3(g_outlineColor.r, g_outlineColor.g, g_outlineColor.b));
 				outlineEffect->UnUseEffect();
 			}
+			// draw billboard effect
+			{
+				if (!(result = CreateEffect(EET_Billboards,
+					"billboard/billboard_vert.glsl",
+					"billboard/billboard_frag.glsl"))) {
+					printf("Fail to create billboard effect.\n");
+					return result;
+				}
+				cEffect* billboardEffect = GetEffectByKey(EET_Outline);
+				billboardEffect->UseEffect();
+				billboardEffect->SetInteger("sprite", 0);
+				billboardEffect->UnUseEffect();
+			}
 			// validate all programs
 			for (auto it : g_KeyToEffect_map)
 			{
@@ -572,8 +585,14 @@ namespace Graphics {
 			_path = "ssaoNoiseTexture";
 			if (!(result = cTexture::s_manager.Load(_path, g_ssaoNoiseTexture, ETT_FRAMEBUFFER_RGB32, g_noiseResolution, g_noiseResolution)))
 			{
-				printf("Failed to ssao_NoiseTexture!\n");
+				printf("Failed to load ssao_NoiseTexture!\n");
 				return result;
+			}
+			_path = "PointLightIcon.png";
+			_path = Assets::ProcessPathTex(_path);
+			if (!(result = cTexture::s_manager.Load(_path, g_pointLightIconTexture, ETT_FILE_ALPHA)))
+			{
+				printf("Fail to load %s\n", _path.c_str());
 			}
 		}
 
@@ -777,7 +796,7 @@ namespace Graphics {
 			//Gizmo_DrawDebugCaptureVolume();
 			RenderOmniShadowMap();
 
-			EditorPass();
+		//	EditorPass();
 		}
 			
 		/** 4. After all render of this frame is done*/
@@ -889,6 +908,7 @@ namespace Graphics {
 
 		cTexture::s_manager.Release(s_spruitSunRise_HDR);
 		cTexture::s_manager.Release(g_ssaoNoiseTexture);
+		cTexture::s_manager.Release(g_pointLightIconTexture);
 		cMesh::s_manager.Release(s_point);
 #ifdef ENABLE_CLOTH_SIM
 		cMesh::s_manager.Release(g_cloth);
@@ -1042,6 +1062,7 @@ namespace Graphics {
 		cPointLight* newPointLight = new cPointLight(i_color, i_initialLocation, i_radius);
 		newPointLight->SetEnableShadow(i_enableShadow);
 		newPointLight->CreateShadowMap(2048, 2048);
+		newPointLight->IncreamentSelectableCount();
 		o_pointLight = newPointLight;
 		g_pointLight_list.push_back(newPointLight);
 		return result;

@@ -340,12 +340,7 @@ void Assignment::Tick(float second_since_lastFrame)
 	static int draggingDirection = -1;
 	if (!ImGui::GetIO().WantCaptureMouse)
 	{
-		// Only when 1. release the mouse; 2. not hovering a transform; 3. not on a UI; 4. not dragging
-		if (ImGui::IsMouseReleased(0) && !isHoveringTransformGizmo && !dragingTransform
-			&& IsFloatZero(dragDelta.x) && IsFloatZero(dragDelta.y))
-		{
-			Editor::SelectingItemID = dataFromRenderThread.g_selectionID;
-		}
+
 		if (isHoveringTransformGizmo && !dragingTransform && ImGui::IsMouseDown(0))
 		{
 			dragingTransform = true;
@@ -353,11 +348,17 @@ void Assignment::Tick(float second_since_lastFrame)
 			Graphics::SetArrowBeingSelected(true, draggingDirection);
 		}
 
+		// Only when 1. release the mouse; 2. not hovering a transform; 3. not on a UI; 4. not dragging
+		if (ImGui::IsMouseReleased(0) && !isHoveringTransformGizmo && !dragingTransform
+			&& IsFloatZero(dragDelta.x) && IsFloatZero(dragDelta.y))
+		{
+			Editor::SelectingItemID = dataFromRenderThread.g_selectionID;
+		}
+
 		if (dragingTransform && ImGui::IsMouseDown(0) && ISelectable::IsValid(Editor::SelectingItemID) && (!IsFloatZero(dragDelta.x) || !IsFloatZero(dragDelta.y)))
 		{
-			const Graphics::cModel* _model = dynamic_cast<Graphics::cModel*>(ISelectable::s_selectableList[Editor::SelectingItemID]);
-			cActor* owner = nullptr;
-			if (_model && (owner = _model->GetOwner()))
+			cTransform* edittingTransform = nullptr;
+			if (ISelectable::s_selectableList[Editor::SelectingItemID]->GetBoundTransform(edittingTransform))
 			{
 				glm::vec3 dragInWorldSpace = m_editorCamera->GetInvViewMatrix() * dragDelta;
 				float dragVelocity = glm::length(dragInWorldSpace);
@@ -366,20 +367,20 @@ void Assignment::Tick(float second_since_lastFrame)
 				switch (draggingDirection)
 				{
 				case 0:
-					direction = owner->Transform.Forward();
+					direction = edittingTransform->Forward();
 					break;
 				case 1:
-					direction = owner->Transform.Right();
+					direction = edittingTransform->Right();
 					break;
 				case 2:
-					direction = owner->Transform.Up();
+					direction = edittingTransform->Up();
 					break;
 				default:
 					break;
 				}
-				float directionSign = glm::dot(direction, dragInWorldSpace_norm) > 0 ? 1 : -1;
 
-				owner->Transform.Translate(direction * directionSign * 100.f * dragVelocity * second_since_lastFrame);
+				float directionSign = glm::dot(direction, dragInWorldSpace_norm) > 0 ? 1 : -1;
+				edittingTransform->Translate(direction * directionSign * 100.f * dragVelocity * second_since_lastFrame);
 			}
 		}
 
@@ -599,7 +600,7 @@ void Assignment::EditorGUI()
 	ImGui::End();
 
 	ImGui::Begin("SelectedActor");
-	if (Editor::SelectingItemID > 0)
+	if (ISelectable::IsValid(Editor::SelectingItemID))
 	{
 		ISelectable* _selectable = ISelectable::s_selectableList.at(Editor::SelectingItemID);
 		cTransform* _itemTransform = nullptr;

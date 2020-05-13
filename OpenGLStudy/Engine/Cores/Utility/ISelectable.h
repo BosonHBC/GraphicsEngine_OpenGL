@@ -6,7 +6,7 @@ class ISelectable
 public:
 	static uint32_t s_selectableCount;
 	static std::map<uint32_t, ISelectable*> s_selectableList;
-	bool static IsValid(uint32_t i_id) { return i_id < -1 && i_id > 0; }
+	bool static IsValid(uint32_t i_id) { return i_id < 256 && i_id > 0; }
 
 	ISelectable() {};
 	virtual ~ISelectable() {}

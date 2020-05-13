@@ -37,6 +37,7 @@ namespace Graphics
 	extern cMatPBRMR g_clothMat;
 #endif // ENABLE_CLOTH_SIM
 	extern cTexture::HANDLE g_ssaoNoiseTexture;
+	extern cTexture::HANDLE g_pointLightIconTexture;
 
 	const std::map<uint8_t, const char*> g_renderModeNameMap =
 	{
@@ -76,20 +77,41 @@ namespace Graphics
 
 	void RenderPointLightPosition()
 	{
-		g_currentEffect = GetEffectByKey(EET_DrawDebugCircles);
+		/*		// render debug circles
+				g_currentEffect = GetEffectByKey(EET_DrawDebugCircles);
+				g_currentEffect->UseEffect();
+
+				for (size_t i = 0; i < g_dataRenderingByGraphicThread->g_pointLights.size(); ++i)
+				{
+					float ratio = 1.0 - (float)(g_dataRenderingByGraphicThread->g_pointLights[i].ImportanceOrder) / g_dataRenderingByGraphicThread->g_pointLights.size();
+					cMesh* _Point = cMesh::s_manager.Get(s_point);
+					g_currentEffect->SetFloat("radius", g_dataRenderingByGraphicThread->g_pointLights[i].Transform.Scale().x);
+					glm::vec3 sphereColor = glm::vec3(0.7f, 0.7f, 0.0f) * pow(ratio, 5);
+
+					g_currentEffect->SetVec3("color", sphereColor);
+					g_uniformBufferMap[UBT_Drawcall].Update(&UniformBufferFormats::sDrawCall(g_dataRenderingByGraphicThread->g_pointLights[i].Transform.M(), g_dataRenderingByGraphicThread->g_pointLights[i].Transform.TranspostInverse()));
+					_Point->Render();
+				}
+				g_currentEffect->UnUseEffect();*/
+
+				// Draw point light hint
+				//-----------------------------------------------------------------------------------------------
+		g_currentEffect = GetEffectByKey(EET_Billboards);
 		g_currentEffect->UseEffect();
+		cTransform pLightBillBoardTransform;
 		g_uniformBufferMap[UBT_Frame].Update(&g_dataRenderingByGraphicThread->g_renderPasses[3].FrameData);
 		for (size_t i = 0; i < g_dataRenderingByGraphicThread->g_pointLights.size(); ++i)
 		{
-			float ratio = 1.0 - (float)(g_dataRenderingByGraphicThread->g_pointLights[i].ImportanceOrder) / g_dataRenderingByGraphicThread->g_pointLights.size();
-			cMesh* _Point = cMesh::s_manager.Get(s_point);
-			g_currentEffect->SetFloat("radius", g_dataRenderingByGraphicThread->g_pointLights[i].Transform.Scale().x / 20.f);
-			glm::vec3 sphereColor = glm::vec3(1.0f, 0.0f, 0.0f) * pow(ratio, 5);
+			pLightBillBoardTransform.SetTransform(g_dataRenderingByGraphicThread->g_pointLights[i].Transform.Position(), glm::quat(1, 0, 0, 0), glm::vec3(10));
+			g_uniformBufferMap[UBT_Drawcall].Update(&UniformBufferFormats::sDrawCall(pLightBillBoardTransform.M(), pLightBillBoardTransform.TranspostInverse()));
 
-			g_currentEffect->SetVec3("color", sphereColor);
-			g_uniformBufferMap[UBT_Drawcall].Update(&UniformBufferFormats::sDrawCall(g_dataRenderingByGraphicThread->g_pointLights[i].Transform.M(), g_dataRenderingByGraphicThread->g_pointLights[i].Transform.TranspostInverse()));
-			_Point->Render();
+			cTexture* _texture = cTexture::s_manager.Get(g_pointLightIconTexture);
+			_texture->UseTexture(GL_TEXTURE0);
+
+			g_quadHandle.RenderWithoutMaterial();
 		}
+
+		cTexture::UnBindTexture(GL_TEXTURE0, ETT_FILE_ALPHA);
 		g_currentEffect->UnUseEffect();
 	}
 
@@ -804,8 +826,9 @@ namespace Graphics
 		glGetIntegerv(GL_FRAMEBUFFER_BINDING, &_prevFbo);
 		glBindFramebuffer(GL_FRAMEBUFFER, g_selectionBuffer.fbo());
 
+/*
 		glFlush();
-		glFinish();
+		glFinish();*/
 		glPixelStorei(GL_UNPACK_ALIGNMENT, 1);
 		unsigned char data[3] = { 0 };
 		sIO& _IO = g_dataRenderingByGraphicThread->g_IO;
@@ -823,46 +846,54 @@ namespace Graphics
 	void EditorPass()
 	{
 		// current selected object in application 
-
+		const auto* frameData = &g_dataRenderingByGraphicThread->g_renderPasses[3].FrameData;
 		auto& selectionID = g_dataRenderingByGraphicThread->g_selectingItemID;
 		cTransform arrowTransforms[3];
 		bool needRenderTarnsformGizmo = false;
 		auto renderMapForSelectionBuffer = g_dataRenderingByGraphicThread->g_renderPasses[3].ModelToTransform_map; // original render map
+		for (auto item : g_dataRenderingByGraphicThread->g_pointLights)
+		{
+			g_quadHandle.SelectableID = item.SelectableID;
+			cTransform pLightTransform(item.Transform.Position(), glm::quatLookAt(glm::normalize(frameData->GetViewPosition() - item.Transform.Position()), glm::vec3(frameData->ViewMatrix[0][0], frameData->ViewMatrix[0][1], frameData->ViewMatrix[0][2])), glm::vec3(10, 10, 10));
+			renderMapForSelectionBuffer.push_back({ g_quadHandle, pLightTransform });
+		}
 		// update frame data, from the editor camera
-		g_uniformBufferMap[UBT_Frame].Update(&g_dataRenderingByGraphicThread->g_renderPasses[3].FrameData);
+		g_uniformBufferMap[UBT_Frame].Update(frameData);
 
-
+		cTransform* selectableTransform = nullptr;
 		if (ISelectable::IsValid(selectionID))
 		{
-			const cModel* _model = dynamic_cast<cModel*>(ISelectable::s_selectableList[selectionID]);
 			// only draw the outline when the model has owner
-			if (needRenderTarnsformGizmo = (_model && _model->GetOwner()))
+			if ((needRenderTarnsformGizmo = ISelectable::s_selectableList[selectionID]->GetBoundTransform(selectableTransform)))
 			{
-				cTransform modelTransform = _model->GetOwner()->Transform;
-				Gizmo_DrawOutline(_model, modelTransform);
+				const cModel* _model = dynamic_cast<cModel*>(ISelectable::s_selectableList[selectionID]);
+				// if it is a model
+				if (_model)
+					Gizmo_DrawOutline(_model, *selectableTransform);
 
 				// Calculate the transform gizmo's transform and add three arrow models to the render map
 				{
 					// Forward
-					arrowTransforms[0].SetRotation(modelTransform.Rotation() * glm::quat(glm::vec3(glm::radians(90.f), 0, 0)));
+					arrowTransforms[0].SetRotation(selectableTransform->Rotation() * glm::quat(glm::vec3(glm::radians(90.f), 0, 0)));
 					// Right									  
-					arrowTransforms[1].SetRotation(modelTransform.Rotation() * glm::quat(glm::vec3(0, 0, glm::radians(90.f))));
+					arrowTransforms[1].SetRotation(selectableTransform->Rotation() * glm::quat(glm::vec3(0, 0, glm::radians(90.f))));
 					// Up											
-					arrowTransforms[2].SetRotation(modelTransform.Rotation() * glm::quat(glm::vec3(0, glm::radians(90.f), 0)));
+					arrowTransforms[2].SetRotation(selectableTransform->Rotation() * glm::quat(glm::vec3(0, glm::radians(90.f), 0)));
 
 					// Get scale according to the camera
-					float distToCamera = glm::distance(g_dataRenderingByGraphicThread->g_renderPasses[3].FrameData.GetViewPosition(), modelTransform.Position());
+					float distToCamera = glm::distance(g_dataRenderingByGraphicThread->g_renderPasses[3].FrameData.GetViewPosition(), selectableTransform->Position());
 					constexpr float scaleOneDistance = 300.f;
 					float _scale = distToCamera / scaleOneDistance;
 
 					// Set position and scale
 					for (int i = 0; i < 3; ++i)
 					{
-						arrowTransforms[i].SetPosition(modelTransform.Position());
+						arrowTransforms[i].SetPosition(selectableTransform->Position());
 						arrowTransforms[i].SetScale(glm::vec3(_scale));
 						arrowTransforms[i].Update();
 						renderMapForSelectionBuffer.push_back({ g_arrowHandles[i], arrowTransforms[i] });
 					}
+
 				}
 			}
 		}
@@ -870,12 +901,9 @@ namespace Graphics
 		// Handle selection
 		SelctionBuffer_Pass(renderMapForSelectionBuffer, needRenderTarnsformGizmo);
 
-		if (ISelectable::IsValid(selectionID))
+		if (ISelectable::IsValid(selectionID) && selectableTransform)
 		{
-			const cModel* _model = dynamic_cast<cModel*>(ISelectable::s_selectableList[selectionID]);
-			// Render transform id according to the selection buffer
-			if (_model && _model->GetOwner())
-				Gizmo_RenderSelectingTransform(arrowTransforms);
+			Gizmo_RenderSelectingTransform(arrowTransforms);
 		}
 
 	}

@@ -5,13 +5,13 @@
 #include "Engine/Graphics/Color/Color.h"
 #include "Cores/Core.h"
 #include "Engine/Math/Transform/Transform.h"
-
+#include "Cores/Utility/ISelectable.h"
 namespace Graphics {
 	// forward declaration
 	class cFrameBuffer;
 
 	// An Interface for all kinds of lights
-	class cGenLight
+	class cGenLight : public ISelectable
 	{
 	public:
 		/** Constructors and destructor */
@@ -30,6 +30,7 @@ namespace Graphics {
 		void SetColor(const Color& i_c) { m_color = i_c; }
 		const Color& GetColor() const { return m_color; }
 		/** Getters */
+		bool GetBoundTransform(cTransform *& o_transform) { o_transform = &Transform; return true; }
 
 		/** Shadow map related*/
 		void SetEnableShadow(bool i_enable) { m_enableShadow = i_enable; }
