@@ -796,7 +796,7 @@ namespace Graphics {
 			//Gizmo_DrawDebugCaptureVolume();
 			RenderOmniShadowMap();
 
-		//	EditorPass();
+			EditorPass();
 		}
 			
 		/** 4. After all render of this frame is done*/
