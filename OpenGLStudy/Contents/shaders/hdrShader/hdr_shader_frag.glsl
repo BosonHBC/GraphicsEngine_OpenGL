@@ -6,11 +6,11 @@ out vec4 FragColor;
 in vec2 TexCoords;
 
 uniform sampler2D hdrBuffer;
-uniform bool enableHDR;
 
 layout(std140, binding = 7) uniform g_uniformBuffer_postProcessing
 {
 	float exposure;
+    bool EnablePostProcessing;
 };
 
 void main()
@@ -18,7 +18,7 @@ void main()
     vec2 texCoord = TexCoords;
     texCoord.y = 1-texCoord.y;
     vec3 hdrColor = texture(hdrBuffer, texCoord).rgb;
-    if(enableHDR)
+    if(EnablePostProcessing)
     {
         // reinhard
         // vec3 result = hdrColor / (hdrColor + vec3(1.0));

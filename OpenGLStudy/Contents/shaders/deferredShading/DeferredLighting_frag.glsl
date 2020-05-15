@@ -126,6 +126,16 @@ float DistributionGGX(vec3 N, vec3 H, float a)
 	
     return nom / denom;
 }
+float computeDistributionGGX(vec3 N, vec3 H, float roughness)
+{
+    float alpha = roughness * roughness;
+    float alpha2 = alpha * alpha;
+
+    float NdotH = clamp(dot(N, H), 0.0, 1.0);
+    float NdotH2 = NdotH * NdotH;
+
+    return (alpha2) / (PI * (NdotH2 * (alpha2 - 1.0f) + 1.0f) * (NdotH2 * (alpha2 - 1.0f) + 1.0f));
+}
 // Geometry function
 float GeometrySchlickGGX(float NdotV, float roughness)
 {
@@ -145,10 +155,21 @@ float GeometrySmith(float NdotV,float NdotL, float roughness)
 	
     return ggx1 * ggx2;
 }
-// Fresnel function
-vec3 fresnelSchlick(float cosTheta, vec3 F0)
+float computeGeometryAttenuationGGXSmith(float NdotL, float NdotV, float roughness)
 {
-    return F0 + (1.0 - F0) * pow(1.0 - cosTheta, 5.0);
+    float NdotL2 = NdotL * NdotL;
+    float NdotV2 = NdotV * NdotV;
+    float kRough2 = roughness * roughness + 0.0001f;
+
+    float ggxL = (2.0f * NdotL) / (NdotL + sqrt(NdotL2 + kRough2 * (1.0f - NdotL2)));
+    float ggxV = (2.0f * NdotV) / (NdotV + sqrt(NdotV2 + kRough2 * (1.0f - NdotV2)));
+
+    return ggxL * ggxV;
+}
+// Fresnel function
+vec3 fresnelSchlick(float NdotV, vec3 F0)
+{
+    return F0 + (1.0 - F0) * pow(1.0 - NdotV, 5.0);
 }
 vec3 fresnelSchlickRoughness(float cosTheta, vec3 F0, float roughness)
 {
@@ -291,21 +312,24 @@ float CalcPointLightShadowMap(PointLight pLight, vec3 worldPos, float dist_vV)
 // irrandance of this light
  vec3 CookTorranceBrdf(vec3 radiance, vec3 albedoColor, float metalness, float roughness, vec3 f0 ,vec3 vN, vec3 vH, vec3 vL, vec3 vV)
  {
-	float NdotV = max(dot(vN, vV), 0.0);
+	float NdotV = max(dot(vN, vV), 0.0001f);
 	// geometry component
-    float NdotL = max(dot(vN, vL), 0.0);
-	float NDF = DistributionGGX(vN, vH, roughness);
-	float G = GeometrySmith(NdotV, NdotL, roughness);
-	vec3 F = fresnelSchlick(max(dot(vH, vV), 0.0), f0);
+    float NdotL = clamp(dot(vN, vL), 0.0, 1.0);
+	//float NDF = DistributionGGX(vN, vH, roughness);
+	float NDF = computeDistributionGGX(vN, vH, roughness);
+	//float G = GeometrySmith(NdotV, NdotL, roughness);
+	float G = computeGeometryAttenuationGGXSmith(NdotL, NdotV, roughness);
+	//vec3 F = fresnelSchlick(max(dot(vH, vV), 0.0), f0);
+	vec3 F = fresnelSchlick(NdotV, f0);
 
 	vec3 kS = F;
 	vec3 kD = vec3(1.0) - kS;
 	kD *= (1.0 - metalness);
 
 	vec3 numerator = NDF * G * F;
-	float denominator = 4.0 * NdotV * NdotL;
+	float denominator = 4.0 * NdotV * NdotL + 0.0001f;
 	// specular component
-	vec3 specular = numerator / max(denominator, 0.001);
+	vec3 specular = numerator / denominator;
 	// diffuse component
 	vec3 diffuse = kD * albedoColor / PI;
 
@@ -348,16 +372,17 @@ vec3 GetBlendedPreFilterTexture(vec3 vR, float roughness)
 }
 vec3 CalcAmbientLight(AmbientLight aLight, vec3 albedoColor,float metalness, float roughness, vec3 f0 ,vec3 vN,vec3 vV,vec3 vR )
 {
-	vec3 kS = fresnelSchlickRoughness(max(dot(vN, vV), 0.0), f0, roughness); 
-	//vec3 kS = fresnelSchlick(max(dot(vN, vV), 0.0), f0);
-	vec3 kD = 1.0 - kS;
+	float NdotV = max(dot(vN, vV), 0.0001f);
+	vec3 kS = fresnelSchlickRoughness(NdotV, f0, roughness); 
+	vec3 kD = vec3(1.0) - kS;
 	kD *= (1.0 - metalness);
 	vec3 irradiance = GetBlendedIrradTexture(vN);
 	vec3 diffuse    = irradiance * albedoColor;
 	
 	// sample both the pre-filter map and the BRDF lut and combine them together as per the Split-Sum approximation to get the IBL specular part.    
 	vec3 prefilteredColor = GetBlendedPreFilterTexture(vR, roughness);
-	vec2 brdfuv = vec2(max(dot(vN, vV), 0.0), 1 - roughness);
+	//vec2 brdfuv = vec2(NdotV, 1 - roughness);
+	vec2 brdfuv = vec2(NdotV, roughness);
     vec2 brdf  = texture(BrdfLUTMap, brdfuv).rg;
     vec3 specular = prefilteredColor * (kS * brdf.x + brdf.y);
 	
@@ -467,7 +492,7 @@ void main(){
 	F0 = mix(F0, albedoColor, vec3(metalness));
 
 	// ambient light
-	vec3 ambientLightColor = CalcAmbientLight(g_ambientLight,albedoColor, metalness, roughness, F0,normal,normalized_view, vR) * ssao * textureAO;
+	vec3 ambientLightColor = CalcAmbientLight(g_ambientLight,albedoColor, metalness, roughness, F0,normal,normalized_view, vR);
 	
 	// cubemap light
 	//vec4 cubemapColor = IlluminateByCubemap(diffuseTexColor,specularTexColor, normalized_normal, normalized_view);
@@ -482,7 +507,7 @@ void main(){
 	vec4 dLightLightSpacePos = directionalLightTransform * worldPos;
 	vec3 directionLightColor = CalcDirectionalLight(g_directionalLight, dLightLightSpacePos, albedoColor, metalness,roughness,F0, normal, normalized_view);
 
-	vec3 allColor = ambientLightColor + pointLightColor + directionLightColor;
+	vec3 allColor = (ambientLightColor + pointLightColor + directionLightColor) * ssao * textureAO;
 
 	color =  vec4(allColor, 1.0);
 }

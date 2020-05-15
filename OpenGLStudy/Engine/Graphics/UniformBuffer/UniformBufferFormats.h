@@ -174,8 +174,8 @@ namespace Graphics {
 		struct sPostProcessing
 		{
 			float Exposure;
-
-			sPostProcessing() : Exposure(1.0f) {}
+			bool EnablePostProcessing;
+			sPostProcessing() : Exposure(1.0f), EnablePostProcessing(true){}
 		};
 		// SSAO values
 		// --------------------------------------------------------------------------------------------------------------------------------------------

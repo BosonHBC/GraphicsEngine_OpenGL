@@ -72,6 +72,7 @@ private:
 	cActor* m_supplyBox = nullptr;
 
 	float m_exposureOffset = 3.0f;
+	bool m_enablePP = false;
 	float m_ambientIntensity = 1.0f;
 	float m_directionalIntensity = 0.0f;
 };

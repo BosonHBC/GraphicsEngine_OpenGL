@@ -157,7 +157,7 @@ void Assignment::SubmitDataToBeRender(const float i_seconds_elapsedSinceLastLoop
 	SubmitShadowData();
 
 	// Submit post processing data
-	Graphics::SubmitPostProcessingData(m_exposureOffset);
+	Graphics::SubmitPostProcessingData(m_exposureOffset, m_enablePP);
 
 	// Submit IO Data
 	glm::vec2 mousePos = glm::vec2(ImGui::GetMousePos().x, ImGui::GetMousePos().y);
@@ -324,12 +324,6 @@ void Assignment::Tick(float second_since_lastFrame)
 		}
 	}
 #endif // ENABLE_CLOTH_SIM
-
-	if (ImGui::IsKeyPressed(GLFW_KEY_G))
-	{
-		CreatePointLight(m_editorCamera->CamLocation() + m_editorCamera->Transform.Forward() * 100.f, m_pointLightColor, 250.f, true);
-		printf("Current Point Light Count: %d\n", m_createdPLightCount);
-	}
 
 	auto dataFromRenderThread = Graphics::GetDataFromRenderThread();
 
@@ -585,10 +579,15 @@ void Assignment::EditorGUI()
 			aLight->SetColor(Color::White() * m_ambientIntensity);
 		if (ImGui::DragFloat("Directional", &m_directionalIntensity, 0.01f, 0.0f, 3.0f))
 			dLight->SetColor(Color(0.6f, 0.6f, 0.5f) * m_directionalIntensity);
+		ImGui::Checkbox("Enable Post processing", &m_enablePP);
 		ImGui::DragFloat("Exposure", &m_exposureOffset, 0.01f, 0.0001f, 50.0f);
 
 		ImGui::ColorEdit3("Point Light Color: ", (float*)&m_pointLightColor);
-
+		if (ImGui::Button("Spawn Point Light"))
+		{
+			CreatePointLight(m_editorCamera->CamLocation() + m_editorCamera->Transform.Forward() * 100.f, m_pointLightColor, 250.f, true);
+			printf("Current Point Light Count: %d\n", m_createdPLightCount);
+		}
 		if (ImGui::Button("Reset"))
 		{
 			g_renderMode = Graphics::ERM_DeferredShading;

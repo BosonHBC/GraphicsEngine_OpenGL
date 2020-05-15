@@ -77,25 +77,8 @@ namespace Graphics
 
 	void RenderPointLightPosition()
 	{
-		/*		// render debug circles
-				g_currentEffect = GetEffectByKey(EET_DrawDebugCircles);
-				g_currentEffect->UseEffect();
-
-				for (size_t i = 0; i < g_dataRenderingByGraphicThread->g_pointLights.size(); ++i)
-				{
-					float ratio = 1.0 - (float)(g_dataRenderingByGraphicThread->g_pointLights[i].ImportanceOrder) / g_dataRenderingByGraphicThread->g_pointLights.size();
-					cMesh* _Point = cMesh::s_manager.Get(s_point);
-					g_currentEffect->SetFloat("radius", g_dataRenderingByGraphicThread->g_pointLights[i].Transform.Scale().x);
-					glm::vec3 sphereColor = glm::vec3(0.7f, 0.7f, 0.0f) * pow(ratio, 5);
-
-					g_currentEffect->SetVec3("color", sphereColor);
-					g_uniformBufferMap[UBT_Drawcall].Update(&UniformBufferFormats::sDrawCall(g_dataRenderingByGraphicThread->g_pointLights[i].Transform.M(), g_dataRenderingByGraphicThread->g_pointLights[i].Transform.TranspostInverse()));
-					_Point->Render();
-				}
-				g_currentEffect->UnUseEffect();*/
-
-				// Draw point light hint
-				//-----------------------------------------------------------------------------------------------
+		// Draw point light hint
+		//-----------------------------------------------------------------------------------------------
 		g_currentEffect = GetEffectByKey(EET_Billboards);
 		g_currentEffect->UseEffect();
 		cTransform pLightBillBoardTransform;
@@ -709,7 +692,21 @@ namespace Graphics
 
 
 	}
+	void Gizmo_DrawDebugCircle(float i_radius, const Color& i_color, const glm::vec3& i_position)
+	{
+		g_currentEffect = GetEffectByKey(EET_DrawDebugCircles);
+		g_currentEffect->UseEffect();
 
+		cMesh* _Point = cMesh::s_manager.Get(s_point);
+		g_currentEffect->SetFloat("radius", i_radius);
+
+		g_currentEffect->SetVec3("color", static_cast<glm::vec3>(i_color));
+		cTransform tempTr(i_position, glm::quat(1, 0, 0, 0), glm::vec3(i_radius));
+		g_uniformBufferMap[UBT_Drawcall].Update(&UniformBufferFormats::sDrawCall(tempTr.M(), tempTr.TranspostInverse()));
+		_Point->Render();
+
+		g_currentEffect->UnUseEffect();
+	}
 
 	void Gizmo_RenderSelectingTransform(const cTransform* i_arrowTransforms)
 	{
@@ -826,9 +823,9 @@ namespace Graphics
 		glGetIntegerv(GL_FRAMEBUFFER_BINDING, &_prevFbo);
 		glBindFramebuffer(GL_FRAMEBUFFER, g_selectionBuffer.fbo());
 
-/*
-		glFlush();
-		glFinish();*/
+		/*
+				glFlush();
+				glFinish();*/
 		glPixelStorei(GL_UNPACK_ALIGNMENT, 1);
 		unsigned char data[3] = { 0 };
 		sIO& _IO = g_dataRenderingByGraphicThread->g_IO;
@@ -870,6 +867,10 @@ namespace Graphics
 				// if it is a model
 				if (_model)
 					Gizmo_DrawOutline(_model, *selectableTransform);
+				const cPointLight* _Light = dynamic_cast<cPointLight*>(ISelectable::s_selectableList[selectionID]);
+				// if it is a light
+				if (_Light)
+					Gizmo_DrawDebugCircle(_Light->Transform.Scale().x, Color(1,1,0), _Light->Transform.Position());
 
 				// Calculate the transform gizmo's transform and add three arrow models to the render map
 				{

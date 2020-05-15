@@ -574,8 +574,8 @@ namespace Graphics {
 		}
 		// Load textures
 		{
-			std::string _path = "HDR/spruit_sunrise_2k.png";
-			//std::string _path = "HDR/HDR_ENV_Dynamic_01_s.hdr";
+			//std::string _path = "HDR/spruit_sunrise_2k.png";
+			std::string _path = "HDR/HDR_ENV_Dynamic_01_s.hdr";
 			_path = Assets::ProcessPathTex(_path);
 			if (!(result = cTexture::s_manager.Load(_path, s_spruitSunRise_HDR)))
 			{
@@ -685,8 +685,6 @@ namespace Graphics {
 
 	void PreRenderFrame()
 	{
-
-
 		// After data has been submitted, swap the data
 		std::swap(g_dataSubmittedByApplicationThread, g_dataRenderingByGraphicThread);
 
@@ -811,9 +809,10 @@ namespace Graphics {
 		g_dataSubmittedByApplicationThread->s_ClipPlane = UniformBufferFormats::sClipPlane(i_plane0, i_plane1, i_plane2, i_plane3);
 	}
 
-	void SubmitPostProcessingData(const float i_exposure)
+	void SubmitPostProcessingData(const float i_exposure, bool i_enablePP)
 	{
 		g_dataSubmittedByApplicationThread->s_PostProcessing.Exposure = i_exposure;
+		g_dataSubmittedByApplicationThread->s_PostProcessing.EnablePostProcessing = i_enablePP;
 	}
 
 	void SubmitLightingData(const std::vector<cPointLight>& i_pointLights, const std::vector<cSpotLight>& i_spotLights, const cAmbientLight& i_ambientLight, const cDirectionalLight& i_directionalLight)
