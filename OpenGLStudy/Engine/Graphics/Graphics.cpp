@@ -809,10 +809,14 @@ namespace Graphics {
 		g_dataSubmittedByApplicationThread->s_ClipPlane = UniformBufferFormats::sClipPlane(i_plane0, i_plane1, i_plane2, i_plane3);
 	}
 
-	void SubmitPostProcessingData(const float i_exposure, bool i_enablePP)
+	void SubmitPostProcessingData(const float i_exposure, int i_toneMappingMode, float i_ssaoRadius, float i_ssaoPower, bool i_enablePP)
 	{
 		g_dataSubmittedByApplicationThread->s_PostProcessing.Exposure = i_exposure;
+		g_dataSubmittedByApplicationThread->s_PostProcessing.TonemappingMode = i_toneMappingMode;
 		g_dataSubmittedByApplicationThread->s_PostProcessing.EnablePostProcessing = i_enablePP;
+
+		g_ssaoData.radius = i_ssaoRadius;
+		g_ssaoData.power = i_ssaoPower;
 	}
 
 	void SubmitLightingData(const std::vector<cPointLight>& i_pointLights, const std::vector<cSpotLight>& i_spotLights, const cAmbientLight& i_ambientLight, const cDirectionalLight& i_directionalLight)

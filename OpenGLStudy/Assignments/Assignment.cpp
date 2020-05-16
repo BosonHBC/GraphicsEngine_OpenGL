@@ -157,7 +157,7 @@ void Assignment::SubmitDataToBeRender(const float i_seconds_elapsedSinceLastLoop
 	SubmitShadowData();
 
 	// Submit post processing data
-	Graphics::SubmitPostProcessingData(m_exposureOffset, m_enablePP);
+	Graphics::SubmitPostProcessingData(m_exposureOffset, m_toneMappingMode,m_ssaoRadius, m_ssaoPower, m_enablePP);
 
 	// Submit IO Data
 	glm::vec2 mousePos = glm::vec2(ImGui::GetMousePos().x, ImGui::GetMousePos().y);
@@ -241,6 +241,8 @@ void Assignment::Run()
 
 void Assignment::Tick(float second_since_lastFrame)
 {
+
+	
 	sWindowInput* _windowInput = GetCurrentWindow()->GetWindowInput();
 	if (ImGui::IsKeyDown(GLFW_KEY_ESCAPE)) {
 		// tell glfw window that it is time to close
@@ -418,6 +420,7 @@ void Assignment::Tick(float second_since_lastFrame)
 	ClothSim::UpdateSprings(0.05f, m_collisionSpheres, m_createdPLightCount);
 #endif // ENABLE_CLOTH_SIM
 
+
 }
 
 void Assignment::SubmitLightingData()
@@ -556,38 +559,70 @@ void Assignment::EditorGUI()
 
 	ImGui::Begin("Control");
 	{
-		const Graphics::ERenderMode rendermodes[] = { Graphics::ERM_ForwardShading, Graphics::ERM_DeferredShading, Graphics::ERM_Deferred_Albede, Graphics::ERM_Deferred_Metallic, Graphics::ERM_Deferred_Roughness,
-				Graphics::ERM_Deferred_Normal, Graphics::ERM_Deferred_Depth, Graphics::ERM_SSAO };
-		static bool toggles[] = { false, true, false, false, false, false, false, false };
-
-		if (ImGui::Button("ChooseRenderMode.."))
-			ImGui::OpenPopup("shading_mode_popup");
-		ImGui::SameLine();
-		ImGui::TextUnformatted(Graphics::g_renderModeNameMap.at(static_cast<uint8_t>(g_renderMode)));
-		if (ImGui::BeginPopup("shading_mode_popup"))
+		if (ImGui::CollapsingHeader("Render settings"))
 		{
-			ImGui::Text("Shading Modes:");
-			ImGui::Separator();
-			for (int i = 0; i < IM_ARRAYSIZE(rendermodes); i++)
-				if (ImGui::Selectable(Graphics::g_renderModeNameMap.at(static_cast<uint8_t>(rendermodes[i]))))
+			const Graphics::ERenderMode rendermodes[] = { Graphics::ERM_ForwardShading, Graphics::ERM_DeferredShading, Graphics::ERM_Deferred_Albede, Graphics::ERM_Deferred_Metallic, Graphics::ERM_Deferred_Roughness,
+		Graphics::ERM_Deferred_Normal, Graphics::ERM_Deferred_Depth, Graphics::ERM_SSAO };
+			static bool toggles[] = { false, true, false, false, false, false, false, false };
+			if (ImGui::Button("ChooseRenderMode.."))
+				ImGui::OpenPopup("shading_mode_popup");
+			ImGui::SameLine();
+			ImGui::TextUnformatted(Graphics::g_renderModeNameMap.at(static_cast<uint8_t>(g_renderMode)));
+			if (ImGui::BeginPopup("shading_mode_popup"))
+			{
+				ImGui::Text("Shading Modes:");
+				ImGui::Separator();
+				for (int i = 0; i < IM_ARRAYSIZE(rendermodes); i++)
+					if (ImGui::Selectable(Graphics::g_renderModeNameMap.at(static_cast<uint8_t>(rendermodes[i]))))
+					{
+						g_renderMode = rendermodes[i];
+					}
+				ImGui::EndPopup();
+			}
+		}
+		if (ImGui::CollapsingHeader("Lighting"))
+		{
+			if (ImGui::DragFloat("Ambient", &m_ambientIntensity, 0.01f, 0.0f, 10.0f))
+				aLight->SetColor(Color::White() * m_ambientIntensity);
+			if (ImGui::DragFloat("Directional", &m_directionalIntensity, 0.01f, 0.0f, 3.0f))
+				dLight->SetColor(Color(0.6f, 0.6f, 0.5f) * m_directionalIntensity);
+			ImGui::ColorEdit3("Point Light Color: ", (float*)&m_pointLightColor);
+			if (ImGui::Button("Spawn Point Light"))
+			{
+				CreatePointLight(m_editorCamera->CamLocation() + m_editorCamera->Transform.Forward() * 100.f, m_pointLightColor, 250.f, true);
+				printf("Current Point Light Count: %d\n", m_createdPLightCount);
+			}
+		}
+		if (ImGui::CollapsingHeader("Post processing"))
+		{
+			ImGui::Checkbox("Enable Post processing", &m_enablePP);
+			if (m_enablePP)
+			{
+				ImGui::PushItemWidth(100);
+				if (ImGui::TreeNode("Tone mapping mode"))
 				{
-					g_renderMode = rendermodes[i];
+					const const char* modes[4] = { "No Tone mapping", "Reinhard", "Filmic", "Uncharted" };
+					static int selected = 1;
+					for (int n = 0; n < 4; n++)
+					{
+						if (ImGui::Selectable(modes[n], selected == n))
+							selected = n;
+					}
+					m_toneMappingMode = selected - 1;
+					ImGui::TreePop();
 				}
-			ImGui::EndPopup();
-		}
-		if (ImGui::DragFloat("Ambient", &m_ambientIntensity, 0.01f, 0.0f, 10.0f))
-			aLight->SetColor(Color::White() * m_ambientIntensity);
-		if (ImGui::DragFloat("Directional", &m_directionalIntensity, 0.01f, 0.0f, 3.0f))
-			dLight->SetColor(Color(0.6f, 0.6f, 0.5f) * m_directionalIntensity);
-		ImGui::Checkbox("Enable Post processing", &m_enablePP);
-		ImGui::DragFloat("Exposure", &m_exposureOffset, 0.01f, 0.0001f, 50.0f);
+				if (ImGui::TreeNode("SSAO settings"))
+				{
+					ImGui::DragFloat("SSAO radius", &m_ssaoRadius, 0.01f, 5.f, 30.0f);
+					ImGui::DragFloat("SSAO power", &m_ssaoPower, 0.01f, 1.f, 10.0f);
 
-		ImGui::ColorEdit3("Point Light Color: ", (float*)&m_pointLightColor);
-		if (ImGui::Button("Spawn Point Light"))
-		{
-			CreatePointLight(m_editorCamera->CamLocation() + m_editorCamera->Transform.Forward() * 100.f, m_pointLightColor, 250.f, true);
-			printf("Current Point Light Count: %d\n", m_createdPLightCount);
+					ImGui::TreePop();
+				}
+				ImGui::DragFloat("Exposure", &m_exposureOffset, 0.01f, 0.0001f, 50.0f);
+				ImGui::PopItemWidth();
+			}
 		}
+
 		if (ImGui::Button("Reset"))
 		{
 			g_renderMode = Graphics::ERM_DeferredShading;

@@ -46,7 +46,7 @@ namespace Graphics {
 	void SubmitGraphicSettings(const ERenderMode& i_renderMode);
 	void SubmitDataToBeRendered(const UniformBufferFormats::sFrame& i_frameData, const std::vector<std::pair<Graphics::cModel, cTransform>>& i_modelToTransform_map, void(*func_ptr)());
 	void SubmitClipPlaneData(const glm::vec4& i_plane0, const glm::vec4& i_plane1 = glm::vec4(0, 0, 0, 0), const glm::vec4& i_plane2 = glm::vec4(0, 0, 0, 0), const glm::vec4& i_plane3 = glm::vec4(0, 0, 0, 0));
-	void SubmitPostProcessingData(const float i_exposure, bool i_enablePP);
+	void SubmitPostProcessingData(const float i_exposure, int i_toneMappingMode, float i_ssaoRadius, float i_ssaoPower, bool i_enablePP);
 	void SubmitLightingData(const std::vector<cPointLight>& i_pointLights, const std::vector<cSpotLight>& i_spotLights, const cAmbientLight& i_ambientLight, const cDirectionalLight& i_directionalLight);
 	void SubmitIOData(const glm::vec2 & i_mousePos, const glm::vec2& i_mousePoseDelta, bool* i_buttonDowns);
 	void SubmitSelectedItem(uint32_t i_selectionID);

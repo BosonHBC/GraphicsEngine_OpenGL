@@ -60,6 +60,7 @@ namespace Graphics {
 		ERenderMode g_renderMode = ERM_ForwardShading;
 		UniformBufferFormats::sClipPlane s_ClipPlane;
 		UniformBufferFormats::sPostProcessing s_PostProcessing;
+		UniformBufferFormats::sSSAO g_ssaoData;
 		std::vector<sPass> g_renderPasses;
 		// Lighting data
 		std::vector<cPointLight> g_pointLights;
