@@ -157,7 +157,7 @@ void Assignment::SubmitDataToBeRender(const float i_seconds_elapsedSinceLastLoop
 	SubmitShadowData();
 
 	// Submit post processing data
-	Graphics::SubmitPostProcessingData(m_exposureOffset, m_toneMappingMode,m_ssaoRadius, m_ssaoPower, m_enablePP);
+	Graphics::SubmitPostProcessingData(m_exposureOffset, m_toneMappingMode, m_ssaoRadius, m_ssaoPower, m_enablePP);
 
 	// Submit IO Data
 	glm::vec2 mousePos = glm::vec2(ImGui::GetMousePos().x, ImGui::GetMousePos().y);
@@ -242,7 +242,7 @@ void Assignment::Run()
 void Assignment::Tick(float second_since_lastFrame)
 {
 
-	
+
 	sWindowInput* _windowInput = GetCurrentWindow()->GetWindowInput();
 	if (ImGui::IsKeyDown(GLFW_KEY_ESCAPE)) {
 		// tell glfw window that it is time to close
@@ -484,7 +484,7 @@ void Assignment::SubmitSceneDataForEnvironmentCapture(Graphics::UniformBufferFor
 	// PBR pass
 	{
 		_renderingMap.clear();
-		_renderingMap.reserve(m_renderingTeapotCount +g_renderActorList.size());
+		_renderingMap.reserve(m_renderingTeapotCount + g_renderActorList.size());
 		for (int i = 0; i < m_renderingTeapotCount; ++i)
 		{
 			_renderingMap.push_back({ m_teapots[i]->GetModelHandle(), m_teapots[i]->Transform });
@@ -640,10 +640,36 @@ void Assignment::EditorGUI()
 		cTransform* _itemTransform = nullptr;
 		if (_selectable &&_selectable->GetBoundTransform(_itemTransform))
 		{
-			glm::vec3 _location = _itemTransform->Position();
-			if (ImGui::DragFloat3("Location", reinterpret_cast<float*>(&_location), 1.f, -5000.f, 5000.f))
+			float delta = ImGui::GetIO().MouseDelta.x;
+			// position
 			{
-				_itemTransform->SetPosition(_location);
+				glm::vec3 _location = _itemTransform->Position();
+				if (ImGui::DragFloat3("Location", reinterpret_cast<float*>(&_location), 1.f, -5000.f, 5000.f))
+					_itemTransform->SetPosition(_location);
+			}
+			// rotation
+			{
+				glm::vec3 _eulerangles = _itemTransform->GetEulerAngle();
+				glm::vec3 _prevEulerAngle = _eulerangles;
+				glm::quat _quat = _itemTransform->Rotation();
+
+				if (ImGui::DragFloat3("Rotation", reinterpret_cast<float*>(&_eulerangles), 1.f, -3600.f, 3600.f))
+				{
+					if (glm::abs(_eulerangles.x - _prevEulerAngle.x) > 1.0f)
+						_itemTransform->SetRotation(_quat * glm::quat(glm::vec3(glm::radians(delta), 0, 0)));
+					else	if (glm::abs(_eulerangles.y - _prevEulerAngle.y) > 1.0f)
+						_itemTransform->SetRotation(_quat * glm::quat(glm::vec3(0, glm::radians(delta), 0)));
+					else	if (glm::abs(_eulerangles.z - _prevEulerAngle.z) > 1.0f)
+						_itemTransform->SetRotation(_quat * glm::quat(glm::vec3(0, 0, glm::radians(delta))));
+				}
+			}
+			// scale
+			{
+				glm::vec3 _scale = _itemTransform->Scale();
+				if (ImGui::DragFloat3("Scale", reinterpret_cast<float*>(&_scale), 0.5f, 0.01f, 1000.f))
+				{
+					_itemTransform->SetScale(_scale);
+				}
 			}
 		}
 	}

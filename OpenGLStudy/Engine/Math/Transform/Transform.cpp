@@ -109,7 +109,7 @@ void cTransform::SetTransform(const glm::vec3 & i_initialTranslation, const glm:
 glm::vec3 cTransform::GetEulerAngle() const
 {
 	glm::vec3 _euler = glm::eulerAngles(m_rotation);
-	return _euler;
+	return glm::degrees(_euler);
 }
 
 glm::mat4 cTransform::GetTranslationMatrix() const
@@ -164,19 +164,3 @@ glm::vec3 cTransform::WorldUp = glm::vec3(0.0, 1.0, 0.0);
 glm::vec3 cTransform::WorldRight = glm::vec3(1.0, 0.0, 0.0);
 
 glm::vec3 cTransform::WorldForward = glm::vec3(0.0, 0.0, 1.0);
-#ifdef _DEBUG
-#include "stdio.h"
-#define ToDegree(x) (x*57.2958f)
-void cTransform::PrintEulerAngle() const
-{
-	glm::vec3 angle = GetEulerAngle();
-
-	printf("angle: %f, %f, %f\n", ToDegree(angle.x), ToDegree(angle.y), ToDegree(angle.z));
-}
-
-void cTransform::PrintPosition() const
-{
-	printf("position: %f, %f, %f\n", m_position.x, m_position.y, m_position.z);
-}
-
-#endif
