@@ -24,7 +24,7 @@ namespace Graphics {
 	void cDirectionalLight::Illuminate()
 	{
 		auto& gLighting = Graphics::GetGlobalLightingData();
-		gLighting.directionalLight.base.color = m_color;
+		gLighting.directionalLight.base.color = LightColor * Intensity;
 		gLighting.directionalLight.base.enableShadow = m_enableShadow;
 		gLighting.directionalLight.direction = Transform.Forward();
 	}

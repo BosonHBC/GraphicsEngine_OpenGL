@@ -478,6 +478,7 @@ namespace Graphics
 		g_hdrBuffer.Read(GL_TEXTURE0);
 		RenderQuad();
 		g_currentEffect->UnUseEffect();
+
 	}
 
 	void ForwardShading()
@@ -870,7 +871,7 @@ namespace Graphics
 				const cPointLight* _Light = dynamic_cast<cPointLight*>(ISelectable::s_selectableList[selectionID]);
 				// if it is a light
 				if (_Light)
-					Gizmo_DrawDebugCircle(_Light->Transform.Scale().x, Color(1,1,0), _Light->Transform.Position());
+					Gizmo_DrawDebugCircle(_Light->Range, Color(1,1,0), _Light->Transform.Position());
 
 				// Calculate the transform gizmo's transform and add three arrow models to the render map
 				{

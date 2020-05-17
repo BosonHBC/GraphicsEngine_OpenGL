@@ -809,11 +809,9 @@ namespace Graphics {
 		g_dataSubmittedByApplicationThread->s_ClipPlane = UniformBufferFormats::sClipPlane(i_plane0, i_plane1, i_plane2, i_plane3);
 	}
 
-	void SubmitPostProcessingData(const float i_exposure, int i_toneMappingMode, float i_ssaoRadius, float i_ssaoPower, bool i_enablePP)
+	void SubmitPostProcessingData(const UniformBufferFormats::sPostProcessing& i_ppData, float i_ssaoRadius, float i_ssaoPower)
 	{
-		g_dataSubmittedByApplicationThread->s_PostProcessing.Exposure = i_exposure;
-		g_dataSubmittedByApplicationThread->s_PostProcessing.TonemappingMode = i_toneMappingMode;
-		g_dataSubmittedByApplicationThread->s_PostProcessing.EnablePostProcessing = i_enablePP;
+		g_dataSubmittedByApplicationThread->s_PostProcessing = i_ppData;
 
 		g_ssaoData.radius = i_ssaoRadius;
 		g_ssaoData.power = i_ssaoPower;
@@ -1054,7 +1052,9 @@ namespace Graphics {
 		}
 		g_ambientLight = new  cAmbientLight(i_color);
 		g_ambientLight->SetupLight(0, 0);
+		g_ambientLight->Intensity = 0.2f;
 		o_ambientLight = g_ambientLight;
+
 		return result;
 	}
 
@@ -1066,6 +1066,7 @@ namespace Graphics {
 		newPointLight->SetEnableShadow(i_enableShadow);
 		newPointLight->CreateShadowMap(2048, 2048);
 		newPointLight->IncreamentSelectableCount();
+		newPointLight->Intensity = 50.f;
 		o_pointLight = newPointLight;
 		g_pointLight_list.push_back(newPointLight);
 		return result;
@@ -1089,7 +1090,7 @@ namespace Graphics {
 		cDirectionalLight* newDirectionalLight = new cDirectionalLight(i_color, glm::normalize(i_direction));
 		newDirectionalLight->SetEnableShadow(i_enableShadow);
 		newDirectionalLight->CreateShadowMap(2048, 2048);
-
+		newDirectionalLight->Intensity = 5;
 		o_directionalLight = newDirectionalLight;
 		g_directionalLight = newDirectionalLight;
 		return result;

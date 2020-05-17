@@ -5,7 +5,7 @@
 #include "glm/glm.hpp"
 #include "glm/gtc/matrix_transform.hpp"
 #include "Math/Shape/Sphere.h"
-
+#include "Graphics/UniformBuffer/UniformBufferFormats.h"
 /** Forward deceleration*/
 //----------------------------------------------
 class cEditorCamera;
@@ -18,10 +18,6 @@ namespace Graphics {
 	class cDirectionalLight;
 	class cSpotLight;
 	class cEnvProbe;
-	namespace UniformBufferFormats
-	{
-		struct sFrame;
-	}
 }
 //----------------------------------------------
 class Assignment : public Application::cApplication
@@ -71,13 +67,8 @@ private:
 	cActor* m_collisionSphere = nullptr;
 	cActor* m_supplyBox = nullptr;
 
-	float m_exposureOffset = 3.0f;
-	bool m_enablePP = true;
-	int m_toneMappingMode = 0; // default reinhard
+	Graphics::UniformBufferFormats::sPostProcessing m_ppData;
 	float m_ssaoRadius = 20;
 	float m_ssaoPower = 5;
-
-	float m_ambientIntensity = 1.0f;
-	float m_directionalIntensity = 0.0f;
 };
 

@@ -27,8 +27,8 @@ namespace Graphics {
 		virtual void CleanUp();
 		/** Pure virtual functions*/
 		virtual void Illuminate() {};
-		void SetColor(const Color& i_c) { m_color = i_c; }
-		const Color& GetColor() const { return m_color; }
+		void SetColor(const Color& i_c) { LightColor = i_c; }
+		const Color& GetColor() const { return LightColor; }
 		/** Getters */
 		bool GetBoundTransform(cTransform *& o_transform) { o_transform = &Transform; return true; }
 
@@ -45,9 +45,12 @@ namespace Graphics {
 		void CleanUpShadowMap();
 
 		cTransform Transform;
+		Color LightColor = Color(0, 0, 0);
+		float Intensity = 1.0f;
+
 	protected:
-		float m_lightIntensity = 1.0f;
-		Color m_color = Color(0,0,0);
+
+
 		// record the index of this light
 		GLuint m_lightIndex = 0;
 		bool m_enableShadow = false;

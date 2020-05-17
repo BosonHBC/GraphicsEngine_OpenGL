@@ -55,6 +55,14 @@ bool Assignment::Initialize(GLuint i_width, GLuint i_height, const char* i_windo
 	m_renderingTeapotCount = glm::clamp(m_renderingTeapotCount, 0, s_maxTeapotCount);
 	m_createdPLightCount = glm::clamp(m_createdPLightCount, 1, s_maxPLightCount);
 
+	m_ppData.Exposure = 0.9f;
+	m_ppData.EnableFxAA = true;
+	m_ppData.EnablePostProcessing = true;
+	m_ppData.ScreenResolution = glm::vec2(static_cast<float>(GetCurrentWindow()->GetBufferWidth()), static_cast<float>(GetCurrentWindow()->GetBufferHeight()));
+	m_ppData.TonemappingMode = 1;
+
+	m_ssaoRadius = 20;
+	m_ssaoPower = 1.2f;
 	printf("---------------------------------Game initialization done.---------------------------------\n");
 	return result;
 }
@@ -82,7 +90,6 @@ void Assignment::CreateActor()
 		m_teapots[i]->Transform.SetTransform(glm::vec3(-150 + (i % teapotPerRow) * horiDist, 0, 100 - (i / teapotPerRow) * vertDist), glm::quat(glm::vec3(-glm::radians(90.f), glm::radians(30.f), 0)), glm::vec3(5, 5, 5));
 		m_teapots[i]->SetModel(g_teapotPaths[i]);
 	}
-
 
 	m_cubemap = new cActor();
 	m_cubemap->Initialize();
@@ -138,7 +145,7 @@ void Assignment::CreateLight()
 	//CreatePointLight(glm::vec3(0, 100, 0), Color::White() * 0.5f, 250, true);
 
 	//Graphics::CreatePointLight(glm::vec3(100, 150.f, 100.f), Color(1, 1, 1), 1.f, 0.7f, 1.8f, true, pLight2);
-	Graphics::CreateDirectionalLight(Color(0.00f, 0.00f, 0.00f), glm::vec3(-1, -0.5f, -0.5f), true, dLight);
+	Graphics::CreateDirectionalLight(Color(0.6f, 0.6f, 0.5f), glm::vec3(-1, -0.5f, -0.5f), true, dLight);
 	//Graphics::CreateSpotLight(glm::vec3(0, 150, 0), glm::vec3(0, 1, 1), Color(1), 65.f, 1.5f, 0.3f, 5.f, true, spLight);
 	//Graphics::CreateSpotLight(glm::vec3(100, 150, 0), glm::vec3(1, 1, 0), Color(1), 65.f, 1.f, 0.7f, 
 
@@ -157,7 +164,7 @@ void Assignment::SubmitDataToBeRender(const float i_seconds_elapsedSinceLastLoop
 	SubmitShadowData();
 
 	// Submit post processing data
-	Graphics::SubmitPostProcessingData(m_exposureOffset, m_toneMappingMode, m_ssaoRadius, m_ssaoPower, m_enablePP);
+	Graphics::SubmitPostProcessingData(m_ppData, m_ssaoRadius, m_ssaoPower);
 
 	// Submit IO Data
 	glm::vec2 mousePos = glm::vec2(ImGui::GetMousePos().x, ImGui::GetMousePos().y);
@@ -582,10 +589,9 @@ void Assignment::EditorGUI()
 		}
 		if (ImGui::CollapsingHeader("Lighting"))
 		{
-			if (ImGui::DragFloat("Ambient", &m_ambientIntensity, 0.01f, 0.0f, 10.0f))
-				aLight->SetColor(Color::White() * m_ambientIntensity);
-			if (ImGui::DragFloat("Directional", &m_directionalIntensity, 0.01f, 0.0f, 3.0f))
-				dLight->SetColor(Color(0.6f, 0.6f, 0.5f) * m_directionalIntensity);
+			ImGui::DragFloat("Ambient intensity", &aLight->Intensity, 0.01f, 0.0f, 10.0f);
+			ImGui::DragFloat("Directional light intensity", &dLight->Intensity, 0.5f, 0.0f, 1000.0f);
+
 			ImGui::ColorEdit3("Point Light Color: ", (float*)&m_pointLightColor);
 			if (ImGui::Button("Spawn Point Light"))
 			{
@@ -595,20 +601,22 @@ void Assignment::EditorGUI()
 		}
 		if (ImGui::CollapsingHeader("Post processing"))
 		{
-			ImGui::Checkbox("Enable Post processing", &m_enablePP);
-			if (m_enablePP)
+			static bool _enablePP = m_ppData.EnablePostProcessing;
+			ImGui::Checkbox("Enable Post processing", &_enablePP);
+			m_ppData.EnablePostProcessing = _enablePP;
+			if (_enablePP)
 			{
 				ImGui::PushItemWidth(100);
 				if (ImGui::TreeNode("Tone mapping mode"))
 				{
 					const const char* modes[4] = { "No Tone mapping", "Reinhard", "Filmic", "Uncharted" };
-					static int selected = 1;
+					static int selected = m_ppData.TonemappingMode + 1;
 					for (int n = 0; n < 4; n++)
 					{
 						if (ImGui::Selectable(modes[n], selected == n))
 							selected = n;
 					}
-					m_toneMappingMode = selected - 1;
+					m_ppData.TonemappingMode = selected - 1;
 					ImGui::TreePop();
 				}
 				if (ImGui::TreeNode("SSAO settings"))
@@ -618,17 +626,18 @@ void Assignment::EditorGUI()
 
 					ImGui::TreePop();
 				}
-				ImGui::DragFloat("Exposure", &m_exposureOffset, 0.01f, 0.0001f, 50.0f);
+				ImGui::DragFloat("Exposure", &m_ppData.Exposure, 0.01f, 0.0001f, 50.0f);
 				ImGui::PopItemWidth();
+				static bool _enableFxAA = m_ppData.EnableFxAA;
+				ImGui::Checkbox("EnableFxAA", &_enableFxAA);
+				m_ppData.EnableFxAA = _enableFxAA;
 			}
 		}
 
 		if (ImGui::Button("Reset"))
 		{
 			g_renderMode = Graphics::ERM_DeferredShading;
-			m_ambientIntensity = 1.0f;
-			m_directionalIntensity = 1.0f;
-			m_exposureOffset = 3.0f;
+			m_ppData.Exposure = 3.0f;
 		}
 	}
 	ImGui::End();
@@ -669,6 +678,20 @@ void Assignment::EditorGUI()
 				if (ImGui::DragFloat3("Scale", reinterpret_cast<float*>(&_scale), 0.5f, 0.01f, 1000.f))
 				{
 					_itemTransform->SetScale(_scale);
+				}
+			}
+
+			Graphics::cPointLight* _pLight = dynamic_cast<Graphics::cPointLight*>(_selectable);
+			if (_pLight)
+			{
+				if (ImGui::CollapsingHeader("Point Light properties"))
+				{
+					ImGui::ColorEdit3("Light color", (float*)&_pLight->LightColor);
+					ImGui::DragFloat("Light Intensity", &_pLight->Intensity, 0.5f, 0.01f, 1000.f);
+					if (ImGui::DragFloat("Light Range", &_pLight->Range, 1.f, 1.f, 1000.f))
+					{
+						_pLight->Transform.SetScale(glm::vec3(_pLight->Range));
+					}
 				}
 			}
 		}
