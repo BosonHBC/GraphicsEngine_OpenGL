@@ -10,7 +10,7 @@ return
     NormalTexture = "sifiGuns/supplyBox/Box_Normal_GL.jpg",
     AOTexture = "sifiGuns/supplyBox/Box_AO.jpg",
     DiffuseIntensity = {1.0,1.0,1.0},
-    MetallicIntensity = 1.0,
-    RoughnessIntensity = 1.0,
+    MetallicIntensity = 0.8,
+    RoughnessIntensity = 0.53,
     IOR = {1.52, 1.52, 1.52},
 }

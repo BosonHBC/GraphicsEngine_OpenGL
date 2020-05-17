@@ -107,7 +107,7 @@ void Assignment::CreateActor()
 
 	m_supplyBox = new cActor();
 	m_supplyBox->Initialize();
-	m_supplyBox->Transform.SetTransform(glm::vec3(0, 0, 10), glm::quat(1, 0, 0, 0), glm::vec3(250, 250, 250));
+	m_supplyBox->Transform.SetTransform(glm::vec3(0, 0, -10), glm::quat(1, 0, 0, 0), glm::vec3(250, 250, 250));
 	m_supplyBox->SetModel("Contents/models/sifiGuns/supplyBox_Close.model");
 	g_renderActorList.push_back(m_supplyBox);
 #ifdef ENABLE_CLOTH_SIM
@@ -693,6 +693,20 @@ void Assignment::EditorGUI()
 						_pLight->Transform.SetScale(glm::vec3(_pLight->Range));
 					}
 				}
+			}
+
+			Graphics::cModel* _model = dynamic_cast<Graphics::cModel*>(_selectable);
+			if (_model)
+			{
+				Graphics::cMatPBRMR* _pbrMat = dynamic_cast<Graphics::cMatPBRMR*>(Graphics::cMaterial::s_manager.Get(_model->GetMaterialAt()));
+				if (_pbrMat && ImGui::CollapsingHeader("PBR material properties"))
+				{
+					ImGui::ColorEdit3("DiffuseColor", reinterpret_cast<float*>(&_pbrMat->DiffuseIntensity));
+					ImGui::DragFloat("Metallic", &_pbrMat->MetallicIntensity, 0.01f, 0.0f, 1.0f);
+					ImGui::DragFloat("Roughness", &_pbrMat->RoughnessIntensity, 0.01f, 0.0f, 1.0f);
+					ImGui::DragFloat3("IoR", reinterpret_cast<float*>(&_pbrMat->IoR), 0.01f, 0.1f, 2.5f);
+				}
+
 			}
 		}
 	}

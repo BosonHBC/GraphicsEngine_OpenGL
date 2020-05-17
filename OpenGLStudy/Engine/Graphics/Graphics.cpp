@@ -1066,7 +1066,7 @@ namespace Graphics {
 		newPointLight->SetEnableShadow(i_enableShadow);
 		newPointLight->CreateShadowMap(2048, 2048);
 		newPointLight->IncreamentSelectableCount();
-		newPointLight->Intensity = 50.f;
+		newPointLight->Intensity = 30.f;
 		o_pointLight = newPointLight;
 		g_pointLight_list.push_back(newPointLight);
 		return result;
@@ -1090,7 +1090,7 @@ namespace Graphics {
 		cDirectionalLight* newDirectionalLight = new cDirectionalLight(i_color, glm::normalize(i_direction));
 		newDirectionalLight->SetEnableShadow(i_enableShadow);
 		newDirectionalLight->CreateShadowMap(2048, 2048);
-		newDirectionalLight->Intensity = 5;
+		newDirectionalLight->Intensity = 3;
 		o_directionalLight = newDirectionalLight;
 		g_directionalLight = newDirectionalLight;
 		return result;
