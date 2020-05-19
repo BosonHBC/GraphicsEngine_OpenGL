@@ -11,6 +11,7 @@
 #include "Application/Window/WindowInput.h"
 #include "Application/imgui/imgui.h"
 #include "Cores/Actor/Actor.h"
+#include "Cores/Utility/GPUProfiler.h"
 
 namespace Graphics
 {
@@ -57,6 +58,7 @@ namespace Graphics
 	Color s_clearColor;
 	extern Color g_outlineColor;
 	extern Color g_arrowColor[3];
+	extern unsigned int queryIDGeometry[2];
 	void RenderQuad(const UniformBufferFormats::sFrame& i_frameData = UniformBufferFormats::sFrame(), const UniformBufferFormats::sDrawCall& i_drawCallData = UniformBufferFormats::sDrawCall())
 	{
 		g_uniformBufferMap[UBT_Frame].Update(&i_frameData);
@@ -253,11 +255,6 @@ namespace Graphics
 	void PointLightShadowMap_Pass()
 	{
 		if (g_dataRenderingByGraphicThread->g_pointLights.size() <= 0) return;
-		glDisable(GL_CULL_FACE);
-		g_currentEffect = GetEffectByKey(EET_OmniShadowMap);
-		g_currentEffect->UseEffect();
-		glClear(GL_DEPTH_BUFFER_BIT);
-		glEnable(GL_SCISSOR_TEST);
 
 		std::sort(g_dataRenderingByGraphicThread->g_pointLights.begin(), g_dataRenderingByGraphicThread->g_pointLights.end(), [](cPointLight& const l1, cPointLight&  const l2) {
 			return l1.Importance() > l2.Importance(); });
@@ -277,6 +274,12 @@ namespace Graphics
 		std::sort(g_dataRenderingByGraphicThread->g_pointLights.begin(), g_dataRenderingByGraphicThread->g_pointLights.end(), [](cPointLight& const l1, cPointLight&  const l2) {
 			return l1.ShadowMapIdx() < l2.ShadowMapIdx(); });
 
+		Profiler::StartRecording(Profiler::EPT_PointLightShadowMap);
+		glDisable(GL_CULL_FACE);
+		g_currentEffect = GetEffectByKey(EET_OmniShadowMap);
+		g_currentEffect->UseEffect();
+		glClear(GL_DEPTH_BUFFER_BIT);
+		glEnable(GL_SCISSOR_TEST);
 		// Now the point light list is sorted depends on their shadow map index
 		for (size_t i = 0; i < g_dataRenderingByGraphicThread->g_pointLights.size(); ++i)
 		{
@@ -324,6 +327,8 @@ namespace Graphics
 		g_currentEffect->UnUseEffect();
 		glEnable(GL_CULL_FACE);
 		glCullFace(GL_BACK);
+		Profiler::StopRecording(Profiler::EPT_PointLightShadowMap);
+
 	}
 
 	void SpotLightShadowMap_Pass()
@@ -584,13 +589,15 @@ namespace Graphics
 			// Execute pass function
 			g_dataRenderingByGraphicThread->g_renderPasses[i].RenderPassFunction();
 		}
-		/** 1. Capture the whole scene with PBR material*/
+		/** 1. Capture the whole scene with PBR material*/		
+		Profiler::StartRecording(Profiler::EPT_GBuffer);
 		g_GBuffer.Write(
 			[] {
 				g_currentRenderPass = 3; // PBR pass
 				g_uniformBufferMap[UBT_Frame].Update(&g_dataRenderingByGraphicThread->g_renderPasses[g_currentRenderPass].FrameData);
 				GBuffer_Pass();
-			});
+			});		
+		Profiler::StopRecording(Profiler::EPT_GBuffer);
 		/** 2.1 Capture SSAO buffer*/
 		g_ssaoBuffer.Write(
 			[] {
@@ -630,8 +637,9 @@ namespace Graphics
 			g_hdrBuffer.Write(
 				[] {
 					/** 3.1A. Show the deferred shading */
+					Profiler::StartRecording(Profiler::EPT_DeferredLighting);
 					Deferred_Lighting_Pass();
-
+					Profiler::StopRecording(Profiler::EPT_DeferredLighting);
 					/** 3.2. Display cubemap at the end */
 					{
 						glBlitNamedFramebuffer(
@@ -901,7 +909,9 @@ namespace Graphics
 		}
 
 		// Handle selection
+		Profiler::StartRecording(Profiler::EPT_Selection);
 		SelctionBuffer_Pass(renderMapForSelectionBuffer, needRenderTarnsformGizmo);
+		Profiler::StopRecording(Profiler::EPT_Selection);
 
 		if (ISelectable::IsValid(selectionID) && selectableTransform)
 		{

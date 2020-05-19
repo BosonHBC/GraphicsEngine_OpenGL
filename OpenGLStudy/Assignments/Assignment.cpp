@@ -89,6 +89,7 @@ void Assignment::CreateActor()
 		m_teapots[i]->Initialize();
 		m_teapots[i]->Transform.SetTransform(glm::vec3(-150 + (i % teapotPerRow) * horiDist, 0, 100 - (i / teapotPerRow) * vertDist), glm::quat(glm::vec3(-glm::radians(90.f), glm::radians(30.f), 0)), glm::vec3(5, 5, 5));
 		m_teapots[i]->SetModel(g_teapotPaths[i]);
+		g_renderActorList.push_back(m_teapots[i]);
 	}
 
 	m_cubemap = new cActor();
@@ -150,18 +151,27 @@ void Assignment::CreateLight()
 	//Graphics::CreateSpotLight(glm::vec3(100, 150, 0), glm::vec3(1, 1, 0), Color(1), 65.f, 1.f, 0.7f, 
 
 }
-
+float cpuProfiling[6] = { 0 };
 void Assignment::SubmitDataToBeRender(const float i_seconds_elapsedSinceLastLoop)
 {
 	std::vector<std::pair<Graphics::cModel, cTransform>> _renderingMap = std::vector<std::pair<Graphics::cModel, cTransform>>();
+	auto t1 = Time::GetCurrentSystemTimeTickCount();
 	// Submit render setting
 	Graphics::SubmitGraphicSettings(g_renderMode);
+	auto t2 = Time::GetCurrentSystemTimeTickCount();
+	cpuProfiling[0] = Time::ConvertFromTickToSeconds(t2 - t1) * 1000;
 
+	t1 = Time::GetCurrentSystemTimeTickCount();
 	// Submit lighting data
 	SubmitLightingData();
+	t2 = Time::GetCurrentSystemTimeTickCount();
+	cpuProfiling[1] = Time::ConvertFromTickToSeconds(t2 - t1) * 1000;
 
+	t1 = Time::GetCurrentSystemTimeTickCount();
 	// Submit geometry data for shadow map
 	SubmitShadowData();
+	t2 = Time::GetCurrentSystemTimeTickCount();
+	cpuProfiling[2] = Time::ConvertFromTickToSeconds(t2 - t1) * 1000;
 
 	// Submit post processing data
 	Graphics::SubmitPostProcessingData(m_ppData, m_ssaoRadius, m_ssaoPower);
@@ -177,10 +187,13 @@ void Assignment::SubmitDataToBeRender(const float i_seconds_elapsedSinceLastLoop
 	// Submit Selection data
 	Graphics::SubmitSelectedItem(Editor::SelectingItemID);
 
+	t1 = Time::GetCurrentSystemTimeTickCount();
 	// Frame data from camera
 	Graphics::UniformBufferFormats::sFrame _frameData_Camera(m_editorCamera->GetProjectionMatrix(), m_editorCamera->GetViewMatrix());
 	// Submit geometry data
 	SubmitSceneData(&_frameData_Camera);
+	t2 = Time::GetCurrentSystemTimeTickCount();
+	cpuProfiling[3] = Time::ConvertFromTickToSeconds(t2 - t1) * 1000;
 
 #ifdef ENABLE_CLOTH_SIM
 	Graphics::SubmitParticleData();
@@ -237,7 +250,10 @@ void Assignment::Run()
 		glfwPollEvents();
 
 		// Render frame
+		auto t1 = Time::GetCurrentSystemTimeTickCount();
 		Graphics::RenderFrame();
+		auto t2 = Time::GetCurrentSystemTimeTickCount();
+		cpuProfiling[5] = Time::ConvertFromTickToSeconds(t2 - t1) * 1000;
 		RenderEditorGUI();
 
 		// Swap buffers
@@ -248,8 +264,7 @@ void Assignment::Run()
 
 void Assignment::Tick(float second_since_lastFrame)
 {
-
-
+	auto t1 = Time::GetCurrentSystemTimeTickCount();
 	sWindowInput* _windowInput = GetCurrentWindow()->GetWindowInput();
 	if (ImGui::IsKeyDown(GLFW_KEY_ESCAPE)) {
 		// tell glfw window that it is time to close
@@ -259,7 +274,7 @@ void Assignment::Tick(float second_since_lastFrame)
 	{
 		m_editorCamera->CameraControl(_windowInput, second_since_lastFrame);
 
-		m_editorCamera->MouseControl(_windowInput, 0.01667f);
+		m_editorCamera->MouseControl(_windowInput, second_since_lastFrame);
 	}
 	cTransform* controledActor = nullptr;
 	controledActor = &m_pLights[0]->Transform;
@@ -334,7 +349,7 @@ void Assignment::Tick(float second_since_lastFrame)
 	}
 #endif // ENABLE_CLOTH_SIM
 
-	auto dataFromRenderThread = Graphics::GetDataFromRenderThread();
+	auto& dataFromRenderThread = Graphics::GetDataFromRenderThread();
 
 	int hoverArrowDirection = -1;
 	bool isHoveringTransformGizmo = Graphics::IsTransformGizmoIsHovered(dataFromRenderThread.g_selectionID, hoverArrowDirection);
@@ -401,11 +416,6 @@ void Assignment::Tick(float second_since_lastFrame)
 	{
 		g_renderActorList[i]->Transform.Update();
 	}
-	for (int i = 0; i < m_renderingTeapotCount; ++i)
-	{
-		m_teapots[i]->Transform.Update();
-	}
-
 	for (int i = 0; i < m_createdPLightCount; ++i)
 	{
 		m_pLights[i]->Transform.Update();
@@ -427,7 +437,8 @@ void Assignment::Tick(float second_since_lastFrame)
 	ClothSim::UpdateSprings(0.05f, m_collisionSpheres, m_createdPLightCount);
 #endif // ENABLE_CLOTH_SIM
 
-
+	auto t2 = Time::GetCurrentSystemTimeTickCount();
+	cpuProfiling[4] = Time::ConvertFromTickToSeconds(t2 - t1) * 1000;
 }
 
 void Assignment::SubmitLightingData()
@@ -463,11 +474,8 @@ void Assignment::SubmitSceneData(Graphics::UniformBufferFormats::sFrame* const i
 	// PBR pass
 	{
 		_renderingMap.clear();
-		_renderingMap.reserve(m_renderingTeapotCount + g_renderActorList.size());
-		for (int i = 0; i < m_renderingTeapotCount; ++i)
-		{
-			_renderingMap.push_back({ m_teapots[i]->GetModelHandle(), m_teapots[i]->Transform });
-		}
+		_renderingMap.reserve(g_renderActorList.size());
+
 		for (int i = 0; i < g_renderActorList.size(); ++i)
 		{
 			_renderingMap.push_back({ g_renderActorList[i]->GetModelHandle(), g_renderActorList[i]->Transform });
@@ -491,11 +499,7 @@ void Assignment::SubmitSceneDataForEnvironmentCapture(Graphics::UniformBufferFor
 	// PBR pass
 	{
 		_renderingMap.clear();
-		_renderingMap.reserve(m_renderingTeapotCount + g_renderActorList.size());
-		for (int i = 0; i < m_renderingTeapotCount; ++i)
-		{
-			_renderingMap.push_back({ m_teapots[i]->GetModelHandle(), m_teapots[i]->Transform });
-		}
+		_renderingMap.reserve(g_renderActorList.size());
 		for (int i = 0; i < g_renderActorList.size(); ++i)
 		{
 			_renderingMap.push_back({ g_renderActorList[i]->GetModelHandle(), g_renderActorList[i]->Transform });
@@ -517,11 +521,7 @@ void Assignment::SubmitShadowData()
 {
 	std::vector<std::pair<Graphics::cModel, cTransform>> _renderingMap;
 
-	_renderingMap.reserve(m_renderingTeapotCount + g_renderActorList.size());
-	for (int i = 0; i < m_renderingTeapotCount; ++i)
-	{
-		_renderingMap.push_back({ m_teapots[i]->GetModelHandle(), m_teapots[i]->Transform });
-	}
+	_renderingMap.reserve(g_renderActorList.size());
 	for (int i = 0; i < g_renderActorList.size(); ++i)
 	{
 		_renderingMap.push_back({ g_renderActorList[i]->GetModelHandle(), g_renderActorList[i]->Transform });
@@ -546,8 +546,13 @@ void Assignment::SubmitShadowData()
 
 void Assignment::CreatePointLight(const glm::vec3& i_initialLocation, const Color& i_color, const GLfloat& i_radius, bool i_enableShadow)
 {
+	std::lock_guard<std::mutex> autoLock(m_applicationMutex);
 	if (m_createdPLightCount < s_maxPLightCount)
-		Graphics::CreatePointLight(i_initialLocation, i_color, i_radius, i_enableShadow, m_pLights[m_createdPLightCount++]);
+	{
+		Graphics::CreatePointLight(i_initialLocation, i_color, i_radius, i_enableShadow, m_pLights[m_createdPLightCount]);
+		m_createdPLightCount++;
+	}
+
 
 }
 
@@ -559,8 +564,43 @@ void Assignment::FixedTick()
 
 void Assignment::EditorGUI()
 {
+	auto& dataFromRenderThread = Graphics::GetDataFromRenderThread();
+
 	ImGui::Begin("Status");
 	ImGui::Text("Application average %.3f ms/frame (%.1f FPS)", 1000.0f / ImGui::GetIO().Framerate, ImGui::GetIO().Framerate);
+	if (ImGui::TreeNode("Frame rate break downs"))
+	{
+		ImGui::Columns(2, "break downs");
+		ImGui::Separator();
+		ImGui::TextWrapped("CPU delta time");
+		ImGui::TextWrapped("Submit graphic setting");
+		ImGui::TextWrapped("Submit lighting data");
+		ImGui::TextWrapped("Submit shadow data");
+		ImGui::TextWrapped("Submit scene data");
+		ImGui::TextWrapped("Tick function time");
+		ImGui::TextWrapped("Render a frame CPU");
+		ImGui::TextWrapped("Render a frame GPU");
+		ImGui::TextWrapped("G-Buffer_GPU");
+		ImGui::TextWrapped("Deferred Lighting_GPU");
+		ImGui::TextWrapped("PointLight shadow map_GPU");
+		ImGui::TextWrapped("Selection_GPU");
+		ImGui::NextColumn();
+
+		ImGui::TextWrapped("%.4f ms/frame", Time::DeltaTime() * 1000);
+		for (int i = 0; i < 6; ++i)
+		{
+			ImGui::TextWrapped("%.4f ms/frame", cpuProfiling[i]);
+		}
+		ImGui::TextWrapped("%.4f ms/frame", dataFromRenderThread.g_deltaRenderAFrameTime);
+		ImGui::TextWrapped("%.4f ms/frame", dataFromRenderThread.g_deltaGeometryTime);
+		ImGui::TextWrapped("%.4f ms/frame", dataFromRenderThread.g_deltaDeferredLightingTime);
+		ImGui::TextWrapped("%.4f ms/frame", dataFromRenderThread.g_deltaPointLightShadowMapTime);
+		ImGui::TextWrapped("%.4f ms/frame", dataFromRenderThread.g_deltaSelectionTime);
+		ImGui::Columns(1);
+		ImGui::Separator();
+
+		ImGui::TreePop();
+	}
 	ImGui::Text("Point light count: %d", m_createdPLightCount);
 	ImGui::End();
 
@@ -721,10 +761,6 @@ void Assignment::CleanUp()
 {
 	safe_delete(m_collisionSphere);
 	safe_delete(m_editorCamera);
-	for (int i = 0; i < m_renderingTeapotCount; ++i)
-	{
-		safe_delete(m_teapots[i]);
-	}
 	safe_delete(m_cubemap);
 	for (int i = 0; i < g_renderActorList.size(); ++i)
 	{

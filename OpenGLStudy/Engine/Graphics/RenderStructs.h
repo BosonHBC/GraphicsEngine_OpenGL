@@ -79,7 +79,11 @@ namespace Graphics {
 	struct sDataReturnToApplicationThread
 	{
 		uint32_t g_selectionID;
-
+		GLfloat g_deltaRenderAFrameTime;
+		GLfloat g_deltaGeometryTime;
+		GLfloat g_deltaDeferredLightingTime;
+		GLfloat g_deltaPointLightShadowMapTime;
+		GLfloat g_deltaSelectionTime;
 	};
 
 	// Primitive types

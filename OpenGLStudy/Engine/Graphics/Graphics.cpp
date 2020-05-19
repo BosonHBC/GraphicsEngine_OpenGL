@@ -23,7 +23,7 @@
 #include "Graphics/FrameBuffer/GeometryBuffer.h"
 
 #include "Application/Window/WindowInput.h"
-
+#include "Cores/Utility/GPUProfiler.h"
 namespace Graphics {
 
 	unsigned int g_currentRenderPass = 0;
@@ -538,7 +538,16 @@ namespace Graphics {
 
 			EnvironmentCaptureManager::BuildAccelerationStructure();
 
+
+			// create profilers
+			Profiler::CreateProfiler(Profiler::EPT_RenderAFrame);
+			Profiler::CreateProfiler(Profiler::EPT_GBuffer);
+			Profiler::CreateProfiler(Profiler::EPT_DeferredLighting);
+			Profiler::CreateProfiler(Profiler::EPT_PointLightShadowMap);
+			Profiler::CreateProfiler(Profiler::EPT_Selection);
 		}
+
+
 
 		// Load models & textures
 		{
@@ -758,7 +767,7 @@ namespace Graphics {
 		std::swap(g_dataSubmittedByApplicationThread, g_dataRenderingByGraphicThread);
 		// Notify the application thread that data is swapped and it is ready for receiving new data
 		g_whenDataHasBeenSwappedInRenderThread.notify_one();
-
+		Profiler::StartRecording(Profiler::EPT_RenderAFrame);
 		// For example calculate something here
 		auto& _IO = g_dataSubmittedByApplicationThread->g_IO;
 
@@ -796,8 +805,14 @@ namespace Graphics {
 
 			EditorPass();
 		}
-			
+		Profiler::StopRecording(Profiler::EPT_RenderAFrame);
+
 		/** 4. After all render of this frame is done*/
+		 Profiler::GetProfilingTime(Profiler::EPT_RenderAFrame, g_dataGetFromRenderThread->g_deltaRenderAFrameTime);
+		 Profiler::GetProfilingTime(Profiler::EPT_GBuffer, g_dataGetFromRenderThread->g_deltaGeometryTime);
+		 Profiler::GetProfilingTime(Profiler::EPT_DeferredLighting, g_dataGetFromRenderThread->g_deltaDeferredLightingTime);
+		 Profiler::GetProfilingTime(Profiler::EPT_PointLightShadowMap, g_dataGetFromRenderThread->g_deltaPointLightShadowMapTime);
+		 Profiler::GetProfilingTime(Profiler::EPT_Selection, g_dataGetFromRenderThread->g_deltaSelectionTime);
 
 		// swap data and notify data has been swapped.
 		std::swap(g_dataGetFromRenderThread, g_dataUsedByApplicationThread);

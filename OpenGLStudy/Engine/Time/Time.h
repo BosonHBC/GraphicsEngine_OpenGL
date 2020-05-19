@@ -15,5 +15,6 @@ namespace Time {
 	uint64_t GetCurrentSystemTimeTickCount();
 	double ConvertFromTickToSeconds(const uint64_t& i_tickCount);
 	uint64_t ConvertFromSecondsToTick(const double& i_second);
-
+	float DeltaTime();
+	void SetDeltaTime(uint64_t tickCount_systemTime_elapsedSinceLastLoop);
 }
