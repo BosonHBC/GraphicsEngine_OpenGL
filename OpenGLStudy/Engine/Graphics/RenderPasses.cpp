@@ -13,6 +13,7 @@
 #include "Cores/Actor/Actor.h"
 #include "Cores/Utility/Profiler.h"
 #include "Time/Time.h"
+#include "Texture/PboDownloader.h"
 
 namespace Graphics
 {
@@ -40,6 +41,7 @@ namespace Graphics
 #endif // ENABLE_CLOTH_SIM
 	extern cTexture::HANDLE g_ssaoNoiseTexture;
 	extern cTexture::HANDLE g_pointLightIconTexture;
+	extern PboDownloader g_pboDownloader;
 
 	const std::map<uint8_t, const char*> g_renderModeNameMap =
 	{
@@ -814,17 +816,18 @@ namespace Graphics
 		glGetIntegerv(GL_FRAMEBUFFER_BINDING, &_prevFbo);
 		glBindFramebuffer(GL_FRAMEBUFFER, g_selectionBuffer.fbo());
 
-		/*
-				glFlush();
-				glFinish();*/
-		glPixelStorei(GL_UNPACK_ALIGNMENT, 1);
-		unsigned char data[3] = { 0 };
+		unsigned char* data = nullptr;
 		sIO& _IO = g_dataRenderingByGraphicThread->g_IO;
-		int mouseX = glm::clamp(static_cast<int>(_IO.MousePos.x), 0, Application::GetCurrentApplication()->GetCurrentWindow()->GetBufferWidth());
-		int mouseY = glm::clamp(static_cast<int>(Application::GetCurrentApplication()->GetCurrentWindow()->GetBufferHeight() - _IO.MousePos.y), 0, Application::GetCurrentApplication()->GetCurrentWindow()->GetBufferHeight());
-		glReadPixels(mouseX, mouseY, 1, 1, GL_RGB, GL_UNSIGNED_BYTE, data);
-		uint32_t pickedID = data[0] + data[1] * 256 + data[2] * 256 * 256;
-		g_dataGetFromRenderThread->g_selectionID = pickedID;
+		int mouseX = glm::clamp(static_cast<int>(_IO.MousePos.x), 0, Application::GetCurrentApplication()->GetCurrentWindow()->GetBufferWidth()-1);
+		int mouseY = glm::clamp(static_cast<int>(Application::GetCurrentApplication()->GetCurrentWindow()->GetBufferHeight() - _IO.MousePos.y), 0, Application::GetCurrentApplication()->GetCurrentWindow()->GetBufferHeight()-1);
+
+		g_pboDownloader.download();
+		data = g_pboDownloader.getPixel_rgb(mouseX, mouseY);
+		if (data)
+		{
+			uint32_t pickedID = data[0] + data[1] * 256 + data[2] * 256 * 256;
+			g_dataGetFromRenderThread->g_selectionID = pickedID;
+		}
 
 		glBindFramebuffer(GL_FRAMEBUFFER, _prevFbo);
 		glEnable(GL_CULL_FACE);

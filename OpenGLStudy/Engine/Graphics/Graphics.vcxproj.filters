@@ -147,6 +147,9 @@
     <ClCompile Include="FrameBuffer\GeometryBuffer.cpp">
       <Filter>Source Files\FrameBuffer</Filter>
     </ClCompile>
+    <ClCompile Include="Texture\PboDownloader.cpp">
+      <Filter>Source Files\Texture</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Graphics.h">
@@ -226,6 +229,9 @@
     </ClInclude>
     <ClInclude Include="FrameBuffer\GeometryBuffer.h">
       <Filter>Source Files\FrameBuffer</Filter>
+    </ClInclude>
+    <ClInclude Include="Texture\PboDownloader.h">
+      <Filter>Source Files\Texture</Filter>
     </ClInclude>
   </ItemGroup>
 </Project>

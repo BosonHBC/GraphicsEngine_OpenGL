@@ -24,6 +24,7 @@
 
 #include "Application/Window/WindowInput.h"
 #include "Cores/Utility/Profiler.h"
+#include "Graphics/Texture/PboDownloader.h"
 namespace Graphics {
 
 	unsigned int g_currentRenderPass = 0;
@@ -60,6 +61,8 @@ namespace Graphics {
 	cTexture::HANDLE g_ssaoNoiseTexture;
 	cTexture::HANDLE g_pointLightIconTexture;
 	cMaterial::HANDLE g_arrowMatHandles[2];
+	PboDownloader g_pboDownloader;
+	
 	// arrow colors
 	Color g_arrowColor[3] = { Color(0, 0, 0.8f), Color(0.8f, 0, 0),Color(0, 0.8f, 0) };
 	Color g_outlineColor(1, 0.64f, 0);
@@ -529,6 +532,7 @@ namespace Graphics {
 				return result;
 			}
 			
+			g_pboDownloader.init(GL_RGB, _window->GetBufferWidth(), _window->GetBufferHeight(), 2);
 
 			//EnvironmentCaptureManager::AddCaptureProbes(cSphere(glm::vec3(-225, 230, 0), 600.f), 50.f, envMapResolution);
 
@@ -765,23 +769,20 @@ namespace Graphics {
 		g_whenAllDataHasBeenSubmittedFromApplicationThread.wait(_mlock);
 		Profiler::StopRecording(6);
 
-		Profiler::StartRecording(7);
 		// After data has been submitted, swap the data
 		std::swap(g_dataSubmittedByApplicationThread, g_dataRenderingByGraphicThread);
 		// Notify the application thread that data is swapped and it is ready for receiving new data
 		g_whenDataHasBeenSwappedInRenderThread.notify_one();
-		Profiler::StopRecording(7);
+
 		Profiler::StartRecording(Profiler::EPT_RenderAFrame);
-		Profiler::StartRecording(8);
 		// For example calculate something here
 		auto& _IO = g_dataSubmittedByApplicationThread->g_IO;
-
 		// Update cubemap weights before rendering, actually, this step should be done at the application thread
 		EnvironmentCaptureManager::UpdatePointOfInterest(g_dataRenderingByGraphicThread->g_renderPasses[3].FrameData.GetViewPosition());
 		g_uniformBufferMap[UBT_ClipPlane].Update(&g_dataRenderingByGraphicThread->s_ClipPlane);
 		g_uniformBufferMap[UBT_PostProcessing].Update(&g_dataRenderingByGraphicThread->s_PostProcessing);
 		g_uniformBufferMap[UBT_SSAO].Update(&g_ssaoData);
-		Profiler::StopRecording(8);
+
 #ifdef ENABLE_CLOTH_SIM
 		cMesh::s_manager.Get(g_cloth)->UpdateBufferData(g_dataRenderingByGraphicThread->clothVertexData, ClothSim::VC * 14);
 #endif // ENABLE_CLOTH_SIM
@@ -960,6 +961,7 @@ namespace Graphics {
 		cTexture::s_manager.Release(s_spruitSunRise_HDR);
 		cTexture::s_manager.Release(g_ssaoNoiseTexture);
 		cTexture::s_manager.Release(g_pointLightIconTexture);
+		g_pboDownloader.cleanUp();
 		cMesh::s_manager.Release(s_point);
 #ifdef ENABLE_CLOTH_SIM
 		cMesh::s_manager.Release(g_cloth);

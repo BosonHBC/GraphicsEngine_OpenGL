@@ -51,7 +51,7 @@ private:
 	Color m_clearColor = Color(0,0,0);
 	cEditorCamera* m_editorCamera = nullptr;
 
-	int m_createdPLightCount = 80;
+	int m_createdPLightCount = 40;
 	Graphics::cPointLight* m_pLights[s_maxPLightCount] = {nullptr};
 	cSphere m_collisionSpheres[Assignment::s_maxPLightCount];
 

@@ -133,7 +133,7 @@ void Assignment::CreateCamera()
 void Assignment::CreateLight()
 {
 	const int lightPerRow = 4;
-	const float horiDist = 150;
+	const float horiDist = 50 * 40.f / m_createdPLightCount;
 	const float vertDist = 50 * 40.f / m_createdPLightCount;
 	Graphics::CreateAmbientLight(Color::White(), aLight);
 
@@ -591,8 +591,7 @@ void Assignment::EditorGUI()
 		ImGui::TextWrapped("Render Point light CPU");
 		ImGui::TextWrapped("Editor CPU");
 		ImGui::TextWrapped("Render thread waiting time CPU");
-		ImGui::TextWrapped("Data swapping CPU");
-		ImGui::TextWrapped("Uniform data update CPU");
+
 
 /*
 		ImGui::TextWrapped("Render a frame GPU");
@@ -604,7 +603,7 @@ void Assignment::EditorGUI()
 
 		ImGui::TextWrapped("%.4f ms/frame", Time::DeltaTime() * 1000);
 		float f;
-		for (int i = 0; i < 9; ++i)
+		for (int i = 0; i < 7; ++i)
 		{
 			Profiler::GetProfilingTime(i, f);
 			ImGui::TextWrapped("%.4f ms/frame", f);
