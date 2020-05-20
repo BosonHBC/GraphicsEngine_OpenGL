@@ -23,7 +23,7 @@
 #include "Graphics/FrameBuffer/GeometryBuffer.h"
 
 #include "Application/Window/WindowInput.h"
-#include "Cores/Utility/GPUProfiler.h"
+#include "Cores/Utility/Profiler.h"
 namespace Graphics {
 
 	unsigned int g_currentRenderPass = 0;
@@ -759,15 +759,20 @@ namespace Graphics {
 	{
 		/** 1. Wait for data being submitted here */
 		// Acquire the lock
+		Profiler::StartRecording(6);
 		std::unique_lock<std::mutex> _mlock(g_graphicMutex);
 		/** 2.Wait until the conditional variable is signaled */
 		g_whenAllDataHasBeenSubmittedFromApplicationThread.wait(_mlock);
+		Profiler::StopRecording(6);
 
+		Profiler::StartRecording(7);
 		// After data has been submitted, swap the data
 		std::swap(g_dataSubmittedByApplicationThread, g_dataRenderingByGraphicThread);
 		// Notify the application thread that data is swapped and it is ready for receiving new data
 		g_whenDataHasBeenSwappedInRenderThread.notify_one();
+		Profiler::StopRecording(7);
 		Profiler::StartRecording(Profiler::EPT_RenderAFrame);
+		Profiler::StartRecording(8);
 		// For example calculate something here
 		auto& _IO = g_dataSubmittedByApplicationThread->g_IO;
 
@@ -776,6 +781,7 @@ namespace Graphics {
 		g_uniformBufferMap[UBT_ClipPlane].Update(&g_dataRenderingByGraphicThread->s_ClipPlane);
 		g_uniformBufferMap[UBT_PostProcessing].Update(&g_dataRenderingByGraphicThread->s_PostProcessing);
 		g_uniformBufferMap[UBT_SSAO].Update(&g_ssaoData);
+		Profiler::StopRecording(8);
 #ifdef ENABLE_CLOTH_SIM
 		cMesh::s_manager.Get(g_cloth)->UpdateBufferData(g_dataRenderingByGraphicThread->clothVertexData, ClothSim::VC * 14);
 #endif // ENABLE_CLOTH_SIM
@@ -786,12 +792,16 @@ namespace Graphics {
 		}
 		else // if not forward shading, it is deferred shading
 		{
+			Profiler::StartRecording(2);
 			DeferredShading();
+			Profiler::StopRecording(2);
 		}
 
 		if (g_dataRenderingByGraphicThread->g_renderMode == ERM_DeferredShading || g_dataRenderingByGraphicThread->g_renderMode == ERM_ForwardShading)
 		{
+			Profiler::StartRecording(3);
 			HDR_Pass();
+			Profiler::StopRecording(3);
 
 			// Clear the default buffer bit and copy hdr frame buffer's depth to the default frame buffer
 			glClear(GL_DEPTH_BUFFER_BIT | GL_STENCIL_BUFFER_BIT);
@@ -799,20 +809,31 @@ namespace Graphics {
 			assert(GL_NO_ERROR == glGetError());
 
 			// Render stuffs that needs depth info and needs not HDR info
+			Profiler::StartRecording(4);
 			RenderPointLightPosition();
+			Profiler::StopRecording(4);
 			//Gizmo_DrawDebugCaptureVolume();
-			RenderOmniShadowMap();
+			//RenderOmniShadowMap();
 
+
+			Profiler::StartRecording(Profiler::EPT_Selection);
+			Profiler::StartRecording(5);
 			EditorPass();
+			Profiler::StopRecording(5);
+			Profiler::StopRecording(Profiler::EPT_Selection);
+
 		}
 		Profiler::StopRecording(Profiler::EPT_RenderAFrame);
 
 		/** 4. After all render of this frame is done*/
+		/*  
+		// GPU profiling will take a long time because this need to wait until a GPU finish its rendering so this will take a long time, should avoid when unneccessary.
 		 Profiler::GetProfilingTime(Profiler::EPT_RenderAFrame, g_dataGetFromRenderThread->g_deltaRenderAFrameTime);
 		 Profiler::GetProfilingTime(Profiler::EPT_GBuffer, g_dataGetFromRenderThread->g_deltaGeometryTime);
 		 Profiler::GetProfilingTime(Profiler::EPT_DeferredLighting, g_dataGetFromRenderThread->g_deltaDeferredLightingTime);
 		 Profiler::GetProfilingTime(Profiler::EPT_PointLightShadowMap, g_dataGetFromRenderThread->g_deltaPointLightShadowMapTime);
 		 Profiler::GetProfilingTime(Profiler::EPT_Selection, g_dataGetFromRenderThread->g_deltaSelectionTime);
+		 */
 
 		// swap data and notify data has been swapped.
 		std::swap(g_dataGetFromRenderThread, g_dataUsedByApplicationThread);
@@ -852,9 +873,23 @@ namespace Graphics {
 		}
 	}
 
-	void SubmitSelectedItem(uint32_t i_selectionID)
+	void SubmitSelectionData(uint32_t i_selectionID, const std::vector<std::pair<cModel, cTransform>>& i_modelTransformPairForSelection)
 	{
 		g_dataSubmittedByApplicationThread->g_selectingItemID = i_selectionID;
+		g_dataSubmittedByApplicationThread->g_modelTransformPairForSelectionPass = i_modelTransformPairForSelection;
+
+		auto& tempPair = g_dataSubmittedByApplicationThread->g_modelTransformPairForSelectionPass;
+		const auto* frameData = &g_dataSubmittedByApplicationThread->g_renderPasses[3].FrameData;
+
+		// render map + point light count + 3 transform gizmo
+		tempPair.reserve(tempPair.size() + g_dataSubmittedByApplicationThread->g_pointLights.size() + 3);
+
+		for (auto item : g_dataSubmittedByApplicationThread->g_pointLights)
+		{
+			g_quadHandle.SelectableID = item.SelectableID;
+			cTransform pLightTransform(item.Transform.Position(), glm::quatLookAt(glm::normalize(frameData->GetViewPosition() - item.Transform.Position()), glm::vec3(frameData->ViewMatrix[0][0], frameData->ViewMatrix[0][1], frameData->ViewMatrix[0][2])), glm::vec3(10, 10, 10));
+			tempPair.push_back({ g_quadHandle, pLightTransform });
+		}
 	}
 
 #ifdef ENABLE_CLOTH_SIM
@@ -1137,5 +1172,6 @@ namespace Graphics {
 		g_dataSubmittedByApplicationThread->g_renderPasses.clear();
 		g_dataSubmittedByApplicationThread->g_pointLights.clear();
 		g_dataSubmittedByApplicationThread->g_spotLights.clear();
+		g_dataSubmittedByApplicationThread->g_modelTransformPairForSelectionPass.clear();
 	}
 }

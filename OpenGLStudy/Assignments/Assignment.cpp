@@ -23,6 +23,7 @@
 #include <random>
 #include "Application/imgui/imgui.h"
 #include "Editor/Editor.h"
+#include "Cores/Utility//Profiler.h"
 
 Graphics::ERenderMode g_renderMode = Graphics::ERenderMode::ERM_DeferredShading;
 
@@ -124,7 +125,7 @@ void Assignment::CreateActor()
 void Assignment::CreateCamera()
 {
 	//m_editorCamera = new  cEditorCamera(glm::vec3(0, 250, 150), 20, 0, 300, 10.f);
-	m_editorCamera = new  cEditorCamera(glm::vec3(0, 200, 350), 25, 0, 300, 10.f);
+	m_editorCamera = new  cEditorCamera(glm::vec3(0, 200, 350), 25, 0, 300, 15.f);
 	float _aspect = (float)(GetCurrentWindow()->GetBufferWidth()) / (float)(GetCurrentWindow()->GetBufferHeight());
 	m_editorCamera->CreateProjectionMatrix(glm::radians(60.f), _aspect, 10.f, 2000.0f);
 }
@@ -151,27 +152,20 @@ void Assignment::CreateLight()
 	//Graphics::CreateSpotLight(glm::vec3(100, 150, 0), glm::vec3(1, 1, 0), Color(1), 65.f, 1.f, 0.7f, 
 
 }
-float cpuProfiling[6] = { 0 };
+
 void Assignment::SubmitDataToBeRender(const float i_seconds_elapsedSinceLastLoop)
 {
-	std::vector<std::pair<Graphics::cModel, cTransform>> _renderingMap = std::vector<std::pair<Graphics::cModel, cTransform>>();
-	auto t1 = Time::GetCurrentSystemTimeTickCount();
 	// Submit render setting
 	Graphics::SubmitGraphicSettings(g_renderMode);
-	auto t2 = Time::GetCurrentSystemTimeTickCount();
-	cpuProfiling[0] = Time::ConvertFromTickToSeconds(t2 - t1) * 1000;
 
-	t1 = Time::GetCurrentSystemTimeTickCount();
+	Profiler::StartRecording(0);
 	// Submit lighting data
 	SubmitLightingData();
-	t2 = Time::GetCurrentSystemTimeTickCount();
-	cpuProfiling[1] = Time::ConvertFromTickToSeconds(t2 - t1) * 1000;
+	Profiler::StopRecording(0);
 
-	t1 = Time::GetCurrentSystemTimeTickCount();
 	// Submit geometry data for shadow map
 	SubmitShadowData();
-	t2 = Time::GetCurrentSystemTimeTickCount();
-	cpuProfiling[2] = Time::ConvertFromTickToSeconds(t2 - t1) * 1000;
+
 
 	// Submit post processing data
 	Graphics::SubmitPostProcessingData(m_ppData, m_ssaoRadius, m_ssaoPower);
@@ -184,16 +178,17 @@ void Assignment::SubmitDataToBeRender(const float i_seconds_elapsedSinceLastLoop
 	for (int i = 0; i < 3; ++i) downs[i] = ImGui::IsMouseDown(i);
 	Graphics::SubmitIOData(mousePos, mouseDelta, downs);
 
-	// Submit Selection data
-	Graphics::SubmitSelectedItem(Editor::SelectingItemID);
 
-	t1 = Time::GetCurrentSystemTimeTickCount();
 	// Frame data from camera
 	Graphics::UniformBufferFormats::sFrame _frameData_Camera(m_editorCamera->GetProjectionMatrix(), m_editorCamera->GetViewMatrix());
+	std::vector<std::pair<Graphics::cModel, cTransform>> _renderingMap;
+	_renderingMap.reserve(g_renderActorList.size());
+
 	// Submit geometry data
-	SubmitSceneData(&_frameData_Camera);
-	t2 = Time::GetCurrentSystemTimeTickCount();
-	cpuProfiling[3] = Time::ConvertFromTickToSeconds(t2 - t1) * 1000;
+	SubmitSceneData(_renderingMap,  &_frameData_Camera);
+	
+	// Submit Selection data
+	Graphics::SubmitSelectionData(Editor::SelectingItemID, _renderingMap);
 
 #ifdef ENABLE_CLOTH_SIM
 	Graphics::SubmitParticleData();
@@ -232,6 +227,7 @@ void Assignment::Run()
 	Graphics::ClearApplicationThreadData();
 	// Submit lighting data
 	SubmitLightingData();
+
 	// submit shadow data
 	SubmitShadowData();
 	// submit render requests
@@ -250,10 +246,10 @@ void Assignment::Run()
 		glfwPollEvents();
 
 		// Render frame
-		auto t1 = Time::GetCurrentSystemTimeTickCount();
+		Profiler::StartRecording(1);
 		Graphics::RenderFrame();
-		auto t2 = Time::GetCurrentSystemTimeTickCount();
-		cpuProfiling[5] = Time::ConvertFromTickToSeconds(t2 - t1) * 1000;
+		Profiler::StopRecording(1);
+
 		RenderEditorGUI();
 
 		// Swap buffers
@@ -264,7 +260,6 @@ void Assignment::Run()
 
 void Assignment::Tick(float second_since_lastFrame)
 {
-	auto t1 = Time::GetCurrentSystemTimeTickCount();
 	sWindowInput* _windowInput = GetCurrentWindow()->GetWindowInput();
 	if (ImGui::IsKeyDown(GLFW_KEY_ESCAPE)) {
 		// tell glfw window that it is time to close
@@ -437,8 +432,6 @@ void Assignment::Tick(float second_since_lastFrame)
 	ClothSim::UpdateSprings(0.05f, m_collisionSpheres, m_createdPLightCount);
 #endif // ENABLE_CLOTH_SIM
 
-	auto t2 = Time::GetCurrentSystemTimeTickCount();
-	cpuProfiling[4] = Time::ConvertFromTickToSeconds(t2 - t1) * 1000;
 }
 
 void Assignment::SubmitLightingData()
@@ -453,6 +446,27 @@ void Assignment::SubmitLightingData()
 		m_pLights[i]->CalculateDistToEye(m_editorCamera->CamLocation());
 		_pLights.push_back(*m_pLights[i]);
 	}
+	// process point light
+	{
+		std::sort(_pLights.begin(), _pLights.end(), [](Graphics::cPointLight& const l1, Graphics::cPointLight&  const l2) {
+			return l1.Importance() > l2.Importance(); });
+		// Now the point light list is sorted depends on their importance
+		for (size_t i = 0; i < _pLights.size(); ++i)
+		{
+			auto* it = &_pLights[i];
+			int shadowMapIdx = -1; int resolutionIdx = -1;
+			if (Graphics::RetriveShadowMapIndexAndSubRect(i, shadowMapIdx, resolutionIdx))
+			{
+				it->SetShadowmapIdxAndResolutionIdx(shadowMapIdx, resolutionIdx);
+				it->ImportanceOrder = i;
+			}
+			else
+				assert(false);
+		}
+		std::sort(_pLights.begin(), _pLights.end(), [](Graphics::cPointLight& const l1, Graphics::cPointLight&  const l2) {
+			return l1.ShadowMapIdx() < l2.ShadowMapIdx(); });
+	}
+
 	if (spLight)
 	{
 		spLight->UpdateLightIndex(_spLights.size());
@@ -467,26 +481,22 @@ void Assignment::SubmitLightingData()
 	Graphics::SubmitLightingData(_pLights, _spLights, *aLight, *dLight);
 }
 
-void Assignment::SubmitSceneData(Graphics::UniformBufferFormats::sFrame* const i_frameData)
+void Assignment::SubmitSceneData(std::vector<std::pair<Graphics::cModel, cTransform>>& io_sceneData, Graphics::UniformBufferFormats::sFrame* const i_frameData)
 {
-	std::vector<std::pair<Graphics::cModel, cTransform>> _renderingMap;
-
 	// PBR pass
 	{
-		_renderingMap.clear();
-		_renderingMap.reserve(g_renderActorList.size());
-
+		// io_sceneData can be reuse in selection pass
+		io_sceneData.clear();
 		for (int i = 0; i < g_renderActorList.size(); ++i)
 		{
-			_renderingMap.push_back({ g_renderActorList[i]->GetModelHandle(), g_renderActorList[i]->Transform });
+			io_sceneData.push_back({ g_renderActorList[i]->GetModelHandle(), g_renderActorList[i]->Transform });
 		}
-
-		Graphics::SubmitDataToBeRendered(*i_frameData, _renderingMap, &Graphics::PBR_Pass);
+		Graphics::SubmitDataToBeRendered(*i_frameData, io_sceneData, &Graphics::PBR_Pass);
 	}
 
 	// Cube map
 	{
-		_renderingMap.clear();
+		std::vector<std::pair<Graphics::cModel, cTransform>> _renderingMap;
 		_renderingMap.push_back({ m_cubemap->GetModelHandle(), m_cubemap->Transform });
 		Graphics::UniformBufferFormats::sFrame _frameData_Cubemap(m_editorCamera->GetProjectionMatrix(), glm::mat4(glm::mat3(m_editorCamera->GetViewMatrix())));
 		Graphics::SubmitDataToBeRendered(*i_frameData, _renderingMap, &Graphics::CubeMap_Pass);
@@ -573,29 +583,39 @@ void Assignment::EditorGUI()
 		ImGui::Columns(2, "break downs");
 		ImGui::Separator();
 		ImGui::TextWrapped("CPU delta time");
-		ImGui::TextWrapped("Submit graphic setting");
+
 		ImGui::TextWrapped("Submit lighting data");
-		ImGui::TextWrapped("Submit shadow data");
-		ImGui::TextWrapped("Submit scene data");
-		ImGui::TextWrapped("Tick function time");
 		ImGui::TextWrapped("Render a frame CPU");
+		ImGui::TextWrapped("Deferred shading CPU");
+		ImGui::TextWrapped("HDR CPU");
+		ImGui::TextWrapped("Render Point light CPU");
+		ImGui::TextWrapped("Editor CPU");
+		ImGui::TextWrapped("Render thread waiting time CPU");
+		ImGui::TextWrapped("Data swapping CPU");
+		ImGui::TextWrapped("Uniform data update CPU");
+
+/*
 		ImGui::TextWrapped("Render a frame GPU");
 		ImGui::TextWrapped("G-Buffer_GPU");
 		ImGui::TextWrapped("Deferred Lighting_GPU");
 		ImGui::TextWrapped("PointLight shadow map_GPU");
-		ImGui::TextWrapped("Selection_GPU");
+		ImGui::TextWrapped("Editor_GPU");*/
 		ImGui::NextColumn();
 
 		ImGui::TextWrapped("%.4f ms/frame", Time::DeltaTime() * 1000);
-		for (int i = 0; i < 6; ++i)
+		float f;
+		for (int i = 0; i < 9; ++i)
 		{
-			ImGui::TextWrapped("%.4f ms/frame", cpuProfiling[i]);
+			Profiler::GetProfilingTime(i, f);
+			ImGui::TextWrapped("%.4f ms/frame", f);
 		}
+
+/*
 		ImGui::TextWrapped("%.4f ms/frame", dataFromRenderThread.g_deltaRenderAFrameTime);
 		ImGui::TextWrapped("%.4f ms/frame", dataFromRenderThread.g_deltaGeometryTime);
 		ImGui::TextWrapped("%.4f ms/frame", dataFromRenderThread.g_deltaDeferredLightingTime);
 		ImGui::TextWrapped("%.4f ms/frame", dataFromRenderThread.g_deltaPointLightShadowMapTime);
-		ImGui::TextWrapped("%.4f ms/frame", dataFromRenderThread.g_deltaSelectionTime);
+		ImGui::TextWrapped("%.4f ms/frame", dataFromRenderThread.g_deltaSelectionTime);*/
 		ImGui::Columns(1);
 		ImGui::Separator();
 

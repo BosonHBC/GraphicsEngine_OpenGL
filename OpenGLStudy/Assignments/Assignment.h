@@ -6,6 +6,7 @@
 #include "glm/gtc/matrix_transform.hpp"
 #include "Math/Shape/Sphere.h"
 #include "Graphics/UniformBuffer/UniformBufferFormats.h"
+#include "Graphics/Model/Model.h"
 /** Forward deceleration*/
 //----------------------------------------------
 class cEditorCamera;
@@ -41,7 +42,7 @@ private:
 
 	void SubmitDataToBeRender(const float i_seconds_elapsedSinceLastLoop) override;
 	void SubmitLightingData();
-	void SubmitSceneData(Graphics::UniformBufferFormats::sFrame* const i_frameData);
+	void SubmitSceneData(std::vector<std::pair<Graphics::cModel, cTransform>>& io_sceneData, Graphics::UniformBufferFormats::sFrame* const i_frameData);
 	void SubmitSceneDataForEnvironmentCapture(Graphics::UniformBufferFormats::sFrame* const i_frameData);
 	void SubmitShadowData();
 
@@ -50,7 +51,7 @@ private:
 	Color m_clearColor = Color(0,0,0);
 	cEditorCamera* m_editorCamera = nullptr;
 
-	int m_createdPLightCount = 1;
+	int m_createdPLightCount = 80;
 	Graphics::cPointLight* m_pLights[s_maxPLightCount] = {nullptr};
 	cSphere m_collisionSpheres[Assignment::s_maxPLightCount];
 

@@ -11,7 +11,8 @@
 #include "Application/Window/WindowInput.h"
 #include "Application/imgui/imgui.h"
 #include "Cores/Actor/Actor.h"
-#include "Cores/Utility/GPUProfiler.h"
+#include "Cores/Utility/Profiler.h"
+#include "Time/Time.h"
 
 namespace Graphics
 {
@@ -256,24 +257,6 @@ namespace Graphics
 	{
 		if (g_dataRenderingByGraphicThread->g_pointLights.size() <= 0) return;
 
-		std::sort(g_dataRenderingByGraphicThread->g_pointLights.begin(), g_dataRenderingByGraphicThread->g_pointLights.end(), [](cPointLight& const l1, cPointLight&  const l2) {
-			return l1.Importance() > l2.Importance(); });
-		// Now the point light list is sorted depends on their importance
-		for (size_t i = 0; i < g_dataRenderingByGraphicThread->g_pointLights.size(); ++i)
-		{
-			auto* it = &g_dataRenderingByGraphicThread->g_pointLights[i];
-			int shadowMapIdx = -1; int resolutionIdx = -1;
-			if (RetriveShadowMapIndexAndSubRect(i, shadowMapIdx, resolutionIdx))
-			{
-				it->SetShadowmapIdxAndResolutionIdx(shadowMapIdx, resolutionIdx);
-				it->ImportanceOrder = i;
-			}
-			else
-				assert(false);
-		}
-		std::sort(g_dataRenderingByGraphicThread->g_pointLights.begin(), g_dataRenderingByGraphicThread->g_pointLights.end(), [](cPointLight& const l1, cPointLight&  const l2) {
-			return l1.ShadowMapIdx() < l2.ShadowMapIdx(); });
-
 		Profiler::StartRecording(Profiler::EPT_PointLightShadowMap);
 		glDisable(GL_CULL_FACE);
 		g_currentEffect = GetEffectByKey(EET_OmniShadowMap);
@@ -328,7 +311,6 @@ namespace Graphics
 		glEnable(GL_CULL_FACE);
 		glCullFace(GL_BACK);
 		Profiler::StopRecording(Profiler::EPT_PointLightShadowMap);
-
 	}
 
 	void SpotLightShadowMap_Pass()
@@ -856,13 +838,8 @@ namespace Graphics
 		auto& selectionID = g_dataRenderingByGraphicThread->g_selectingItemID;
 		cTransform arrowTransforms[3];
 		bool needRenderTarnsformGizmo = false;
-		auto renderMapForSelectionBuffer = g_dataRenderingByGraphicThread->g_renderPasses[3].ModelToTransform_map; // original render map
-		for (auto item : g_dataRenderingByGraphicThread->g_pointLights)
-		{
-			g_quadHandle.SelectableID = item.SelectableID;
-			cTransform pLightTransform(item.Transform.Position(), glm::quatLookAt(glm::normalize(frameData->GetViewPosition() - item.Transform.Position()), glm::vec3(frameData->ViewMatrix[0][0], frameData->ViewMatrix[0][1], frameData->ViewMatrix[0][2])), glm::vec3(10, 10, 10));
-			renderMapForSelectionBuffer.push_back({ g_quadHandle, pLightTransform });
-		}
+		auto& renderMapForSelectionBuffer = g_dataRenderingByGraphicThread->g_modelTransformPairForSelectionPass; // original render map
+
 		// update frame data, from the editor camera
 		g_uniformBufferMap[UBT_Frame].Update(frameData);
 
@@ -909,10 +886,8 @@ namespace Graphics
 		}
 
 		// Handle selection
-		Profiler::StartRecording(Profiler::EPT_Selection);
 		SelctionBuffer_Pass(renderMapForSelectionBuffer, needRenderTarnsformGizmo);
-		Profiler::StopRecording(Profiler::EPT_Selection);
-
+		
 		if (ISelectable::IsValid(selectionID) && selectableTransform)
 		{
 			Gizmo_RenderSelectingTransform(arrowTransforms);

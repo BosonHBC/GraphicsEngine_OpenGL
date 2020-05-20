@@ -22,14 +22,14 @@
     <ClCompile Include="Actor\Actor.cpp" />
     <ClCompile Include="BitArray\BitArray.cpp" />
     <ClCompile Include="DataStructure\OctTree.cpp" />
-    <ClCompile Include="Utility\GPUProfiler.cpp" />
+    <ClCompile Include="Utility\Profiler.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Actor\Actor.h" />
     <ClInclude Include="BitArray\BitArray.h" />
     <ClInclude Include="Core.h" />
     <ClInclude Include="DataStructure\OctTree.h" />
-    <ClInclude Include="Utility\GPUProfiler.h" />
+    <ClInclude Include="Utility\Profiler.h" />
     <ClInclude Include="Utility\ISelectable.h" />
   </ItemGroup>
   <PropertyGroup Label="Globals">

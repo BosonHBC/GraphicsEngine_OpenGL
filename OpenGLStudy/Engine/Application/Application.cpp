@@ -7,7 +7,7 @@
 #include "Application/imgui/imgui.h"
 #include "Application/imgui/imgui_impl_glfw.h"
 #include "Application/imgui/imgui_impl_opengl3.h"
-#include "Cores/Utility/GPUProfiler.h"
+#include "Cores/Utility/Profiler.h"
 namespace Application {
 
 	bool cApplication::Initialize(GLuint i_width, GLuint i_height, const char* i_windowName)
@@ -108,7 +108,7 @@ namespace Application {
 			// Submit data
 			{
 				/** 1. Wait until render thread is ready for receiving new graphic data */
-				Graphics::MakeApplicationThreadWaitForSwapingData(m_applicationMutex);
+				//Graphics::MakeApplicationThreadWaitForSwapingData(m_applicationMutex);
 				/** 2. Clear the application thread data and submit new one */
 				Graphics::ClearApplicationThreadData();
 				SubmitDataToBeRender(static_cast<float>(Time::ConvertFromTickToSeconds(tickCount_systemTime_elapsedSinceLastLoop)));

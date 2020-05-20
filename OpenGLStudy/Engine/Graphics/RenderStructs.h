@@ -62,6 +62,7 @@ namespace Graphics {
 		UniformBufferFormats::sPostProcessing s_PostProcessing;
 		UniformBufferFormats::sSSAO g_ssaoData;
 		std::vector<sPass> g_renderPasses;
+		std::vector<std::pair<cModel, cTransform>> g_modelTransformPairForSelectionPass;
 		// Lighting data
 		std::vector<cPointLight> g_pointLights;
 		std::vector<cSpotLight> g_spotLights;
