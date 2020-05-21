@@ -1,0 +1,9 @@
+--[[
+    Default Model sheet
+]]
+return 
+{
+    ModelPath = "sifiGuns/SupplyBox_Closed.obj",
+    MaterialPath = "sifiGuns/pbrSupplyBox.material",
+
+}

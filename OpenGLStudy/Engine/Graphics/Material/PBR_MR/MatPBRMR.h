@@ -8,7 +8,7 @@ namespace Graphics
 	{
 	public:
 		cMatPBRMR()
-			: m_diffuseIntensity(Color::White()), m_roughnessIntensity(1.0f), m_ior(1.0f), m_metallicIntensity(1.0f), cMaterial(eMaterialType::MT_PBRMR)
+			: DiffuseIntensity(Color::White()), RoughnessIntensity(1.0f), IoR(1.0f), MetallicIntensity(1.0f), cMaterial(eMaterialType::MT_PBRMR)
 		{}
 		static cUniformBuffer& GetUniformBuffer() { return s_PBRMRUniformBlock; }
 
@@ -23,13 +23,15 @@ namespace Graphics
 		void CleanUpMaterialBind() override;
 		void CleanUp() override;
 
-		Color GetAlbedoIntensity() const { return m_diffuseIntensity; }
-		void UpdateAlbedoIntensity(const Color& i_albedo) { m_diffuseIntensity = i_albedo; }
-		float GetMetalnessIntensity() const { return m_metallicIntensity; }
-		void UpdateMetalnessIntensity(const float& i_metal) { m_metallicIntensity = i_metal; }
-		float GetRoughnessIntensity() const { return m_roughnessIntensity; }
-		void UpdateRoughnessIntensity(const float& i_rough) { m_roughnessIntensity = i_rough; }
+		void UpdateAlbedoIntensity(const Color& i_albedo) { DiffuseIntensity = i_albedo; }
+		void UpdateMetalnessIntensity(const float& i_metal) { MetallicIntensity = i_metal; }
+		void UpdateRoughnessIntensity(const float& i_rough) { RoughnessIntensity = i_rough; }
 		const Assets::cHandle<cTexture>& GetNormalMapHandle() const { return m_normalMapHandle; }
+
+		Color DiffuseIntensity = Color(1, 1, 1);
+		float MetallicIntensity = 1.0f, RoughnessIntensity = 1.0f;
+		glm::vec3 IoR = glm::vec3(1.0f, 1.0f, 1.0f);
+
 	private:
 		Assets::cHandle<cTexture> m_albedoMapHandle;
 		Assets::cHandle<cTexture> m_metallicMapHandle;
@@ -37,9 +39,7 @@ namespace Graphics
 		Assets::cHandle<cTexture> m_normalMapHandle;
 		Assets::cHandle<cTexture> m_aoMapHandle;
 
-		Color m_diffuseIntensity = Color(1,1,1);
-		float m_metallicIntensity = 1.0f, m_roughnessIntensity = 1.0f;
-		glm::vec3 m_ior = glm::vec3(1.0f, 1.0f, 1.0f);
+
 
 		GLuint m_albedoID = static_cast<GLuint>(-1), m_metallicID = static_cast<GLuint>(-1), m_roughnessID = static_cast<GLuint>(-1), m_normalID = static_cast<GLuint>(-1), m_aoID = static_cast<GLuint>(-1);
 

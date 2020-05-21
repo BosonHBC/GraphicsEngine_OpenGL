@@ -60,7 +60,9 @@ namespace Graphics {
 		ERenderMode g_renderMode = ERM_ForwardShading;
 		UniformBufferFormats::sClipPlane s_ClipPlane;
 		UniformBufferFormats::sPostProcessing s_PostProcessing;
+		UniformBufferFormats::sSSAO g_ssaoData;
 		std::vector<sPass> g_renderPasses;
+		std::vector<std::pair<cModel, cTransform>> g_modelTransformPairForSelectionPass;
 		// Lighting data
 		std::vector<cPointLight> g_pointLights;
 		std::vector<cSpotLight> g_spotLights;
@@ -78,7 +80,11 @@ namespace Graphics {
 	struct sDataReturnToApplicationThread
 	{
 		uint32_t g_selectionID;
-
+		GLfloat g_deltaRenderAFrameTime;
+		GLfloat g_deltaGeometryTime;
+		GLfloat g_deltaDeferredLightingTime;
+		GLfloat g_deltaPointLightShadowMapTime;
+		GLfloat g_deltaSelectionTime;
 	};
 
 	// Primitive types

@@ -7,7 +7,7 @@
 #include "Application/imgui/imgui.h"
 #include "Application/imgui/imgui_impl_glfw.h"
 #include "Application/imgui/imgui_impl_opengl3.h"
-
+#include "Cores/Utility/Profiler.h"
 namespace Application {
 
 	bool cApplication::Initialize(GLuint i_width, GLuint i_height, const char* i_windowName)
@@ -87,7 +87,7 @@ namespace Application {
 				// calculate the delta tick between loop, make sure the update between will not be larger than the maxAllowable_time_per_Iteration
 				tickCount_systemTime_elapsedSinceLastLoop =
 					std::min(tickCount_systemTime_currentLoop - tickCount_systemTime_previousLoop, tickCount_maxAllowable_time_per_Iteration);
-
+				Time::SetDeltaTime(tickCount_systemTime_elapsedSinceLastLoop);
 				// Update as soon as possible
 				Tick(static_cast<float>(Time::ConvertFromTickToSeconds(tickCount_systemTime_elapsedSinceLastLoop)));
 
@@ -108,7 +108,7 @@ namespace Application {
 			// Submit data
 			{
 				/** 1. Wait until render thread is ready for receiving new graphic data */
-				Graphics::MakeApplicationThreadWaitForSwapingData(m_applicationMutex);
+				//Graphics::MakeApplicationThreadWaitForSwapingData(m_applicationMutex);
 				/** 2. Clear the application thread data and submit new one */
 				Graphics::ClearApplicationThreadData();
 				SubmitDataToBeRender(static_cast<float>(Time::ConvertFromTickToSeconds(tickCount_systemTime_elapsedSinceLastLoop)));
@@ -138,6 +138,7 @@ namespace Application {
 		if (!Graphics::CleanUp()) {
 			printf("Fail to clean up Graphic Module.\n");
 		}
+		Profiler::CleanUp();
 		safe_delete(m_window);
 	}
 

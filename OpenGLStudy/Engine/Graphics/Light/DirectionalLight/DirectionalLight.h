@@ -13,24 +13,8 @@ namespace Graphics {
 			m_directionalLightTransformID = 0;
 			m_directionalShadowMapID = 0;
 		}
-		cDirectionalLight(const cDirectionalLight& i_other) :
-			cGenLight(i_other), m_directionalLightTransformID(i_other.m_directionalLightTransformID), 
-			m_directionalShadowMapID(i_other.m_directionalShadowMapID) {}
-		cDirectionalLight& operator =(const cDirectionalLight& i_other) 
-		{
-			if (&i_other != nullptr)
-			{
-				cGenLight::operator= (i_other);
-				m_directionalLightTransformID = i_other.m_directionalLightTransformID;
-				m_directionalShadowMapID = i_other.m_directionalShadowMapID;
-				return *this;
-			}
-			else
-			{
-				*this = cDirectionalLight();
-				return *this;
-			}
-		}
+		cDirectionalLight(const cDirectionalLight& i_other) = default;
+		cDirectionalLight& operator =(const cDirectionalLight& i_other) = default;
 
 		/** Setup uniform id*/
 		void SetupLight(const GLuint& i_programID, GLuint i_lightIndex = 0) override;

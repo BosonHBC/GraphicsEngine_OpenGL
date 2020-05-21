@@ -334,7 +334,7 @@ float CalcPointLightShadowMap(PointLight pLight, float dist_vV)
 // irrandance of this light
  vec3 CookTorranceBrdf(vec3 radiance, vec3 albedoColor, float metalness, float roughness, vec3 f0 ,vec3 vN, vec3 vH, vec3 vL, vec3 vV)
  {
-	float NdotV = max(dot(vN, vV), 0.0);
+	float NdotV = max(dot(vN, vV), 0.0001f);
 	// geometry component
     float NdotL = max(dot(vN, vL), 0.0);
 	float NDF = DistributionGGX(vN, vH, roughness);

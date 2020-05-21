@@ -51,6 +51,7 @@
     <ClCompile Include="Mesh\Mesh.cpp" />
     <ClCompile Include="Model\Model.cpp" />
     <ClCompile Include="RenderPasses.cpp" />
+    <ClCompile Include="Texture\PboDownloader.cpp" />
     <ClCompile Include="Texture\Texture.cpp" />
     <ClCompile Include="UniformBuffer\UniformBuffer.cpp" />
   </ItemGroup>
@@ -78,6 +79,7 @@
     <ClInclude Include="Mesh\Mesh.h" />
     <ClInclude Include="Model\Model.h" />
     <ClInclude Include="RenderStructs.h" />
+    <ClInclude Include="Texture\PboDownloader.h" />
     <ClInclude Include="Texture\Texture.h" />
     <ClInclude Include="UniformBuffer\UniformBuffer.h" />
     <ClInclude Include="UniformBuffer\UniformBufferFormats.h" />

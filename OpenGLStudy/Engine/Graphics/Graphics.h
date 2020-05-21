@@ -46,10 +46,10 @@ namespace Graphics {
 	void SubmitGraphicSettings(const ERenderMode& i_renderMode);
 	void SubmitDataToBeRendered(const UniformBufferFormats::sFrame& i_frameData, const std::vector<std::pair<Graphics::cModel, cTransform>>& i_modelToTransform_map, void(*func_ptr)());
 	void SubmitClipPlaneData(const glm::vec4& i_plane0, const glm::vec4& i_plane1 = glm::vec4(0, 0, 0, 0), const glm::vec4& i_plane2 = glm::vec4(0, 0, 0, 0), const glm::vec4& i_plane3 = glm::vec4(0, 0, 0, 0));
-	void SubmitPostProcessingData(const float i_exposure);
+	void SubmitPostProcessingData(const UniformBufferFormats::sPostProcessing& i_ppData, float i_ssaoRadius, float i_ssaoPower);
 	void SubmitLightingData(const std::vector<cPointLight>& i_pointLights, const std::vector<cSpotLight>& i_spotLights, const cAmbientLight& i_ambientLight, const cDirectionalLight& i_directionalLight);
 	void SubmitIOData(const glm::vec2 & i_mousePos, const glm::vec2& i_mousePoseDelta, bool* i_buttonDowns);
-	void SubmitSelectedItem(uint32_t i_selectionID);
+	void SubmitSelectionData(uint32_t i_selectionID, const std::vector<std::pair<cModel, cTransform>>& i_modelTransformPairForSelection);
 
 #ifdef ENABLE_CLOTH_SIM
 	void SubmitParticleData();
@@ -60,6 +60,7 @@ namespace Graphics {
 	/** Usage function*/
 	bool CreateEffect(const eEffectType& i_key, const char* i_vertexShaderPath, const char* i_fragmentShaderPath, const char* i_geometryShaderPath = "", const char* const i_TCSPath = "", const char* const i_TESPath = "");
 	cEffect* GetEffectByKey(const eEffectType& i_key);
+	bool RetriveShadowMapIndexAndSubRect(int i_lightIdx, int& io_shadowmapIdx, int& io_resolutionIdx);
 
 	/** Lighting related*/
 	UniformBufferFormats::sLighting& GetGlobalLightingData();

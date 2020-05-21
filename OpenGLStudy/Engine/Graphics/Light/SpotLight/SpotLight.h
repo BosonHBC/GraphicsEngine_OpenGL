@@ -6,21 +6,11 @@ namespace Graphics {
 	{
 	public:
 		cSpotLight() : cPointLight() {}
-		cSpotLight(Color i_color, const glm::vec3& i_position,
-			const glm::vec3& i_direction,
-			GLfloat i_edge,
-			GLfloat i_radius);
+		cSpotLight(Color i_color, const glm::vec3& i_position, const glm::vec3& i_direction, GLfloat i_edge, GLfloat i_radius);
 
-		cSpotLight(const cSpotLight& i_other) : cPointLight(i_other), m_edge(i_other.m_edge), m_procEdge(i_other.m_procEdge)
-		{}
+		cSpotLight(const cSpotLight& i_other) = default;
 		virtual ~cSpotLight() { m_edge = 0; m_procEdge = 0; m_lightTransformID = 0; m_lightShadowMapID = 0; }
-		cSpotLight& operator =(const cSpotLight& i_other)
-		{
-			cPointLight::operator=(i_other);
-			m_edge = i_other.m_edge;
-			m_procEdge = i_other.m_procEdge;
-			return *this;
-		}
+		cSpotLight& operator =(const cSpotLight& i_other) = default;
 
 
 		/** overriding virtual functions*/

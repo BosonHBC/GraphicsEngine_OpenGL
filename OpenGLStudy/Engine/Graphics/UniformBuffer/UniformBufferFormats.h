@@ -173,9 +173,13 @@ namespace Graphics {
 		// --------------------------------------------------------------------------------------------------------------------------------------------
 		struct sPostProcessing
 		{
+			glm::vec2 ScreenResolution;
 			float Exposure;
-
-			sPostProcessing() : Exposure(1.0f) {}
+			int TonemappingMode;
+			int EnablePostProcessing;
+			int EnableFxAA;
+			sPostProcessing& operator = (const sPostProcessing& i_rhs) = default;
+			sPostProcessing() :ScreenResolution(glm::vec2(1280, 720)), Exposure(1.0f), TonemappingMode(0), EnablePostProcessing(true), EnableFxAA(true){}
 		};
 		// SSAO values
 		// --------------------------------------------------------------------------------------------------------------------------------------------

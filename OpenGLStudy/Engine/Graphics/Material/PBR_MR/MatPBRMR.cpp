@@ -18,10 +18,10 @@ namespace Graphics
 		cTexture::s_manager.Copy(i_rhs.m_normalMapHandle, m_normalMapHandle);
 		cTexture::s_manager.Copy(i_rhs.m_aoMapHandle, m_aoMapHandle);
 
-		m_diffuseIntensity = i_rhs.m_diffuseIntensity;
-		m_metallicIntensity = i_rhs.m_metallicIntensity;
-		m_roughnessIntensity = i_rhs.m_roughnessIntensity;
-		m_ior = i_rhs.m_ior;
+		DiffuseIntensity = i_rhs.DiffuseIntensity;
+		MetallicIntensity = i_rhs.MetallicIntensity;
+		RoughnessIntensity = i_rhs.RoughnessIntensity;
+		IoR = i_rhs.IoR;
 
 		m_albedoID = i_rhs.m_albedoID;
 		m_metallicID = i_rhs.m_metallicID;
@@ -32,8 +32,8 @@ namespace Graphics
 		return *this;
 	}
 
-	cMatPBRMR::cMatPBRMR(const cMatPBRMR& i_other): cMaterial(i_other), m_diffuseIntensity (i_other.m_diffuseIntensity),
-	m_metallicIntensity (i_other.m_metallicIntensity), m_roughnessIntensity(i_other.m_roughnessIntensity), m_ior(i_other.m_ior),
+	cMatPBRMR::cMatPBRMR(const cMatPBRMR& i_other): cMaterial(i_other), DiffuseIntensity (i_other.DiffuseIntensity),
+	MetallicIntensity (i_other.MetallicIntensity), RoughnessIntensity(i_other.RoughnessIntensity), IoR(i_other.IoR),
 		m_albedoID(i_other.m_albedoID), m_metallicID(i_other.m_metallicID), m_roughnessID (i_other.m_roughnessID), m_normalID(i_other.m_normalID), m_aoID(i_other.m_aoID)
 	{
 		cTexture::s_manager.Copy(i_other.m_albedoMapHandle, m_albedoMapHandle);
@@ -48,7 +48,7 @@ namespace Graphics
 		bool result = true;
 		std::string _albedoPath, _metallicPath, _roughnessPath, _normalPath, _aoPath;
 		// load material data from LUA files
-		if (!(result = LoadFileFromLua(i_path, _albedoPath, _metallicPath, _roughnessPath, _normalPath, _aoPath, m_diffuseIntensity, m_metallicIntensity, m_roughnessIntensity, m_ior))) {
+		if (!(result = LoadFileFromLua(i_path, _albedoPath, _metallicPath, _roughnessPath, _normalPath, _aoPath, DiffuseIntensity, MetallicIntensity, RoughnessIntensity, IoR))) {
 			printf("Fail to load PBR_MetallicRoughness[%s] from LUA.\n", i_path.c_str());
 			return result;
 		}
@@ -125,7 +125,7 @@ namespace Graphics
 		else
 			cTexture::UnBindTexture(GL_TEXTURE5, ETT_FILE_GRAY);
 
-		s_PBRMRUniformBlock.Update(&UniformBufferFormats::sPBRMRMaterial(m_diffuseIntensity, m_roughnessIntensity, m_ior, m_metallicIntensity));
+		s_PBRMRUniformBlock.Update(&UniformBufferFormats::sPBRMRMaterial(DiffuseIntensity, RoughnessIntensity, IoR, MetallicIntensity));
 
 		assert(GL_NO_ERROR == glGetError());
 
@@ -229,6 +229,14 @@ namespace Graphics
 			for (uint8_t i = 0; i < 3; ++i)
 			{
 				o_diffuseIntensity[i] = _tempHolder[i];
+			}
+		}
+		// Metallic Intensity
+		{
+			constexpr auto* const _key = "MetallicIntensity";
+			if (!(result = Assets::Lua_LoadFloat(luaState, _key, o_metallicIntensity))) {
+				printf("LUA error: fail to load key[%s]", _key);
+				return result;
 			}
 		}
 		// Roughness Intensity

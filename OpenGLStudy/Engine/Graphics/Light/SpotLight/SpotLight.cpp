@@ -16,10 +16,10 @@ namespace Graphics {
 	void cSpotLight::Illuminate()
 	{
 		auto& gLighting = Graphics::GetGlobalLightingData();
-		gLighting.spotLights[m_lightIndex].base.base.color = m_color;
+		gLighting.spotLights[m_lightIndex].base.base.color = LightColor;
 		gLighting.spotLights[m_lightIndex].base.base.enableShadow = m_enableShadow;
 		gLighting.spotLights[m_lightIndex].base.position = Transform.Position();
-		gLighting.spotLights[m_lightIndex].base.radius = m_range;
+		gLighting.spotLights[m_lightIndex].base.radius = Range;
 		gLighting.spotLights[m_lightIndex].direction = Transform.Forward();
 		gLighting.spotLights[m_lightIndex].edge = m_procEdge;
 	}
@@ -45,7 +45,7 @@ namespace Graphics {
 	{
 		cGenLight::CreateShadowMap(i_width, i_height);
 		float _aspect = static_cast<GLfloat>(i_width) / static_cast<GLfloat>(i_height);
-		m_lightPrjectionMatrix = glm::perspective(glm::radians(m_edge), _aspect, 1.f, m_range *2.f);
+		m_lightPrjectionMatrix = glm::perspective(glm::radians(m_edge), _aspect, 1.f, Range *2.f);
 	}
 
 	glm::mat4 cSpotLight::GetViewMatrix() const

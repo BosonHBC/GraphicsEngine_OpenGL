@@ -1,4 +1,4 @@
-<?xml version="1.0" encoding="utf-8"?>
+﻿<?xml version="1.0" encoding="utf-8"?>
 <Project DefaultTargets="Build" ToolsVersion="15.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
   <ItemGroup Label="ProjectConfigurations">
     <ProjectConfiguration Include="Debug|Win32">
@@ -22,12 +22,14 @@
     <ClCompile Include="Actor\Actor.cpp" />
     <ClCompile Include="BitArray\BitArray.cpp" />
     <ClCompile Include="DataStructure\OctTree.cpp" />
+    <ClCompile Include="Utility\Profiler.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Actor\Actor.h" />
     <ClInclude Include="BitArray\BitArray.h" />
     <ClInclude Include="Core.h" />
     <ClInclude Include="DataStructure\OctTree.h" />
+    <ClInclude Include="Utility\Profiler.h" />
     <ClInclude Include="Utility\ISelectable.h" />
   </ItemGroup>
   <PropertyGroup Label="Globals">

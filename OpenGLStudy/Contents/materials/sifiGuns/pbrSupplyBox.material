@@ -1,0 +1,16 @@
+--[[
+    Default Physcis based rendering metallic roughness workflow
+]]
+return 
+{
+    MaterialType = 4,
+    AlbedoTexture = "sifiGuns/supplyBox/Box_BaseColor.jpg",
+    MetallicTexture = "sifiGuns/supplyBox/Box_Metallic.jpg",
+    RoughnessTexture = "sifiGuns/supplyBox/Box_Roughness.jpg",
+    NormalTexture = "sifiGuns/supplyBox/Box_Normal_GL.jpg",
+    AOTexture = "sifiGuns/supplyBox/Box_AO.jpg",
+    DiffuseIntensity = {1.0,1.0,1.0},
+    MetallicIntensity = 0.8,
+    RoughnessIntensity = 0.53,
+    IOR = {1.52, 1.52, 1.52},
+}

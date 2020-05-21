@@ -1,5 +1,6 @@
 #pragma once
 #include "stdio.h"
+#include "glm/glm.hpp"
 namespace Graphics {
 
 	// Color class represent 24bits color value from 0 to 1, prevent inheritance
@@ -32,6 +33,7 @@ namespace Graphics {
 		cColor  operator - (const float &i_n) const { return cColor(r - i_n, g - i_n, b - i_n); }
 		cColor  operator * (const float &i_n) const { return cColor(r*i_n, g*i_n, b*i_n); }
 		cColor  operator / (const float &i_n) const { return cColor(r / i_n, g / i_n, b / i_n); }
+		operator glm::vec3() const { return glm::vec3(this->r, this->g, this->b); }
 		float& operator [] (const unsigned short& i_index) { if (i_index < 3 && i_index >= 0) { return ((i_index == 0) ? r : ((i_index == 1) ? g : b)); } else { printf("Color: Index out of bound\n"); return r; } }
 	private:
 

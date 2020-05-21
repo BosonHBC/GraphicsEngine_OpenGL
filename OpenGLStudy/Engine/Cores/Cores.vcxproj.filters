@@ -36,6 +36,9 @@
     <ClCompile Include="DataStructure\OctTree.cpp">
       <Filter>Source Files\DataStructure</Filter>
     </ClCompile>
+    <ClCompile Include="Utility\Profiler.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Actor\Actor.h">
@@ -52,6 +55,9 @@
     </ClInclude>
     <ClInclude Include="Utility\ISelectable.h">
       <Filter>Source Files\Utility</Filter>
+    </ClInclude>
+    <ClInclude Include="Utility\Profiler.h">
+      <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>
 </Project>

@@ -23,11 +23,14 @@
 #include <random>
 #include "Application/imgui/imgui.h"
 #include "Editor/Editor.h"
+#include "Cores/Utility//Profiler.h"
 
-Graphics::ERenderMode g_renderMode = Graphics::ERenderMode::ERM_ForwardShading;
+Graphics::ERenderMode g_renderMode = Graphics::ERenderMode::ERM_DeferredShading;
 
 std::uniform_real_distribution<float> randomFloats(0.0, 1.0); // generates random floats between 0.0 and 1.0
 std::default_random_engine generator;
+
+std::vector<cActor*> g_renderActorList;
 
 bool Assignment::Initialize(GLuint i_width, GLuint i_height, const char* i_windowName /*= "Default Window"*/)
 {
@@ -50,12 +53,17 @@ bool Assignment::Initialize(GLuint i_width, GLuint i_height, const char* i_windo
 
 	//Graphics::cMatPBRMR* _spaceHolderMat = dynamic_cast<Graphics::cMatPBRMR*>(Graphics::cModel::s_manager.Get(m_spaceHolder->GetModelHandle())->GetMaterialAt());
 
-	m_renderingTeapotCount = glm::clamp(m_renderingTeapotCount, 1, s_maxTeapotCount);
-	m_createdPLightCount = glm::clamp(m_createdPLightCount, 1, s_maxPLightCount);
+	m_renderingTeapotCount = glm::clamp(m_renderingTeapotCount, 0, s_maxTeapotCount);
+	m_createdPLightCount = glm::clamp(m_createdPLightCount, 0, s_maxPLightCount);
 
-	aLight->SetColor(Color(0.1f) * m_ambientIntensity);
-	dLight->SetColor(Color(0.6f, 0.6f, 0.5f)* m_directionalIntensity);
+	m_ppData.Exposure = 0.9f;
+	m_ppData.EnableFxAA = true;
+	m_ppData.EnablePostProcessing = true;
+	m_ppData.ScreenResolution = glm::vec2(static_cast<float>(GetCurrentWindow()->GetBufferWidth()), static_cast<float>(GetCurrentWindow()->GetBufferHeight()));
+	m_ppData.TonemappingMode = 1;
 
+	m_ssaoRadius = 20;
+	m_ssaoPower = 1.2f;
 	printf("---------------------------------Game initialization done.---------------------------------\n");
 	return result;
 }
@@ -82,8 +90,8 @@ void Assignment::CreateActor()
 		m_teapots[i]->Initialize();
 		m_teapots[i]->Transform.SetTransform(glm::vec3(-150 + (i % teapotPerRow) * horiDist, 0, 100 - (i / teapotPerRow) * vertDist), glm::quat(glm::vec3(-glm::radians(90.f), glm::radians(30.f), 0)), glm::vec3(5, 5, 5));
 		m_teapots[i]->SetModel(g_teapotPaths[i]);
+		g_renderActorList.push_back(m_teapots[i]);
 	}
-
 
 	m_cubemap = new cActor();
 	m_cubemap->Initialize();
@@ -97,17 +105,27 @@ void Assignment::CreateActor()
 	m_spaceHolder->Initialize();
 	m_spaceHolder->Transform.SetTransform(glm::vec3(0, 150.f, 0), glm::quat(1, 0, 0, 0), glm::vec3(5, 5, 5));
 	m_spaceHolder->SetModel("Contents/models/spaceHolder.model");
+	g_renderActorList.push_back(m_spaceHolder);
 
+	m_supplyBox = new cActor();
+	m_supplyBox->Initialize();
+	m_supplyBox->Transform.SetTransform(glm::vec3(0, 0, -10), glm::quat(1, 0, 0, 0), glm::vec3(250, 250, 250));
+	m_supplyBox->SetModel("Contents/models/sifiGuns/supplyBox_Close.model");
+	g_renderActorList.push_back(m_supplyBox);
+#ifdef ENABLE_CLOTH_SIM
 	m_collisionSphere = new cActor();
 	m_collisionSphere->Initialize();
 	m_collisionSphere->Transform.SetTransform(glm::vec3(0, 0, -150), glm::quat(1, 0, 0, 0), glm::vec3(10, 10, 10));
 	m_collisionSphere->SetModel("Contents/models/pbrSphere.model");
+	g_renderActorList.push_back(m_collisionSphere);
+#endif // ENABLE_CLOTH_SIM
+
 }
 
 void Assignment::CreateCamera()
 {
 	//m_editorCamera = new  cEditorCamera(glm::vec3(0, 250, 150), 20, 0, 300, 10.f);
-	m_editorCamera = new  cEditorCamera(glm::vec3(0, 200, 350), 25, 0, 300, 10.f);
+	m_editorCamera = new  cEditorCamera(glm::vec3(0, 200, 350), 25, 0, 300, 15.f);
 	float _aspect = (float)(GetCurrentWindow()->GetBufferWidth()) / (float)(GetCurrentWindow()->GetBufferHeight());
 	m_editorCamera->CreateProjectionMatrix(glm::radians(60.f), _aspect, 10.f, 2000.0f);
 }
@@ -115,21 +133,21 @@ void Assignment::CreateCamera()
 void Assignment::CreateLight()
 {
 	const int lightPerRow = 4;
-	const float horiDist = 150;
+	const float horiDist = 50 * 40.f / m_createdPLightCount;
 	const float vertDist = 50 * 40.f / m_createdPLightCount;
-	Graphics::CreateAmbientLight(Color(0, 0, 0), aLight);
+	Graphics::CreateAmbientLight(Color::White(), aLight);
 
 	for (int i = 0; i < m_createdPLightCount; ++i)
 	{
 		//Color randomColor = Color(randomFloats(generator), randomFloats(generator), randomFloats(generator));
 		bool enableShadow = true;
-		Graphics::CreatePointLight(glm::vec3(0 + (i % lightPerRow) * horiDist, 200, 100 - (i / lightPerRow) * vertDist), Color::White() * 0.5f, 250.f, enableShadow, m_pLights[i]);
+		Graphics::CreatePointLight(glm::vec3(0 + (i % lightPerRow) * horiDist, 200, 100 - (i / lightPerRow) * vertDist), m_pointLightColor, 250.f, enableShadow, m_pLights[i]);
 	}
 
 	//CreatePointLight(glm::vec3(0, 100, 0), Color::White() * 0.5f, 250, true);
 
 	//Graphics::CreatePointLight(glm::vec3(100, 150.f, 100.f), Color(1, 1, 1), 1.f, 0.7f, 1.8f, true, pLight2);
-	Graphics::CreateDirectionalLight(Color(0.00f, 0.00f, 0.00f), glm::vec3(-1, -0.5f, -0.5f), true, dLight);
+	Graphics::CreateDirectionalLight(Color(0.6f, 0.6f, 0.5f), glm::vec3(-1, -0.5f, -0.5f), true, dLight);
 	//Graphics::CreateSpotLight(glm::vec3(0, 150, 0), glm::vec3(0, 1, 1), Color(1), 65.f, 1.5f, 0.3f, 5.f, true, spLight);
 	//Graphics::CreateSpotLight(glm::vec3(100, 150, 0), glm::vec3(1, 1, 0), Color(1), 65.f, 1.f, 0.7f, 
 
@@ -137,18 +155,20 @@ void Assignment::CreateLight()
 
 void Assignment::SubmitDataToBeRender(const float i_seconds_elapsedSinceLastLoop)
 {
-	std::vector<std::pair<Graphics::cModel, cTransform>> _renderingMap = std::vector<std::pair<Graphics::cModel, cTransform>>();
 	// Submit render setting
 	Graphics::SubmitGraphicSettings(g_renderMode);
 
+	Profiler::StartRecording(0);
 	// Submit lighting data
 	SubmitLightingData();
+	Profiler::StopRecording(0);
 
 	// Submit geometry data for shadow map
 	SubmitShadowData();
 
+
 	// Submit post processing data
-	Graphics::SubmitPostProcessingData(m_exposureOffset);
+	Graphics::SubmitPostProcessingData(m_ppData, m_ssaoRadius, m_ssaoPower);
 
 	// Submit IO Data
 	glm::vec2 mousePos = glm::vec2(ImGui::GetMousePos().x, ImGui::GetMousePos().y);
@@ -158,13 +178,17 @@ void Assignment::SubmitDataToBeRender(const float i_seconds_elapsedSinceLastLoop
 	for (int i = 0; i < 3; ++i) downs[i] = ImGui::IsMouseDown(i);
 	Graphics::SubmitIOData(mousePos, mouseDelta, downs);
 
-	// Submit Selection data
-	Graphics::SubmitSelectedItem(Editor::SelectingItemID);
 
 	// Frame data from camera
 	Graphics::UniformBufferFormats::sFrame _frameData_Camera(m_editorCamera->GetProjectionMatrix(), m_editorCamera->GetViewMatrix());
+	std::vector<std::pair<Graphics::cModel, cTransform>> _renderingMap;
+	_renderingMap.reserve(g_renderActorList.size());
+
 	// Submit geometry data
-	SubmitSceneData(&_frameData_Camera);
+	SubmitSceneData(_renderingMap, &_frameData_Camera);
+
+	// Submit Selection data
+	Graphics::SubmitSelectionData(Editor::SelectingItemID, _renderingMap);
 
 #ifdef ENABLE_CLOTH_SIM
 	Graphics::SubmitParticleData();
@@ -203,6 +227,7 @@ void Assignment::Run()
 	Graphics::ClearApplicationThreadData();
 	// Submit lighting data
 	SubmitLightingData();
+
 	// submit shadow data
 	SubmitShadowData();
 	// submit render requests
@@ -221,7 +246,10 @@ void Assignment::Run()
 		glfwPollEvents();
 
 		// Render frame
+		Profiler::StartRecording(1);
 		Graphics::RenderFrame();
+		Profiler::StopRecording(1);
+
 		RenderEditorGUI();
 
 		// Swap buffers
@@ -241,7 +269,7 @@ void Assignment::Tick(float second_since_lastFrame)
 	{
 		m_editorCamera->CameraControl(_windowInput, second_since_lastFrame);
 
-		m_editorCamera->MouseControl(_windowInput, 0.01667f);
+		m_editorCamera->MouseControl(_windowInput, second_since_lastFrame);
 	}
 	cTransform* controledActor = nullptr;
 	controledActor = &m_pLights[0]->Transform;
@@ -316,80 +344,12 @@ void Assignment::Tick(float second_since_lastFrame)
 	}
 #endif // ENABLE_CLOTH_SIM
 
-	if (ImGui::IsKeyPressed(GLFW_KEY_G))
+	auto& dataFromRenderThread = Graphics::GetDataFromRenderThread();
+
+	for (int i = 0; i < g_renderActorList.size(); ++i)
 	{
-		CreatePointLight(m_editorCamera->CamLocation() + m_editorCamera->Transform.Forward() * 100.f, Color::White() * 0.5f, 250.f, true);
-		printf("Current Point Light Count: %d\n", m_createdPLightCount);
+		g_renderActorList[i]->Transform.Update();
 	}
-
-	auto dataFromRenderThread = Graphics::GetDataFromRenderThread();
-
-	int hoverArrowDirection = -1;
-	bool isHoveringTransformGizmo = Graphics::IsTransformGizmoIsHovered(dataFromRenderThread.g_selectionID, hoverArrowDirection);
-	glm::vec4 dragDelta(glm::vec2(_windowInput->DX(), _windowInput->DY()), 0, 0);
-	static bool dragingTransform = false;
-	static int draggingDirection = -1;
-	if (!ImGui::GetIO().WantCaptureMouse)
-	{
-		// Only when 1. release the mouse; 2. not hovering a transform; 3. not on a UI; 4. not dragging
-		if (ImGui::IsMouseReleased(0) && !isHoveringTransformGizmo && !dragingTransform
-			&& IsFloatZero(dragDelta.x) && IsFloatZero(dragDelta.y))
-		{
-			Editor::SelectingItemID = dataFromRenderThread.g_selectionID;
-		}
-		if (isHoveringTransformGizmo && !dragingTransform && ImGui::IsMouseDown(0))
-		{
-			dragingTransform = true;
-			draggingDirection = hoverArrowDirection;
-			Graphics::SetArrowBeingSelected(true, draggingDirection);
-		}
-
-		if (dragingTransform && ImGui::IsMouseDown(0) && ISelectable::IsValid(Editor::SelectingItemID) && (!IsFloatZero(dragDelta.x) || !IsFloatZero(dragDelta.y)))
-		{
-			const Graphics::cModel* _model = dynamic_cast<Graphics::cModel*>(ISelectable::s_selectableList[Editor::SelectingItemID]);
-			cActor* owner = nullptr;
-			if (_model && (owner = _model->GetOwner()))
-			{
-				glm::vec3 dragInWorldSpace = m_editorCamera->GetInvViewMatrix() * dragDelta;
-				float dragVelocity = glm::length(dragInWorldSpace);
-				glm::vec3 dragInWorldSpace_norm = dragInWorldSpace / dragVelocity;
-				glm::vec3 direction(0.0f);
-				switch (draggingDirection)
-				{
-				case 0:
-					direction = owner->Transform.Forward();
-					break;
-				case 1:
-					direction = owner->Transform.Right();
-					break;
-				case 2:
-					direction = owner->Transform.Up();
-					break;
-				default:
-					break;
-				}
-				float directionSign = glm::dot(direction, dragInWorldSpace_norm) > 0 ? 1 : -1;
-
-				owner->Transform.Translate(direction * directionSign * 100.f * dragVelocity * second_since_lastFrame);
-			}
-		}
-
-		if (dragingTransform && ImGui::IsMouseReleased(0))
-		{
-			dragingTransform = false;
-			Graphics::SetArrowBeingSelected(false, draggingDirection);
-			draggingDirection = -1;
-
-		}
-	}
-
-
-	m_spaceHolder->Transform.Update();
-	for (int i = 0; i < m_renderingTeapotCount; ++i)
-	{
-		m_teapots[i]->Transform.Update();
-	}
-
 	for (int i = 0; i < m_createdPLightCount; ++i)
 	{
 		m_pLights[i]->Transform.Update();
@@ -425,6 +385,27 @@ void Assignment::SubmitLightingData()
 		m_pLights[i]->CalculateDistToEye(m_editorCamera->CamLocation());
 		_pLights.push_back(*m_pLights[i]);
 	}
+	// process point light
+	{
+		std::sort(_pLights.begin(), _pLights.end(), [](Graphics::cPointLight& const l1, Graphics::cPointLight&  const l2) {
+			return l1.Importance() > l2.Importance(); });
+		// Now the point light list is sorted depends on their importance
+		for (size_t i = 0; i < _pLights.size(); ++i)
+		{
+			auto* it = &_pLights[i];
+			int shadowMapIdx = -1; int resolutionIdx = -1;
+			if (Graphics::RetriveShadowMapIndexAndSubRect(i, shadowMapIdx, resolutionIdx))
+			{
+				it->SetShadowmapIdxAndResolutionIdx(shadowMapIdx, resolutionIdx);
+				it->ImportanceOrder = i;
+			}
+			else
+				assert(false);
+		}
+		std::sort(_pLights.begin(), _pLights.end(), [](Graphics::cPointLight& const l1, Graphics::cPointLight&  const l2) {
+			return l1.ShadowMapIdx() < l2.ShadowMapIdx(); });
+	}
+
 	if (spLight)
 	{
 		spLight->UpdateLightIndex(_spLights.size());
@@ -439,30 +420,22 @@ void Assignment::SubmitLightingData()
 	Graphics::SubmitLightingData(_pLights, _spLights, *aLight, *dLight);
 }
 
-void Assignment::SubmitSceneData(Graphics::UniformBufferFormats::sFrame* const i_frameData)
+void Assignment::SubmitSceneData(std::vector<std::pair<Graphics::cModel, cTransform>>& io_sceneData, Graphics::UniformBufferFormats::sFrame* const i_frameData)
 {
-	std::vector<std::pair<Graphics::cModel, cTransform>> _renderingMap;
-
 	// PBR pass
 	{
-		_renderingMap.clear();
-		_renderingMap.reserve(m_renderingTeapotCount + 2);
-		_renderingMap.push_back({ m_spaceHolder->GetModelHandle(), m_spaceHolder->Transform });
-		for (int i = 0; i < m_renderingTeapotCount; ++i)
+		// io_sceneData can be reuse in selection pass
+		io_sceneData.clear();
+		for (int i = 0; i < g_renderActorList.size(); ++i)
 		{
-			_renderingMap.push_back({ m_teapots[i]->GetModelHandle(), m_teapots[i]->Transform });
+			io_sceneData.push_back({ g_renderActorList[i]->GetModelHandle(), g_renderActorList[i]->Transform });
 		}
-
-#ifdef ENABLE_CLOTH_SIM
-		_renderingMap.push_back({ m_collisionSphere->GetModelHandle(), m_collisionSphere->Transform });
-#endif // ENABLE_CLOTH_SIM
-
-		Graphics::SubmitDataToBeRendered(*i_frameData, _renderingMap, &Graphics::PBR_Pass);
-	}
+		Graphics::SubmitDataToBeRendered(*i_frameData, io_sceneData, &Graphics::PBR_Pass);
+}
 
 	// Cube map
 	{
-		_renderingMap.clear();
+		std::vector<std::pair<Graphics::cModel, cTransform>> _renderingMap;
 		_renderingMap.push_back({ m_cubemap->GetModelHandle(), m_cubemap->Transform });
 		Graphics::UniformBufferFormats::sFrame _frameData_Cubemap(m_editorCamera->GetProjectionMatrix(), glm::mat4(glm::mat3(m_editorCamera->GetViewMatrix())));
 		Graphics::SubmitDataToBeRendered(*i_frameData, _renderingMap, &Graphics::CubeMap_Pass);
@@ -475,16 +448,11 @@ void Assignment::SubmitSceneDataForEnvironmentCapture(Graphics::UniformBufferFor
 	// PBR pass
 	{
 		_renderingMap.clear();
-		_renderingMap.reserve(m_renderingTeapotCount + 2);
-		_renderingMap.push_back({ m_spaceHolder->GetModelHandle(), m_spaceHolder->Transform });
-		for (int i = 0; i < m_renderingTeapotCount; ++i)
+		_renderingMap.reserve(g_renderActorList.size());
+		for (int i = 0; i < g_renderActorList.size(); ++i)
 		{
-			_renderingMap.push_back({ m_teapots[i]->GetModelHandle(), m_teapots[i]->Transform });
+			_renderingMap.push_back({ g_renderActorList[i]->GetModelHandle(), g_renderActorList[i]->Transform });
 		}
-
-#ifdef ENABLE_CLOTH_SIM
-		_renderingMap.push_back({ m_collisionSphere->GetModelHandle(), m_collisionSphere->Transform });
-#endif // ENABLE_CLOTH_SIM
 
 		Graphics::SubmitDataToBeRendered(*i_frameData, _renderingMap, &Graphics::PBR_Pass);
 	}
@@ -502,18 +470,11 @@ void Assignment::SubmitShadowData()
 {
 	std::vector<std::pair<Graphics::cModel, cTransform>> _renderingMap;
 
-	_renderingMap.reserve(m_renderingTeapotCount + 2);
-	for (int i = 0; i < m_renderingTeapotCount; ++i)
+	_renderingMap.reserve(g_renderActorList.size());
+	for (int i = 0; i < g_renderActorList.size(); ++i)
 	{
-		_renderingMap.push_back({ m_teapots[i]->GetModelHandle(), m_teapots[i]->Transform });
-}
-	_renderingMap.push_back({ m_spaceHolder->GetModelHandle(), m_spaceHolder->Transform });
-
-#ifdef ENABLE_CLOTH_SIM
-	_renderingMap.push_back({ m_collisionSphere->GetModelHandle(), m_collisionSphere->Transform });
-#endif //  ENABLE_CLOTH_SIM
-
-
+		_renderingMap.push_back({ g_renderActorList[i]->GetModelHandle(), g_renderActorList[i]->Transform });
+	}
 
 	{// Spot light shadow map pass
 		Graphics::SubmitDataToBeRendered(Graphics::UniformBufferFormats::sFrame(), _renderingMap, &Graphics::SpotLightShadowMap_Pass);
@@ -534,8 +495,13 @@ void Assignment::SubmitShadowData()
 
 void Assignment::CreatePointLight(const glm::vec3& i_initialLocation, const Color& i_color, const GLfloat& i_radius, bool i_enableShadow)
 {
+	std::lock_guard<std::mutex> autoLock(m_applicationMutex);
 	if (m_createdPLightCount < s_maxPLightCount)
-		Graphics::CreatePointLight(i_initialLocation, i_color, i_radius, i_enableShadow, m_pLights[m_createdPLightCount++]);
+	{
+		Graphics::CreatePointLight(i_initialLocation, i_color, i_radius, i_enableShadow, m_pLights[m_createdPLightCount]);
+		m_createdPLightCount++;
+	}
+
 
 }
 
@@ -547,44 +513,266 @@ void Assignment::FixedTick()
 
 void Assignment::EditorGUI()
 {
+	auto& dataFromRenderThread = Graphics::GetDataFromRenderThread();
+	// handle selecting
+	{
+		int hoverArrowDirection = -1;
+		bool isHoveringTransformGizmo = Graphics::IsTransformGizmoIsHovered(dataFromRenderThread.g_selectionID, hoverArrowDirection);
+		glm::vec4 dragDelta(glm::vec2(ImGui::GetIO().MouseDelta.x, -ImGui::GetIO().MouseDelta.y), 0, 0);
+		static bool dragingTransform = false;
+		static int draggingDirection = -1;
+		if (!ImGui::GetIO().WantCaptureMouse)
+		{
+			bool isReleased = ImGui::IsMouseReleased(0);
+
+			// Only when 1. release the mouse; 2. not hovering a transform; 3. not on a UI; 4. not dragging
+			if (isReleased && !isHoveringTransformGizmo && !dragingTransform
+				&& IsFloatZero(dragDelta.x) && IsFloatZero(dragDelta.y))
+			{
+				Editor::SelectingItemID = dataFromRenderThread.g_selectionID;
+			}
+
+			if (isHoveringTransformGizmo && !dragingTransform && ImGui::IsMouseDown(0))
+			{
+				dragingTransform = true;
+				draggingDirection = hoverArrowDirection;
+				Graphics::SetArrowBeingSelected(true, draggingDirection);
+			}
+
+			if (dragingTransform && ImGui::IsMouseDown(0) && ISelectable::IsValid(Editor::SelectingItemID) && (!IsFloatZero(dragDelta.x) || !IsFloatZero(dragDelta.y)))
+			{
+				cTransform* edittingTransform = nullptr;
+				if (ISelectable::s_selectableList[Editor::SelectingItemID]->GetBoundTransform(edittingTransform))
+				{
+					glm::vec3 dragInWorldSpace = m_editorCamera->GetInvViewMatrix() * dragDelta;
+					float dragVelocity = glm::length(dragInWorldSpace);
+					glm::vec3 dragInWorldSpace_norm = dragInWorldSpace / dragVelocity;
+					glm::vec3 direction(0.0f);
+					switch (draggingDirection)
+					{
+					case 0:
+						direction = edittingTransform->Forward();
+						break;
+					case 1:
+						direction = edittingTransform->Right();
+						break;
+					case 2:
+						direction = edittingTransform->Up();
+						break;
+					default:
+						break;
+					}
+
+					float directionSign = glm::dot(direction, dragInWorldSpace_norm) > 0 ? 1 : -1;
+					edittingTransform->Translate(direction * directionSign * 100.f * dragVelocity * 0.02f);
+				}
+			}
+
+			if (dragingTransform && isReleased)
+			{
+				dragingTransform = false;
+				Graphics::SetArrowBeingSelected(false, draggingDirection);
+				draggingDirection = -1;
+			}
+		}
+	}
+
+
 	ImGui::Begin("Status");
 	ImGui::Text("Application average %.3f ms/frame (%.1f FPS)", 1000.0f / ImGui::GetIO().Framerate, ImGui::GetIO().Framerate);
+	if (ImGui::TreeNode("Frame rate break downs"))
+	{
+		ImGui::Columns(2, "break downs");
+		ImGui::Separator();
+		ImGui::TextWrapped("CPU delta time");
+
+		ImGui::TextWrapped("Submit lighting data");
+		ImGui::TextWrapped("Render a frame CPU");
+		ImGui::TextWrapped("Deferred shading CPU");
+		ImGui::TextWrapped("HDR CPU");
+		ImGui::TextWrapped("Render Point light CPU");
+		ImGui::TextWrapped("Editor CPU");
+		ImGui::TextWrapped("Render thread waiting time CPU");
+
+
+		/*
+				ImGui::TextWrapped("Render a frame GPU");
+				ImGui::TextWrapped("G-Buffer_GPU");
+				ImGui::TextWrapped("Deferred Lighting_GPU");
+				ImGui::TextWrapped("PointLight shadow map_GPU");
+				ImGui::TextWrapped("Editor_GPU");*/
+		ImGui::NextColumn();
+
+		ImGui::TextWrapped("%.4f ms/frame", Time::DeltaTime() * 1000);
+		float f;
+		for (int i = 0; i < 7; ++i)
+		{
+			Profiler::GetProfilingTime(i, f);
+			ImGui::TextWrapped("%.4f ms/frame", f);
+		}
+
+		/*
+				ImGui::TextWrapped("%.4f ms/frame", dataFromRenderThread.g_deltaRenderAFrameTime);
+				ImGui::TextWrapped("%.4f ms/frame", dataFromRenderThread.g_deltaGeometryTime);
+				ImGui::TextWrapped("%.4f ms/frame", dataFromRenderThread.g_deltaDeferredLightingTime);
+				ImGui::TextWrapped("%.4f ms/frame", dataFromRenderThread.g_deltaPointLightShadowMapTime);
+				ImGui::TextWrapped("%.4f ms/frame", dataFromRenderThread.g_deltaSelectionTime);*/
+		ImGui::Columns(1);
+		ImGui::Separator();
+
+		ImGui::TreePop();
+	}
 	ImGui::Text("Point light count: %d", m_createdPLightCount);
 	ImGui::End();
 
 	ImGui::Begin("Control");
-	const Graphics::ERenderMode rendermodes[] = { Graphics::ERM_ForwardShading, Graphics::ERM_DeferredShading, Graphics::ERM_Deferred_Albede, Graphics::ERM_Deferred_Metallic, Graphics::ERM_Deferred_Roughness,
+	{
+		if (ImGui::CollapsingHeader("Render settings"))
+		{
+			const Graphics::ERenderMode rendermodes[] = { Graphics::ERM_ForwardShading, Graphics::ERM_DeferredShading, Graphics::ERM_Deferred_Albede, Graphics::ERM_Deferred_Metallic, Graphics::ERM_Deferred_Roughness,
 		Graphics::ERM_Deferred_Normal, Graphics::ERM_Deferred_Depth, Graphics::ERM_SSAO };
-	static bool toggles[] = { false, true, false, false, false, false, false, false };
-
-	if (ImGui::Button("ChooseRenderMode.."))
-		ImGui::OpenPopup("shading_mode_popup");
-	ImGui::SameLine();
-	ImGui::TextUnformatted(Graphics::g_renderModeNameMap.at(static_cast<uint8_t>(g_renderMode)));
-	if (ImGui::BeginPopup("shading_mode_popup"))
-	{
-		ImGui::Text("Shading Modes:");
-		ImGui::Separator();
-		for (int i = 0; i < IM_ARRAYSIZE(rendermodes); i++)
-			if (ImGui::Selectable(Graphics::g_renderModeNameMap.at(static_cast<uint8_t>(rendermodes[i]))))
+			static bool toggles[] = { false, true, false, false, false, false, false, false };
+			if (ImGui::Button("ChooseRenderMode.."))
+				ImGui::OpenPopup("shading_mode_popup");
+			ImGui::SameLine();
+			ImGui::TextUnformatted(Graphics::g_renderModeNameMap.at(static_cast<uint8_t>(g_renderMode)));
+			if (ImGui::BeginPopup("shading_mode_popup"))
 			{
-				g_renderMode = rendermodes[i];
+				ImGui::Text("Shading Modes:");
+				ImGui::Separator();
+				for (int i = 0; i < IM_ARRAYSIZE(rendermodes); i++)
+					if (ImGui::Selectable(Graphics::g_renderModeNameMap.at(static_cast<uint8_t>(rendermodes[i]))))
+					{
+						g_renderMode = rendermodes[i];
+					}
+				ImGui::EndPopup();
 			}
-		ImGui::EndPopup();
+		}
+		if (ImGui::CollapsingHeader("Lighting"))
+		{
+			ImGui::DragFloat("Ambient intensity", &aLight->Intensity, 0.01f, 0.0f, 10.0f);
+			ImGui::DragFloat("Directional light intensity", &dLight->Intensity, 0.5f, 0.0f, 1000.0f);
+
+			ImGui::ColorEdit3("Point Light Color: ", (float*)&m_pointLightColor);
+			if (ImGui::Button("Spawn Point Light"))
+			{
+				CreatePointLight(m_editorCamera->CamLocation() + m_editorCamera->Transform.Forward() * 100.f, m_pointLightColor, 250.f, true);
+			}
+		}
+		if (ImGui::CollapsingHeader("Post processing"))
+		{
+			static bool _enablePP = m_ppData.EnablePostProcessing;
+			ImGui::Checkbox("Enable Post processing", &_enablePP);
+			m_ppData.EnablePostProcessing = _enablePP;
+			if (_enablePP)
+			{
+				ImGui::PushItemWidth(100);
+				if (ImGui::TreeNode("Tone mapping mode"))
+				{
+					const const char* modes[4] = { "No Tone mapping", "Reinhard", "Filmic", "Uncharted" };
+					static int selected = m_ppData.TonemappingMode + 1;
+					for (int n = 0; n < 4; n++)
+					{
+						if (ImGui::Selectable(modes[n], selected == n))
+							selected = n;
+					}
+					m_ppData.TonemappingMode = selected - 1;
+					ImGui::TreePop();
+				}
+				if (ImGui::TreeNode("SSAO settings"))
+				{
+					ImGui::DragFloat("SSAO radius", &m_ssaoRadius, 0.01f, 5.f, 30.0f);
+					ImGui::DragFloat("SSAO power", &m_ssaoPower, 0.01f, 1.f, 10.0f);
+
+					ImGui::TreePop();
+				}
+				ImGui::DragFloat("Exposure", &m_ppData.Exposure, 0.01f, 0.0001f, 50.0f);
+				ImGui::PopItemWidth();
+				static bool _enableFxAA = m_ppData.EnableFxAA;
+				ImGui::Checkbox("EnableFxAA", &_enableFxAA);
+				m_ppData.EnableFxAA = _enableFxAA;
+			}
+		}
+
+		if (ImGui::Button("Reset"))
+		{
+			g_renderMode = Graphics::ERM_DeferredShading;
+			m_ppData.Exposure = 3.0f;
+		}
 	}
+	ImGui::End();
 
-
-	if (ImGui::DragFloat("Ambient", &m_ambientIntensity, 0.1f, 0.0f, 10.0f))
-		aLight->SetColor(Color(0.1f, 0.1f, 0.1f) * m_ambientIntensity);
-	if (ImGui::DragFloat("Directional", &m_directionalIntensity, 0.1f, 0.0f, 3.0f))
-		dLight->SetColor(Color(0.6f, 0.6f, 0.5f) * m_directionalIntensity);
-	ImGui::DragFloat("Exposure", &m_exposureOffset, 0.1f, 0.0001f, 50.0f);
-	if (ImGui::Button("Reset"))
+	ImGui::Begin("SelectedActor");
+	if (ISelectable::IsValid(Editor::SelectingItemID))
 	{
-		g_renderMode = Graphics::ERM_DeferredShading;
-		m_ambientIntensity = 1.0f;
-		m_directionalIntensity = 1.0f;
-		m_exposureOffset = 3.0f;
+		ISelectable* _selectable = ISelectable::s_selectableList.at(Editor::SelectingItemID);
+		cTransform* _itemTransform = nullptr;
+		if (_selectable &&_selectable->GetBoundTransform(_itemTransform))
+		{
+			float delta = ImGui::GetIO().MouseDelta.x;
+			// position
+			{
+				glm::vec3 _location = _itemTransform->Position();
+				if (ImGui::DragFloat3("Location", reinterpret_cast<float*>(&_location), 1.f, -5000.f, 5000.f))
+					_itemTransform->SetPosition(_location);
+			}
+			// rotation
+			{
+				glm::vec3 _eulerangles = _itemTransform->GetEulerAngle();
+				glm::vec3 _prevEulerAngle = _eulerangles;
+				glm::quat _quat = _itemTransform->Rotation();
+
+				if (ImGui::DragFloat3("Rotation", reinterpret_cast<float*>(&_eulerangles), 1.f, -3600.f, 3600.f))
+				{
+					if (glm::abs(_eulerangles.x - _prevEulerAngle.x) > 1.0f)
+						_itemTransform->SetRotation(_quat * glm::quat(glm::vec3(glm::radians(delta), 0, 0)));
+					else	if (glm::abs(_eulerangles.y - _prevEulerAngle.y) > 1.0f)
+						_itemTransform->SetRotation(_quat * glm::quat(glm::vec3(0, glm::radians(delta), 0)));
+					else	if (glm::abs(_eulerangles.z - _prevEulerAngle.z) > 1.0f)
+						_itemTransform->SetRotation(_quat * glm::quat(glm::vec3(0, 0, glm::radians(delta))));
+				}
+			}
+			// scale
+			{
+				glm::vec3 _scale = _itemTransform->Scale();
+				if (ImGui::DragFloat3("Scale", reinterpret_cast<float*>(&_scale), 0.5f, 0.01f, 1000.f))
+				{
+					_itemTransform->SetScale(_scale);
+				}
+			}
+
+			Graphics::cPointLight* _pLight = dynamic_cast<Graphics::cPointLight*>(_selectable);
+			if (_pLight)
+			{
+				if (ImGui::CollapsingHeader("Point Light properties"))
+				{
+					ImGui::ColorEdit3("Light color", (float*)&_pLight->LightColor);
+					ImGui::DragFloat("Light Intensity", &_pLight->Intensity, 0.5f, 0.01f, 1000.f);
+					if (ImGui::DragFloat("Light Range", &_pLight->Range, 1.f, 1.f, 1000.f))
+					{
+						_pLight->Transform.SetScale(glm::vec3(_pLight->Range));
+					}
+				}
+			}
+
+			Graphics::cModel* _model = dynamic_cast<Graphics::cModel*>(_selectable);
+			if (_model)
+			{
+				Graphics::cMatPBRMR* _pbrMat = dynamic_cast<Graphics::cMatPBRMR*>(Graphics::cMaterial::s_manager.Get(_model->GetMaterialAt()));
+				if (_pbrMat && ImGui::CollapsingHeader("PBR material properties"))
+				{
+					ImGui::ColorEdit3("DiffuseColor", reinterpret_cast<float*>(&_pbrMat->DiffuseIntensity));
+					ImGui::DragFloat("Metallic", &_pbrMat->MetallicIntensity, 0.01f, 0.0f, 1.0f);
+					ImGui::DragFloat("Roughness", &_pbrMat->RoughnessIntensity, 0.01f, 0.0f, 1.0f);
+					ImGui::DragFloat3("IoR", reinterpret_cast<float*>(&_pbrMat->IoR), 0.01f, 0.1f, 2.5f);
+				}
+
+			}
+		}
+	}
+	else
+	{
+		ImGui::Text("No actor is selected.");
 	}
 	ImGui::End();
 }
@@ -593,13 +781,12 @@ void Assignment::CleanUp()
 {
 	safe_delete(m_collisionSphere);
 	safe_delete(m_editorCamera);
-	for (int i = 0; i < m_renderingTeapotCount; ++i)
-	{
-		safe_delete(m_teapots[i]);
-}
 	safe_delete(m_cubemap);
-	safe_delete(m_spaceHolder);
+	for (int i = 0; i < g_renderActorList.size(); ++i)
+	{
+		safe_delete(g_renderActorList[i]);
+	}
 #ifdef ENABLE_CLOTH_SIM
 	ClothSim::CleanUpData();
 #endif
-}
+	}

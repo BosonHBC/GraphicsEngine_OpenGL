@@ -38,6 +38,7 @@ namespace Graphics {
 		void UpdateMaterial(const cMaterial::HANDLE& i_mat);
 		/** Getters */
 		cMaterial::HANDLE GetMaterialAt(GLuint i_idx = 0);
+		bool GetBoundTransform(cTransform *& o_transform) override;
 	private:
 
 		/** Mesh list and texture list should not be stored here,

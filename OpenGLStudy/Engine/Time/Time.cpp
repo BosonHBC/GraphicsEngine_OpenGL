@@ -4,6 +4,7 @@
 #include "Windows.h"
 namespace {
 	uint64_t s_tickCountPerSecond = 0;
+	float g_deltaTime;
 }
 
 namespace Time {
@@ -51,6 +52,16 @@ namespace Time {
 	{
 		assert(s_tickCountPerSecond > 0 && "s_tickCountPerSecond is smaller or equal to zero");
 		return static_cast<uint64_t>((i_second * static_cast<double>(s_tickCountPerSecond)) + 0.5);
+	}
+
+	float DeltaTime()
+	{
+		return g_deltaTime;
+	}
+
+	void SetDeltaTime(uint64_t tickCount_systemTime_elapsedSinceLastLoop)
+	{
+		g_deltaTime = ConvertFromTickToSeconds(tickCount_systemTime_elapsedSinceLastLoop);
 	}
 
 }

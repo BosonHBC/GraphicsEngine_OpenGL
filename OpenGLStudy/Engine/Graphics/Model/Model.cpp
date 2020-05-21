@@ -10,7 +10,8 @@
 
 #include "Assets/LoadTableFromLuaFile.h"
 #include "Assets/PathProcessor.h"
-
+#include "Math/Transform/Transform.h"
+#include "Cores/Actor/Actor.h"
 namespace Graphics {
 
 	bool cModel::LoadModel(const char* i_path)
@@ -43,7 +44,7 @@ namespace Graphics {
 		LoadNode(_modelPath.c_str(), _scene->mRootNode, _scene);
 		//  Load materials
 		LoadMaterials(_scene, _materialPath.c_str());
-	
+
 		return true;
 	}
 
@@ -60,15 +61,15 @@ namespace Graphics {
 
 	void cModel::Render(GLenum i_drawMode/* = GL_TRIANGLES*/) const
 	{
-		for (size_t i = 0; i < m_meshList.size(); ++i)
+		//for (size_t i = 0; i < m_meshList.size(); ++i)
 		{
 			cMaterial* _material = cMaterial::s_manager.Get(m_materialList[0]);
 			// if _maxIndex is in range and the texture is not a nullptr
 			if (_material) {
 				_material->UseMaterial();
 			}
-			
-			auto _mesh = cMesh::s_manager.Get(m_meshList[i]);
+
+			auto _mesh = cMesh::s_manager.Get(m_meshList[0]);
 			if (_mesh)
 				_mesh->Render(i_drawMode);
 
@@ -80,12 +81,12 @@ namespace Graphics {
 
 	void cModel::RenderWithoutMaterial(GLenum i_drawMode/* = GL_TRIANGLES*/) const
 	{
-		for (size_t i = 0; i < m_meshList.size(); ++i)
-		{
-			auto _mesh = cMesh::s_manager.Get(m_meshList[i]);
-			if (_mesh)
-				_mesh->Render(i_drawMode);
-		}
+		//for (size_t i = 0; i < m_meshList.size(); ++i)
+		//{
+		auto _mesh = cMesh::s_manager.Get(m_meshList[0]);
+		if (_mesh)
+			_mesh->Render(i_drawMode);
+		//}
 	}
 
 	void cModel::CleanUp()
@@ -103,7 +104,7 @@ namespace Graphics {
 		}
 		m_meshList.clear();
 		m_meshList.~vector();
-		
+
 		DecreamentSelectableCount();
 	}
 
@@ -129,10 +130,15 @@ namespace Graphics {
 
 
 
+	bool cModel::GetBoundTransform(cTransform *& o_transform)
+	{
+		if (!m_owner) return false;
+		return (o_transform = &(m_owner->Transform));
+	}
+
 	cModel::cModel(const std::string& i_path)
 	{
 		LoadModel(i_path.c_str());
-		
 	}
 
 	bool cModel::LoadFileFromLua(const char* i_path, std::string& o_modelPath, std::string& o_materialPath)

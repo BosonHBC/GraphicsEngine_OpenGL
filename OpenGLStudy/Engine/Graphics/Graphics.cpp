@@ -23,7 +23,8 @@
 #include "Graphics/FrameBuffer/GeometryBuffer.h"
 
 #include "Application/Window/WindowInput.h"
-
+#include "Cores/Utility/Profiler.h"
+#include "Graphics/Texture/PboDownloader.h"
 namespace Graphics {
 
 	unsigned int g_currentRenderPass = 0;
@@ -58,7 +59,10 @@ namespace Graphics {
 #endif // ENABLE_CLOTH_SIM
 	cTexture::HANDLE s_spruitSunRise_HDR;
 	cTexture::HANDLE g_ssaoNoiseTexture;
+	cTexture::HANDLE g_pointLightIconTexture;
 	cMaterial::HANDLE g_arrowMatHandles[2];
+	PboDownloader g_pboDownloader;
+	
 	// arrow colors
 	Color g_arrowColor[3] = { Color(0, 0, 0.8f), Color(0.8f, 0, 0),Color(0, 0.8f, 0) };
 	Color g_outlineColor(1, 0.64f, 0);
@@ -98,7 +102,6 @@ namespace Graphics {
 	cDirectionalLight* g_directionalLight;
 	std::vector<cPointLight*> g_pointLight_list;
 	std::vector<cSpotLight*> g_spotLight_list;
-
 
 	// Functions
 	// ------------------------------------------------------------------------------------------------------------------------------------
@@ -446,6 +449,19 @@ namespace Graphics {
 				outlineEffect->SetVec3("unlitColor", glm::vec3(g_outlineColor.r, g_outlineColor.g, g_outlineColor.b));
 				outlineEffect->UnUseEffect();
 			}
+			// draw billboard effect
+			{
+				if (!(result = CreateEffect(EET_Billboards,
+					"billboard/billboard_vert.glsl",
+					"billboard/billboard_frag.glsl"))) {
+					printf("Fail to create billboard effect.\n");
+					return result;
+				}
+				cEffect* billboardEffect = GetEffectByKey(EET_Outline);
+				billboardEffect->UseEffect();
+				billboardEffect->SetInteger("sprite", 0);
+				billboardEffect->UnUseEffect();
+			}
 			// validate all programs
 			for (auto it : g_KeyToEffect_map)
 			{
@@ -516,6 +532,7 @@ namespace Graphics {
 				return result;
 			}
 			
+			g_pboDownloader.init(GL_RGB, _window->GetBufferWidth(), _window->GetBufferHeight(), 2);
 
 			//EnvironmentCaptureManager::AddCaptureProbes(cSphere(glm::vec3(-225, 230, 0), 600.f), 50.f, envMapResolution);
 
@@ -525,7 +542,16 @@ namespace Graphics {
 
 			EnvironmentCaptureManager::BuildAccelerationStructure();
 
+
+			// create profilers
+			Profiler::CreateProfiler(Profiler::EPT_RenderAFrame);
+			Profiler::CreateProfiler(Profiler::EPT_GBuffer);
+			Profiler::CreateProfiler(Profiler::EPT_DeferredLighting);
+			Profiler::CreateProfiler(Profiler::EPT_PointLightShadowMap);
+			Profiler::CreateProfiler(Profiler::EPT_Selection);
 		}
+
+
 
 		// Load models & textures
 		{
@@ -561,18 +587,25 @@ namespace Graphics {
 		}
 		// Load textures
 		{
-			std::string _path = "HDR/spruit_sunrise_2k.png";
+			//std::string _path = "HDR/spruit_sunrise_2k.png";
+			std::string _path = "HDR/HDR_ENV_Dynamic_01_s.hdr";
 			_path = Assets::ProcessPathTex(_path);
 			if (!(result = cTexture::s_manager.Load(_path, s_spruitSunRise_HDR)))
 			{
-				printf("Failed to LoadspruitSunRise_HDR texture!\n");
+				printf("Failed to Load spruitSunRise_HDR texture!\n");
 				return result;
 			}
 			_path = "ssaoNoiseTexture";
 			if (!(result = cTexture::s_manager.Load(_path, g_ssaoNoiseTexture, ETT_FRAMEBUFFER_RGB32, g_noiseResolution, g_noiseResolution)))
 			{
-				printf("Failed to ssao_NoiseTexture!\n");
+				printf("Failed to load ssao_NoiseTexture!\n");
 				return result;
+			}
+			_path = "PointLightIcon.png";
+			_path = Assets::ProcessPathTex(_path);
+			if (!(result = cTexture::s_manager.Load(_path, g_pointLightIconTexture, ETT_FILE_ALPHA)))
+			{
+				printf("Fail to load %s\n", _path.c_str());
 			}
 		}
 
@@ -665,8 +698,6 @@ namespace Graphics {
 
 	void PreRenderFrame()
 	{
-
-
 		// After data has been submitted, swap the data
 		std::swap(g_dataSubmittedByApplicationThread, g_dataRenderingByGraphicThread);
 
@@ -732,23 +763,26 @@ namespace Graphics {
 	{
 		/** 1. Wait for data being submitted here */
 		// Acquire the lock
+		Profiler::StartRecording(6);
 		std::unique_lock<std::mutex> _mlock(g_graphicMutex);
 		/** 2.Wait until the conditional variable is signaled */
 		g_whenAllDataHasBeenSubmittedFromApplicationThread.wait(_mlock);
+		Profiler::StopRecording(6);
 
 		// After data has been submitted, swap the data
 		std::swap(g_dataSubmittedByApplicationThread, g_dataRenderingByGraphicThread);
 		// Notify the application thread that data is swapped and it is ready for receiving new data
 		g_whenDataHasBeenSwappedInRenderThread.notify_one();
 
+		Profiler::StartRecording(Profiler::EPT_RenderAFrame);
 		// For example calculate something here
 		auto& _IO = g_dataSubmittedByApplicationThread->g_IO;
-
 		// Update cubemap weights before rendering, actually, this step should be done at the application thread
 		EnvironmentCaptureManager::UpdatePointOfInterest(g_dataRenderingByGraphicThread->g_renderPasses[3].FrameData.GetViewPosition());
 		g_uniformBufferMap[UBT_ClipPlane].Update(&g_dataRenderingByGraphicThread->s_ClipPlane);
 		g_uniformBufferMap[UBT_PostProcessing].Update(&g_dataRenderingByGraphicThread->s_PostProcessing);
 		g_uniformBufferMap[UBT_SSAO].Update(&g_ssaoData);
+
 #ifdef ENABLE_CLOTH_SIM
 		cMesh::s_manager.Get(g_cloth)->UpdateBufferData(g_dataRenderingByGraphicThread->clothVertexData, ClothSim::VC * 14);
 #endif // ENABLE_CLOTH_SIM
@@ -759,12 +793,16 @@ namespace Graphics {
 		}
 		else // if not forward shading, it is deferred shading
 		{
+			Profiler::StartRecording(2);
 			DeferredShading();
+			Profiler::StopRecording(2);
 		}
 
 		if (g_dataRenderingByGraphicThread->g_renderMode == ERM_DeferredShading || g_dataRenderingByGraphicThread->g_renderMode == ERM_ForwardShading)
 		{
+			Profiler::StartRecording(3);
 			HDR_Pass();
+			Profiler::StopRecording(3);
 
 			// Clear the default buffer bit and copy hdr frame buffer's depth to the default frame buffer
 			glClear(GL_DEPTH_BUFFER_BIT | GL_STENCIL_BUFFER_BIT);
@@ -772,14 +810,31 @@ namespace Graphics {
 			assert(GL_NO_ERROR == glGetError());
 
 			// Render stuffs that needs depth info and needs not HDR info
+			Profiler::StartRecording(4);
 			RenderPointLightPosition();
+			Profiler::StopRecording(4);
 			//Gizmo_DrawDebugCaptureVolume();
-			RenderOmniShadowMap();
+			//RenderOmniShadowMap();
 
+
+			Profiler::StartRecording(Profiler::EPT_Selection);
+			Profiler::StartRecording(5);
 			EditorPass();
+			Profiler::StopRecording(5);
+			Profiler::StopRecording(Profiler::EPT_Selection);
+
 		}
-			
+		Profiler::StopRecording(Profiler::EPT_RenderAFrame);
+
 		/** 4. After all render of this frame is done*/
+		/*  
+		// GPU profiling will take a long time because this need to wait until a GPU finish its rendering so this will take a long time, should avoid when unneccessary.
+		 Profiler::GetProfilingTime(Profiler::EPT_RenderAFrame, g_dataGetFromRenderThread->g_deltaRenderAFrameTime);
+		 Profiler::GetProfilingTime(Profiler::EPT_GBuffer, g_dataGetFromRenderThread->g_deltaGeometryTime);
+		 Profiler::GetProfilingTime(Profiler::EPT_DeferredLighting, g_dataGetFromRenderThread->g_deltaDeferredLightingTime);
+		 Profiler::GetProfilingTime(Profiler::EPT_PointLightShadowMap, g_dataGetFromRenderThread->g_deltaPointLightShadowMapTime);
+		 Profiler::GetProfilingTime(Profiler::EPT_Selection, g_dataGetFromRenderThread->g_deltaSelectionTime);
+		 */
 
 		// swap data and notify data has been swapped.
 		std::swap(g_dataGetFromRenderThread, g_dataUsedByApplicationThread);
@@ -791,9 +846,12 @@ namespace Graphics {
 		g_dataSubmittedByApplicationThread->s_ClipPlane = UniformBufferFormats::sClipPlane(i_plane0, i_plane1, i_plane2, i_plane3);
 	}
 
-	void SubmitPostProcessingData(const float i_exposure)
+	void SubmitPostProcessingData(const UniformBufferFormats::sPostProcessing& i_ppData, float i_ssaoRadius, float i_ssaoPower)
 	{
-		g_dataSubmittedByApplicationThread->s_PostProcessing.Exposure = i_exposure;
+		g_dataSubmittedByApplicationThread->s_PostProcessing = i_ppData;
+
+		g_ssaoData.radius = i_ssaoRadius;
+		g_ssaoData.power = i_ssaoPower;
 	}
 
 	void SubmitLightingData(const std::vector<cPointLight>& i_pointLights, const std::vector<cSpotLight>& i_spotLights, const cAmbientLight& i_ambientLight, const cDirectionalLight& i_directionalLight)
@@ -816,9 +874,23 @@ namespace Graphics {
 		}
 	}
 
-	void SubmitSelectedItem(uint32_t i_selectionID)
+	void SubmitSelectionData(uint32_t i_selectionID, const std::vector<std::pair<cModel, cTransform>>& i_modelTransformPairForSelection)
 	{
 		g_dataSubmittedByApplicationThread->g_selectingItemID = i_selectionID;
+		g_dataSubmittedByApplicationThread->g_modelTransformPairForSelectionPass = i_modelTransformPairForSelection;
+
+		auto& tempPair = g_dataSubmittedByApplicationThread->g_modelTransformPairForSelectionPass;
+		const auto* frameData = &g_dataSubmittedByApplicationThread->g_renderPasses[3].FrameData;
+
+		// render map + point light count + 3 transform gizmo
+		tempPair.reserve(tempPair.size() + g_dataSubmittedByApplicationThread->g_pointLights.size() + 3);
+
+		for (auto item : g_dataSubmittedByApplicationThread->g_pointLights)
+		{
+			g_quadHandle.SelectableID = item.SelectableID;
+			cTransform pLightTransform(item.Transform.Position(), glm::quatLookAt(glm::normalize(frameData->GetViewPosition() - item.Transform.Position()), glm::vec3(frameData->ViewMatrix[0][0], frameData->ViewMatrix[0][1], frameData->ViewMatrix[0][2])), glm::vec3(10, 10, 10));
+			tempPair.push_back({ g_quadHandle, pLightTransform });
+		}
 	}
 
 #ifdef ENABLE_CLOTH_SIM
@@ -888,6 +960,8 @@ namespace Graphics {
 
 		cTexture::s_manager.Release(s_spruitSunRise_HDR);
 		cTexture::s_manager.Release(g_ssaoNoiseTexture);
+		cTexture::s_manager.Release(g_pointLightIconTexture);
+		g_pboDownloader.cleanUp();
 		cMesh::s_manager.Release(s_point);
 #ifdef ENABLE_CLOTH_SIM
 		cMesh::s_manager.Release(g_cloth);
@@ -1030,7 +1104,9 @@ namespace Graphics {
 		}
 		g_ambientLight = new  cAmbientLight(i_color);
 		g_ambientLight->SetupLight(0, 0);
+		g_ambientLight->Intensity = 0.2f;
 		o_ambientLight = g_ambientLight;
+
 		return result;
 	}
 
@@ -1041,6 +1117,8 @@ namespace Graphics {
 		cPointLight* newPointLight = new cPointLight(i_color, i_initialLocation, i_radius);
 		newPointLight->SetEnableShadow(i_enableShadow);
 		newPointLight->CreateShadowMap(2048, 2048);
+		newPointLight->IncreamentSelectableCount();
+		newPointLight->Intensity = 30.f;
 		o_pointLight = newPointLight;
 		g_pointLight_list.push_back(newPointLight);
 		return result;
@@ -1064,7 +1142,7 @@ namespace Graphics {
 		cDirectionalLight* newDirectionalLight = new cDirectionalLight(i_color, glm::normalize(i_direction));
 		newDirectionalLight->SetEnableShadow(i_enableShadow);
 		newDirectionalLight->CreateShadowMap(2048, 2048);
-
+		newDirectionalLight->Intensity = 3;
 		o_directionalLight = newDirectionalLight;
 		g_directionalLight = newDirectionalLight;
 		return result;
@@ -1096,5 +1174,6 @@ namespace Graphics {
 		g_dataSubmittedByApplicationThread->g_renderPasses.clear();
 		g_dataSubmittedByApplicationThread->g_pointLights.clear();
 		g_dataSubmittedByApplicationThread->g_spotLights.clear();
+		g_dataSubmittedByApplicationThread->g_modelTransformPairForSelectionPass.clear();
 	}
 }
