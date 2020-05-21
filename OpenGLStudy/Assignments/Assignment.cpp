@@ -54,7 +54,7 @@ bool Assignment::Initialize(GLuint i_width, GLuint i_height, const char* i_windo
 	//Graphics::cMatPBRMR* _spaceHolderMat = dynamic_cast<Graphics::cMatPBRMR*>(Graphics::cModel::s_manager.Get(m_spaceHolder->GetModelHandle())->GetMaterialAt());
 
 	m_renderingTeapotCount = glm::clamp(m_renderingTeapotCount, 0, s_maxTeapotCount);
-	m_createdPLightCount = glm::clamp(m_createdPLightCount, 1, s_maxPLightCount);
+	m_createdPLightCount = glm::clamp(m_createdPLightCount, 0, s_maxPLightCount);
 
 	m_ppData.Exposure = 0.9f;
 	m_ppData.EnableFxAA = true;
@@ -185,8 +185,8 @@ void Assignment::SubmitDataToBeRender(const float i_seconds_elapsedSinceLastLoop
 	_renderingMap.reserve(g_renderActorList.size());
 
 	// Submit geometry data
-	SubmitSceneData(_renderingMap,  &_frameData_Camera);
-	
+	SubmitSceneData(_renderingMap, &_frameData_Camera);
+
 	// Submit Selection data
 	Graphics::SubmitSelectionData(Editor::SelectingItemID, _renderingMap);
 
@@ -346,67 +346,6 @@ void Assignment::Tick(float second_since_lastFrame)
 
 	auto& dataFromRenderThread = Graphics::GetDataFromRenderThread();
 
-	int hoverArrowDirection = -1;
-	bool isHoveringTransformGizmo = Graphics::IsTransformGizmoIsHovered(dataFromRenderThread.g_selectionID, hoverArrowDirection);
-	glm::vec4 dragDelta(glm::vec2(_windowInput->DX(), _windowInput->DY()), 0, 0);
-	static bool dragingTransform = false;
-	static int draggingDirection = -1;
-	if (!ImGui::GetIO().WantCaptureMouse)
-	{
-
-		if (isHoveringTransformGizmo && !dragingTransform && ImGui::IsMouseDown(0))
-		{
-			dragingTransform = true;
-			draggingDirection = hoverArrowDirection;
-			Graphics::SetArrowBeingSelected(true, draggingDirection);
-		}
-
-		// Only when 1. release the mouse; 2. not hovering a transform; 3. not on a UI; 4. not dragging
-		if (ImGui::IsMouseReleased(0) && !isHoveringTransformGizmo && !dragingTransform
-			&& IsFloatZero(dragDelta.x) && IsFloatZero(dragDelta.y))
-		{
-			Editor::SelectingItemID = dataFromRenderThread.g_selectionID;
-		}
-
-		if (dragingTransform && ImGui::IsMouseDown(0) && ISelectable::IsValid(Editor::SelectingItemID) && (!IsFloatZero(dragDelta.x) || !IsFloatZero(dragDelta.y)))
-		{
-			cTransform* edittingTransform = nullptr;
-			if (ISelectable::s_selectableList[Editor::SelectingItemID]->GetBoundTransform(edittingTransform))
-			{
-				glm::vec3 dragInWorldSpace = m_editorCamera->GetInvViewMatrix() * dragDelta;
-				float dragVelocity = glm::length(dragInWorldSpace);
-				glm::vec3 dragInWorldSpace_norm = dragInWorldSpace / dragVelocity;
-				glm::vec3 direction(0.0f);
-				switch (draggingDirection)
-				{
-				case 0:
-					direction = edittingTransform->Forward();
-					break;
-				case 1:
-					direction = edittingTransform->Right();
-					break;
-				case 2:
-					direction = edittingTransform->Up();
-					break;
-				default:
-					break;
-				}
-
-				float directionSign = glm::dot(direction, dragInWorldSpace_norm) > 0 ? 1 : -1;
-				edittingTransform->Translate(direction * directionSign * 100.f * dragVelocity * second_since_lastFrame);
-			}
-		}
-
-		if (dragingTransform && ImGui::IsMouseReleased(0))
-		{
-			dragingTransform = false;
-			Graphics::SetArrowBeingSelected(false, draggingDirection);
-			draggingDirection = -1;
-
-		}
-	}
-
-
 	for (int i = 0; i < g_renderActorList.size(); ++i)
 	{
 		g_renderActorList[i]->Transform.Update();
@@ -492,7 +431,7 @@ void Assignment::SubmitSceneData(std::vector<std::pair<Graphics::cModel, cTransf
 			io_sceneData.push_back({ g_renderActorList[i]->GetModelHandle(), g_renderActorList[i]->Transform });
 		}
 		Graphics::SubmitDataToBeRendered(*i_frameData, io_sceneData, &Graphics::PBR_Pass);
-	}
+}
 
 	// Cube map
 	{
@@ -575,6 +514,69 @@ void Assignment::FixedTick()
 void Assignment::EditorGUI()
 {
 	auto& dataFromRenderThread = Graphics::GetDataFromRenderThread();
+	// handle selecting
+	{
+		int hoverArrowDirection = -1;
+		bool isHoveringTransformGizmo = Graphics::IsTransformGizmoIsHovered(dataFromRenderThread.g_selectionID, hoverArrowDirection);
+		glm::vec4 dragDelta(glm::vec2(ImGui::GetIO().MouseDelta.x, -ImGui::GetIO().MouseDelta.y), 0, 0);
+		static bool dragingTransform = false;
+		static int draggingDirection = -1;
+		if (!ImGui::GetIO().WantCaptureMouse)
+		{
+			bool isReleased = ImGui::IsMouseReleased(0);
+
+			// Only when 1. release the mouse; 2. not hovering a transform; 3. not on a UI; 4. not dragging
+			if (isReleased && !isHoveringTransformGizmo && !dragingTransform
+				&& IsFloatZero(dragDelta.x) && IsFloatZero(dragDelta.y))
+			{
+				Editor::SelectingItemID = dataFromRenderThread.g_selectionID;
+			}
+
+			if (isHoveringTransformGizmo && !dragingTransform && ImGui::IsMouseDown(0))
+			{
+				dragingTransform = true;
+				draggingDirection = hoverArrowDirection;
+				Graphics::SetArrowBeingSelected(true, draggingDirection);
+			}
+
+			if (dragingTransform && ImGui::IsMouseDown(0) && ISelectable::IsValid(Editor::SelectingItemID) && (!IsFloatZero(dragDelta.x) || !IsFloatZero(dragDelta.y)))
+			{
+				cTransform* edittingTransform = nullptr;
+				if (ISelectable::s_selectableList[Editor::SelectingItemID]->GetBoundTransform(edittingTransform))
+				{
+					glm::vec3 dragInWorldSpace = m_editorCamera->GetInvViewMatrix() * dragDelta;
+					float dragVelocity = glm::length(dragInWorldSpace);
+					glm::vec3 dragInWorldSpace_norm = dragInWorldSpace / dragVelocity;
+					glm::vec3 direction(0.0f);
+					switch (draggingDirection)
+					{
+					case 0:
+						direction = edittingTransform->Forward();
+						break;
+					case 1:
+						direction = edittingTransform->Right();
+						break;
+					case 2:
+						direction = edittingTransform->Up();
+						break;
+					default:
+						break;
+					}
+
+					float directionSign = glm::dot(direction, dragInWorldSpace_norm) > 0 ? 1 : -1;
+					edittingTransform->Translate(direction * directionSign * 100.f * dragVelocity * 0.02f);
+				}
+			}
+
+			if (dragingTransform && isReleased)
+			{
+				dragingTransform = false;
+				Graphics::SetArrowBeingSelected(false, draggingDirection);
+				draggingDirection = -1;
+			}
+		}
+	}
+
 
 	ImGui::Begin("Status");
 	ImGui::Text("Application average %.3f ms/frame (%.1f FPS)", 1000.0f / ImGui::GetIO().Framerate, ImGui::GetIO().Framerate);
@@ -593,12 +595,12 @@ void Assignment::EditorGUI()
 		ImGui::TextWrapped("Render thread waiting time CPU");
 
 
-/*
-		ImGui::TextWrapped("Render a frame GPU");
-		ImGui::TextWrapped("G-Buffer_GPU");
-		ImGui::TextWrapped("Deferred Lighting_GPU");
-		ImGui::TextWrapped("PointLight shadow map_GPU");
-		ImGui::TextWrapped("Editor_GPU");*/
+		/*
+				ImGui::TextWrapped("Render a frame GPU");
+				ImGui::TextWrapped("G-Buffer_GPU");
+				ImGui::TextWrapped("Deferred Lighting_GPU");
+				ImGui::TextWrapped("PointLight shadow map_GPU");
+				ImGui::TextWrapped("Editor_GPU");*/
 		ImGui::NextColumn();
 
 		ImGui::TextWrapped("%.4f ms/frame", Time::DeltaTime() * 1000);
@@ -609,12 +611,12 @@ void Assignment::EditorGUI()
 			ImGui::TextWrapped("%.4f ms/frame", f);
 		}
 
-/*
-		ImGui::TextWrapped("%.4f ms/frame", dataFromRenderThread.g_deltaRenderAFrameTime);
-		ImGui::TextWrapped("%.4f ms/frame", dataFromRenderThread.g_deltaGeometryTime);
-		ImGui::TextWrapped("%.4f ms/frame", dataFromRenderThread.g_deltaDeferredLightingTime);
-		ImGui::TextWrapped("%.4f ms/frame", dataFromRenderThread.g_deltaPointLightShadowMapTime);
-		ImGui::TextWrapped("%.4f ms/frame", dataFromRenderThread.g_deltaSelectionTime);*/
+		/*
+				ImGui::TextWrapped("%.4f ms/frame", dataFromRenderThread.g_deltaRenderAFrameTime);
+				ImGui::TextWrapped("%.4f ms/frame", dataFromRenderThread.g_deltaGeometryTime);
+				ImGui::TextWrapped("%.4f ms/frame", dataFromRenderThread.g_deltaDeferredLightingTime);
+				ImGui::TextWrapped("%.4f ms/frame", dataFromRenderThread.g_deltaPointLightShadowMapTime);
+				ImGui::TextWrapped("%.4f ms/frame", dataFromRenderThread.g_deltaSelectionTime);*/
 		ImGui::Columns(1);
 		ImGui::Separator();
 
@@ -655,7 +657,6 @@ void Assignment::EditorGUI()
 			if (ImGui::Button("Spawn Point Light"))
 			{
 				CreatePointLight(m_editorCamera->CamLocation() + m_editorCamera->Transform.Forward() * 100.f, m_pointLightColor, 250.f, true);
-				printf("Current Point Light Count: %d\n", m_createdPLightCount);
 			}
 		}
 		if (ImGui::CollapsingHeader("Post processing"))
@@ -788,4 +789,4 @@ void Assignment::CleanUp()
 #ifdef ENABLE_CLOTH_SIM
 	ClothSim::CleanUpData();
 #endif
-}
+	}
