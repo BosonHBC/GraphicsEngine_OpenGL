@@ -45,7 +45,7 @@ namespace Graphics {
 
 		/** Initializations and clean up*/
 		/** Create program with default vertex shader and fragment shader*/
-		bool CreateProgram(const char* const i_vertexShaderPath, const char* const i_fragmentShaderPath, const char* const i_geometryShaderPath = "", const char* const i_TCSPath = "", const char* const i_TESPath = "");
+		bool CreateProgram(eEffectType i_effectType, const char* const i_vertexShaderPath, const char* const i_fragmentShaderPath, const char* const i_geometryShaderPath = "", const char* const i_TCSPath = "", const char* const i_TESPath = "");
 		bool LinkProgram();
 		bool ValidateProgram();
 		void CleanUp();
@@ -62,7 +62,7 @@ namespace Graphics {
 	protected:
 		/** private variables*/
 		GLuint m_programID;
-
+		eEffectType m_type;
 		std::map<GLenum, sGLShader*> m_shaders;
 
 		/** private helper functions*/
@@ -74,6 +74,8 @@ namespace Graphics {
 		bool IsPathNull(const char* const i_incomingPath);
 
 		bool IsUniformIDValid(const GLuint& i_id);
+
+		void FixSamplerProblem();
 	};
 
 }

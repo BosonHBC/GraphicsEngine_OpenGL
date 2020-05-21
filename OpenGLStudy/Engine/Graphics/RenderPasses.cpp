@@ -14,6 +14,7 @@
 #include "Cores/Utility/Profiler.h"
 #include "Time/Time.h"
 #include "Texture/PboDownloader.h"
+#include "Constants/Constants.h"
 
 namespace Graphics
 {
@@ -59,8 +60,6 @@ namespace Graphics
 	bool g_bRenderOmniShaodowMap = false;
 	// clear color
 	Color s_clearColor;
-	extern Color g_outlineColor;
-	extern Color g_arrowColor[3];
 	extern unsigned int queryIDGeometry[2];
 	void RenderQuad(const UniformBufferFormats::sFrame& i_frameData = UniformBufferFormats::sFrame(), const UniformBufferFormats::sDrawCall& i_drawCallData = UniformBufferFormats::sDrawCall())
 	{
@@ -117,7 +116,6 @@ namespace Graphics
 			g_currentEffect = GetEffectByKey(EET_CubemapDisplayer);
 			g_currentEffect->UseEffect();
 
-			g_currentEffect->SetInteger("cubemapTex", 0);
 			g_omniShadowMaps[i].Read(GL_TEXTURE0);
 
 			cTransform tempTr(glm::vec3(-300, 200, 300 - 150 * i), glm::quat(1, 0, 0, 0), glm::vec3(5, 5, 5));
@@ -551,7 +549,7 @@ namespace Graphics
 		g_currentEffect = GetEffectByKey(EET_DeferredLighting);
 		g_currentEffect->UseEffect();
 
-		GLenum _textureUnits[4] = { GL_TEXTURE0 , GL_TEXTURE1 ,GL_TEXTURE2, GL_TEXTURE3 };
+		static GLenum _textureUnits[4] = { GL_TEXTURE0 , GL_TEXTURE1 ,GL_TEXTURE2, GL_TEXTURE3 };
 		g_GBuffer.Read(_textureUnits);
 		g_ssao_blur_Buffer.Read(GL_TEXTURE0 + SHADOWMAP_START_TEXTURE_UNIT + OMNI_SHADOW_MAP_COUNT * 2 + 1);
 		UpdateInfoForPBR();
@@ -714,7 +712,7 @@ namespace Graphics
 			g_uniformBufferMap[UBT_Drawcall].Update(&UniformBufferFormats::sDrawCall(i_arrowTransforms[i].M(), i_arrowTransforms[i].TranspostInverse()));
 			if (i == hoveredArrowDirection)
 			{
-				g_currentEffect->SetVec3("unlitColor", 0.8f * glm::vec3(g_outlineColor.r, g_outlineColor.g, g_outlineColor.b));
+				g_currentEffect->SetVec3("unlitColor", 0.8f * glm::vec3(Constants::g_outlineColor.r, Constants::g_outlineColor.g, Constants::g_outlineColor.b));
 				g_arrowHandles[i].RenderWithoutMaterial();
 			}
 			else
@@ -921,7 +919,7 @@ namespace Graphics
 			cMatUnlit* _arrowMat = dynamic_cast<cMatUnlit*>(cMaterial::s_manager.Get(g_arrowHandles[i_direction].GetMaterialAt()));
 			if (_arrowMat)
 			{
-				_arrowMat->SetUnlitColor(i_selected ? g_outlineColor * 0.8f : g_arrowColor[i_direction]);
+				_arrowMat->SetUnlitColor(i_selected ? Constants::g_outlineColor * 0.8f : Constants::g_arrowColor[i_direction]);
 			}
 		}
 	}

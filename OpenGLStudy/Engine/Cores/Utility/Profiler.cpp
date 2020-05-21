@@ -24,6 +24,7 @@ namespace Profiler
 		const sGPUProfilerUnit& _unit = g_GPUProfileUnits.at(i_type);
 
 		glQueryCounter(_unit.queryID[0], GL_TIMESTAMP);
+		return true;
 	}
 
 	bool StopRecording(eGPUProfileType i_type)
@@ -32,6 +33,7 @@ namespace Profiler
 		const sGPUProfilerUnit& _unit = g_GPUProfileUnits.at(i_type);
 
 		glQueryCounter(_unit.queryID[1], GL_TIMESTAMP);
+		return true;
 	}
 
 

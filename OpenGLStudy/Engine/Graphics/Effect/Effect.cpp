@@ -6,6 +6,9 @@
 #include "glm/gtc/type_ptr.hpp"
 
 #include "Shader/GLShader.h"
+#include "Cores/Core.h"
+#include "Constants/Constants.h"
+#include "Graphics/EnvironmentCaptureManager.h"
 
 namespace Graphics {
 	cEffect::cEffect()
@@ -18,7 +21,7 @@ namespace Graphics {
 		CleanUp();
 	}
 
-	bool cEffect::CreateProgram(const char* const i_vertexShaderPath, const char* const i_fragmentShaderPath, const char* const i_geometryShaderPath /*= ""*/, const char* const i_TCSPath /*= ""*/, const char* const i_TESPath/* = ""*/)
+	bool cEffect::CreateProgram(eEffectType i_effectType, const char* const i_vertexShaderPath, const char* const i_fragmentShaderPath, const char* const i_geometryShaderPath /*= ""*/, const char* const i_TCSPath /*= ""*/, const char* const i_TESPath/* = ""*/)
 	{
 		m_programID = glCreateProgram();
 		if (!m_programID) {
@@ -65,10 +68,13 @@ namespace Graphics {
 			return false;
 		}
 
+		m_type = i_effectType;
 		if (!BindUniformVariables()) {
 			printf("Error binding uniform variables!");
 			return false;
 		}
+
+
 		return true;
 	}
 
@@ -83,6 +89,7 @@ namespace Graphics {
 			printf("Error Linking program: %d \n%s", m_programID, eLog);
 			return false;
 		}
+		assert(GL_NO_ERROR == glGetError());
 		return true;
 	}
 
@@ -122,6 +129,89 @@ namespace Graphics {
 
 	bool cEffect::BindUniformVariables()
 	{
+		UseEffect();
+		switch (m_type)
+		{
+		case Graphics::EET_BlinnPhong:
+			FixSamplerProblem();
+			break;
+		case Graphics::EET_ShadowMap:
+			break;
+		case Graphics::EET_OmniShadowMap:
+			break;
+		case Graphics::EET_Cubemap:
+			break;
+		case Graphics::EET_Unlit:
+			break;
+		case Graphics::EET_NormalDisplay:
+			break;
+		case Graphics::EET_PBR_MR:
+			FixSamplerProblem();
+			break;
+		case Graphics::EET_HDRToCubemap:
+			SetInteger("rectangularHDRMap", 0);
+			break;
+		case Graphics::EET_IrradConvolution:
+			break;
+		case Graphics::EET_CubemapPrefilter:
+			break;
+		case Graphics::EET_BrdfIntegration:
+			break;
+		case Graphics::EET_DrawDebugCircles:
+			break;
+		case Graphics::EET_TessQuad:
+			FixSamplerProblem();
+			break;
+		case Graphics::EET_TriangulationDisplay:
+			break;
+		case Graphics::EET_HDREffect:
+			SetInteger("hdrBuffer", 0);
+			SetInteger("enableHDR", true);
+			break;
+		case Graphics::EET_GBuffer:
+			break;
+		case Graphics::EET_GBufferDisplay:
+			SetInteger("gAlbedoMetallic", 0);
+			SetInteger("gNormalRoughness", 1);
+			SetInteger("gIOR", 2);
+			SetInteger("gDepth", 3);
+			SetInteger("gSSAOMap", 4);
+			break;
+		case Graphics::EET_DeferredLighting:
+			SetInteger("gAlbedoMetallic", 0);
+			SetInteger("gNormalRoughness", 1);
+			SetInteger("gIOR", 2);
+			SetInteger("gDepth", 3);
+			SetInteger("gSSAOMap", SHADOWMAP_START_TEXTURE_UNIT + OMNI_SHADOW_MAP_COUNT * 2 + 1);
+			FixSamplerProblem();
+			break;
+		case Graphics::EET_SSAO:
+			SetInteger("gNormalRoughness", 0);
+			SetInteger("gDepth", 1);
+			SetInteger("texNoise", 2);
+			break;
+		case Graphics::EET_SSAO_Blur:
+			SetInteger("ssaoInput", 0);
+			break;
+		case Graphics::EET_CubemapDisplayer:
+			SetInteger("cubemapTex", 0);
+			break;
+		case Graphics::EET_SelectionBuffer:
+			break;
+		case Graphics::EET_Outline:
+			SetFloat("outlineWidth", 0.15f);
+			SetVec3("unlitColor", glm::vec3(Constants::g_outlineColor.r, Constants::g_outlineColor.g, Constants::g_outlineColor.b));
+			break;
+		case Graphics::EET_Billboards:
+			SetInteger("sprite", 0);
+			break;
+		case Graphics::EET_Invalid:
+			break;
+		default:
+			break;
+		}
+		UnUseEffect();
+		assert(GL_NO_ERROR == glGetError());
 		return true;
 	}
 
@@ -160,15 +250,17 @@ namespace Graphics {
 	{
 		GLuint _ID = glGetUniformLocation(m_programID, i_uniformName);
 		if (IsUniformIDValid(_ID))
+		{
 			glUniform1i(_ID, i_int);
-		assert(GL_NO_ERROR == glGetError());
+			assert(GL_NO_ERROR == glGetError());
+		}
 	}
 
 	void cEffect::SetFloat(const char* const i_uniformName, const GLfloat& i_float)
 	{
 		GLuint _ID = glGetUniformLocation(m_programID, i_uniformName);
-		if(IsUniformIDValid(_ID)) glUniform1f(_ID, i_float);
-		
+		if (IsUniformIDValid(_ID)) glUniform1f(_ID, i_float);
+
 		assert(GL_NO_ERROR == glGetError());
 	}
 
@@ -203,5 +295,32 @@ namespace Graphics {
 		glAttachShader(m_programID, m_shaders.at(i_shaderType)->GetShaderID());
 		return true;
 	}
+	void cEffect::FixSamplerProblem()
+	{
+		// Fix sampler problem before validating the program
+		char _charBuffer[64] = { '\0' };
 
+		SetInteger("BrdfLUTMap", 4);
+		SetInteger("AOMap", 5);
+
+		const auto maxCubemapMixing = EnvironmentCaptureManager::MaximumCubemapMixingCount();
+		constexpr auto cubemapStartID = IBL_CUBEMAP_START_TEXTURE_UNIT;
+		for (size_t i = 0; i < maxCubemapMixing; ++i)
+		{
+			snprintf(_charBuffer, sizeof(_charBuffer), "IrradianceMap[%d]", i);
+			SetInteger(_charBuffer, cubemapStartID + i);
+			snprintf(_charBuffer, sizeof(_charBuffer), "PrefilterMap[%d]", i);
+			SetInteger(_charBuffer, cubemapStartID + maxCubemapMixing + i);
+		}
+		for (int i = 0; i < OMNI_SHADOW_MAP_COUNT; ++i)
+		{
+			snprintf(_charBuffer, sizeof(_charBuffer), "spotlightShadowMap[%d]", i);
+			SetInteger(_charBuffer, SHADOWMAP_START_TEXTURE_UNIT + i);
+			snprintf(_charBuffer, sizeof(_charBuffer), "pointLightShadowMap[%d]", i);
+			SetInteger(_charBuffer, SHADOWMAP_START_TEXTURE_UNIT + OMNI_SHADOW_MAP_COUNT + i);
+		}
+		SetInteger("directionalShadowMap", SHADOWMAP_START_TEXTURE_UNIT + OMNI_SHADOW_MAP_COUNT * 2);
+		assert(GL_NO_ERROR == glGetError());
+
+	}
 }
