@@ -150,6 +150,9 @@
     <ClCompile Include="Texture\PboDownloader.cpp">
       <Filter>Source Files\Texture</Filter>
     </ClCompile>
+    <ClCompile Include="Effect\Shader\GLShader.cpp">
+      <Filter>Source Files\Effect\Shader</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Graphics.h">

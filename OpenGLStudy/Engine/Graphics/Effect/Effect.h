@@ -31,6 +31,7 @@ namespace Graphics {
 		EET_SelectionBuffer,
 		EET_Outline,
 		EET_Billboards,
+		EET_ParticleTest,
 		EET_Invalid = static_cast<uint16_t>(-1),
 	};
 	/** Forward declaration*/

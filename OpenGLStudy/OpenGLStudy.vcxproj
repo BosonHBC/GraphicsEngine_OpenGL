@@ -203,11 +203,13 @@ xcopy $(SolutionDir)Contents $(targetDir)Contents /Y /E /I</Command>
   <ItemGroup>
     <ClCompile Include="Assignments\Assignment.cpp" />
     <ClCompile Include="Assignments\ClothSimulation\SimulationParams.cpp" />
+    <ClCompile Include="Assignments\ParticleTest.cpp" />
     <ClCompile Include="EntryPoint.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Assignments\Assignment.h" />
     <ClInclude Include="Assignments\ClothSimulation\SimulationParams.h" />
+    <ClInclude Include="Assignments\ParticleTest.h" />
     <ClInclude Include="Tool\stb_image.h" />
   </ItemGroup>
   <ItemGroup>

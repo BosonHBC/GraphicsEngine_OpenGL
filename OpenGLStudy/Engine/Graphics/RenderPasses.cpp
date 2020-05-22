@@ -16,6 +16,8 @@
 #include "Texture/PboDownloader.h"
 #include "Constants/Constants.h"
 
+#include "Assignments/ParticleTest.h"
+
 namespace Graphics
 {
 	extern unsigned int g_currentRenderPass;
@@ -631,6 +633,8 @@ namespace Graphics
 						g_uniformBufferMap[UBT_Frame].Update(&g_dataRenderingByGraphicThread->g_renderPasses[g_currentRenderPass].FrameData);
 						CubeMap_Pass();
 					}
+
+					ComputeShaderTest::RenderParticle();
 				}
 			);
 

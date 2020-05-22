@@ -25,6 +25,7 @@
 #include "Application/Window/WindowInput.h"
 #include "Cores/Utility/Profiler.h"
 #include "Graphics/Texture/PboDownloader.h"
+#include "Assignments/ParticleTest.h"
 namespace Graphics {
 
 	unsigned int g_currentRenderPass = 0;
@@ -385,6 +386,15 @@ namespace Graphics {
 					return result;
 				}
 			}
+			// particle test
+			{
+				if (!(result = CreateEffect(EET_ParticleTest,
+					"particle/particle_vert.glsl",
+					"particle/particle_frag.glsl"))) {
+					printf("Fail to create ParticleTest effect.\n");
+					return result;
+				}
+			}
 			// validate all programs
 			for (auto it : g_KeyToEffect_map)
 			{
@@ -616,6 +626,8 @@ namespace Graphics {
 			}
 		}
 #endif // ENABLE_CLOTH_SIM
+
+		ComputeShaderTest::Init();
 		return result;
 	}
 
@@ -711,6 +723,7 @@ namespace Graphics {
 		if (g_dataRenderingByGraphicThread->g_renderMode == ERM_ForwardShading)
 		{
 			ForwardShading();
+
 		}
 		else // if not forward shading, it is deferred shading
 		{
@@ -718,6 +731,8 @@ namespace Graphics {
 			DeferredShading();
 			Profiler::StopRecording(2);
 		}
+
+
 
 		if (g_dataRenderingByGraphicThread->g_renderMode == ERM_DeferredShading || g_dataRenderingByGraphicThread->g_renderMode == ERM_ForwardShading)
 		{
@@ -926,6 +941,7 @@ namespace Graphics {
 		if (!(result = EnvironmentCaptureManager::CleanUp()))
 			printf("Fail to clean up Environment Capture Manager.\n");
 
+		ComputeShaderTest::cleanUp();
 		return result;
 	}
 
