@@ -128,6 +128,11 @@ namespace Application {
 		m_window->SetViewportSize(m_window->GetBufferWidth(), m_window->GetBufferHeight());
 	}
 
+	float cApplication::GetSystemElapsedTime() const
+	{
+		return Time::ConvertFromTickToSeconds(m_tickCountt_systemTime_Elapsed);
+	}
+
 	void cApplication::CleanUp()
 	{
 		if (m_applicationThread) {

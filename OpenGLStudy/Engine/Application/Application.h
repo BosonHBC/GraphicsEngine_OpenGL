@@ -37,9 +37,12 @@ namespace Application {
 		virtual void BeforeUpdate() {}; 
 		void UpdateUntilExit();
 
-		cWindow* GetCurrentWindow() const { return m_window; }
 		void ResetWindowSize();
+
+		/** Getters */
+		cWindow* GetCurrentWindow() const { return m_window; }
 		std::mutex& GetApplicationMutex() {return m_applicationMutex;}
+		float GetSystemElapsedTime() const;
 	protected:
 		cApplication(const cApplication& i_other) = delete;
 		cApplication& operator = (const cApplication& i_other) = delete;

@@ -5,7 +5,7 @@
 
 namespace ComputeShaderTest
 {
-#define NUM_PARTICLES 1024*1024 // total number of particles to move
+#define NUM_PARTICLES 64*64 // total number of particles to move
 #define WORK_GROUP_SIZE 128 // # work-items per work-group
 
 
@@ -17,11 +17,15 @@ namespace ComputeShaderTest
 	{
 		float vx, vy, vz, vw; // velocities
 	};
-	struct sColor
+	struct sOtherData
 	{
-		float r, g, b, a; // colors
+		float elpasedLifeTime;
+		float padding[3];
 	};
 	// need to do the following for both position, velocity, and colors of the particles:
+
+	extern float lifeTime, delayTime;
+	extern glm::vec3 initialLocMin, initialLocMax, initialVelMin, initialVelMax;
 
 	bool Init();
 	void cleanUp();
