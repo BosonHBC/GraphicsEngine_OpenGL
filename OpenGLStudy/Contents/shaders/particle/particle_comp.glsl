@@ -8,17 +8,17 @@ const float groundY = 1;
 const float firctionCoefficient = 0.5;
 #define DAMPING -0.1f
 
-layout( std140, binding=9 ) buffer sPos
+layout( std140, binding=0 ) buffer sPos
 {
 	vec4 Positions[ ];
 };
 
-layout( std140, binding=10 ) buffer sVel
+layout( std140, binding=1 ) buffer sVel
 {
 	vec4 Velocities[ ];
 };
 
-layout( std140, binding=11 ) buffer sOtherData
+layout( std140, binding=2 ) buffer sOtherData
 {
 	vec4 OtherData[];
 };

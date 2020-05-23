@@ -98,9 +98,9 @@ namespace ComputeShaderTest
 	{
 		if (!enableParticle) return;
 		// compute shader stage
-		glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 9, posSSbo);
-		glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 10, velSSbo);
-		glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 11, dataSSbo);
+		glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 0, posSSbo);
+		glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 1, velSSbo);
+		glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 2, dataSSbo);
 		assert(GL_NO_ERROR == glGetError());
 
 		Graphics::cEffect* compEffect = Graphics::GetEffectByKey(Graphics::EET_Comp_Particle);
