@@ -24,6 +24,7 @@
 #include "Application/imgui/imgui.h"
 #include "Editor/Editor.h"
 #include "Cores/Utility//Profiler.h"
+#include "Assignments/ParticleTest.h"
 
 Graphics::ERenderMode g_renderMode = Graphics::ERenderMode::ERM_DeferredShading;
 
@@ -693,7 +694,20 @@ void Assignment::EditorGUI()
 				m_ppData.EnableFxAA = _enableFxAA;
 			}
 		}
+		if (ImGui::CollapsingHeader("Particle")) 
+		{
+			ImGui::Checkbox("Enable particles", &ComputeShaderTest::enableParticle);
+			if (ComputeShaderTest::enableParticle)
+			{
+				ImGui::DragFloat3("Initial Loc min", (float*)&ComputeShaderTest::initialLocMin, 0.1f);
+				ImGui::DragFloat3("Initial Loc max", (float*)&ComputeShaderTest::initialLocMax, 0.1f);
+				ImGui::DragFloat3("Initial Vel min", (float*)&ComputeShaderTest::initialVelMin, 0.1f);
+				ImGui::DragFloat3("Initial Vel max", (float*)&ComputeShaderTest::initialVelMax, 0.1f);
 
+				ImGui::DragFloat("Life time", &ComputeShaderTest::lifeTime, 0.1f, 0.1f, 20.f);
+				ImGui::DragFloat("Delay time", &ComputeShaderTest::delayTime, 0.1f, -20.f, 0);
+			}
+		}
 		if (ImGui::Button("Reset"))
 		{
 			g_renderMode = Graphics::ERM_DeferredShading;

@@ -12,17 +12,12 @@ namespace ComputeShaderTest
 	GLuint velSSbo;
 	GLuint dataSSbo;
 	GLuint vao;
-	GLuint computeShaderProgramID;
 	sVel vels[NUM_PARTICLES];
 	sPos points[NUM_PARTICLES];
 
-	GLuint timeUniformID;
-	GLuint lifeTimeUniformID, delayTimeUniformID;
-	GLuint initLocMinID, initLocMaxID, initVelMinID, initVelMaxID;
-
 	float lifeTime = 5, delayTime = -5;
-	glm::vec3 initialLocMin(-10,150, -10), initialLocMax(10, 160, 10), initialVelMin(-100, 0, -100), initialVelMax(100, 100, 100);
-	Graphics::sGLShader* computeShader;
+	glm::vec3 initialLocMin(-10, 150, -10), initialLocMax(10, 160, 10), initialVelMin(-100, 0, -100), initialVelMax(100, 100, 100);
+	bool enableParticle = false;
 
 	float randRange(float min, float max)
 	{
@@ -32,52 +27,6 @@ namespace ComputeShaderTest
 	}
 	bool Init()
 	{
-		// create compute program
-		{
-			computeShaderProgramID = glCreateProgram();
-
-			computeShader = new Graphics::sGLShader();
-			const char* path = "particle/particle_comp.glsl";
-			if (!computeShader->CompileShader(path, GL_COMPUTE_SHADER)) {
-				printf("Error compiling shader[%s]\n", path);
-				assert(false);
-			}
-
-			glAttachShader(computeShaderProgramID, computeShader->GetShaderID());
-
-			// link program
-			GLint result = 0;
-			GLchar eLog[1024] = { 0 };
-			glLinkProgram(computeShaderProgramID);
-			glGetProgramiv(computeShaderProgramID, GL_LINK_STATUS, &result);
-			if (!result) {
-				glGetProgramInfoLog(computeShaderProgramID, sizeof(eLog), NULL, eLog);
-				auto errorCode = glGetError();
-				printf("Error Linking program: %d, error message: %s, error code: %d\n", computeShaderProgramID, eLog, errorCode);
-				assert(false);
-			}
-			assert(GL_NO_ERROR == glGetError());
-
-			// validate the program
-			glValidateProgram(computeShaderProgramID);
-			// try handle error
-			glGetProgramiv(computeShaderProgramID, GL_VALIDATE_STATUS, &result);
-			if (!result) {
-				glGetProgramInfoLog(computeShaderProgramID, sizeof(eLog), NULL, eLog);
-				printf("Error validating program: %d \n%s", computeShaderProgramID, eLog);
-				assert(false);
-			}
-		}
-		// set up uniform variables
-		{
-			timeUniformID = glGetUniformLocation(computeShaderProgramID, "g_time");
-			lifeTimeUniformID = glGetUniformLocation(computeShaderProgramID, "g_lifeTime");
-			delayTimeUniformID = glGetUniformLocation(computeShaderProgramID, "g_delayTime"); 
-			initLocMinID = glGetUniformLocation(computeShaderProgramID, "g_initialLocMin");
-			initLocMaxID = glGetUniformLocation(computeShaderProgramID, "g_initialLocMax");
-			initVelMinID = glGetUniformLocation(computeShaderProgramID, "g_initialVelMin");
-			initVelMaxID = glGetUniformLocation(computeShaderProgramID, "g_initialVelMax");
-		}
 		GLint bufMask = GL_MAP_WRITE_BIT | GL_MAP_INVALIDATE_BUFFER_BIT; // the invalidate makes a big difference when re-writing
 
 		// generate a VAO
@@ -99,16 +48,16 @@ namespace ComputeShaderTest
 				points[i].w = 1.;
 			}
 			glUnmapBuffer(GL_SHADER_STORAGE_BUFFER);
-			
+
 		}
 		// velocity
 		{
 			glGenBuffers(1, &velSSbo);
 			glBindBuffer(GL_SHADER_STORAGE_BUFFER, velSSbo);
-			//glBufferData(GL_SHADER_STORAGE_BUFFER, NUM_PARTICLES * sizeof(sVel), NULL, GL_DYNAMIC_DRAW);
+			glBufferData(GL_SHADER_STORAGE_BUFFER, NUM_PARTICLES * sizeof(sVel), NULL, GL_STATIC_DRAW);
 
-			//sVel *vels = (sVel *)glMapBufferRange(GL_SHADER_STORAGE_BUFFER, 0, NUM_PARTICLES * sizeof(sVel), bufMask);
-			
+			sVel *vels = (sVel *)glMapBufferRange(GL_SHADER_STORAGE_BUFFER, 0, NUM_PARTICLES * sizeof(sVel), bufMask);
+
 			for (int i = 0; i < NUM_PARTICLES; i++)
 			{
 				vels[i].vx = randRange(initialVelMin.x, initialVelMax.x);
@@ -116,11 +65,10 @@ namespace ComputeShaderTest
 				vels[i].vz = randRange(initialVelMin.z, initialVelMax.z);
 				vels[i].vw = 0;
 			}
-			glBufferData(GL_SHADER_STORAGE_BUFFER, NUM_PARTICLES * sizeof(sVel), &vels[0], GL_DYNAMIC_DRAW);
-			//glUnmapBuffer(GL_SHADER_STORAGE_BUFFER);
-		}
 
-		// color
+			glUnmapBuffer(GL_SHADER_STORAGE_BUFFER);
+		}
+		// other data
 		{
 			glGenBuffers(1, &dataSSbo);
 			glBindBuffer(GL_SHADER_STORAGE_BUFFER, dataSSbo);
@@ -140,9 +88,6 @@ namespace ComputeShaderTest
 
 	void cleanUp()
 	{
-		safe_delete(computeShader);
-		glDeleteProgram(computeShaderProgramID);
-		computeShaderProgramID = 0;
 		glDeleteBuffers(1, &posSSbo);
 		glDeleteBuffers(1, &velSSbo);
 		glDeleteBuffers(1, &dataSSbo);
@@ -151,30 +96,33 @@ namespace ComputeShaderTest
 
 	void RenderParticle()
 	{
+		if (!enableParticle) return;
 		// compute shader stage
 		glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 9, posSSbo);
 		glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 10, velSSbo);
 		glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 11, dataSSbo);
 		assert(GL_NO_ERROR == glGetError());
 
-		glUseProgram(computeShaderProgramID);
+		Graphics::cEffect* compEffect = Graphics::GetEffectByKey(Graphics::EET_Comp_Particle);
+		compEffect->UseEffect();
 		Application::cApplication* currentApp = Application::GetCurrentApplication();
 		float elpasedTime = currentApp->GetSystemElapsedTime();
-		glUniform1f(timeUniformID, elpasedTime);
-		glUniform1f(lifeTimeUniformID, lifeTime);
-		glUniform1f(delayTimeUniformID, delayTime);
+		compEffect->SetFloat("g_time", elpasedTime);
+		compEffect->SetFloat("g_lifeTime", lifeTime);
+		compEffect->SetFloat("g_delayTime", delayTime);
 
-		glUniform3f(initLocMinID,initialLocMin.x, initialLocMin.y, initialLocMin.z);
-		glUniform3f(initLocMaxID, initialLocMax.x, initialLocMax.y, initialLocMax.z);
-		glUniform3f(initVelMinID, initialVelMin.x, initialVelMin.y, initialVelMin.z);
-		glUniform3f(initVelMaxID, initialVelMax.x, initialVelMax.y, initialVelMax.z);
+		compEffect->SetVec3("g_initialLocMin", initialLocMin);
+		compEffect->SetVec3("g_initialLocMax", initialLocMax);
+		compEffect->SetVec3("g_initialVelMin", initialVelMin);
+		compEffect->SetVec3("g_initialVelMax", initialVelMax);
 
 		glDispatchCompute(NUM_PARTICLES / WORK_GROUP_SIZE, 1, 1);
 		glMemoryBarrier(GL_SHADER_STORAGE_BARRIER_BIT);
+		compEffect->UnUseEffect();
 
 		Graphics::cEffect* particleEffect = Graphics::GetEffectByKey(Graphics::EET_ParticleTest);
 		particleEffect->UseEffect();
-		
+
 		glBindVertexArray(vao);
 
 		glBindBuffer(GL_ARRAY_BUFFER, posSSbo);
@@ -190,9 +138,13 @@ namespace ComputeShaderTest
 
 		glBindBuffer(GL_ARRAY_BUFFER, 0);
 		glBindVertexArray(0);
-	
+
 		particleEffect->UnUseEffect();
 
 	}
 
+	void ResetParticles()
+	{
+
+	}
 }

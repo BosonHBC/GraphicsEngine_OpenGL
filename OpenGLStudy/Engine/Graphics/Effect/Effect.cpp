@@ -21,45 +21,55 @@ namespace Graphics {
 		CleanUp();
 	}
 
-	bool cEffect::CreateProgram(eEffectType i_effectType, const char* const i_vertexShaderPath, const char* const i_fragmentShaderPath, const char* const i_geometryShaderPath /*= ""*/, const char* const i_TCSPath /*= ""*/, const char* const i_TESPath/* = ""*/)
+	bool cEffect::CreateProgram(eEffectType i_effectType, const char* const i_vertexShaderPath, const char* const i_fragmentShaderPath, const char* const i_geometryShaderPath /*= ""*/, const char* const i_TCSPath /*= ""*/, const char* const i_TESPath/* = ""*/, const char* const i_ComputePath /*= ""*/)
 	{
 		m_programID = glCreateProgram();
 		if (!m_programID) {
 			printf("Failed to create a shader program\n");
 			return false;
 		}
-
-		if (!LoadShader(i_vertexShaderPath, GL_VERTEX_SHADER)) {
-			printf("Can not create program without vertex shader\n");
-			return false;
-		}
-		if (!LoadShader(i_fragmentShaderPath, GL_FRAGMENT_SHADER))
+		// if this is not a compute shader
+		if (IsPathNull(i_ComputePath))
 		{
-			printf("Can not create program without fragment shader\n");
-			return false;
-		}
-
-		if (!IsPathNull(i_geometryShaderPath))
-		{
-			if (!LoadShader(i_geometryShaderPath, GL_GEOMETRY_SHADER))
-			{
-				printf("Can not create program because of failing compiling geometry shader. \n");
+			if (!LoadShader(i_vertexShaderPath, GL_VERTEX_SHADER)) {
+				printf("Can not create program without vertex shader\n");
 				return false;
 			}
-		}
-		if (!IsPathNull(i_TCSPath))
-		{
-			if (!LoadShader(i_TCSPath, GL_TESS_CONTROL_SHADER))
+			if (!LoadShader(i_fragmentShaderPath, GL_FRAGMENT_SHADER))
 			{
-				printf("Can not create program because of failing compiling TCS shader. \n");
+				printf("Can not create program without fragment shader\n");
 				return false;
 			}
-		}
-		if (!IsPathNull(i_TESPath))
-		{
-			if (!LoadShader(i_TESPath, GL_TESS_EVALUATION_SHADER))
+
+			if (!IsPathNull(i_geometryShaderPath))
 			{
-				printf("Can not create program because of failing compiling TCS shader. \n");
+				if (!LoadShader(i_geometryShaderPath, GL_GEOMETRY_SHADER))
+				{
+					printf("Can not create program because of failing compiling geometry shader. \n");
+					return false;
+				}
+			}
+			if (!IsPathNull(i_TCSPath))
+			{
+				if (!LoadShader(i_TCSPath, GL_TESS_CONTROL_SHADER))
+				{
+					printf("Can not create program because of failing compiling TCS shader. \n");
+					return false;
+				}
+			}
+			if (!IsPathNull(i_TESPath))
+			{
+				if (!LoadShader(i_TESPath, GL_TESS_EVALUATION_SHADER))
+				{
+					printf("Can not create program because of failing compiling TCS shader. \n");
+					return false;
+				}
+			}
+		}
+		else
+		{
+			if (!LoadShader(i_ComputePath, GL_COMPUTE_SHADER)) {
+				printf("Can not create a program with invalid compute shader \n");
 				return false;
 			}
 		}
@@ -204,6 +214,8 @@ namespace Graphics {
 			break;
 		case Graphics::EET_Billboards:
 			SetInteger("sprite", 0);
+			break;
+		case Graphics::EET_Comp_Particle:
 			break;
 		case Graphics::EET_Invalid:
 			break;

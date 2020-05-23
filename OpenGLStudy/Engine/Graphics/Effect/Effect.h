@@ -32,6 +32,7 @@ namespace Graphics {
 		EET_Outline,
 		EET_Billboards,
 		EET_ParticleTest,
+		EET_Comp_Particle,
 		EET_Invalid = static_cast<uint16_t>(-1),
 	};
 	/** Forward declaration*/
@@ -46,7 +47,7 @@ namespace Graphics {
 
 		/** Initializations and clean up*/
 		/** Create program with default vertex shader and fragment shader*/
-		bool CreateProgram(eEffectType i_effectType, const char* const i_vertexShaderPath, const char* const i_fragmentShaderPath, const char* const i_geometryShaderPath = "", const char* const i_TCSPath = "", const char* const i_TESPath = "");
+		bool CreateProgram(eEffectType i_effectType, const char* const i_vertexShaderPath, const char* const i_fragmentShaderPath, const char* const i_geometryShaderPath = "", const char* const i_TCSPath = "", const char* const i_TESPath = "", const char* const i_ComputePath = "");
 		bool LinkProgram();
 		bool ValidateProgram();
 		void CleanUp();

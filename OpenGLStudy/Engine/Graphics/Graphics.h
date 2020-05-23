@@ -58,6 +58,7 @@ namespace Graphics {
 
 	/** Usage function*/
 	bool CreateEffect(const eEffectType& i_key, const char* i_vertexShaderPath, const char* i_fragmentShaderPath, const char* i_geometryShaderPath = "", const char* const i_TCSPath = "", const char* const i_TESPath = "");
+	bool CreateEffect(const eEffectType& i_key, const char* i_computeShaderPath);
 	cEffect* GetEffectByKey(const eEffectType& i_key);
 	bool RetriveShadowMapIndexAndSubRect(int i_lightIdx, int& io_shadowmapIdx, int& io_resolutionIdx);
 

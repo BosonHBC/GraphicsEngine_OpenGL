@@ -395,6 +395,14 @@ namespace Graphics {
 					return result;
 				}
 			}
+			// particle compute
+			{
+				if (!(result = CreateEffect(EET_Comp_Particle,
+					"particle/particle_comp.glsl"))) {
+					printf("Fail to create EET_Comp_Particle effect.\n");
+					return result;
+				}
+			}
 			// validate all programs
 			for (auto it : g_KeyToEffect_map)
 			{
@@ -1003,6 +1011,22 @@ namespace Graphics {
 
 		cEffect* newEffect = new  Graphics::cEffect();
 		if (!(result = newEffect->CreateProgram(i_key, i_vertexShaderPath, i_fragmentShaderPath, i_geometryShaderPath, i_TCSPath, i_TESPath))) {
+			printf("Fail to create effect: %d.\n", i_key);
+			safe_delete(newEffect);
+			return result;
+		}
+
+		g_KeyToEffect_map.insert({ i_key, newEffect });
+
+		return result;
+	}
+
+	bool CreateEffect(const eEffectType& i_key, const char* i_computeShaderPath)
+	{
+		auto result = true;
+
+		cEffect* newEffect = new  Graphics::cEffect();
+		if (!(result = newEffect->CreateProgram(i_key, "", "", "", "", "", i_computeShaderPath))) {
 			printf("Fail to create effect: %d.\n", i_key);
 			safe_delete(newEffect);
 			return result;

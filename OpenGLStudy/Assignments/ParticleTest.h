@@ -26,7 +26,7 @@ namespace ComputeShaderTest
 
 	extern float lifeTime, delayTime;
 	extern glm::vec3 initialLocMin, initialLocMax, initialVelMin, initialVelMax;
-
+	extern bool enableParticle;
 	bool Init();
 	void cleanUp();
 	void RenderParticle();
