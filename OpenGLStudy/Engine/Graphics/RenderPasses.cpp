@@ -44,7 +44,11 @@ namespace Graphics
 #endif // ENABLE_CLOTH_SIM
 	extern cTexture::HANDLE g_ssaoNoiseTexture;
 	extern cTexture::HANDLE g_pointLightIconTexture;
+	extern 	cTexture::HANDLE g_tileLightingTexture;
 	extern PboDownloader g_pboDownloader;
+
+	extern GLuint visibleLightIndiceListID;
+	extern GLuint visibleLightIndices[MAX_VISIBLE_LIGHT];
 
 	const std::map<uint8_t, const char*> g_renderModeNameMap =
 	{
@@ -540,7 +544,9 @@ namespace Graphics
 		g_currentEffect->SetInteger("displayMode", static_cast<GLint>(renderMode) - 2);
 		GLenum _textureUnits[4] = { GL_TEXTURE0 , GL_TEXTURE1 ,GL_TEXTURE2, GL_TEXTURE3 };
 		g_GBuffer.Read(_textureUnits);
-		g_ssao_blur_Buffer.Read(GL_TEXTURE4);
+		//g_ssao_blur_Buffer.Read(GL_TEXTURE4);
+		cTexture* tileTex = cTexture::s_manager.Get(g_tileLightingTexture);
+		tileTex->UseTexture(GL_TEXTURE4);
 		RenderQuad(g_dataRenderingByGraphicThread->g_renderPasses[g_currentRenderPass].FrameData);
 		g_currentEffect->UnUseEffect();
 	}
@@ -560,7 +566,52 @@ namespace Graphics
 
 		g_currentEffect->UnUseEffect();
 	}
+	void TileGenerationPass()
+	{
+		g_uniformBufferMap[UBT_Frame].Update(&g_dataRenderingByGraphicThread->g_renderPasses[3].FrameData);
 
+		GLuint tilesIntersectByLight = 0;
+		glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 3, visibleLightIndiceListID);
+
+		g_currentEffect = GetEffectByKey(EET_Comp_TileBasedDeferred);
+		g_currentEffect->UseEffect();
+		
+		{
+			cTexture* _tileLightingTexture = cTexture::s_manager.Get(g_tileLightingTexture);
+			GLuint texID = _tileLightingTexture->GetTextureID();
+			glActiveTexture(GL_TEXTURE1);
+			glBindTexture(GL_TEXTURE_2D, texID);
+
+			int imageUnitIndex = 1; //something unique
+			glBindImageTexture(imageUnitIndex, texID, 0, GL_FALSE, 0, GL_WRITE_ONLY, GL_RGBA32F);
+
+			glBindTexture(GL_TEXTURE_2D, 0);
+			assert(GL_NO_ERROR == glGetError());
+		}
+
+		g_GBuffer.ReadDepth(GL_TEXTURE0);
+
+		glDispatchComputeGroupSizeARB(
+			NUM_GROUPS_X, NUM_GROUPS_Y, 1,
+			WORK_GROUP_SIZE, WORK_GROUP_SIZE, 1
+		);
+		assert(GL_NO_ERROR == glGetError());
+		glMemoryBarrier(GL_SHADER_STORAGE_BARRIER_BIT);
+
+		// Get buffer data
+		glBindBuffer(GL_SHADER_STORAGE_BUFFER, visibleLightIndiceListID);
+		GLuint* _dataOut = (GLuint *)glMapBuffer(GL_SHADER_STORAGE_BUFFER, GL_READ_ONLY);
+		for (int i = 0; i < NUM_GROUPS_X * NUM_GROUPS_Y; ++i)
+		{
+			if (_dataOut[i] != 0)
+				tilesIntersectByLight++;
+		}
+		glUnmapBuffer(GL_SHADER_STORAGE_BUFFER);
+		glBindBuffer(GL_SHADER_STORAGE_BUFFER, 0);
+
+		g_dataGetFromRenderThread->g_tilesIntersectByLight = tilesIntersectByLight;
+		g_currentEffect->UnUseEffect();
+	}
 	void DeferredShading()
 	{
 		/** 0. Update lighting data pass 0-2*/
@@ -573,15 +624,18 @@ namespace Graphics
 			// Execute pass function
 			g_dataRenderingByGraphicThread->g_renderPasses[i].RenderPassFunction();
 		}
-		/** 1. Capture the whole scene with PBR material*/		
+		/** 1. Capture the whole scene with PBR material*/
 		Profiler::StartRecording(Profiler::EPT_GBuffer);
 		g_GBuffer.Write(
 			[] {
 				g_currentRenderPass = 3; // PBR pass
 				g_uniformBufferMap[UBT_Frame].Update(&g_dataRenderingByGraphicThread->g_renderPasses[g_currentRenderPass].FrameData);
 				GBuffer_Pass();
-			});		
+			});
 		Profiler::StopRecording(Profiler::EPT_GBuffer);
+
+		TileGenerationPass();
+
 		/** 2.1 Capture SSAO buffer*/
 		g_ssaoBuffer.Write(
 			[] {
@@ -820,8 +874,8 @@ namespace Graphics
 
 		unsigned char* data = nullptr;
 		sIO& _IO = g_dataRenderingByGraphicThread->g_IO;
-		int mouseX = glm::clamp(static_cast<int>(_IO.MousePos.x), 0, Application::GetCurrentApplication()->GetCurrentWindow()->GetBufferWidth()-1);
-		int mouseY = glm::clamp(static_cast<int>(Application::GetCurrentApplication()->GetCurrentWindow()->GetBufferHeight() - _IO.MousePos.y), 0, Application::GetCurrentApplication()->GetCurrentWindow()->GetBufferHeight()-1);
+		int mouseX = glm::clamp(static_cast<int>(_IO.MousePos.x), 0, Application::GetCurrentApplication()->GetCurrentWindow()->GetBufferWidth() - 1);
+		int mouseY = glm::clamp(static_cast<int>(Application::GetCurrentApplication()->GetCurrentWindow()->GetBufferHeight() - _IO.MousePos.y), 0, Application::GetCurrentApplication()->GetCurrentWindow()->GetBufferHeight() - 1);
 
 		g_pboDownloader.download();
 		data = g_pboDownloader.getPixel_rgb(mouseX, mouseY);
@@ -861,7 +915,7 @@ namespace Graphics
 				const cPointLight* _Light = dynamic_cast<cPointLight*>(ISelectable::s_selectableList[selectionID]);
 				// if it is a light
 				if (_Light)
-					Gizmo_DrawDebugCircle(_Light->Range, Color(1,1,0), _Light->Transform.Position());
+					Gizmo_DrawDebugCircle(_Light->Range, Color(1, 1, 0), _Light->Transform.Position());
 
 				// Calculate the transform gizmo's transform and add three arrow models to the render map
 				{
@@ -892,7 +946,7 @@ namespace Graphics
 
 		// Handle selection
 		SelctionBuffer_Pass(renderMapForSelectionBuffer, needRenderTarnsformGizmo);
-		
+
 		if (ISelectable::IsValid(selectionID) && selectableTransform)
 		{
 			Gizmo_RenderSelectingTransform(arrowTransforms);

@@ -615,6 +615,27 @@ namespace Graphics {
 		return result;
 	}
 
+	bool cTexture::LoadRGBA32Texture(const std::string& i_type_id, const GLuint& i_width, const GLuint& i_height)
+	{
+		auto result = true;
+		m_width = i_width;
+		m_height = i_height;
+
+		glGenTextures(1, &m_textureID);
+		glActiveTexture(GL_TEXTURE1);
+		glBindTexture(GL_TEXTURE_2D, m_textureID);
+		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
+		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
+		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+		glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA32F, m_width, m_height, 0, GL_RGBA, GL_FLOAT, nullptr);
+
+		glBindImageTexture(1, m_textureID, 0, GL_FALSE, 0, GL_WRITE_ONLY, GL_R32F);
+		// unbind texture
+		glBindTexture(GL_TEXTURE_2D, 0);
+		return result;
+	}
+
 	bool cTexture::LoadStencilTexture(const std::string& i_type_id, const GLuint& i_width, const GLuint& i_height)
 	{
 		auto result = true;

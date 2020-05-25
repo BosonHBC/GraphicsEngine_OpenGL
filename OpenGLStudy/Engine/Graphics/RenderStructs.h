@@ -85,6 +85,7 @@ namespace Graphics {
 		GLfloat g_deltaDeferredLightingTime;
 		GLfloat g_deltaPointLightShadowMapTime;
 		GLfloat g_deltaSelectionTime;
+		GLuint g_tilesIntersectByLight;
 	};
 
 	// Primitive types

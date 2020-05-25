@@ -48,7 +48,7 @@ namespace ComputeShaderTest
 				points[i].w = 1.;
 			}
 			glUnmapBuffer(GL_SHADER_STORAGE_BUFFER);
-
+			glBindBuffer(GL_SHADER_STORAGE_BUFFER, 0);
 		}
 		// velocity
 		{
@@ -67,6 +67,7 @@ namespace ComputeShaderTest
 			}
 
 			glUnmapBuffer(GL_SHADER_STORAGE_BUFFER);
+			glBindBuffer(GL_SHADER_STORAGE_BUFFER, 0);
 		}
 		// other data
 		{
@@ -80,6 +81,7 @@ namespace ComputeShaderTest
 				datas[i].elpasedLifeTime = randRange(delayTime, 0);
 			}
 			glUnmapBuffer(GL_SHADER_STORAGE_BUFFER);
+			glBindBuffer(GL_SHADER_STORAGE_BUFFER, 0);
 		}
 
 		glBindVertexArray(0);
@@ -116,7 +118,10 @@ namespace ComputeShaderTest
 		compEffect->SetVec3("g_initialVelMin", initialVelMin);
 		compEffect->SetVec3("g_initialVelMax", initialVelMax);
 
-		glDispatchCompute(NUM_PARTICLES / WORK_GROUP_SIZE, 1, 1);
+		glDispatchComputeGroupSizeARB(
+			NUM_PARTICLES / PARTICLE_WORK_GROUP_SIZE, 1, 1,
+			128, 1, 1
+		);
 		glMemoryBarrier(GL_SHADER_STORAGE_BARRIER_BIT);
 		compEffect->UnUseEffect();
 

@@ -61,6 +61,7 @@ namespace Graphics {
 	cTexture::HANDLE s_spruitSunRise_HDR;
 	cTexture::HANDLE g_ssaoNoiseTexture;
 	cTexture::HANDLE g_pointLightIconTexture;
+	cTexture::HANDLE g_tileLightingTexture;
 	cMaterial::HANDLE g_arrowMatHandles[2];
 	PboDownloader g_pboDownloader;
 	
@@ -87,6 +88,10 @@ namespace Graphics {
 	cFrameBuffer g_selectionBuffer;
 	// outline buffer
 	cFrameBuffer g_outlineBuffer;
+
+	GLuint visibleLightIndiceListID;
+	GLuint tiledLightVisibleCount[NUM_GROUPS_X * NUM_GROUPS_Y] = {0};
+	GLuint visibleLightIndices[MAX_VISIBLE_LIGHT];
 
 	// Effect
 	// ------------------------------------------------------------------------------------------------------------------------------------
@@ -403,6 +408,14 @@ namespace Graphics {
 					return result;
 				}
 			}
+			// tile based deferred shading comp
+			{
+				if (!(result = CreateEffect(EET_Comp_TileBasedDeferred,
+					"deferredShading/TiledBasedDefferred_comp.glsl"))) {
+					printf("Fail to create EET_Comp_TileBasedDeferred effect.\n");
+					return result;
+				}
+			}
 			// validate all programs
 			for (auto it : g_KeyToEffect_map)
 			{
@@ -492,8 +505,28 @@ namespace Graphics {
 			Profiler::CreateProfiler(Profiler::EPT_Selection);
 		}
 
+		// tile based global data init
+		{
+			GLint bufMask = GL_MAP_WRITE_BIT | GL_MAP_INVALIDATE_BUFFER_BIT;
 
+			glGenBuffers(1, &visibleLightIndiceListID);
+			glBindBuffer(GL_SHADER_STORAGE_BUFFER, visibleLightIndiceListID);
+			const GLsizei bufferSize = sizeof(GLuint) * NUM_GROUPS_X * NUM_GROUPS_Y;
+			glBufferData(GL_SHADER_STORAGE_BUFFER, bufferSize, NULL, GL_DYNAMIC_DRAW);
+			GLuint* _data = (GLuint *)glMapBufferRange(GL_SHADER_STORAGE_BUFFER, 0, bufferSize, bufMask);
+			memcpy(_data, tiledLightVisibleCount, bufferSize);
+			glUnmapBuffer(GL_SHADER_STORAGE_BUFFER);
 
+			glBindBufferBase(GL_ATOMIC_COUNTER_BUFFER, 3, visibleLightIndiceListID);
+			glBindBuffer(GL_SHADER_STORAGE_BUFFER, 0);
+			assert(GL_NO_ERROR == glGetError());
+
+			std::string _path = "TiledLighting";
+			if (!(result = cTexture::s_manager.Load(_path, g_tileLightingTexture, ETT_FRAMEBUFFER_RGBA32, NUM_GROUPS_X, NUM_GROUPS_Y)))
+			{
+				printf("Fail to load texture %s\n", _path.c_str());
+			}
+		}
 		// Load models & textures
 		{
 			g_cubeHandle = cModel("Contents/models/cube.model");
@@ -905,6 +938,7 @@ namespace Graphics {
 		cTexture::s_manager.Release(s_spruitSunRise_HDR);
 		cTexture::s_manager.Release(g_ssaoNoiseTexture);
 		cTexture::s_manager.Release(g_pointLightIconTexture);
+		cTexture::s_manager.Release(g_tileLightingTexture);
 		g_pboDownloader.cleanUp();
 		cMesh::s_manager.Release(s_point);
 #ifdef ENABLE_CLOTH_SIM
@@ -938,6 +972,9 @@ namespace Graphics {
 		{
 			g_omniShadowMaps[i].CleanUp();
 		}
+
+		glDeleteBuffers(1, &visibleLightIndiceListID);
+
 		s_cubemapProbe.CleanUp();
 		s_brdfLUTTexture.CleanUp();
 		g_hdrBuffer.CleanUp();

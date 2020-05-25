@@ -1,6 +1,7 @@
 #version 430 compatibility
 #extension GL_ARB_compute_shader: 					enable
 #extension GL_ARB_shader_storage_buffer_object: 	enable
+#extension GL_ARB_compute_variable_group_size : 	enable
 
 const vec3 g = vec3( 0., -90.8, 0. );
 const float dt = 0.01;
@@ -69,7 +70,7 @@ uniform vec3 g_initialLocMax;
 uniform vec3 g_initialVelMin;
 uniform vec3 g_initialVelMax;
 
-layout( local_size_x = 128, local_size_y = 1, local_size_z = 1 ) in;
+layout( local_size_variable ) in;
 
 void main()
 {

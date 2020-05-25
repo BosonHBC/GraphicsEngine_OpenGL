@@ -217,6 +217,10 @@ namespace Graphics {
 			break;
 		case Graphics::EET_Comp_Particle:
 			break;
+		case Graphics::EET_Comp_TileBasedDeferred:
+			SetInteger("gDepth", 0);
+			SetInteger("img_output", 1);
+			break;
 		case Graphics::EET_Invalid:
 			break;
 		default:

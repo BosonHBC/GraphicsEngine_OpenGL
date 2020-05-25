@@ -595,13 +595,6 @@ void Assignment::EditorGUI()
 		ImGui::TextWrapped("Editor CPU");
 		ImGui::TextWrapped("Render thread waiting time CPU");
 
-
-		/*
-				ImGui::TextWrapped("Render a frame GPU");
-				ImGui::TextWrapped("G-Buffer_GPU");
-				ImGui::TextWrapped("Deferred Lighting_GPU");
-				ImGui::TextWrapped("PointLight shadow map_GPU");
-				ImGui::TextWrapped("Editor_GPU");*/
 		ImGui::NextColumn();
 
 		ImGui::TextWrapped("%.4f ms/frame", Time::DeltaTime() * 1000);
@@ -624,6 +617,7 @@ void Assignment::EditorGUI()
 		ImGui::TreePop();
 	}
 	ImGui::Text("Point light count: %d", m_createdPLightCount);
+	ImGui::Text("Tile intersects by light: %d", dataFromRenderThread.g_tilesIntersectByLight);
 	ImGui::End();
 
 	ImGui::Begin("Control");

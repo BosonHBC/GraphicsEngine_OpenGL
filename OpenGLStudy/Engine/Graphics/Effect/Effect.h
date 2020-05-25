@@ -33,6 +33,7 @@ namespace Graphics {
 		EET_Billboards,
 		EET_ParticleTest,
 		EET_Comp_Particle,
+		EET_Comp_TileBasedDeferred,
 		EET_Invalid = static_cast<uint16_t>(-1),
 	};
 	/** Forward declaration*/
