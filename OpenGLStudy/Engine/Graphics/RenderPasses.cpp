@@ -579,6 +579,7 @@ namespace Graphics
 		{
 			cTexture* _tileLightingTexture = cTexture::s_manager.Get(g_tileLightingTexture);
 			GLuint texID = _tileLightingTexture->GetTextureID();
+			
 			glActiveTexture(GL_TEXTURE1);
 			glBindTexture(GL_TEXTURE_2D, texID);
 

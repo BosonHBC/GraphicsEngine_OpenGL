@@ -88,7 +88,7 @@ vec4 CreatePlaneEquation( vec4 b, vec4 c )
     vec4 n;
 
     // normalize(cross( b.xyz-a.xyz, c.xyz-a.xyz )), except we know "a" is the origin
-    n.xyz = normalize(cross( b.xyz, c.xyz ));
+    n.xyz = normalize(cross( c.xyz, b.xyz ));
 
     // -(n dot a), except we know "a" is the origin
     n.w = 0;
@@ -100,6 +100,7 @@ vec4 CreatePlaneEquation( vec4 b, vec4 c )
 // the plane passes through the origin
 float GetSignedDistanceFromPlane( vec4 p, vec4 eqn )
 {
+	// https://mathworld.wolfram.com/Point-PlaneDistance.html
     // dot( eqn.xyz, p.xyz ) + eqn.w, , except we know eqn.w is zero 
     // (see CreatePlaneEquation above)
     return dot( eqn.xyz, p.xyz );
@@ -128,8 +129,9 @@ vec4 ConvertProjToView( vec4 p )
 // convert a depth value from post-projection space into view space
 float ConvertProjDepthToView( float z )
 {
-    z = 1.f / (z*InvProj[2][3] + InvProj[3][3]);
-    return z;
+	float newZ = z;
+    newZ = 1.f / (newZ*InvProj[3][2] + InvProj[3][3]);
+    return newZ;
 }
 
 vec4 ViewPosFromDepth(vec2 texCoord, float depth) {
@@ -145,15 +147,45 @@ vec4 ViewPosFromDepth(vec2 texCoord, float depth) {
 
 void main()
 {
+	uint localIdxFlattened = gl_LocalInvocationID.x + gl_LocalInvocationID.y * WORK_GROUP_SIZE;
+	if(localIdxFlattened == 0)
+	{
+		minDepthInt = 0xFFFFFFFF;
+		maxDepthInt = 0;
+		visibleLightCount = 0;
+	}
+	vec4 frustumEqn[4];
+	{
+		// construct frustum for this tile, getting rect coordinates of the tile, unit is pixel
+    	uint minX = WORK_GROUP_SIZE * gl_WorkGroupID.x;
+    	uint minY = WORK_GROUP_SIZE * gl_WorkGroupID.y;
+    	uint maxX = WORK_GROUP_SIZE * (gl_WorkGroupID.x + 1);
+   	 	uint maxY = WORK_GROUP_SIZE * (gl_WorkGroupID.y + 1);
+
+		vec4 corners[4];
+		// create a clock-wised square
+		corners[0] = ConvertProjToView(vec4( (float(minX)/SCREEN_WIDTH) * 2.0f - 1.0f, 	(float(minY)/SCREEN_HEIGHT) * 2.0f - 1.0f, 1.0f, 1.0f));
+ 		corners[1] = ConvertProjToView(vec4( (float(maxX)/SCREEN_WIDTH) * 2.0f - 1.0f, 	(float(minY)/SCREEN_HEIGHT) * 2.0f - 1.0f, 1.0f, 1.0f));
+ 		corners[2] = ConvertProjToView(vec4( (float(maxX)/SCREEN_WIDTH) * 2.0f - 1.0f, 	(float(maxY)/SCREEN_HEIGHT) * 2.0f - 1.0f, 1.0f, 1.0f));
+ 		corners[3] = ConvertProjToView(vec4( (float(minX)/SCREEN_WIDTH) * 2.0f - 1.0f, 	(float(maxY)/SCREEN_HEIGHT) * 2.0f - 1.0f, 1.0f, 1.0f));
+
+	    // create plane equations using the four corners of the tile, 
+        for(uint i=0; i<4; i++)
+            frustumEqn[i] = CreatePlaneEquation( corners[i], corners[(i+1)&3] );
+	}
+	
+	// wait until all threads finish craeting frustums;
+	barrier();
 
 	vec2 texCoord = vec2(
 		(gl_WorkGroupID.x * WORK_GROUP_SIZE + gl_LocalInvocationID.x) / float(SCREEN_WIDTH), 
 		(gl_WorkGroupID.y * WORK_GROUP_SIZE + gl_LocalInvocationID.y) / float(SCREEN_HEIGHT)); 
+	
 	// get depth in float
 	float depthFloat = texture(gDepth, texCoord).r;
-	vec3 viewPos = ViewPosFromDepth(texCoord, depthFloat ).xyz;
+	float viewPosZ = ConvertProjDepthToView( depthFloat );
 	// convert depth from float to uint, since atomics only works on uints
-	uint depthuInt = floatBitsToUint(abs(viewPos.z));
+	uint depthuInt = floatBitsToUint(abs(viewPosZ));
 	
 	// calculate min, max depth of this tile
 	atomicMin(minDepthInt, depthuInt);
@@ -162,38 +194,9 @@ void main()
 	// wait until min, max depth has been calculated in all threads of this tile
 	barrier();
 
-	float depthMinFloat = -uintBitsToFloat(minDepthInt); // near to the camera
-	float depthMaxFloat = -uintBitsToFloat(maxDepthInt); // fat to the camera
+	float depthMinFloat = uintBitsToFloat(minDepthInt); // near to the camera
+	float depthMaxFloat = uintBitsToFloat(maxDepthInt); // fat to the camera
 
-	vec4 frustumEqn[4];
-	{
-		// construct frustum for this tile
-    	uint pxm = WORK_GROUP_SIZE * gl_WorkGroupID.x;
-    	uint pym = WORK_GROUP_SIZE * gl_WorkGroupID.y;
-    	uint pxp = WORK_GROUP_SIZE * (gl_WorkGroupID.x + 1);
-   	 	uint pyp = WORK_GROUP_SIZE * (gl_WorkGroupID.y + 1);
-
-		uint uWindowWidthEvenlyDivisibleByTileRes = WORK_GROUP_SIZE * GetNumTilesX();
-		uint uWindowHeightEvenlyDivisibleByTileRes = WORK_GROUP_SIZE * GetNumTilesY();
-		// four corners of the tile, clockwise from top-left
-    	vec4 frustum[4];
-    	frustum[0] = ConvertProjToView( vec4( pxm/float(uWindowWidthEvenlyDivisibleByTileRes)*2.f-1.f, (uWindowHeightEvenlyDivisibleByTileRes-pym)/float(uWindowHeightEvenlyDivisibleByTileRes)*2.f-1.f,1.f,1.f) );
-    	frustum[1] = ConvertProjToView( vec4( pxp/float(uWindowWidthEvenlyDivisibleByTileRes)*2.f-1.f, (uWindowHeightEvenlyDivisibleByTileRes-pym)/float(uWindowHeightEvenlyDivisibleByTileRes)*2.f-1.f,1.f,1.f) );
-    	frustum[2] = ConvertProjToView( vec4( pxp/float(uWindowWidthEvenlyDivisibleByTileRes)*2.f-1.f, (uWindowHeightEvenlyDivisibleByTileRes-pyp)/float(uWindowHeightEvenlyDivisibleByTileRes)*2.f-1.f,1.f,1.f) );
-    	frustum[3] = ConvertProjToView( vec4( pxm/float(uWindowWidthEvenlyDivisibleByTileRes)*2.f-1.f, (uWindowHeightEvenlyDivisibleByTileRes-pyp)/float(uWindowHeightEvenlyDivisibleByTileRes)*2.f-1.f,1.f,1.f) );
-	
-	    // create plane equations for the four sides of the frustum, 
-        // with the positive half-space outside the frustum (and remember, 
-        // view space is left handed, so use the left-hand rule to determine 
-        // cross product direction)
-        for(uint i=0; i<4; i++)
-            frustumEqn[i] = CreatePlaneEquation( frustum[i], frustum[(i+1)&3] );
-	}
-	
-	// wait until all threads finish craeting frustums;
-	barrier();
-
-	uint localIdxFlattened = gl_LocalInvocationID.x + gl_LocalInvocationID.y * WORK_GROUP_SIZE;
 	uint threadPertile = WORK_GROUP_SIZE * WORK_GROUP_SIZE;
 	// loop over the lights and do a sphere vs. frustum intersection test
 	// each thread process a point light in parallel, for max 80 point lights, i will end at 1
@@ -207,19 +210,25 @@ void main()
 			// things that is in front of the camera in view space should have negative z value
 			vec4 pLightLoc_ViewSpace = ViewMatrix * pLightLocation;
 			// test if sphere is intersecting or inside frustum
-			if(pLightLoc_ViewSpace.z - r < depthMinFloat && pLightLoc_ViewSpace.z + r > depthMaxFloat)
-			//if(pLightLoc_ViewSpace.z - r < 0)
-			{
-				if( ( GetSignedDistanceFromPlane( pLightLoc_ViewSpace, frustumEqn[0] ) < r ) &&
-                    ( GetSignedDistanceFromPlane( pLightLoc_ViewSpace, frustumEqn[1] ) < r ) &&
-                    ( GetSignedDistanceFromPlane( pLightLoc_ViewSpace, frustumEqn[2] ) < r ) &&
-                    ( GetSignedDistanceFromPlane( pLightLoc_ViewSpace, frustumEqn[3] ) < r ) )
-					{
-                    	// do a thread-safe increment of the list counter 
-                    	// and put the index of this light into the list
-                    	uint id = atomicAdd(visibleLightCount, 1);
-						visibleLightIndices[visibleLightCount] = lightIndex;
-					}
+			//if(pLightLoc_ViewSpace.z + r > depthMinFloat && pLightLoc_ViewSpace.z - r < depthMaxFloat)
+			//if(pLightLoc_ViewSpace.z - r < -depthMinFloat && pLightLoc_ViewSpace.z + r > -depthMaxFloat)
+			if(pLightLoc_ViewSpace.z - r < 0)
+			{				
+				float dist0 = GetSignedDistanceFromPlane( pLightLoc_ViewSpace, frustumEqn[0] );
+				float dist1 = GetSignedDistanceFromPlane( pLightLoc_ViewSpace, frustumEqn[1] );
+				float dist2 = GetSignedDistanceFromPlane( pLightLoc_ViewSpace, frustumEqn[2] );
+				float dist3 = GetSignedDistanceFromPlane( pLightLoc_ViewSpace, frustumEqn[3] );
+				if(
+					( dist0 < r && dist0 > - r ) &&
+                   	( dist1 < r && dist1 > - r ) &&
+                    ( dist2 < r && dist2 > - r ) &&
+                    ( dist3 < r && dist3 > - r ) )
+				{
+                    // do a thread-safe increment of the list counter 
+                    // and put the index of this light into the list
+                    uint id = atomicAdd(visibleLightCount, 1);
+					visibleLightIndices[visibleLightCount] = lightIndex;
+				}
                 
 			}
 		}
@@ -232,6 +241,7 @@ void main()
 	vec4 pixel = vec4(1.0, 1.0, 1.0, 1.0);
 	if(visibleLightCount == 0)
 		pixel = vec4(0,0,0,1);
+
 	ivec2 pixel_coords = ivec2(gl_WorkGroupID.xy);
 	imageStore(img_output, pixel_coords, pixel);
 }

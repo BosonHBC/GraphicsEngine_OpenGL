@@ -522,9 +522,10 @@ namespace Graphics {
 			assert(GL_NO_ERROR == glGetError());
 
 			std::string _path = "TiledLighting";
-			if (!(result = cTexture::s_manager.Load(_path, g_tileLightingTexture, ETT_FRAMEBUFFER_RGBA32, NUM_GROUPS_X, NUM_GROUPS_Y)))
+			if (!(result = cTexture::s_manager.Load(_path, g_tileLightingTexture, ETT_IMAGE2D_RGBA32, NUM_GROUPS_X, NUM_GROUPS_Y)))
 			{
 				printf("Fail to load texture %s\n", _path.c_str());
+				assert(result);
 			}
 		}
 		// Load models & textures
@@ -773,34 +774,31 @@ namespace Graphics {
 			Profiler::StopRecording(2);
 		}
 
-
-
 		if (g_dataRenderingByGraphicThread->g_renderMode == ERM_DeferredShading || g_dataRenderingByGraphicThread->g_renderMode == ERM_ForwardShading)
 		{
 			Profiler::StartRecording(3);
 			HDR_Pass();
 			Profiler::StopRecording(3);
-
-			// Clear the default buffer bit and copy hdr frame buffer's depth to the default frame buffer
-			glClear(GL_DEPTH_BUFFER_BIT | GL_STENCIL_BUFFER_BIT);
-			glBlitNamedFramebuffer(g_hdrBuffer.fbo(), 0, 0, 0, g_hdrBuffer.GetWidth(), g_hdrBuffer.GetHeight(), 0, 0, g_hdrBuffer.GetWidth(), g_hdrBuffer.GetHeight(), GL_DEPTH_BUFFER_BIT, GL_NEAREST);
-			assert(GL_NO_ERROR == glGetError());
-
-			// Render stuffs that needs depth info and needs not HDR info
-			Profiler::StartRecording(4);
-			RenderPointLightPosition();
-			Profiler::StopRecording(4);
-			//Gizmo_DrawDebugCaptureVolume();
-			//RenderOmniShadowMap();
-
-
-			Profiler::StartRecording(Profiler::EPT_Selection);
-			Profiler::StartRecording(5);
-			EditorPass();
-			Profiler::StopRecording(5);
-			Profiler::StopRecording(Profiler::EPT_Selection);
-
 		}
+
+		// Clear the default buffer bit and copy hdr frame buffer's depth to the default frame buffer
+		glClear(GL_DEPTH_BUFFER_BIT | GL_STENCIL_BUFFER_BIT);
+		glBlitNamedFramebuffer(g_hdrBuffer.fbo(), 0, 0, 0, g_hdrBuffer.GetWidth(), g_hdrBuffer.GetHeight(), 0, 0, g_hdrBuffer.GetWidth(), g_hdrBuffer.GetHeight(), GL_DEPTH_BUFFER_BIT, GL_NEAREST);
+		assert(GL_NO_ERROR == glGetError());
+
+		// Render stuffs that needs depth info and needs not HDR info
+		Profiler::StartRecording(4);
+		RenderPointLightPosition();
+		Profiler::StopRecording(4);
+		//Gizmo_DrawDebugCaptureVolume();
+		//RenderOmniShadowMap();
+
+
+		Profiler::StartRecording(Profiler::EPT_Selection);
+		Profiler::StartRecording(5);
+		EditorPass();
+		Profiler::StopRecording(5);
+		Profiler::StopRecording(Profiler::EPT_Selection);
 		Profiler::StopRecording(Profiler::EPT_RenderAFrame);
 
 		/** 4. After all render of this frame is done*/

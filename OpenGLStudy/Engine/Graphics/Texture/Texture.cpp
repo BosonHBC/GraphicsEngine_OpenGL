@@ -78,6 +78,9 @@ namespace Graphics {
 			case ETT_FRAMEBUFFER_RGB8:
 				result = _texture->LoadRGB8Texture(i_path, i_override_width, i_override_height);
 				break;
+			case ETT_IMAGE2D_RGBA32:
+				result = _texture->LoadRGBA32Texture(i_path, i_override_width, i_override_height);
+				break;
 			case Graphics::ETT_INVALID:
 				result = false;
 				printf("Load texture error: Invalid texture type: %d in\n", i_ett);
@@ -116,7 +119,7 @@ namespace Graphics {
 			|| _textureType == ETT_FRAMEBUFFER_HDR_CUBEMAP
 			|| _textureType == ETT_FRAMEBUFFER_HDR_MIPMAP_CUBEMAP)
 			_glTextureType = GL_TEXTURE_CUBE_MAP;
-		
+
 		glBindTexture(_glTextureType, 0);
 		assert(glGetError() == GL_NO_ERROR);
 	}
@@ -396,7 +399,7 @@ namespace Graphics {
 		glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_WRAP_R, GL_CLAMP_TO_EDGE);
 
 		// Set up texture filtering for looking closer
-		glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_MIN_FILTER, GL_LINEAR); 
+		glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
 		// Set up texture filtering for looking further
 		glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
 
@@ -460,9 +463,9 @@ namespace Graphics {
 		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
 		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
 		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
-		
+
 		assert(GL_NO_ERROR == glGetError());
-		
+
 		// unbind texture
 		glBindTexture(GL_TEXTURE_2D, 0);
 		return result;
@@ -626,8 +629,8 @@ namespace Graphics {
 		glBindTexture(GL_TEXTURE_2D, m_textureID);
 		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
 		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
-		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
-		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
 		glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA32F, m_width, m_height, 0, GL_RGBA, GL_FLOAT, nullptr);
 
 		glBindImageTexture(1, m_textureID, 0, GL_FALSE, 0, GL_WRITE_ONLY, GL_R32F);
@@ -660,9 +663,9 @@ namespace Graphics {
 		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
 		// Set up texture filtering for looking further
 		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
-		
+
 		assert(GL_NO_ERROR == glGetError());
-		
+
 		// unbind texture
 		glBindTexture(GL_TEXTURE_2D, 0);
 		return result;
@@ -721,7 +724,7 @@ namespace Graphics {
 		GLenum _textureType = GL_TEXTURE_2D;
 		// if the texture is a cube map, use GL_TEXTURE_CUBE_MAP
 		if (m_textureType == ETT_CUBEMAP
-			|| m_textureType == ETT_FRAMEBUFFER_OMNI_SHADOWMAP 
+			|| m_textureType == ETT_FRAMEBUFFER_OMNI_SHADOWMAP
 			|| m_textureType == ETT_FRAMEBUFFER_HDR_CUBEMAP
 			|| m_textureType == ETT_FRAMEBUFFER_HDR_MIPMAP_CUBEMAP)
 			_textureType = GL_TEXTURE_CUBE_MAP;

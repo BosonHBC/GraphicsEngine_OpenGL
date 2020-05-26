@@ -421,7 +421,7 @@ vec3 albedoColor, float metalness, float roughness, vec3 f0, vec3 vN, vec3 vV, f
 		float distRate = dist / pLight.radius;
 		float falloff = pow(clamp(1-pow(distRate,4),0.0,1.0),2) / (1 + dist * dist);
 		// 10000.f is a intensity compensation of changing falloff method from Exponential Falloff to Inverse Square Falloff, light unit now is lumens
-		vec3 radiance = pLight.base.color * 10000.f * falloff;
+		vec3 radiance = pLight.base.color;// * 10000.f * falloff;
 
 		vec3 cookedIrrandance = CookTorranceBrdf(radiance, albedoColor, metalness, roughness, f0,vN, vH, vL ,vV);
 
