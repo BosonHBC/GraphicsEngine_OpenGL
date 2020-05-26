@@ -47,6 +47,8 @@ namespace Graphics
 	extern 	cTexture::HANDLE g_tileLightingTexture;
 	extern PboDownloader g_pboDownloader;
 
+	extern 	GLuint minMaxDepthID;
+	extern glm::vec4 minMaxDepth[NUM_GROUPS_X * NUM_GROUPS_Y];
 	extern GLuint visibleLightIndiceListID;
 	extern GLuint visibleLightIndices[MAX_VISIBLE_LIGHT];
 
@@ -572,6 +574,7 @@ namespace Graphics
 
 		GLuint tilesIntersectByLight = 0;
 		glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 3, visibleLightIndiceListID);
+		glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 4, minMaxDepthID);
 
 		g_currentEffect = GetEffectByKey(EET_Comp_TileBasedDeferred);
 		g_currentEffect->UseEffect();
@@ -600,16 +603,25 @@ namespace Graphics
 		glMemoryBarrier(GL_SHADER_STORAGE_BARRIER_BIT);
 
 		// Get buffer data
-		glBindBuffer(GL_SHADER_STORAGE_BUFFER, visibleLightIndiceListID);
-		GLuint* _dataOut = (GLuint *)glMapBuffer(GL_SHADER_STORAGE_BUFFER, GL_READ_ONLY);
-		for (int i = 0; i < NUM_GROUPS_X * NUM_GROUPS_Y; ++i)
 		{
-			if (_dataOut[i] != 0)
-				tilesIntersectByLight++;
+			glBindBuffer(GL_SHADER_STORAGE_BUFFER, visibleLightIndiceListID);
+			GLuint* _dataOut = (GLuint *)glMapBuffer(GL_SHADER_STORAGE_BUFFER, GL_READ_ONLY);
+			for (int i = 0; i < NUM_GROUPS_X * NUM_GROUPS_Y; ++i)
+			{
+				if (_dataOut[i] != 0)
+					tilesIntersectByLight++;
+			}
+			glUnmapBuffer(GL_SHADER_STORAGE_BUFFER);
+			glBindBuffer(GL_SHADER_STORAGE_BUFFER, 0);
 		}
-		glUnmapBuffer(GL_SHADER_STORAGE_BUFFER);
-		glBindBuffer(GL_SHADER_STORAGE_BUFFER, 0);
-
+		{
+			glBindBuffer(GL_SHADER_STORAGE_BUFFER, minMaxDepthID);
+			glm::vec4* _dataOut = (glm::vec4 *)glMapBuffer(GL_SHADER_STORAGE_BUFFER, GL_READ_ONLY);
+			const GLsizei bufferSize = sizeof(glm::vec4) * NUM_GROUPS_X * NUM_GROUPS_Y;
+			memcpy(minMaxDepth, _dataOut, bufferSize);
+			glUnmapBuffer(GL_SHADER_STORAGE_BUFFER);
+			glBindBuffer(GL_SHADER_STORAGE_BUFFER, 0);
+		}
 		g_dataGetFromRenderThread->g_tilesIntersectByLight = tilesIntersectByLight;
 		g_currentEffect->UnUseEffect();
 	}

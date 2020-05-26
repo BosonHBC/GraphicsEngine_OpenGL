@@ -89,6 +89,8 @@ namespace Graphics {
 	// outline buffer
 	cFrameBuffer g_outlineBuffer;
 
+	GLuint minMaxDepthID;
+	glm::vec4 minMaxDepth[NUM_GROUPS_X * NUM_GROUPS_Y] = { glm::vec4(1,2,3,4) };
 	GLuint visibleLightIndiceListID;
 	GLuint tiledLightVisibleCount[NUM_GROUPS_X * NUM_GROUPS_Y] = {0};
 	GLuint visibleLightIndices[MAX_VISIBLE_LIGHT];
@@ -511,6 +513,7 @@ namespace Graphics {
 
 			glGenBuffers(1, &visibleLightIndiceListID);
 			glBindBuffer(GL_SHADER_STORAGE_BUFFER, visibleLightIndiceListID);
+
 			const GLsizei bufferSize = sizeof(GLuint) * NUM_GROUPS_X * NUM_GROUPS_Y;
 			glBufferData(GL_SHADER_STORAGE_BUFFER, bufferSize, NULL, GL_DYNAMIC_DRAW);
 			GLuint* _data = (GLuint *)glMapBufferRange(GL_SHADER_STORAGE_BUFFER, 0, bufferSize, bufMask);
@@ -520,7 +523,21 @@ namespace Graphics {
 			glBindBufferBase(GL_ATOMIC_COUNTER_BUFFER, 3, visibleLightIndiceListID);
 			glBindBuffer(GL_SHADER_STORAGE_BUFFER, 0);
 			assert(GL_NO_ERROR == glGetError());
+			{
+				
+				glGenBuffers(1, &minMaxDepthID);
+				glBindBuffer(GL_SHADER_STORAGE_BUFFER, minMaxDepthID);
 
+				const GLsizei bufferSize = sizeof(glm::vec4) * NUM_GROUPS_X * NUM_GROUPS_Y;
+				glBufferData(GL_SHADER_STORAGE_BUFFER, bufferSize, NULL, GL_DYNAMIC_DRAW);
+				glm::vec4* _data = (glm::vec4 *)glMapBufferRange(GL_SHADER_STORAGE_BUFFER, 0, bufferSize, bufMask);
+				memcpy(_data, minMaxDepth, bufferSize);
+				glUnmapBuffer(GL_SHADER_STORAGE_BUFFER);
+
+				glBindBufferBase(GL_ATOMIC_COUNTER_BUFFER, 4, minMaxDepthID);
+				glBindBuffer(GL_SHADER_STORAGE_BUFFER, 0);
+				assert(GL_NO_ERROR == glGetError());
+			}
 			std::string _path = "TiledLighting";
 			if (!(result = cTexture::s_manager.Load(_path, g_tileLightingTexture, ETT_IMAGE2D_RGBA32, NUM_GROUPS_X, NUM_GROUPS_Y)))
 			{
@@ -972,6 +989,7 @@ namespace Graphics {
 		}
 
 		glDeleteBuffers(1, &visibleLightIndiceListID);
+		glDeleteBuffers(1, &minMaxDepthID);
 
 		s_cubemapProbe.CleanUp();
 		s_brdfLUTTexture.CleanUp();

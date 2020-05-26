@@ -73,6 +73,11 @@ layout(std430, binding = 3) buffer sLightData
 	 uint g_visibleLightCount[NUM_GROUPS_X * NUM_GROUPS_Y];
 };
 
+layout(std140, binding = 4) buffer sMinMaxDepthData
+{ 
+	 vec4 g_minMaxDepthData[NUM_GROUPS_X * NUM_GROUPS_Y];
+};
+
 layout(rgba32f, binding = 1) writeonly uniform image2D img_output;
 
 layout( local_size_variable ) in;
@@ -129,8 +134,8 @@ vec4 ConvertProjToView( vec4 p )
 // convert a depth value from post-projection space into view space
 float ConvertProjDepthToView( float z )
 {
-	float newZ = z;
-    newZ = 1.f / (newZ*InvProj[3][2] + InvProj[3][3]);
+	float newZ = 2.0f * z - 1;
+    newZ = 1.f / (newZ*InvProj[2][3] + InvProj[3][3]);
     return newZ;
 }
 
@@ -176,7 +181,8 @@ void main()
 	
 	// wait until all threads finish craeting frustums;
 	barrier();
-
+	float depthMinFloat = 100000;
+	float depthMaxFloat = 0;
 	vec2 texCoord = vec2(
 		(gl_WorkGroupID.x * WORK_GROUP_SIZE + gl_LocalInvocationID.x) / float(SCREEN_WIDTH), 
 		(gl_WorkGroupID.y * WORK_GROUP_SIZE + gl_LocalInvocationID.y) / float(SCREEN_HEIGHT)); 
@@ -185,7 +191,7 @@ void main()
 	float depthFloat = texture(gDepth, texCoord).r;
 	float viewPosZ = ConvertProjDepthToView( depthFloat );
 	// convert depth from float to uint, since atomics only works on uints
-	uint depthuInt = floatBitsToUint(abs(viewPosZ));
+	uint depthuInt = floatBitsToUint(viewPosZ);
 	
 	// calculate min, max depth of this tile
 	atomicMin(minDepthInt, depthuInt);
@@ -194,8 +200,8 @@ void main()
 	// wait until min, max depth has been calculated in all threads of this tile
 	barrier();
 
-	float depthMinFloat = uintBitsToFloat(minDepthInt); // near to the camera
-	float depthMaxFloat = uintBitsToFloat(maxDepthInt); // fat to the camera
+	depthMinFloat = uintBitsToFloat(minDepthInt); // near to the camera
+	depthMaxFloat = uintBitsToFloat(maxDepthInt); // fat to the camera
 
 	uint threadPertile = WORK_GROUP_SIZE * WORK_GROUP_SIZE;
 	// loop over the lights and do a sphere vs. frustum intersection test
@@ -211,18 +217,18 @@ void main()
 			vec4 pLightLoc_ViewSpace = ViewMatrix * pLightLocation;
 			// test if sphere is intersecting or inside frustum
 			//if(pLightLoc_ViewSpace.z + r > depthMinFloat && pLightLoc_ViewSpace.z - r < depthMaxFloat)
-			//if(pLightLoc_ViewSpace.z - r < -depthMinFloat && pLightLoc_ViewSpace.z + r > -depthMaxFloat)
-			if(pLightLoc_ViewSpace.z - r < 0)
+			if(pLightLoc_ViewSpace.z - r < 0 && pLightLoc_ViewSpace.z - r < -depthMinFloat && pLightLoc_ViewSpace.z + r > -depthMaxFloat)
+			//if(pLightLoc_ViewSpace.z - r < 0)
 			{				
 				float dist0 = GetSignedDistanceFromPlane( pLightLoc_ViewSpace, frustumEqn[0] );
 				float dist1 = GetSignedDistanceFromPlane( pLightLoc_ViewSpace, frustumEqn[1] );
 				float dist2 = GetSignedDistanceFromPlane( pLightLoc_ViewSpace, frustumEqn[2] );
 				float dist3 = GetSignedDistanceFromPlane( pLightLoc_ViewSpace, frustumEqn[3] );
 				if(
-					( dist0 < r && dist0 > - r ) &&
-                   	( dist1 < r && dist1 > - r ) &&
-                    ( dist2 < r && dist2 > - r ) &&
-                    ( dist3 < r && dist3 > - r ) )
+					( dist0 < r  ) &&
+                   	( dist1 < r ) &&
+                    ( dist2 < r  ) &&
+                    ( dist3 < r ) )
 				{
                     // do a thread-safe increment of the list counter 
                     // and put the index of this light into the list
@@ -237,6 +243,11 @@ void main()
 	barrier();
 	uint workGroupID = gl_WorkGroupID.x + gl_WorkGroupID.y * NUM_GROUPS_X;
 	g_visibleLightCount[workGroupID] = visibleLightCount;
+
+	g_minMaxDepthData[workGroupID].x = depthMinFloat;
+	g_minMaxDepthData[workGroupID].y = depthMaxFloat;
+	g_minMaxDepthData[workGroupID].z = texCoord.x;
+	g_minMaxDepthData[workGroupID].w = texCoord.y;
 
 	vec4 pixel = vec4(1.0, 1.0, 1.0, 1.0);
 	if(visibleLightCount == 0)
