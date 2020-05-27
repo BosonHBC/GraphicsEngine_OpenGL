@@ -91,9 +91,7 @@ namespace Graphics {
 
 	GLuint minMaxDepthID;
 	glm::vec4 minMaxDepth[NUM_GROUPS_X * NUM_GROUPS_Y] = { glm::vec4(1,2,3,4) };
-	GLuint visibleLightIndiceListID;
-	GLuint tiledLightVisibleCount[NUM_GROUPS_X * NUM_GROUPS_Y] = {0};
-	GLuint visibleLightIndices[MAX_VISIBLE_LIGHT];
+	GLuint g_lightVisibilitiesID;
 
 	// Effect
 	// ------------------------------------------------------------------------------------------------------------------------------------
@@ -511,20 +509,22 @@ namespace Graphics {
 		{
 			GLint bufMask = GL_MAP_WRITE_BIT | GL_MAP_INVALIDATE_BUFFER_BIT;
 
-			glGenBuffers(1, &visibleLightIndiceListID);
-			glBindBuffer(GL_SHADER_STORAGE_BUFFER, visibleLightIndiceListID);
+			glGenBuffers(1, &g_lightVisibilitiesID);
+			glBindBuffer(GL_SHADER_STORAGE_BUFFER, g_lightVisibilitiesID);
 
-			const GLsizei bufferSize = sizeof(GLuint) * NUM_GROUPS_X * NUM_GROUPS_Y;
-			glBufferData(GL_SHADER_STORAGE_BUFFER, bufferSize, NULL, GL_DYNAMIC_DRAW);
-			GLuint* _data = (GLuint *)glMapBufferRange(GL_SHADER_STORAGE_BUFFER, 0, bufferSize, bufMask);
-			memcpy(_data, tiledLightVisibleCount, bufferSize);
-			glUnmapBuffer(GL_SHADER_STORAGE_BUFFER);
-
-			glBindBufferBase(GL_ATOMIC_COUNTER_BUFFER, 3, visibleLightIndiceListID);
-			glBindBuffer(GL_SHADER_STORAGE_BUFFER, 0);
-			assert(GL_NO_ERROR == glGetError());
 			{
-				
+				const GLsizei bufferSize = sizeof(GLuint) * MAX_POINT_LIGHT_COUNT;
+				glBufferData(GL_SHADER_STORAGE_BUFFER, bufferSize, NULL, GL_DYNAMIC_DRAW);
+				GLuint cleanData[MAX_POINT_LIGHT_COUNT] = { 0 };
+				GLuint* _data = (GLuint *)glMapBufferRange(GL_SHADER_STORAGE_BUFFER, 0, bufferSize, bufMask);
+				memcpy(_data, cleanData, bufferSize);
+				glUnmapBuffer(GL_SHADER_STORAGE_BUFFER);
+
+				glBindBufferBase(GL_ATOMIC_COUNTER_BUFFER, 3, g_lightVisibilitiesID);
+				glBindBuffer(GL_SHADER_STORAGE_BUFFER, 0);
+				assert(GL_NO_ERROR == glGetError());
+			}
+			{			
 				glGenBuffers(1, &minMaxDepthID);
 				glBindBuffer(GL_SHADER_STORAGE_BUFFER, minMaxDepthID);
 
@@ -988,7 +988,7 @@ namespace Graphics {
 			g_omniShadowMaps[i].CleanUp();
 		}
 
-		glDeleteBuffers(1, &visibleLightIndiceListID);
+		glDeleteBuffers(1, &g_lightVisibilitiesID);
 		glDeleteBuffers(1, &minMaxDepthID);
 
 		s_cubemapProbe.CleanUp();
@@ -1044,6 +1044,13 @@ namespace Graphics {
 			return cModel();
 			break;
 		}
+	}
+
+	glm::vec2 GetTileMinMaxDepthOnCursor(int i_x, int i_y)
+	{
+		int idx = i_x /  WORK_GROUP_SIZE + (i_y / WORK_GROUP_SIZE)  * NUM_GROUPS_X;
+		idx = glm::clamp(idx, 0, NUM_GROUPS_X * NUM_GROUPS_Y - 1);
+		return minMaxDepth[idx];
 	}
 
 	const Graphics::sDataReturnToApplicationThread& GetDataFromRenderThread()

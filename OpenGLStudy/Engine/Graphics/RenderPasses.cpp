@@ -49,8 +49,8 @@ namespace Graphics
 
 	extern 	GLuint minMaxDepthID;
 	extern glm::vec4 minMaxDepth[NUM_GROUPS_X * NUM_GROUPS_Y];
-	extern GLuint visibleLightIndiceListID;
-	extern GLuint visibleLightIndices[MAX_VISIBLE_LIGHT];
+
+	extern GLuint g_lightVisibilitiesID;
 
 	const std::map<uint8_t, const char*> g_renderModeNameMap =
 	{
@@ -571,9 +571,19 @@ namespace Graphics
 	void TileGenerationPass()
 	{
 		g_uniformBufferMap[UBT_Frame].Update(&g_dataRenderingByGraphicThread->g_renderPasses[3].FrameData);
+		// clear light visibilities
+		{
+			GLint bufMask = GL_MAP_WRITE_BIT | GL_MAP_INVALIDATE_BUFFER_BIT;
+			glBindBuffer(GL_SHADER_STORAGE_BUFFER, g_lightVisibilitiesID);
+			const GLsizei bufferSize = sizeof(GLuint) * MAX_POINT_LIGHT_COUNT;
+			GLuint cleanData[MAX_POINT_LIGHT_COUNT] = { 0 };
+			GLuint* _data = (GLuint *)glMapBufferRange(GL_SHADER_STORAGE_BUFFER, 0, bufferSize, bufMask);
+			memcpy(_data, cleanData, bufferSize);
 
-		GLuint tilesIntersectByLight = 0;
-		glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 3, visibleLightIndiceListID);
+			glUnmapBuffer(GL_SHADER_STORAGE_BUFFER);
+			glBindBuffer(GL_SHADER_STORAGE_BUFFER, 0);
+		}
+		glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 3, g_lightVisibilitiesID);
 		glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 4, minMaxDepthID);
 
 		g_currentEffect = GetEffectByKey(EET_Comp_TileBasedDeferred);
@@ -603,13 +613,18 @@ namespace Graphics
 		glMemoryBarrier(GL_SHADER_STORAGE_BARRIER_BIT);
 
 		// Get buffer data
+		GLuint visiblePointLightCount = 0;
 		{
-			glBindBuffer(GL_SHADER_STORAGE_BUFFER, visibleLightIndiceListID);
+			glBindBuffer(GL_SHADER_STORAGE_BUFFER, g_lightVisibilitiesID);
+			const GLsizei bufferSize = sizeof(GLuint) * MAX_POINT_LIGHT_COUNT;
 			GLuint* _dataOut = (GLuint *)glMapBuffer(GL_SHADER_STORAGE_BUFFER, GL_READ_ONLY);
-			for (int i = 0; i < NUM_GROUPS_X * NUM_GROUPS_Y; ++i)
+			for (int i = 0; i < g_dataRenderingByGraphicThread->g_pointLights.size(); ++i)
 			{
-				if (_dataOut[i] != 0)
-					tilesIntersectByLight++;
+				// if the point light is not visible in view, not casting shadow
+				if (_dataOut[i] == 0)
+					g_dataRenderingByGraphicThread->g_pointLights[i].SetEnableShadow(false);
+				else
+					visiblePointLightCount++;
 			}
 			glUnmapBuffer(GL_SHADER_STORAGE_BUFFER);
 			glBindBuffer(GL_SHADER_STORAGE_BUFFER, 0);
@@ -622,7 +637,7 @@ namespace Graphics
 			glUnmapBuffer(GL_SHADER_STORAGE_BUFFER);
 			glBindBuffer(GL_SHADER_STORAGE_BUFFER, 0);
 		}
-		g_dataGetFromRenderThread->g_tilesIntersectByLight = tilesIntersectByLight;
+		g_dataGetFromRenderThread->g_visiblePointLightCount = visiblePointLightCount;
 		g_currentEffect->UnUseEffect();
 	}
 	void DeferredShading()

@@ -133,7 +133,7 @@ namespace Graphics {
 		struct sLighting
 		{
 			SupportingData::SpotLight64 spotLights[MAX_COUNT_PER_LIGHT]; // 48 * MAX_COUNT_PER_LIGHT = 240 bytes
-			SupportingData::PointLight48 pointLights[OMNI_SHADOW_MAP_COUNT * 16]; // 48 * 80 = 3.8 KB
+			SupportingData::PointLight48 pointLights[MAX_POINT_LIGHT_COUNT]; // 48 * 80 = 3.8 KB
 			SupportingData::DirectionalLight32 directionalLight; // 32 bytes
 			SupportingData::AmbientLight16 ambientLight; // 16 bytes
 			int pointLightCount = 0; // 4 bytes

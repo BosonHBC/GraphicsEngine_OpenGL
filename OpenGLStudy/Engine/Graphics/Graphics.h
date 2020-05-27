@@ -81,6 +81,8 @@ namespace Graphics {
 	/** Predefined model and textures*/
 	const cModel& GetPrimitive(const EPrimitiveType& i_primitiveType);
 
+	glm::vec2 GetTileMinMaxDepthOnCursor(int i_x, int i_y);
+
 	/** Return data related*/
 	const sDataReturnToApplicationThread& GetDataFromRenderThread();
 }

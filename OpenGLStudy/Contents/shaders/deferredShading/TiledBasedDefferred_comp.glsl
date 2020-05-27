@@ -52,7 +52,7 @@ layout(std140, binding = 3) uniform g_uniformBuffer_Lighting
 	int g_pointLightCount; // 4 bytes
 	int g_spotLightCount; // 4 bytes
 }; 
-
+#define MAX_LIGHT_COUNT 80
 #define SCREEN_WIDTH 1280
 #define SCREEN_HEIGHT 720
 #define WORK_GROUP_SIZE 16
@@ -65,12 +65,11 @@ uniform sampler2D gDepth; // 3, depth buffer
 shared uint minDepthInt = 0xFFFFFFFF;
 shared uint maxDepthInt = 0;
 shared uint visibleLightCount = 0;
-shared uint visibleLightIndices[64];
 
 // std430 will remove the restriction of rounding up to a multiple of 16 bytes like std140
-layout(std430, binding = 3) buffer sLightData
+layout(std430, binding = 3) buffer lightVisibility
 { 
-	 uint g_visibleLightCount[NUM_GROUPS_X * NUM_GROUPS_Y];
+	 uint g_lightVisibilities[MAX_LIGHT_COUNT];
 };
 
 layout(std140, binding = 4) buffer sMinMaxDepthData
@@ -139,17 +138,6 @@ float ConvertProjDepthToView( float z )
     return newZ;
 }
 
-vec4 ViewPosFromDepth(vec2 texCoord, float depth) {
-    float z = depth * 2.0 - 1.0;
-
-    vec4 clipSpacePosition = vec4(texCoord * 2.0 - 1.0, z, 1.0);
-    vec4 viewSpacePosition = InvProj * clipSpacePosition;
-
-    // Perspective division
-    viewSpacePosition /= viewSpacePosition.w;
-    return viewSpacePosition;
-}
-
 void main()
 {
 	uint localIdxFlattened = gl_LocalInvocationID.x + gl_LocalInvocationID.y * WORK_GROUP_SIZE;
@@ -159,28 +147,6 @@ void main()
 		maxDepthInt = 0;
 		visibleLightCount = 0;
 	}
-	vec4 frustumEqn[4];
-	{
-		// construct frustum for this tile, getting rect coordinates of the tile, unit is pixel
-    	uint minX = WORK_GROUP_SIZE * gl_WorkGroupID.x;
-    	uint minY = WORK_GROUP_SIZE * gl_WorkGroupID.y;
-    	uint maxX = WORK_GROUP_SIZE * (gl_WorkGroupID.x + 1);
-   	 	uint maxY = WORK_GROUP_SIZE * (gl_WorkGroupID.y + 1);
-
-		vec4 corners[4];
-		// create a clock-wised square
-		corners[0] = ConvertProjToView(vec4( (float(minX)/SCREEN_WIDTH) * 2.0f - 1.0f, 	(float(minY)/SCREEN_HEIGHT) * 2.0f - 1.0f, 1.0f, 1.0f));
- 		corners[1] = ConvertProjToView(vec4( (float(maxX)/SCREEN_WIDTH) * 2.0f - 1.0f, 	(float(minY)/SCREEN_HEIGHT) * 2.0f - 1.0f, 1.0f, 1.0f));
- 		corners[2] = ConvertProjToView(vec4( (float(maxX)/SCREEN_WIDTH) * 2.0f - 1.0f, 	(float(maxY)/SCREEN_HEIGHT) * 2.0f - 1.0f, 1.0f, 1.0f));
- 		corners[3] = ConvertProjToView(vec4( (float(minX)/SCREEN_WIDTH) * 2.0f - 1.0f, 	(float(maxY)/SCREEN_HEIGHT) * 2.0f - 1.0f, 1.0f, 1.0f));
-
-	    // create plane equations using the four corners of the tile, 
-        for(uint i=0; i<4; i++)
-            frustumEqn[i] = CreatePlaneEquation( corners[i], corners[(i+1)&3] );
-	}
-	
-	// wait until all threads finish craeting frustums;
-	barrier();
 	float depthMinFloat = 100000;
 	float depthMaxFloat = 0;
 	vec2 texCoord = vec2(
@@ -199,10 +165,33 @@ void main()
 
 	// wait until min, max depth has been calculated in all threads of this tile
 	barrier();
-
 	depthMinFloat = uintBitsToFloat(minDepthInt); // near to the camera
 	depthMaxFloat = uintBitsToFloat(maxDepthInt); // fat to the camera
+	
+	vec4 frustumEqn[4];
+	{
+		// construct frustum for this tile, getting rect coordinates of the tile, unit is pixel
+    	uint minX = WORK_GROUP_SIZE * gl_WorkGroupID.x;
+    	uint minY = WORK_GROUP_SIZE * gl_WorkGroupID.y;
+    	uint maxX = WORK_GROUP_SIZE * (gl_WorkGroupID.x + 1);
+   	 	uint maxY = WORK_GROUP_SIZE * (gl_WorkGroupID.y + 1);
 
+		vec4 corners[4];
+		// create a clock-wised square
+		corners[0] = ConvertProjToView(vec4( (float(minX)/SCREEN_WIDTH) * 2.0f - 1.0f, 	(float(minY)/SCREEN_HEIGHT) * 2.0f - 1.0f, 1.0f, 1.0f));
+ 		corners[1] = ConvertProjToView(vec4( (float(maxX)/SCREEN_WIDTH) * 2.0f - 1.0f, 	(float(minY)/SCREEN_HEIGHT) * 2.0f - 1.0f, 1.0f, 1.0f));
+ 		corners[2] = ConvertProjToView(vec4( (float(maxX)/SCREEN_WIDTH) * 2.0f - 1.0f, 	(float(maxY)/SCREEN_HEIGHT) * 2.0f - 1.0f, 1.0f, 1.0f));
+ 		corners[3] = ConvertProjToView(vec4( (float(minX)/SCREEN_WIDTH) * 2.0f - 1.0f, 	(float(maxY)/SCREEN_HEIGHT) * 2.0f - 1.0f, 1.0f, 1.0f));
+
+	    // create plane equations using the four corners of the tile, 
+        for(uint i=0; i<4; i++)
+            frustumEqn[i] = CreatePlaneEquation( corners[i], corners[(i+1)&3] );
+			
+	}
+	
+	// wait until all threads finish craeting frustums;
+	barrier();
+	
 	uint threadPertile = WORK_GROUP_SIZE * WORK_GROUP_SIZE;
 	// loop over the lights and do a sphere vs. frustum intersection test
 	// each thread process a point light in parallel, for max 80 point lights, i will end at 1
@@ -216,24 +205,26 @@ void main()
 			// things that is in front of the camera in view space should have negative z value
 			vec4 pLightLoc_ViewSpace = ViewMatrix * pLightLocation;
 			// test if sphere is intersecting or inside frustum
-			//if(pLightLoc_ViewSpace.z + r > depthMinFloat && pLightLoc_ViewSpace.z - r < depthMaxFloat)
-			if(pLightLoc_ViewSpace.z - r < 0 && pLightLoc_ViewSpace.z - r < -depthMinFloat && pLightLoc_ViewSpace.z + r > -depthMaxFloat)
-			//if(pLightLoc_ViewSpace.z - r < 0)
+			if(pLightLoc_ViewSpace.z - r < -depthMinFloat && pLightLoc_ViewSpace.z + r > -depthMaxFloat)
+			//if(pLightLoc_ViewSpace.z - r < 0) // did not do z test
 			{				
-				float dist0 = GetSignedDistanceFromPlane( pLightLoc_ViewSpace, frustumEqn[0] );
-				float dist1 = GetSignedDistanceFromPlane( pLightLoc_ViewSpace, frustumEqn[1] );
-				float dist2 = GetSignedDistanceFromPlane( pLightLoc_ViewSpace, frustumEqn[2] );
-				float dist3 = GetSignedDistanceFromPlane( pLightLoc_ViewSpace, frustumEqn[3] );
-				if(
-					( dist0 < r  ) &&
-                   	( dist1 < r ) &&
-                    ( dist2 < r  ) &&
-                    ( dist3 < r ) )
+				bool bInFrustum = true;
+				for(int i = 0; i < 4; ++i)
+				{
+					float dist = GetSignedDistanceFromPlane( pLightLoc_ViewSpace, frustumEqn[i] );
+					if(dist >= r || dist <= -r)
+					{
+						bInFrustum = false;
+						break;
+					}
+				}
+				
+				if(bInFrustum)
 				{
                     // do a thread-safe increment of the list counter 
                     // and put the index of this light into the list
                     uint id = atomicAdd(visibleLightCount, 1);
-					visibleLightIndices[visibleLightCount] = lightIndex;
+					g_lightVisibilities[lightIndex] = 1;
 				}
                 
 			}
@@ -242,16 +233,13 @@ void main()
 
 	barrier();
 	uint workGroupID = gl_WorkGroupID.x + gl_WorkGroupID.y * NUM_GROUPS_X;
-	g_visibleLightCount[workGroupID] = visibleLightCount;
 
 	g_minMaxDepthData[workGroupID].x = depthMinFloat;
 	g_minMaxDepthData[workGroupID].y = depthMaxFloat;
 	g_minMaxDepthData[workGroupID].z = texCoord.x;
 	g_minMaxDepthData[workGroupID].w = texCoord.y;
 
-	vec4 pixel = vec4(1.0, 1.0, 1.0, 1.0);
-	if(visibleLightCount == 0)
-		pixel = vec4(0,0,0,1);
+	vec4 pixel = vec4(visibleLightCount / 10.f, visibleLightCount / 10.f, visibleLightCount / 10.f, 1.0);
 
 	ivec2 pixel_coords = ivec2(gl_WorkGroupID.xy);
 	imageStore(img_output, pixel_coords, pixel);

@@ -142,7 +142,7 @@ void Assignment::CreateLight()
 	{
 		//Color randomColor = Color(randomFloats(generator), randomFloats(generator), randomFloats(generator));
 		bool enableShadow = true;
-		Graphics::CreatePointLight(glm::vec3(0 + (i % lightPerRow) * horiDist, 200, 100 - (i / lightPerRow) * vertDist), m_pointLightColor, 250.f, enableShadow, m_pLights[i]);
+		Graphics::CreatePointLight(glm::vec3(0 + (i % lightPerRow) * horiDist, 100, 100 - (i / lightPerRow) * vertDist), m_pointLightColor, 150.f, enableShadow, m_pLights[i]);
 	}
 
 	//CreatePointLight(glm::vec3(0, 100, 0), Color::White() * 0.5f, 250, true);
@@ -617,7 +617,12 @@ void Assignment::EditorGUI()
 		ImGui::TreePop();
 	}
 	ImGui::Text("Point light count: %d", m_createdPLightCount);
-	ImGui::Text("Tile intersects by light: %d", dataFromRenderThread.g_tilesIntersectByLight);
+	ImGui::Text("Visible Point light count: %d", dataFromRenderThread.g_visiblePointLightCount);
+
+	int mouseX = glm::clamp((int)ImGui::GetIO().MousePos.x, 0, 1279);
+	int mouseY = glm::clamp(720 - (int)ImGui::GetIO().MousePos.y, 0, 719);
+	auto minMapDepth = Graphics::GetTileMinMaxDepthOnCursor(mouseX, mouseY);
+	ImGui::Text("Cursor(%d , %d), depths(%.1f, %.1f)", mouseX, mouseY, minMapDepth.x, minMapDepth.y);
 	ImGui::End();
 
 	ImGui::Begin("Control");
@@ -651,7 +656,7 @@ void Assignment::EditorGUI()
 			ImGui::ColorEdit3("Point Light Color: ", (float*)&m_pointLightColor);
 			if (ImGui::Button("Spawn Point Light"))
 			{
-				CreatePointLight(m_editorCamera->CamLocation() + m_editorCamera->Transform.Forward() * 100.f, m_pointLightColor, 250.f, true);
+				CreatePointLight(m_editorCamera->CamLocation() + m_editorCamera->Transform.Forward() * 100.f, m_pointLightColor, 150.f, true);
 			}
 		}
 		if (ImGui::CollapsingHeader("Post processing"))
@@ -760,6 +765,10 @@ void Assignment::EditorGUI()
 					{
 						_pLight->Transform.SetScale(glm::vec3(_pLight->Range));
 					}
+					glm::vec4 viewSpacePos = m_editorCamera->GetViewMatrix() * glm::vec4(_pLight->Transform.Position(), 1.0);
+
+					ImGui::Text("Light Position in View Space (%.1f, %.1f, %.1f, %.1f)", viewSpacePos.x, viewSpacePos.y, viewSpacePos.z, viewSpacePos.w);
+					//ImGui::Text("Light Position in Clip Space (%.1f, %.1f, %.1f, %.1f)", viewSpacePos.x, viewSpacePos.y, viewSpacePos.z, viewSpacePos.w);
 				}
 			}
 
