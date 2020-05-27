@@ -27,6 +27,7 @@ namespace Graphics {
 		GLuint ShadowMapIdx() const { return m_shadowMapIdx; }
 		GLuint ResolutionIdx() const { return m_resolutionIdx; }
 		glm::mat4 GetViewMatrix() const;
+		bool IsShadowEnabled() const override { return m_enableShadow; }
 
 		// use inverse squared fall off
 		GLfloat Range = 100.f;

@@ -66,6 +66,10 @@ namespace Graphics
 		std::pair<ERenderMode, const char*>(ERM_SSAO, "SSAO")
 	};
 	bool g_bRenderOmniShaodowMap = false;
+	
+	std::vector<cPointLight> g_pointLightsAfterCulling;
+
+
 	// clear color
 	Color s_clearColor;
 	extern unsigned int queryIDGeometry[2];
@@ -275,14 +279,15 @@ namespace Graphics
 		for (size_t i = 0; i < g_dataRenderingByGraphicThread->g_pointLights.size(); ++i)
 		{
 			auto* it = &g_dataRenderingByGraphicThread->g_pointLights[i];
+			// point need extra uniform variables to be passed in to shader
+			it->SetupLight(g_currentEffect->GetProgramID(), i);
+			it->SetLightUniformTransform();
+
+			if(!it->IsShadowEnabled()) continue;
 
 			// for each light, needs to update the frame data
 			Graphics::UniformBufferFormats::sFrame _frameData_PointLightShadow(it->GetProjectionmatrix(), it->GetViewMatrix());
 			g_uniformBufferMap[UBT_Frame].Update(&_frameData_PointLightShadow);
-
-			// point need extra uniform variables to be passed in to shader
-			it->SetupLight(g_currentEffect->GetProgramID(), i);
-			it->SetLightUniformTransform();
 
 			// write buffer to the texture
 			sRect subRect = g_subRectRefs[it->ResolutionIdx()];
@@ -583,6 +588,7 @@ namespace Graphics
 			glUnmapBuffer(GL_SHADER_STORAGE_BUFFER);
 			glBindBuffer(GL_SHADER_STORAGE_BUFFER, 0);
 		}
+
 		glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 3, g_lightVisibilitiesID);
 		glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 4, minMaxDepthID);
 
@@ -618,14 +624,26 @@ namespace Graphics
 			glBindBuffer(GL_SHADER_STORAGE_BUFFER, g_lightVisibilitiesID);
 			const GLsizei bufferSize = sizeof(GLuint) * MAX_POINT_LIGHT_COUNT;
 			GLuint* _dataOut = (GLuint *)glMapBuffer(GL_SHADER_STORAGE_BUFFER, GL_READ_ONLY);
+			std::vector<int> deletingIndices;
+			deletingIndices.reserve(MAX_POINT_LIGHT_COUNT);
+			g_pointLightsAfterCulling = g_dataRenderingByGraphicThread->g_pointLights;
 			for (int i = 0; i < g_dataRenderingByGraphicThread->g_pointLights.size(); ++i)
 			{
 				// if the point light is not visible in view, not casting shadow
-				if (_dataOut[i] == 0)
-					g_dataRenderingByGraphicThread->g_pointLights[i].SetEnableShadow(false);
-				else
+				if (_dataOut[i] == 1)
+				{
 					visiblePointLightCount++;
+				}
+				else
+					deletingIndices.push_back(i);
 			}
+			std::sort(deletingIndices.begin(), deletingIndices.end(), [](int& const l1, int& const l2) {
+				return l1 > l2; });
+			for (int i = 0; i < deletingIndices.size(); ++i)
+			{
+				g_pointLightsAfterCulling.erase(g_pointLightsAfterCulling.begin() + deletingIndices[i]);
+			}
+
 			glUnmapBuffer(GL_SHADER_STORAGE_BUFFER);
 			glBindBuffer(GL_SHADER_STORAGE_BUFFER, 0);
 		}
@@ -637,13 +655,14 @@ namespace Graphics
 			glUnmapBuffer(GL_SHADER_STORAGE_BUFFER);
 			glBindBuffer(GL_SHADER_STORAGE_BUFFER, 0);
 		}
+		glMemoryBarrier(GL_SHADER_STORAGE_BARRIER_BIT);
 		g_dataGetFromRenderThread->g_visiblePointLightCount = visiblePointLightCount;
 		g_currentEffect->UnUseEffect();
 	}
 	void DeferredShading()
 	{
-		/** 0. Update lighting data pass 0-2*/
-		for (size_t i = 0; i < 3; ++i)
+		/** 0. Update lighting data and shadow map generation for directional light and spot light*/
+		for (size_t i = 0; i < 2; ++i)
 		{
 			// Update current render pass
 			g_currentRenderPass = i;
@@ -662,8 +681,12 @@ namespace Graphics
 			});
 		Profiler::StopRecording(Profiler::EPT_GBuffer);
 
+		// find tiles
 		TileGenerationPass();
 
+		// generate shadow map for point lights after view culling
+		PointLightShadowMap_Pass();
+		
 		/** 2.1 Capture SSAO buffer*/
 		g_ssaoBuffer.Write(
 			[] {
