@@ -12,6 +12,7 @@ namespace Graphics {
 	void cPointLight::Illuminate()
 	{
 		auto& gLighting = Graphics::GetGlobalLightingData();
+		gLighting.pointLights[m_lightIndex].base.uniqueID = UniqueID;
 		gLighting.pointLights[m_lightIndex].base.color = LightColor * Intensity;
 		gLighting.pointLights[m_lightIndex].base.enableShadow = m_enableShadow;
 		gLighting.pointLights[m_lightIndex].position = Transform.Position();

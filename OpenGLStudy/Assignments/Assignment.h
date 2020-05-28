@@ -52,7 +52,9 @@ private:
 	cEditorCamera* m_editorCamera = nullptr;
 
 	int m_createdPLightCount = 1;
-	Graphics::cPointLight* m_pLights[s_maxPLightCount] = {nullptr};
+	std::map<int, Graphics::cPointLight*> m_pointLightMap;
+	Graphics::cPointLight* m_pLights[s_maxPLightCount] = { nullptr };
+
 	cSphere m_collisionSpheres[Assignment::s_maxPLightCount];
 
 	Graphics::cAmbientLight* aLight = nullptr;

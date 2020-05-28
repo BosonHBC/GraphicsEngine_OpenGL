@@ -49,7 +49,6 @@ namespace Graphics
 
 	extern 	GLuint minMaxDepthID;
 	extern glm::vec4 minMaxDepth[NUM_GROUPS_X * NUM_GROUPS_Y];
-
 	extern GLuint g_lightVisibilitiesID;
 
 	const std::map<uint8_t, const char*> g_renderModeNameMap =
@@ -308,7 +307,7 @@ namespace Graphics
 						// 2. Update draw call data
 						g_uniformBufferMap[UBT_Drawcall].Update(&UniformBufferFormats::sDrawCall(it2->second.M(), it2->second.TranspostInverse()));
 						// 3. Draw
-						it2->first.RenderWithoutMaterial(GL_TRIANGLES);
+						it2->first.RenderWithoutMaterial();
 
 					}
 				}
@@ -570,6 +569,8 @@ namespace Graphics
 
 		g_currentEffect->UnUseEffect();
 	}
+
+
 	void TileGenerationPass()
 	{
 		g_uniformBufferMap[UBT_Frame].Update(&g_dataRenderingByGraphicThread->g_renderPasses[3].FrameData);
@@ -639,7 +640,9 @@ namespace Graphics
 
 		g_currentEffect->UnUseEffect();
 
-		for (int i = 0; i < g_dataRenderingByGraphicThread->g_pointLights.size(); ++i)
+		int pLightCount = g_dataRenderingByGraphicThread->g_pointLights.size();
+		int invisiblePointLightCount = 0;
+		for (int i = 0; i < pLightCount; ++i)
 		{
 			// if the point light is not visible in view, not casting shadow
 			if (visibilities[i] == 1)
@@ -648,8 +651,8 @@ namespace Graphics
 			}
 			else
 			{
-				g_dataRenderingByGraphicThread->g_pointLights[i].SetEnableShadow(false);
-				g_dataRenderingByGraphicThread->g_pointLights[i].Illuminate();
+				g_dataGetFromRenderThread->g_disablePointLightIndices[invisiblePointLightCount] = i;
+				invisiblePointLightCount++;
 			}
 		}
 
@@ -682,6 +685,7 @@ namespace Graphics
 		TileGenerationPass();
 
 		// generate shadow map for point lights after view culling
+		//g_currentRenderPass = 2;
 		PointLightShadowMap_Pass();
 		
 		/** 2.1 Capture SSAO buffer*/

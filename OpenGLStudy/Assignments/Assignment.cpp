@@ -142,7 +142,8 @@ void Assignment::CreateLight()
 	{
 		//Color randomColor = Color(randomFloats(generator), randomFloats(generator), randomFloats(generator));
 		bool enableShadow = true;
-		Graphics::CreatePointLight(glm::vec3(0 + (i % lightPerRow) * horiDist, 100, 100 - (i / lightPerRow) * vertDist), m_pointLightColor, 150.f, enableShadow, m_pLights[i]);
+		Graphics::CreatePointLight(glm::vec3(0 + (i % lightPerRow) * horiDist, 100, 100 - (i / lightPerRow) * vertDist), m_pointLightColor, 150.f, enableShadow, m_pLights[i], i);
+		m_pointLightMap.insert({ m_pLights[i]->UniqueID, m_pLights[i] });
 	}
 
 	//CreatePointLight(glm::vec3(0, 100, 0), Color::White() * 0.5f, 250, true);
@@ -255,6 +256,7 @@ void Assignment::Run()
 
 		// Swap buffers
 		m_window->SwapBuffers();
+		Graphics::SwapDataFromRenderThread();
 	}
 }
 
@@ -351,13 +353,14 @@ void Assignment::Tick(float second_since_lastFrame)
 	{
 		g_renderActorList[i]->Transform.Update();
 	}
+
 	for (int i = 0; i < m_createdPLightCount; ++i)
 	{
 		m_pLights[i]->CalculateDistToEye(m_editorCamera->CamLocation());
 		m_pLights[i]->Transform.Update();
 	}
 
-	if (dLight)
+	if (dLight)  
 		dLight->Transform.Update();
 	if (spLight)
 		spLight->Transform.Update();
@@ -381,6 +384,22 @@ void Assignment::SubmitLightingData()
 	std::vector<Graphics::cPointLight> _pLights;
 	std::vector<Graphics::cSpotLight> _spLights;
 
+	auto& dataFromRenderThread = Graphics::GetDataFromRenderThread();
+
+
+	for (auto it : m_pointLightMap)
+	{
+		it.second->Enabled = true;
+		it.second->SetEnableShadow(true);
+	}
+
+	for (int i = 0; i < m_createdPLightCount - dataFromRenderThread.g_visiblePointLightCount; ++i)
+	{
+		unsigned int disableUniqueID = dataFromRenderThread.g_disablePointLightIndices[i];
+
+		m_pointLightMap[disableUniqueID]->Enabled = false;
+		m_pointLightMap[disableUniqueID]->SetEnableShadow(false);
+	}
 
 	// process point light
 	{
@@ -405,8 +424,8 @@ void Assignment::SubmitLightingData()
 
 	for (int i = 0; i < m_createdPLightCount; ++i)
 	{
+		m_pLights[i]->UpdateLightIndex(i);
 		_pLights.push_back(*m_pLights[i]);
-		_pLights[i].UpdateLightIndex(i);
 	}
 
 
@@ -502,7 +521,8 @@ void Assignment::CreatePointLight(const glm::vec3& i_initialLocation, const Colo
 	std::lock_guard<std::mutex> autoLock(m_applicationMutex);
 	if (m_createdPLightCount < s_maxPLightCount)
 	{
-		Graphics::CreatePointLight(i_initialLocation, i_color, i_radius, i_enableShadow, m_pLights[m_createdPLightCount]);
+		Graphics::CreatePointLight(i_initialLocation, i_color, i_radius, i_enableShadow, m_pLights[m_createdPLightCount], m_createdPLightCount);
+		m_pointLightMap.insert({ m_pLights[m_createdPLightCount]->UniqueID, m_pLights[m_createdPLightCount] });
 		m_createdPLightCount++;
 	}
 
@@ -621,6 +641,15 @@ void Assignment::EditorGUI()
 	}
 	ImGui::Text("Point light count: %d", m_createdPLightCount);
 	ImGui::Text("Visible Point light count: %d", dataFromRenderThread.g_visiblePointLightCount);
+/*
+	ImGui::Text("Invisible light indices: ");
+	int len = m_createdPLightCount - dataFromRenderThread.g_visiblePointLightCount;
+	for (int i  = 0; i < len; ++i)
+	{
+		unsigned int disableIndex = dataFromRenderThread.g_disablePointLightIndices[i];
+		ImGui::SameLine();
+		ImGui::Text("%d, ", disableIndex);
+	}*/
 
 	int mouseX = glm::clamp((int)ImGui::GetIO().MousePos.x, 0, 1279);
 	int mouseY = glm::clamp(720 - (int)ImGui::GetIO().MousePos.y, 0, 719);
@@ -771,7 +800,11 @@ void Assignment::EditorGUI()
 					glm::vec4 viewSpacePos = m_editorCamera->GetViewMatrix() * glm::vec4(_pLight->Transform.Position(), 1.0);
 
 					ImGui::Text("Light Position in View Space (%.1f, %.1f, %.1f, %.1f)", viewSpacePos.x, viewSpacePos.y, viewSpacePos.z, viewSpacePos.w);
-					//ImGui::Text("Light Position in Clip Space (%.1f, %.1f, %.1f, %.1f)", viewSpacePos.x, viewSpacePos.y, viewSpacePos.z, viewSpacePos.w);
+					ImGui::Checkbox("Enabled", &_pLight->Enabled);
+					bool shadowEnabled = _pLight->IsShadowEnabled();
+					ImGui::Checkbox("Shadow enabled", &shadowEnabled);
+					ImGui::Text("Light unique id: %d", _pLight->UniqueID);
+					ImGui::Text("Light index: %d", _pLight->GetLightIndex());
 				}
 			}
 

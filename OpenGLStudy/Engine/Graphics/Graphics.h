@@ -65,7 +65,7 @@ namespace Graphics {
 	/** Lighting related*/
 	UniformBufferFormats::sLighting& GetGlobalLightingData();
 	bool CreateAmbientLight(const Color& i_color, cAmbientLight*& o_ambientLight);
-	bool CreatePointLight(const glm::vec3& i_initialLocation, const Color& i_color, const GLfloat& i_radius, bool i_enableShadow, cPointLight*& o_pointLight);
+	bool CreatePointLight(const glm::vec3& i_initialLocation, const Color& i_color, const GLfloat& i_radius, bool i_enableShadow, cPointLight*& o_pointLight, int uniqueID);
 	bool CreateSpotLight(const glm::vec3& i_initialLocation, const glm::vec3& i_direction, const Color& i_color, const GLfloat& i_edge, const GLfloat& i_radius, bool i_enableShadow, cSpotLight*& o_spotLight);
 	bool CreateDirectionalLight(const Color& i_color, glm::vec3 i_direction, bool i_enableShadow, cDirectionalLight*& o_directionalLight);
 	void UpdateLightingData();
@@ -74,6 +74,8 @@ namespace Graphics {
 	// When the data is swapped, application data can be cleared and it is ready for next submission
 	void MakeApplicationThreadWaitForSwapingData(std::mutex& i_applicationMutex);
 	void MakeApplicationThreadWaitUntilPreRenderFrameDone(std::mutex& i_applicationMutex);
+
+	void SwapDataFromRenderThread();
 	/** Others */
 	cEnvProbe* GetHDRtoCubemap();
 	cUniformBuffer* GetUniformBuffer(const eUniformBufferType& i_uniformBufferType);
@@ -82,6 +84,7 @@ namespace Graphics {
 	const cModel& GetPrimitive(const EPrimitiveType& i_primitiveType);
 
 	glm::vec2 GetTileMinMaxDepthOnCursor(int i_x, int i_y);
+
 
 	/** Return data related*/
 	const sDataReturnToApplicationThread& GetDataFromRenderThread();

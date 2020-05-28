@@ -88,7 +88,9 @@ out vec4 color;
 
 struct Light{	
 	vec3 color;
+	int uniqueID;
 	bool enableShadow;
+	vec2 padding;
 };
 
 // Lighting, no interpoloation

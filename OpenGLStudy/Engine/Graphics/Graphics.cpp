@@ -544,6 +544,7 @@ namespace Graphics {
 				printf("Fail to load texture %s\n", _path.c_str());
 				assert(result);
 			}
+
 		}
 		// Load models & textures
 		{
@@ -828,9 +829,7 @@ namespace Graphics {
 		 Profiler::GetProfilingTime(Profiler::EPT_Selection, g_dataGetFromRenderThread->g_deltaSelectionTime);
 		 */
 
-		// swap data and notify data has been swapped.
-		std::swap(g_dataGetFromRenderThread, g_dataUsedByApplicationThread);
-		g_whenDataReturnToApplicationThreadHasSwapped.notify_one();
+
 	}
 
 	void SubmitClipPlaneData(const glm::vec4& i_plane0, const glm::vec4& i_plane1 /*= glm::vec4(0,0,0,0)*/, const glm::vec4& i_plane2 /*= glm::vec4(0, 0, 0, 0)*/, const glm::vec4& i_plane3 /*= glm::vec4(0, 0, 0, 0)*/)
@@ -1055,9 +1054,11 @@ namespace Graphics {
 
 	const Graphics::sDataReturnToApplicationThread& GetDataFromRenderThread()
 	{
+		std::lock_guard<std::mutex> autoLock(g_graphicMutex);
+/*
 		std::unique_lock<std::mutex> lck(Application::GetCurrentApplication()->GetApplicationMutex());
 		constexpr unsigned int timeToWait_inMilliseconds = 1;
-		g_whenDataReturnToApplicationThreadHasSwapped.wait_for(lck, std::chrono::milliseconds(timeToWait_inMilliseconds));
+		g_whenDataReturnToApplicationThreadHasSwapped.wait_for(lck, std::chrono::milliseconds(timeToWait_inMilliseconds));*/
 		return *g_dataUsedByApplicationThread;
 	}
 
@@ -1124,6 +1125,7 @@ namespace Graphics {
 			return result;
 		}
 		g_ambientLight = new  cAmbientLight(i_color);
+		g_ambientLight->UniqueID = 0;
 		g_ambientLight->SetupLight(0, 0);
 		g_ambientLight->Intensity = 0.2f;
 		o_ambientLight = g_ambientLight;
@@ -1131,11 +1133,12 @@ namespace Graphics {
 		return result;
 	}
 
-	bool CreatePointLight(const glm::vec3& i_initialLocation, const Color& i_color, const GLfloat& i_radius, bool i_enableShadow, cPointLight*& o_pointLight)
+	bool CreatePointLight(const glm::vec3& i_initialLocation, const Color& i_color, const GLfloat& i_radius, bool i_enableShadow, cPointLight*& o_pointLight, int uniqueID)
 	{
 		auto result = true;
 		// TODO: lighting, range should be passed in
 		cPointLight* newPointLight = new cPointLight(i_color, i_initialLocation, i_radius);
+		newPointLight->UniqueID = uniqueID;
 		newPointLight->SetEnableShadow(i_enableShadow);
 		newPointLight->CreateShadowMap(2048, 2048);
 		newPointLight->IncreamentSelectableCount();
@@ -1149,6 +1152,7 @@ namespace Graphics {
 	{
 		auto result = true;
 		cSpotLight* newSpotLight = new cSpotLight(i_color, i_initialLocation, glm::normalize(i_direction), i_edge, i_radius);
+		newSpotLight->UniqueID = g_spotLight_list.size();
 		newSpotLight->SetEnableShadow(i_enableShadow);
 		newSpotLight->CreateShadowMap(1024, 1024);
 		o_spotLight = newSpotLight;
@@ -1161,6 +1165,7 @@ namespace Graphics {
 	{
 		auto result = true;
 		cDirectionalLight* newDirectionalLight = new cDirectionalLight(i_color, glm::normalize(i_direction));
+		newDirectionalLight->UniqueID = 0;
 		newDirectionalLight->SetEnableShadow(i_enableShadow);
 		newDirectionalLight->CreateShadowMap(2048, 2048);
 		newDirectionalLight->Intensity = 3;
@@ -1188,6 +1193,15 @@ namespace Graphics {
 	{
 		std::unique_lock<std::mutex> lck(i_applicationMutex);
 		g_whenPreRenderFinish.wait(lck);
+	}
+
+	void SwapDataFromRenderThread()
+	{
+		// swap data and notify data has been swapped.
+		//std::swap(g_dataGetFromRenderThread, g_dataUsedByApplicationThread);
+		//g_whenDataReturnToApplicationThreadHasSwapped.notify_one();
+		std::lock_guard<std::mutex> autoLock(g_graphicMutex);
+		memcpy(g_dataUsedByApplicationThread, g_dataGetFromRenderThread, sizeof(sDataReturnToApplicationThread));
 	}
 
 	void ClearApplicationThreadData()

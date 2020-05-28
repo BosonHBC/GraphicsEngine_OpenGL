@@ -17,6 +17,7 @@ namespace Graphics {
 	void cAmbientLight::Illuminate()
 	{
 		auto& gLighting = Graphics::GetGlobalLightingData();
+		gLighting.ambientLight.base.uniqueID = UniqueID;
 		gLighting.ambientLight.base.color = LightColor * Intensity;
 		gLighting.ambientLight.base.enableShadow = m_enableShadow;
 	}

@@ -16,9 +16,12 @@ layout(std140, binding = 1) uniform uniformBuffer_drawcall
 	mat4 modelMatrix;
 	mat4 normalMatrix;
 };
+
 struct Light{	
 	vec3 color;
+	int uniqueID;
 	bool enableShadow;
+	vec2 padding;
 };
 
 // Lighting, no interpoloation
@@ -224,7 +227,7 @@ void main()
                     // do a thread-safe increment of the list counter 
                     // and put the index of this light into the list
                     uint id = atomicAdd(visibleLightCount, 1);
-					g_lightVisibilities[lightIndex] = 1;
+					g_lightVisibilities[g_pointLights[lightIndex].base.uniqueID] = 1;
 				}
                 
 			}

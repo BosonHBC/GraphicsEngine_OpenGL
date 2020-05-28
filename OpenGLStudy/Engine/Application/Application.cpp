@@ -108,7 +108,7 @@ namespace Application {
 			// Submit data
 			{
 				/** 1. Wait until render thread is ready for receiving new graphic data */
-				//Graphics::MakeApplicationThreadWaitForSwapingData(m_applicationMutex);
+				Graphics::MakeApplicationThreadWaitForSwapingData(m_applicationMutex);
 				/** 2. Clear the application thread data and submit new one */
 				Graphics::ClearApplicationThreadData();
 				SubmitDataToBeRender(static_cast<float>(Time::ConvertFromTickToSeconds(tickCount_systemTime_elapsedSinceLastLoop)));
