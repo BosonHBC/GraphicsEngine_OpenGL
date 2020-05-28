@@ -47,10 +47,9 @@ namespace Graphics {
 		cTransform Transform;
 		Color LightColor = Color(0, 0, 0);
 		float Intensity = 1.0f;
+		bool Enabled = true;
 
 	protected:
-
-
 		// record the index of this light
 		GLuint m_lightIndex = 0;
 		bool m_enableShadow = false;

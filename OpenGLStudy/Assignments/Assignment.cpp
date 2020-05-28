@@ -353,6 +353,7 @@ void Assignment::Tick(float second_since_lastFrame)
 	}
 	for (int i = 0; i < m_createdPLightCount; ++i)
 	{
+		m_pLights[i]->CalculateDistToEye(m_editorCamera->CamLocation());
 		m_pLights[i]->Transform.Update();
 	}
 
@@ -380,20 +381,15 @@ void Assignment::SubmitLightingData()
 	std::vector<Graphics::cPointLight> _pLights;
 	std::vector<Graphics::cSpotLight> _spLights;
 
-	for (int i = 0; i < m_createdPLightCount; ++i)
-	{
-		m_pLights[i]->UpdateLightIndex(_pLights.size());
-		m_pLights[i]->CalculateDistToEye(m_editorCamera->CamLocation());
-		_pLights.push_back(*m_pLights[i]);
-	}
+
 	// process point light
 	{
-		std::sort(_pLights.begin(), _pLights.end(), [](Graphics::cPointLight& const l1, Graphics::cPointLight&  const l2) {
-			return l1.Importance() > l2.Importance(); });
+		std::sort(m_pLights, m_pLights + m_createdPLightCount, [](Graphics::cPointLight* l1, Graphics::cPointLight* l2) {
+			return l1->Importance() > l2->Importance(); });
 		// Now the point light list is sorted depends on their importance
-		for (size_t i = 0; i < _pLights.size(); ++i)
+		for (size_t i = 0; i < m_createdPLightCount; ++i)
 		{
-			auto* it = &_pLights[i];
+			auto* it = m_pLights[i];
 			int shadowMapIdx = -1; int resolutionIdx = -1;
 			if (Graphics::RetriveShadowMapIndexAndSubRect(i, shadowMapIdx, resolutionIdx))
 			{
@@ -403,9 +399,16 @@ void Assignment::SubmitLightingData()
 			else
 				assert(false);
 		}
-		std::sort(_pLights.begin(), _pLights.end(), [](Graphics::cPointLight& const l1, Graphics::cPointLight&  const l2) {
-			return l1.ShadowMapIdx() < l2.ShadowMapIdx(); });
+		std::sort(m_pLights, m_pLights + m_createdPLightCount, [](Graphics::cPointLight* l1, Graphics::cPointLight* l2) {
+			return l1->ShadowMapIdx() < l2->ShadowMapIdx(); });
 	}
+
+	for (int i = 0; i < m_createdPLightCount; ++i)
+	{
+		_pLights.push_back(*m_pLights[i]);
+		_pLights[i].UpdateLightIndex(i);
+	}
+
 
 	if (spLight)
 	{

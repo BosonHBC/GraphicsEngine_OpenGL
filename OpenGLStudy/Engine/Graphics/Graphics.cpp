@@ -808,7 +808,7 @@ namespace Graphics {
 		RenderPointLightPosition();
 		Profiler::StopRecording(4);
 		//Gizmo_DrawDebugCaptureVolume();
-		//RenderOmniShadowMap();
+		RenderOmniShadowMap();
 
 
 		Profiler::StartRecording(Profiler::EPT_Selection);

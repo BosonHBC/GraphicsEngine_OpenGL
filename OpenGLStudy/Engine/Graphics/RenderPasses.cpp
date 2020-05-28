@@ -67,9 +67,6 @@ namespace Graphics
 	};
 	bool g_bRenderOmniShaodowMap = false;
 	
-	std::vector<cPointLight> g_pointLightsAfterCulling;
-
-
 	// clear color
 	Color s_clearColor;
 	extern unsigned int queryIDGeometry[2];
@@ -620,29 +617,12 @@ namespace Graphics
 
 		// Get buffer data
 		GLuint visiblePointLightCount = 0;
+		GLuint visibilities[MAX_POINT_LIGHT_COUNT];
 		{
 			glBindBuffer(GL_SHADER_STORAGE_BUFFER, g_lightVisibilitiesID);
 			const GLsizei bufferSize = sizeof(GLuint) * MAX_POINT_LIGHT_COUNT;
 			GLuint* _dataOut = (GLuint *)glMapBuffer(GL_SHADER_STORAGE_BUFFER, GL_READ_ONLY);
-			std::vector<int> deletingIndices;
-			deletingIndices.reserve(MAX_POINT_LIGHT_COUNT);
-			g_pointLightsAfterCulling = g_dataRenderingByGraphicThread->g_pointLights;
-			for (int i = 0; i < g_dataRenderingByGraphicThread->g_pointLights.size(); ++i)
-			{
-				// if the point light is not visible in view, not casting shadow
-				if (_dataOut[i] == 1)
-				{
-					visiblePointLightCount++;
-				}
-				else
-					deletingIndices.push_back(i);
-			}
-			std::sort(deletingIndices.begin(), deletingIndices.end(), [](int& const l1, int& const l2) {
-				return l1 > l2; });
-			for (int i = 0; i < deletingIndices.size(); ++i)
-			{
-				g_pointLightsAfterCulling.erase(g_pointLightsAfterCulling.begin() + deletingIndices[i]);
-			}
+			memcpy(visibilities, _dataOut, bufferSize);
 
 			glUnmapBuffer(GL_SHADER_STORAGE_BUFFER);
 			glBindBuffer(GL_SHADER_STORAGE_BUFFER, 0);
@@ -656,8 +636,25 @@ namespace Graphics
 			glBindBuffer(GL_SHADER_STORAGE_BUFFER, 0);
 		}
 		glMemoryBarrier(GL_SHADER_STORAGE_BARRIER_BIT);
-		g_dataGetFromRenderThread->g_visiblePointLightCount = visiblePointLightCount;
+
 		g_currentEffect->UnUseEffect();
+
+		for (int i = 0; i < g_dataRenderingByGraphicThread->g_pointLights.size(); ++i)
+		{
+			// if the point light is not visible in view, not casting shadow
+			if (visibilities[i] == 1)
+			{
+				visiblePointLightCount++;
+			}
+			else
+			{
+				g_dataRenderingByGraphicThread->g_pointLights[i].SetEnableShadow(false);
+				g_dataRenderingByGraphicThread->g_pointLights[i].Illuminate();
+			}
+		}
+
+		// update global lighting data
+		g_dataGetFromRenderThread->g_visiblePointLightCount = visiblePointLightCount;
 	}
 	void DeferredShading()
 	{
