@@ -25,6 +25,7 @@
 #include "Application/Window/WindowInput.h"
 #include "Cores/Utility/Profiler.h"
 #include "Graphics/Texture/PboDownloader.h"
+#include "Assignments/ParticleTest.h"
 namespace Graphics {
 
 	unsigned int g_currentRenderPass = 0;
@@ -60,12 +61,10 @@ namespace Graphics {
 	cTexture::HANDLE s_spruitSunRise_HDR;
 	cTexture::HANDLE g_ssaoNoiseTexture;
 	cTexture::HANDLE g_pointLightIconTexture;
+	cTexture::HANDLE g_tileLightingTexture;
 	cMaterial::HANDLE g_arrowMatHandles[2];
 	PboDownloader g_pboDownloader;
-	
-	// arrow colors
-	Color g_arrowColor[3] = { Color(0, 0, 0.8f), Color(0.8f, 0, 0),Color(0, 0.8f, 0) };
-	Color g_outlineColor(1, 0.64f, 0);
+
 	// Lighting data
 	UniformBufferFormats::sLighting g_globalLightingData;
 	UniformBufferFormats::sSSAO g_ssaoData;
@@ -89,6 +88,10 @@ namespace Graphics {
 	cFrameBuffer g_selectionBuffer;
 	// outline buffer
 	cFrameBuffer g_outlineBuffer;
+
+	GLuint minMaxDepthID = 0;
+	glm::vec4 minMaxDepth[NUM_GROUPS_X * NUM_GROUPS_Y] = { glm::vec4(1,2,3,4) };
+	GLuint g_lightVisibilitiesID = 0;
 
 	// Effect
 	// ------------------------------------------------------------------------------------------------------------------------------------
@@ -132,38 +135,7 @@ namespace Graphics {
 	{
 		return a + f * (b - a);
 	}
-	void FixSamplerProblem(const eEffectType& i_effectKey)
-	{
-		// Fix sampler problem before validating the program
 
-		cEffect* _effect = GetEffectByKey(i_effectKey);
-		_effect->UseEffect();
-		GLuint _programID = _effect->GetProgramID();
-		char _charBuffer[64] = { '\0' };
-
-		_effect->SetInteger("BrdfLUTMap", 4);
-		_effect->SetInteger("AOMap", 5);
-
-		const auto maxCubemapMixing = EnvironmentCaptureManager::MaximumCubemapMixingCount();
-		constexpr auto cubemapStartID = IBL_CUBEMAP_START_TEXTURE_UNIT;
-		for (size_t i = 0; i < maxCubemapMixing; ++i)
-		{
-			snprintf(_charBuffer, sizeof(_charBuffer), "IrradianceMap[%d]", i);
-			_effect->SetInteger(_charBuffer, cubemapStartID + i);
-			snprintf(_charBuffer, sizeof(_charBuffer), "PrefilterMap[%d]", i);
-			_effect->SetInteger(_charBuffer, cubemapStartID + maxCubemapMixing + i);
-		}
-		for (int i = 0; i < OMNI_SHADOW_MAP_COUNT; ++i)
-		{
-			snprintf(_charBuffer, sizeof(_charBuffer), "spotlightShadowMap[%d]", i);
-			_effect->SetInteger(_charBuffer, SHADOWMAP_START_TEXTURE_UNIT + i);
-			snprintf(_charBuffer, sizeof(_charBuffer), "pointLightShadowMap[%d]", i);
-			_effect->SetInteger(_charBuffer, SHADOWMAP_START_TEXTURE_UNIT + OMNI_SHADOW_MAP_COUNT + i);
-		}
-		_effect->SetInteger("directionalShadowMap", SHADOWMAP_START_TEXTURE_UNIT + OMNI_SHADOW_MAP_COUNT * 2);
-		assert(GL_NO_ERROR == glGetError());
-		_effect->UnUseEffect();
-	}
 	void ForwardShading();
 	void DeferredShading();
 
@@ -186,7 +158,7 @@ namespace Graphics {
 					printf("Fail to create default effect.\n");
 					return result;
 				}
-				FixSamplerProblem(EET_BlinnPhong);
+
 			}
 			// Create shadow map effect
 			{
@@ -246,7 +218,7 @@ namespace Graphics {
 					printf("Fail to create PBR_MR effect.\n");
 					return result;
 				}
-				FixSamplerProblem(EET_PBR_MR);
+
 			}
 			// Create rectangular HDR map to cubemap effect
 			{
@@ -307,8 +279,6 @@ namespace Graphics {
 					printf("Fail to create TessQuad effect.\n");
 					return result;
 				}
-
-				FixSamplerProblem(EET_TessQuad);
 			}
 			// Create triangulation display effect
 			{
@@ -330,11 +300,6 @@ namespace Graphics {
 					printf("Fail to create HDREffect effect.\n");
 					return result;
 				}
-				cEffect* hdrEffect = GetEffectByKey(EET_HDREffect);
-				hdrEffect->UseEffect();
-				hdrEffect->SetInteger("hdrBuffer", 0);
-				hdrEffect->SetInteger("enableHDR", true);
-				hdrEffect->UnUseEffect();
 			}
 
 			// Create G-Buffer
@@ -356,14 +321,6 @@ namespace Graphics {
 					printf("Fail to create GBuffer effect.\n");
 					return result;
 				}
-				cEffect* bufferDisplayEffect = GetEffectByKey(EET_GBufferDisplay);
-				bufferDisplayEffect->UseEffect();
-				bufferDisplayEffect->SetInteger("gAlbedoMetallic", 0);
-				bufferDisplayEffect->SetInteger("gNormalRoughness", 1);
-				bufferDisplayEffect->SetInteger("gIOR", 2);
-				bufferDisplayEffect->SetInteger("gDepth", 3);
-				bufferDisplayEffect->SetInteger("gSSAOMap", 4);
-				bufferDisplayEffect->UnUseEffect();
 			}
 			// Create Deferred-Lighting pass
 			{
@@ -374,16 +331,6 @@ namespace Graphics {
 					printf("Fail to create Deferred lighting effect.\n");
 					return result;
 				}
-
-				cEffect* dLighting = GetEffectByKey(EET_DeferredLighting);
-				dLighting->UseEffect();
-				dLighting->SetInteger("gAlbedoMetallic", 0);
-				dLighting->SetInteger("gNormalRoughness", 1);
-				dLighting->SetInteger("gIOR", 2);
-				dLighting->SetInteger("gDepth", 3);
-				dLighting->SetInteger("gSSAOMap", SHADOWMAP_START_TEXTURE_UNIT + OMNI_SHADOW_MAP_COUNT * 2 + 1);
-				dLighting->UnUseEffect();
-				FixSamplerProblem(EET_DeferredLighting);
 			}
 
 			// Create ssao and ssao_blur pass
@@ -395,12 +342,6 @@ namespace Graphics {
 					printf("Fail to create SSAO effect.\n");
 					return result;
 				}
-				cEffect* ssaoEffect = GetEffectByKey(EET_SSAO);
-				ssaoEffect->UseEffect();
-				ssaoEffect->SetInteger("gNormalRoughness", 0);
-				ssaoEffect->SetInteger("gDepth", 1);
-				ssaoEffect->SetInteger("texNoise", 2);
-				ssaoEffect->UnUseEffect();
 
 				if (!(result = CreateEffect(EET_SSAO_Blur,
 					"hdrShader/hdr_shader_vert.glsl",
@@ -409,10 +350,6 @@ namespace Graphics {
 					printf("Fail to create SSAO_Blur effect.\n");
 					return result;
 				}
-				ssaoEffect = GetEffectByKey(EET_SSAO_Blur);
-				ssaoEffect->UseEffect();
-				ssaoEffect->SetInteger("ssaoInput", 0);
-				ssaoEffect->UnUseEffect();
 			}
 
 			// Create cubemap displayer
@@ -443,11 +380,7 @@ namespace Graphics {
 					printf("Fail to create outline effect.\n");
 					return result;
 				}
-				cEffect* outlineEffect = GetEffectByKey(EET_Outline);
-				outlineEffect->UseEffect();
-				outlineEffect->SetFloat("outlineWidth", 0.15f);
-				outlineEffect->SetVec3("unlitColor", glm::vec3(g_outlineColor.r, g_outlineColor.g, g_outlineColor.b));
-				outlineEffect->UnUseEffect();
+
 			}
 			// draw billboard effect
 			{
@@ -457,10 +390,31 @@ namespace Graphics {
 					printf("Fail to create billboard effect.\n");
 					return result;
 				}
-				cEffect* billboardEffect = GetEffectByKey(EET_Outline);
-				billboardEffect->UseEffect();
-				billboardEffect->SetInteger("sprite", 0);
-				billboardEffect->UnUseEffect();
+			}
+			// particle test
+			{
+				if (!(result = CreateEffect(EET_ParticleTest,
+					"particle/particle_vert.glsl",
+					"particle/particle_frag.glsl"))) {
+					printf("Fail to create ParticleTest effect.\n");
+					return result;
+				}
+			}
+			// particle compute
+			{
+				if (!(result = CreateEffect(EET_Comp_Particle,
+					"particle/particle_comp.glsl"))) {
+					printf("Fail to create EET_Comp_Particle effect.\n");
+					return result;
+				}
+			}
+			// tile based deferred shading comp
+			{
+				if (!(result = CreateEffect(EET_Comp_TileBasedDeferred,
+					"deferredShading/TiledBasedDefferred_comp.glsl"))) {
+					printf("Fail to create EET_Comp_TileBasedDeferred effect.\n");
+					return result;
+				}
 			}
 			// validate all programs
 			for (auto it : g_KeyToEffect_map)
@@ -531,7 +485,7 @@ namespace Graphics {
 				printf("Fail to create outline-Buffer.\n");
 				return result;
 			}
-			
+
 			g_pboDownloader.init(GL_RGB, _window->GetBufferWidth(), _window->GetBufferHeight(), 2);
 
 			//EnvironmentCaptureManager::AddCaptureProbes(cSphere(glm::vec3(-225, 230, 0), 600.f), 50.f, envMapResolution);
@@ -551,8 +505,44 @@ namespace Graphics {
 			Profiler::CreateProfiler(Profiler::EPT_Selection);
 		}
 
+		// tile based global data init
+		{
+			GLint bufMask = GL_MAP_WRITE_BIT | GL_MAP_INVALIDATE_BUFFER_BIT;
 
+			{
+				glGenBuffers(1, &g_lightVisibilitiesID);
+				glBindBuffer(GL_SHADER_STORAGE_BUFFER, g_lightVisibilitiesID);
+				const GLsizei bufferSize = sizeof(GLuint) * MAX_POINT_LIGHT_COUNT;
+				glBufferData(GL_SHADER_STORAGE_BUFFER, bufferSize, NULL, GL_DYNAMIC_DRAW);
+				GLuint cleanData[MAX_POINT_LIGHT_COUNT] = { 0 };
+				GLuint* _data = (GLuint *)glMapBufferRange(GL_SHADER_STORAGE_BUFFER, 0, bufferSize, bufMask);
+				memcpy(_data, cleanData, bufferSize);
+				glUnmapBuffer(GL_SHADER_STORAGE_BUFFER);
 
+				glBindBuffer(GL_SHADER_STORAGE_BUFFER, 0);
+				assert(GL_NO_ERROR == glGetError());
+			}
+			{
+				glGenBuffers(1, &minMaxDepthID);
+				glBindBuffer(GL_SHADER_STORAGE_BUFFER, minMaxDepthID);
+
+				const GLsizei bufferSize = sizeof(glm::vec4) * NUM_GROUPS_X * NUM_GROUPS_Y;
+				glBufferData(GL_SHADER_STORAGE_BUFFER, bufferSize, NULL, GL_DYNAMIC_DRAW);
+				glm::vec4* _data = (glm::vec4 *)glMapBufferRange(GL_SHADER_STORAGE_BUFFER, 0, bufferSize, bufMask);
+				memcpy(_data, minMaxDepth, bufferSize);
+				glUnmapBuffer(GL_SHADER_STORAGE_BUFFER);
+
+				glBindBuffer(GL_SHADER_STORAGE_BUFFER, 0);
+				assert(GL_NO_ERROR == glGetError());
+			}
+			std::string _path = "TiledLighting";
+			if (!(result = cTexture::s_manager.Load(_path, g_tileLightingTexture, ETT_IMAGE2D_RGBA32, NUM_GROUPS_X, NUM_GROUPS_Y)))
+			{
+				printf("Fail to load texture %s\n", _path.c_str());
+				assert(result);
+			}
+
+		}
 		// Load models & textures
 		{
 			g_cubeHandle = cModel("Contents/models/cube.model");
@@ -580,7 +570,7 @@ namespace Graphics {
 				g_arrowHandles[i].UpdateUniformVariables(GetEffectByKey(EET_Unlit)->GetProgramID());
 				g_arrowHandles[i].IncreamentSelectableCount();
 				cMatUnlit* _arrowMat = dynamic_cast<cMatUnlit*>(cMaterial::s_manager.Get(g_arrowHandles[i].GetMaterialAt()));
-				_arrowMat->SetUnlitColor(g_arrowColor[i]);
+				_arrowMat->SetUnlitColor(Constants::g_arrowColor[i]);
 			}
 			GetEffectByKey(EET_Unlit)->UnUseEffect();
 
@@ -693,6 +683,8 @@ namespace Graphics {
 			}
 		}
 #endif // ENABLE_CLOTH_SIM
+
+		ComputeShaderTest::Init();
 		return result;
 	}
 
@@ -707,8 +699,6 @@ namespace Graphics {
 		{
 			g_currentEffect = Graphics::GetEffectByKey(EET_HDRToCubemap);
 			g_currentEffect->UseEffect();
-
-			g_currentEffect->SetInteger("rectangularHDRMap", 0);
 			cTexture* _hdr = cTexture::s_manager.Get(s_spruitSunRise_HDR);
 			_hdr->UseTexture(GL_TEXTURE0);
 
@@ -790,6 +780,7 @@ namespace Graphics {
 		if (g_dataRenderingByGraphicThread->g_renderMode == ERM_ForwardShading)
 		{
 			ForwardShading();
+
 		}
 		else // if not forward shading, it is deferred shading
 		{
@@ -803,31 +794,30 @@ namespace Graphics {
 			Profiler::StartRecording(3);
 			HDR_Pass();
 			Profiler::StopRecording(3);
-
-			// Clear the default buffer bit and copy hdr frame buffer's depth to the default frame buffer
-			glClear(GL_DEPTH_BUFFER_BIT | GL_STENCIL_BUFFER_BIT);
-			glBlitNamedFramebuffer(g_hdrBuffer.fbo(), 0, 0, 0, g_hdrBuffer.GetWidth(), g_hdrBuffer.GetHeight(), 0, 0, g_hdrBuffer.GetWidth(), g_hdrBuffer.GetHeight(), GL_DEPTH_BUFFER_BIT, GL_NEAREST);
-			assert(GL_NO_ERROR == glGetError());
-
-			// Render stuffs that needs depth info and needs not HDR info
-			Profiler::StartRecording(4);
-			RenderPointLightPosition();
-			Profiler::StopRecording(4);
-			//Gizmo_DrawDebugCaptureVolume();
-			//RenderOmniShadowMap();
-
-
-			Profiler::StartRecording(Profiler::EPT_Selection);
-			Profiler::StartRecording(5);
-			EditorPass();
-			Profiler::StopRecording(5);
-			Profiler::StopRecording(Profiler::EPT_Selection);
-
 		}
+
+		// Clear the default buffer bit and copy hdr frame buffer's depth to the default frame buffer
+		glClear(GL_DEPTH_BUFFER_BIT | GL_STENCIL_BUFFER_BIT);
+		glBlitNamedFramebuffer(g_hdrBuffer.fbo(), 0, 0, 0, g_hdrBuffer.GetWidth(), g_hdrBuffer.GetHeight(), 0, 0, g_hdrBuffer.GetWidth(), g_hdrBuffer.GetHeight(), GL_DEPTH_BUFFER_BIT, GL_NEAREST);
+		assert(GL_NO_ERROR == glGetError());
+
+		// Render stuffs that needs depth info and needs not HDR info
+		Profiler::StartRecording(4);
+		RenderPointLightPosition();
+		Profiler::StopRecording(4);
+		//Gizmo_DrawDebugCaptureVolume();
+		RenderOmniShadowMap();
+
+
+		Profiler::StartRecording(Profiler::EPT_Selection);
+		Profiler::StartRecording(5);
+		EditorPass();
+		Profiler::StopRecording(5);
+		Profiler::StopRecording(Profiler::EPT_Selection);
 		Profiler::StopRecording(Profiler::EPT_RenderAFrame);
 
 		/** 4. After all render of this frame is done*/
-		/*  
+		/*
 		// GPU profiling will take a long time because this need to wait until a GPU finish its rendering so this will take a long time, should avoid when unneccessary.
 		 Profiler::GetProfilingTime(Profiler::EPT_RenderAFrame, g_dataGetFromRenderThread->g_deltaRenderAFrameTime);
 		 Profiler::GetProfilingTime(Profiler::EPT_GBuffer, g_dataGetFromRenderThread->g_deltaGeometryTime);
@@ -836,9 +826,7 @@ namespace Graphics {
 		 Profiler::GetProfilingTime(Profiler::EPT_Selection, g_dataGetFromRenderThread->g_deltaSelectionTime);
 		 */
 
-		// swap data and notify data has been swapped.
-		std::swap(g_dataGetFromRenderThread, g_dataUsedByApplicationThread);
-		g_whenDataReturnToApplicationThreadHasSwapped.notify_one();
+
 	}
 
 	void SubmitClipPlaneData(const glm::vec4& i_plane0, const glm::vec4& i_plane1 /*= glm::vec4(0,0,0,0)*/, const glm::vec4& i_plane2 /*= glm::vec4(0, 0, 0, 0)*/, const glm::vec4& i_plane3 /*= glm::vec4(0, 0, 0, 0)*/)
@@ -898,7 +886,7 @@ namespace Graphics {
 	{
 		memcpy(g_dataSubmittedByApplicationThread->particles, ClothSim::g_positionData, sizeof(glm::vec3) * ClothSim::VC);
 		memcpy(g_dataSubmittedByApplicationThread->clothVertexData, ClothSim::GetVertexData(), sizeof(float) * ClothSim::VC * 14);
-}
+	}
 #endif // ENABLE_CLOTH_SIM
 
 
@@ -954,13 +942,14 @@ namespace Graphics {
 		}
 		g_cubeHandle.CleanUp();
 		g_quadHandle.CleanUp();
-		
+
 		cMaterial::s_manager.Release(g_arrowMatHandles[0]);
 		cMaterial::s_manager.Release(g_arrowMatHandles[1]);
 
 		cTexture::s_manager.Release(s_spruitSunRise_HDR);
 		cTexture::s_manager.Release(g_ssaoNoiseTexture);
 		cTexture::s_manager.Release(g_pointLightIconTexture);
+		cTexture::s_manager.Release(g_tileLightingTexture);
 		g_pboDownloader.cleanUp();
 		cMesh::s_manager.Release(s_point);
 #ifdef ENABLE_CLOTH_SIM
@@ -994,6 +983,10 @@ namespace Graphics {
 		{
 			g_omniShadowMaps[i].CleanUp();
 		}
+
+		glDeleteBuffers(1, &g_lightVisibilitiesID);
+		glDeleteBuffers(1, &minMaxDepthID);
+
 		s_cubemapProbe.CleanUp();
 		s_brdfLUTTexture.CleanUp();
 		g_hdrBuffer.CleanUp();
@@ -1005,6 +998,7 @@ namespace Graphics {
 		if (!(result = EnvironmentCaptureManager::CleanUp()))
 			printf("Fail to clean up Environment Capture Manager.\n");
 
+		ComputeShaderTest::cleanUp();
 		return result;
 	}
 
@@ -1048,6 +1042,13 @@ namespace Graphics {
 		}
 	}
 
+	glm::vec2 GetTileMinMaxDepthOnCursor(int i_x, int i_y)
+	{
+		int idx = i_x / WORK_GROUP_SIZE + (i_y / WORK_GROUP_SIZE)  * NUM_GROUPS_X;
+		idx = glm::clamp(idx, 0, NUM_GROUPS_X * NUM_GROUPS_Y - 1);
+		return minMaxDepth[idx];
+	}
+
 	const Graphics::sDataReturnToApplicationThread& GetDataFromRenderThread()
 	{
 		std::unique_lock<std::mutex> lck(Application::GetCurrentApplication()->GetApplicationMutex());
@@ -1065,8 +1066,24 @@ namespace Graphics {
 		auto result = true;
 
 		cEffect* newEffect = new  Graphics::cEffect();
-		if (!(result = newEffect->CreateProgram(i_vertexShaderPath, i_fragmentShaderPath, i_geometryShaderPath, i_TCSPath, i_TESPath))) {
-			printf("Fail to create default effect.\n");
+		if (!(result = newEffect->CreateProgram(i_key, i_vertexShaderPath, i_fragmentShaderPath, i_geometryShaderPath, i_TCSPath, i_TESPath))) {
+			printf("Fail to create effect: %d.\n", i_key);
+			safe_delete(newEffect);
+			return result;
+		}
+
+		g_KeyToEffect_map.insert({ i_key, newEffect });
+
+		return result;
+	}
+
+	bool CreateEffect(const eEffectType& i_key, const char* i_computeShaderPath)
+	{
+		auto result = true;
+
+		cEffect* newEffect = new  Graphics::cEffect();
+		if (!(result = newEffect->CreateProgram(i_key, "", "", "", "", "", i_computeShaderPath))) {
+			printf("Fail to create effect: %d.\n", i_key);
 			safe_delete(newEffect);
 			return result;
 		}
@@ -1103,6 +1120,7 @@ namespace Graphics {
 			return result;
 		}
 		g_ambientLight = new  cAmbientLight(i_color);
+		g_ambientLight->UniqueID = 0;
 		g_ambientLight->SetupLight(0, 0);
 		g_ambientLight->Intensity = 0.2f;
 		o_ambientLight = g_ambientLight;
@@ -1110,11 +1128,12 @@ namespace Graphics {
 		return result;
 	}
 
-	bool CreatePointLight(const glm::vec3& i_initialLocation, const Color& i_color, const GLfloat& i_radius, bool i_enableShadow, cPointLight*& o_pointLight)
+	bool CreatePointLight(const glm::vec3& i_initialLocation, const Color& i_color, const GLfloat& i_radius, bool i_enableShadow, cPointLight*& o_pointLight, int uniqueID)
 	{
 		auto result = true;
 		// TODO: lighting, range should be passed in
 		cPointLight* newPointLight = new cPointLight(i_color, i_initialLocation, i_radius);
+		newPointLight->UniqueID = uniqueID;
 		newPointLight->SetEnableShadow(i_enableShadow);
 		newPointLight->CreateShadowMap(2048, 2048);
 		newPointLight->IncreamentSelectableCount();
@@ -1128,6 +1147,7 @@ namespace Graphics {
 	{
 		auto result = true;
 		cSpotLight* newSpotLight = new cSpotLight(i_color, i_initialLocation, glm::normalize(i_direction), i_edge, i_radius);
+		newSpotLight->UniqueID = g_spotLight_list.size();
 		newSpotLight->SetEnableShadow(i_enableShadow);
 		newSpotLight->CreateShadowMap(1024, 1024);
 		o_spotLight = newSpotLight;
@@ -1140,6 +1160,7 @@ namespace Graphics {
 	{
 		auto result = true;
 		cDirectionalLight* newDirectionalLight = new cDirectionalLight(i_color, glm::normalize(i_direction));
+		newDirectionalLight->UniqueID = 0;
 		newDirectionalLight->SetEnableShadow(i_enableShadow);
 		newDirectionalLight->CreateShadowMap(2048, 2048);
 		newDirectionalLight->Intensity = 3;
@@ -1167,6 +1188,13 @@ namespace Graphics {
 	{
 		std::unique_lock<std::mutex> lck(i_applicationMutex);
 		g_whenPreRenderFinish.wait(lck);
+	}
+
+	void SwapDataFromRenderThread()
+	{
+		// swap data and notify data has been swapped.
+		std::swap(g_dataGetFromRenderThread, g_dataUsedByApplicationThread);
+		g_whenDataReturnToApplicationThreadHasSwapped.notify_one();
 	}
 
 	void ClearApplicationThreadData()

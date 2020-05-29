@@ -27,6 +27,7 @@ namespace Graphics {
 		ETT_FRAMEBUFFER_R16 = 15,
 		ETT_FRAMEBUFFER_RGB32 = 16,
 		ETT_FRAMEBUFFER_RGB8 = 17,
+		ETT_IMAGE2D_RGBA32 = 18,
 		ETT_INVALID = 0xff
 	};
 
@@ -78,6 +79,7 @@ namespace Graphics {
 		bool LoadR16Texture(const std::string& i_type_id, const GLuint& i_width, const GLuint& i_height);				// ssao textures
 		bool LoadRGB32Texture(const std::string& i_type_id, const GLuint& i_width, const GLuint& i_height);		// noise texture
 		bool LoadRGB8Texture(const std::string& i_type_id, const GLuint& i_width, const GLuint& i_height);			// selection buffer
+		bool LoadRGBA32Texture(const std::string& i_type_id, const GLuint& i_width, const GLuint& i_height);		// tiled lighting image
 		// Load color format texture from frame buffer
 		bool LoadStencilTexture(const std::string& i_type_id, const GLuint& i_width, const GLuint& i_height);
 

@@ -22,11 +22,12 @@ namespace Graphics {
 		void UseShadowMap(GLuint i_textureUnit) override;
 		void SetShadowmapIdxAndResolutionIdx(GLuint i_shadowMapIdx, GLuint i_resolutionIDx) { m_shadowMapIdx = i_shadowMapIdx; m_resolutionIdx = i_resolutionIDx; };
 		void CalculateDistToEye(const glm::vec3& i_eyePos);
-		GLfloat Importance() const { return Range / (0.01f + m_distToEye); }
+		GLfloat Importance() const { return (Range / (0.01f + m_distToEye)) ; }
 		
 		GLuint ShadowMapIdx() const { return m_shadowMapIdx; }
 		GLuint ResolutionIdx() const { return m_resolutionIdx; }
 		glm::mat4 GetViewMatrix() const;
+		bool IsShadowEnabled() const override { return m_enableShadow && Enabled; }
 
 		// use inverse squared fall off
 		GLfloat Range = 100.f;

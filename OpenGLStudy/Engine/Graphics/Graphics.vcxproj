@@ -22,9 +22,6 @@
     <ProjectReference Include="..\Assets\Assets.vcxproj">
       <Project>{e5bc07b4-4aab-4ce6-8a4e-a5b3ec116cc6}</Project>
     </ProjectReference>
-    <ProjectReference Include="..\Constants\Constants.vcxproj">
-      <Project>{c382dd7e-e9fe-41f6-bef6-cc7d647a1d0f}</Project>
-    </ProjectReference>
     <ProjectReference Include="..\Math\Maths.vcxproj">
       <Project>{2b7eaa37-308e-4d6b-ba43-a36c0f99f6f0}</Project>
     </ProjectReference>
@@ -33,6 +30,7 @@
     <ClCompile Include="Camera\Camera.cpp" />
     <ClCompile Include="Camera\EditorCamera\EditorCamera.cpp" />
     <ClCompile Include="Effect\Effect.cpp" />
+    <ClCompile Include="Effect\Shader\GLShader.cpp" />
     <ClCompile Include="EnvironmentCaptureManager.cpp" />
     <ClCompile Include="EnvironmentProbes\EnvProbe.cpp" />
     <ClCompile Include="FrameBuffer\cFrameBuffer.cpp" />

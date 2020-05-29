@@ -14,6 +14,9 @@
 #include "Cores/Utility/Profiler.h"
 #include "Time/Time.h"
 #include "Texture/PboDownloader.h"
+#include "Constants/Constants.h"
+
+#include "Assignments/ParticleTest.h"
 
 namespace Graphics
 {
@@ -41,7 +44,12 @@ namespace Graphics
 #endif // ENABLE_CLOTH_SIM
 	extern cTexture::HANDLE g_ssaoNoiseTexture;
 	extern cTexture::HANDLE g_pointLightIconTexture;
+	extern 	cTexture::HANDLE g_tileLightingTexture;
 	extern PboDownloader g_pboDownloader;
+
+	extern 	GLuint minMaxDepthID;
+	extern glm::vec4 minMaxDepth[NUM_GROUPS_X * NUM_GROUPS_Y];
+	extern GLuint g_lightVisibilitiesID;
 
 	const std::map<uint8_t, const char*> g_renderModeNameMap =
 	{
@@ -57,10 +65,9 @@ namespace Graphics
 		std::pair<ERenderMode, const char*>(ERM_SSAO, "SSAO")
 	};
 	bool g_bRenderOmniShaodowMap = false;
+	
 	// clear color
 	Color s_clearColor;
-	extern Color g_outlineColor;
-	extern Color g_arrowColor[3];
 	extern unsigned int queryIDGeometry[2];
 	void RenderQuad(const UniformBufferFormats::sFrame& i_frameData = UniformBufferFormats::sFrame(), const UniformBufferFormats::sDrawCall& i_drawCallData = UniformBufferFormats::sDrawCall())
 	{
@@ -117,7 +124,6 @@ namespace Graphics
 			g_currentEffect = GetEffectByKey(EET_CubemapDisplayer);
 			g_currentEffect->UseEffect();
 
-			g_currentEffect->SetInteger("cubemapTex", 0);
 			g_omniShadowMaps[i].Read(GL_TEXTURE0);
 
 			cTransform tempTr(glm::vec3(-300, 200, 300 - 150 * i), glm::quat(1, 0, 0, 0), glm::vec3(5, 5, 5));
@@ -269,14 +275,15 @@ namespace Graphics
 		for (size_t i = 0; i < g_dataRenderingByGraphicThread->g_pointLights.size(); ++i)
 		{
 			auto* it = &g_dataRenderingByGraphicThread->g_pointLights[i];
+			// point need extra uniform variables to be passed in to shader
+			it->SetupLight(g_currentEffect->GetProgramID(), i);
+			it->SetLightUniformTransform();
+
+			if(!it->IsShadowEnabled()) continue;
 
 			// for each light, needs to update the frame data
 			Graphics::UniformBufferFormats::sFrame _frameData_PointLightShadow(it->GetProjectionmatrix(), it->GetViewMatrix());
 			g_uniformBufferMap[UBT_Frame].Update(&_frameData_PointLightShadow);
-
-			// point need extra uniform variables to be passed in to shader
-			it->SetupLight(g_currentEffect->GetProgramID(), i);
-			it->SetLightUniformTransform();
 
 			// write buffer to the texture
 			sRect subRect = g_subRectRefs[it->ResolutionIdx()];
@@ -300,7 +307,7 @@ namespace Graphics
 						// 2. Update draw call data
 						g_uniformBufferMap[UBT_Drawcall].Update(&UniformBufferFormats::sDrawCall(it2->second.M(), it2->second.TranspostInverse()));
 						// 3. Draw
-						it2->first.RenderWithoutMaterial(GL_TRIANGLES);
+						it2->first.RenderWithoutMaterial();
 
 					}
 				}
@@ -540,7 +547,9 @@ namespace Graphics
 		g_currentEffect->SetInteger("displayMode", static_cast<GLint>(renderMode) - 2);
 		GLenum _textureUnits[4] = { GL_TEXTURE0 , GL_TEXTURE1 ,GL_TEXTURE2, GL_TEXTURE3 };
 		g_GBuffer.Read(_textureUnits);
-		g_ssao_blur_Buffer.Read(GL_TEXTURE4);
+		//g_ssao_blur_Buffer.Read(GL_TEXTURE4);
+		cTexture* tileTex = cTexture::s_manager.Get(g_tileLightingTexture);
+		tileTex->UseTexture(GL_TEXTURE4);
 		RenderQuad(g_dataRenderingByGraphicThread->g_renderPasses[g_currentRenderPass].FrameData);
 		g_currentEffect->UnUseEffect();
 	}
@@ -551,7 +560,7 @@ namespace Graphics
 		g_currentEffect = GetEffectByKey(EET_DeferredLighting);
 		g_currentEffect->UseEffect();
 
-		GLenum _textureUnits[4] = { GL_TEXTURE0 , GL_TEXTURE1 ,GL_TEXTURE2, GL_TEXTURE3 };
+		static GLenum _textureUnits[4] = { GL_TEXTURE0 , GL_TEXTURE1 ,GL_TEXTURE2, GL_TEXTURE3 };
 		g_GBuffer.Read(_textureUnits);
 		g_ssao_blur_Buffer.Read(GL_TEXTURE0 + SHADOWMAP_START_TEXTURE_UNIT + OMNI_SHADOW_MAP_COUNT * 2 + 1);
 		UpdateInfoForPBR();
@@ -561,10 +570,98 @@ namespace Graphics
 		g_currentEffect->UnUseEffect();
 	}
 
+	GLuint cleanData[MAX_POINT_LIGHT_COUNT] = { 0 };
+	GLuint visibilities[MAX_POINT_LIGHT_COUNT];
+	void TileGenerationPass()
+	{
+		g_uniformBufferMap[UBT_Frame].Update(&g_dataRenderingByGraphicThread->g_renderPasses[3].FrameData);
+		// clear light visibilities
+		{
+			GLint bufMask = GL_MAP_WRITE_BIT | GL_MAP_INVALIDATE_BUFFER_BIT;
+			glBindBuffer(GL_SHADER_STORAGE_BUFFER, g_lightVisibilitiesID);
+			const GLsizei bufferSize = sizeof(GLuint) * MAX_POINT_LIGHT_COUNT;
+			GLuint* _data = (GLuint *)glMapBufferRange(GL_SHADER_STORAGE_BUFFER, 0, bufferSize, bufMask);
+			memcpy(_data, cleanData, bufferSize);
+
+			glUnmapBuffer(GL_SHADER_STORAGE_BUFFER);
+			glBindBuffer(GL_SHADER_STORAGE_BUFFER, 0);
+		}
+
+		glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 3, g_lightVisibilitiesID);
+		glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 4, minMaxDepthID);
+
+		g_currentEffect = GetEffectByKey(EET_Comp_TileBasedDeferred);
+		g_currentEffect->UseEffect();
+		
+		{
+			cTexture* _tileLightingTexture = cTexture::s_manager.Get(g_tileLightingTexture);
+			GLuint texID = _tileLightingTexture->GetTextureID();
+			
+			glActiveTexture(GL_TEXTURE1);
+			glBindTexture(GL_TEXTURE_2D, texID);
+
+			int imageUnitIndex = 1; //something unique
+			glBindImageTexture(imageUnitIndex, texID, 0, GL_FALSE, 0, GL_WRITE_ONLY, GL_RGBA32F);
+
+			glBindTexture(GL_TEXTURE_2D, 0);
+			assert(GL_NO_ERROR == glGetError());
+		}
+
+		g_GBuffer.ReadDepth(GL_TEXTURE0);
+
+		glDispatchComputeGroupSizeARB(
+			NUM_GROUPS_X, NUM_GROUPS_Y, 1,
+			WORK_GROUP_SIZE, WORK_GROUP_SIZE, 1
+		);
+		assert(GL_NO_ERROR == glGetError());
+		glMemoryBarrier(GL_SHADER_STORAGE_BARRIER_BIT);
+
+		// Get buffer data
+		GLuint visiblePointLightCount = 0;
+		{
+			glBindBuffer(GL_SHADER_STORAGE_BUFFER, g_lightVisibilitiesID);
+			const GLsizei bufferSize = sizeof(GLuint) * MAX_POINT_LIGHT_COUNT;
+			GLuint* _dataOut = (GLuint *)glMapBuffer(GL_SHADER_STORAGE_BUFFER, GL_READ_ONLY);
+			memcpy(visibilities, _dataOut, bufferSize);
+
+			glUnmapBuffer(GL_SHADER_STORAGE_BUFFER);
+			glBindBuffer(GL_SHADER_STORAGE_BUFFER, 0);
+		}
+		{
+			glBindBuffer(GL_SHADER_STORAGE_BUFFER, minMaxDepthID);
+			glm::vec4* _dataOut = (glm::vec4 *)glMapBuffer(GL_SHADER_STORAGE_BUFFER, GL_READ_ONLY);
+			const GLsizei bufferSize = sizeof(glm::vec4) * NUM_GROUPS_X * NUM_GROUPS_Y;
+			memcpy(minMaxDepth, _dataOut, bufferSize);
+			glUnmapBuffer(GL_SHADER_STORAGE_BUFFER);
+			glBindBuffer(GL_SHADER_STORAGE_BUFFER, 0);
+		}
+		glMemoryBarrier(GL_SHADER_STORAGE_BARRIER_BIT);
+
+		g_currentEffect->UnUseEffect();
+
+		int pLightCount = g_dataRenderingByGraphicThread->g_pointLights.size();
+		int invisiblePointLightCount = 0;
+		for (int i = 0; i < pLightCount; ++i)
+		{
+			// if the point light is not visible in view, not casting shadow
+			if (visibilities[i] == 1)
+			{
+				visiblePointLightCount++;
+			}
+			else
+			{
+				g_dataGetFromRenderThread->g_disablePointLightIndices[invisiblePointLightCount] = i;
+				invisiblePointLightCount++;
+			}
+		}
+
+		// update global lighting data
+		g_dataGetFromRenderThread->g_visiblePointLightCount = visiblePointLightCount;
+	}
 	void DeferredShading()
 	{
-		/** 0. Update lighting data pass 0-2*/
-		for (size_t i = 0; i < 3; ++i)
+		/** 0. Update lighting data and shadow map generation for directional light and spot light*/
+		for (size_t i = 0; i < 2; ++i)
 		{
 			// Update current render pass
 			g_currentRenderPass = i;
@@ -573,15 +670,23 @@ namespace Graphics
 			// Execute pass function
 			g_dataRenderingByGraphicThread->g_renderPasses[i].RenderPassFunction();
 		}
-		/** 1. Capture the whole scene with PBR material*/		
+		/** 1. Capture the whole scene with PBR material*/
 		Profiler::StartRecording(Profiler::EPT_GBuffer);
 		g_GBuffer.Write(
 			[] {
 				g_currentRenderPass = 3; // PBR pass
 				g_uniformBufferMap[UBT_Frame].Update(&g_dataRenderingByGraphicThread->g_renderPasses[g_currentRenderPass].FrameData);
 				GBuffer_Pass();
-			});		
+			});
 		Profiler::StopRecording(Profiler::EPT_GBuffer);
+
+		// find tiles
+		TileGenerationPass();
+
+		// generate shadow map for point lights after view culling
+		//g_currentRenderPass = 2;
+		PointLightShadowMap_Pass();
+		
 		/** 2.1 Capture SSAO buffer*/
 		g_ssaoBuffer.Write(
 			[] {
@@ -633,6 +738,8 @@ namespace Graphics
 						g_uniformBufferMap[UBT_Frame].Update(&g_dataRenderingByGraphicThread->g_renderPasses[g_currentRenderPass].FrameData);
 						CubeMap_Pass();
 					}
+
+					ComputeShaderTest::RenderParticle();
 				}
 			);
 
@@ -714,7 +821,7 @@ namespace Graphics
 			g_uniformBufferMap[UBT_Drawcall].Update(&UniformBufferFormats::sDrawCall(i_arrowTransforms[i].M(), i_arrowTransforms[i].TranspostInverse()));
 			if (i == hoveredArrowDirection)
 			{
-				g_currentEffect->SetVec3("unlitColor", 0.8f * glm::vec3(g_outlineColor.r, g_outlineColor.g, g_outlineColor.b));
+				g_currentEffect->SetVec3("unlitColor", 0.8f * glm::vec3(Constants::g_outlineColor.r, Constants::g_outlineColor.g, Constants::g_outlineColor.b));
 				g_arrowHandles[i].RenderWithoutMaterial();
 			}
 			else
@@ -818,8 +925,8 @@ namespace Graphics
 
 		unsigned char* data = nullptr;
 		sIO& _IO = g_dataRenderingByGraphicThread->g_IO;
-		int mouseX = glm::clamp(static_cast<int>(_IO.MousePos.x), 0, Application::GetCurrentApplication()->GetCurrentWindow()->GetBufferWidth()-1);
-		int mouseY = glm::clamp(static_cast<int>(Application::GetCurrentApplication()->GetCurrentWindow()->GetBufferHeight() - _IO.MousePos.y), 0, Application::GetCurrentApplication()->GetCurrentWindow()->GetBufferHeight()-1);
+		int mouseX = glm::clamp(static_cast<int>(_IO.MousePos.x), 0, Application::GetCurrentApplication()->GetCurrentWindow()->GetBufferWidth() - 1);
+		int mouseY = glm::clamp(static_cast<int>(Application::GetCurrentApplication()->GetCurrentWindow()->GetBufferHeight() - _IO.MousePos.y), 0, Application::GetCurrentApplication()->GetCurrentWindow()->GetBufferHeight() - 1);
 
 		g_pboDownloader.download();
 		data = g_pboDownloader.getPixel_rgb(mouseX, mouseY);
@@ -859,7 +966,7 @@ namespace Graphics
 				const cPointLight* _Light = dynamic_cast<cPointLight*>(ISelectable::s_selectableList[selectionID]);
 				// if it is a light
 				if (_Light)
-					Gizmo_DrawDebugCircle(_Light->Range, Color(1,1,0), _Light->Transform.Position());
+					Gizmo_DrawDebugCircle(_Light->Range, Color(1, 1, 0), _Light->Transform.Position());
 
 				// Calculate the transform gizmo's transform and add three arrow models to the render map
 				{
@@ -890,7 +997,7 @@ namespace Graphics
 
 		// Handle selection
 		SelctionBuffer_Pass(renderMapForSelectionBuffer, needRenderTarnsformGizmo);
-		
+
 		if (ISelectable::IsValid(selectionID) && selectableTransform)
 		{
 			Gizmo_RenderSelectingTransform(arrowTransforms);
@@ -921,7 +1028,7 @@ namespace Graphics
 			cMatUnlit* _arrowMat = dynamic_cast<cMatUnlit*>(cMaterial::s_manager.Get(g_arrowHandles[i_direction].GetMaterialAt()));
 			if (_arrowMat)
 			{
-				_arrowMat->SetUnlitColor(i_selected ? g_outlineColor * 0.8f : g_arrowColor[i_direction]);
+				_arrowMat->SetUnlitColor(i_selected ? Constants::g_outlineColor * 0.8f : Constants::g_arrowColor[i_direction]);
 			}
 		}
 	}

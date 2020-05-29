@@ -6,6 +6,13 @@
 #define safe_delete(x) if(x){delete x; x = nullptr;}
 #define MAX_COUNT_PER_LIGHT 5
 #define OMNI_SHADOW_MAP_COUNT 5
+#define MAX_POINT_LIGHT_COUNT OMNI_SHADOW_MAP_COUNT * 16
+#define SHADOWMAP_START_TEXTURE_UNIT 14
+#define IBL_CUBEMAP_START_TEXTURE_UNIT 6
+#define WORK_GROUP_SIZE 16
+#define NUM_GROUPS_X (1280 / WORK_GROUP_SIZE)
+#define NUM_GROUPS_Y (720 / WORK_GROUP_SIZE)
+
 #define IsFloatZero(x) (x > -0.0001f && x < 0.0001f)
 
 /** Check memory leak*/

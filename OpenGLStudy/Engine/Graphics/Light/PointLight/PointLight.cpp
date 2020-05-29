@@ -12,6 +12,7 @@ namespace Graphics {
 	void cPointLight::Illuminate()
 	{
 		auto& gLighting = Graphics::GetGlobalLightingData();
+		gLighting.pointLights[m_lightIndex].base.uniqueID = UniqueID;
 		gLighting.pointLights[m_lightIndex].base.color = LightColor * Intensity;
 		gLighting.pointLights[m_lightIndex].base.enableShadow = m_enableShadow;
 		gLighting.pointLights[m_lightIndex].position = Transform.Position();
@@ -33,14 +34,13 @@ namespace Graphics {
 
 	void cPointLight::CreateShadowMap(GLuint i_width, GLuint i_height)
 	{
-	//	m_shadowMap = new cFrameBuffer();
-	//	m_shadowMap->Initialize(i_width, i_height, ETextureType::ETT_FRAMEBUFFER_OMNI_SHADOWMAP);
-
 		m_lightPrjectionMatrix = glm::perspective(glm::radians(90.f), 1.f, 1.f, Range);
 	}
 
 	void cPointLight::SetLightUniformTransform()
 	{
+		m_lightPrjectionMatrix = glm::perspective(glm::radians(90.f), 1.f, 1.f, Range);
+
 		// order: px, nx, py, ny, pz, nz
 		glm::mat4 lightMatrices[6] =
 		{

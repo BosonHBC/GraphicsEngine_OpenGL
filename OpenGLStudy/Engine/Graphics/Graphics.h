@@ -16,8 +16,7 @@
 
 // Graphics stores, initializes, cleans up all data that needs to be rendered
 namespace Graphics {
-#define SHADOWMAP_START_TEXTURE_UNIT 14
-#define IBL_CUBEMAP_START_TEXTURE_UNIT 6
+
 
 	/** Initialization and clean up function*/
 	bool Initialize();
@@ -59,13 +58,14 @@ namespace Graphics {
 
 	/** Usage function*/
 	bool CreateEffect(const eEffectType& i_key, const char* i_vertexShaderPath, const char* i_fragmentShaderPath, const char* i_geometryShaderPath = "", const char* const i_TCSPath = "", const char* const i_TESPath = "");
+	bool CreateEffect(const eEffectType& i_key, const char* i_computeShaderPath);
 	cEffect* GetEffectByKey(const eEffectType& i_key);
 	bool RetriveShadowMapIndexAndSubRect(int i_lightIdx, int& io_shadowmapIdx, int& io_resolutionIdx);
 
 	/** Lighting related*/
 	UniformBufferFormats::sLighting& GetGlobalLightingData();
 	bool CreateAmbientLight(const Color& i_color, cAmbientLight*& o_ambientLight);
-	bool CreatePointLight(const glm::vec3& i_initialLocation, const Color& i_color, const GLfloat& i_radius, bool i_enableShadow, cPointLight*& o_pointLight);
+	bool CreatePointLight(const glm::vec3& i_initialLocation, const Color& i_color, const GLfloat& i_radius, bool i_enableShadow, cPointLight*& o_pointLight, int uniqueID);
 	bool CreateSpotLight(const glm::vec3& i_initialLocation, const glm::vec3& i_direction, const Color& i_color, const GLfloat& i_edge, const GLfloat& i_radius, bool i_enableShadow, cSpotLight*& o_spotLight);
 	bool CreateDirectionalLight(const Color& i_color, glm::vec3 i_direction, bool i_enableShadow, cDirectionalLight*& o_directionalLight);
 	void UpdateLightingData();
@@ -74,12 +74,17 @@ namespace Graphics {
 	// When the data is swapped, application data can be cleared and it is ready for next submission
 	void MakeApplicationThreadWaitForSwapingData(std::mutex& i_applicationMutex);
 	void MakeApplicationThreadWaitUntilPreRenderFrameDone(std::mutex& i_applicationMutex);
+
+	void SwapDataFromRenderThread();
 	/** Others */
 	cEnvProbe* GetHDRtoCubemap();
 	cUniformBuffer* GetUniformBuffer(const eUniformBufferType& i_uniformBufferType);
 	cFrameBuffer* GetOmniShadowMapAt(int i_idx);
 	/** Predefined model and textures*/
 	const cModel& GetPrimitive(const EPrimitiveType& i_primitiveType);
+
+	glm::vec2 GetTileMinMaxDepthOnCursor(int i_x, int i_y);
+
 
 	/** Return data related*/
 	const sDataReturnToApplicationThread& GetDataFromRenderThread();

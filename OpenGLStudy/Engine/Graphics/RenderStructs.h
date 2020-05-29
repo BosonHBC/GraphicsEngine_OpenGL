@@ -85,6 +85,8 @@ namespace Graphics {
 		GLfloat g_deltaDeferredLightingTime;
 		GLfloat g_deltaPointLightShadowMapTime;
 		GLfloat g_deltaSelectionTime;
+		GLuint g_visiblePointLightCount;
+		int g_disablePointLightIndices[MAX_POINT_LIGHT_COUNT];
 	};
 
 	// Primitive types

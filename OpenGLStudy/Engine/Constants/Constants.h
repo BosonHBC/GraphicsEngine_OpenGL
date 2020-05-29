@@ -1,8 +1,7 @@
 #pragma once
 // Constants.h
 
-#ifndef BH_CONSTANTS_H
-#define BH_CONSTANTS_H
+#include "Graphics/Color/Color.h"
 namespace Constants {
 	char const * const CONST_PATH_DEFAULT_COLOR = "Contents/textures/whiteBoard.png";
 	char const * const CONST_PATH_DEFAULT_NORMAL = "Contents/textures/DefaultNormal.png";
@@ -14,5 +13,6 @@ namespace Constants {
 	char const * const CONST_PATH_DEFAULT_VERTEXSHADER = "vertexShader.glsl";
 	char const* const CONST_PATH_BLINNPHONG_FRAGMENTSHADER = "BlinnPhong.glsl";
 
+	extern const Color g_arrowColor[3];
+	extern const Color g_outlineColor;
 }
-#endif // !MYLIB_CONSTANTS_H

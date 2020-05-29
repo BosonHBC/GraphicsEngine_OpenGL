@@ -55,7 +55,9 @@ layout(std140, binding = 2) uniform g_uniformBuffer_blinnPhongMaterial
 
 struct Light{	
 	vec3 color;
+	int uniqueID;
 	bool enableShadow;
+	vec2 padding;
 };
 
 // Lighting, no interpoloation

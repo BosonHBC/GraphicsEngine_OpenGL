@@ -12,7 +12,7 @@ namespace Graphics {
 #define V1Padding float v1Padding = 0.0f
 #define V1Padding2 float v1Padding2 = 0.0f
 #define V2Padding glm::vec2 v2Padding = glm::vec2(0.0f ,0.0f)
-#define V3Padding glm::vec3 v3Padding= glm::vec2(0.0f,0.0f,0.0f)
+#define V3Padding glm::vec3 v3Padding= glm::vec3(0.0f,0.0f,0.0f)
 #endif
 
 
@@ -92,52 +92,55 @@ namespace Graphics {
 		// This namespace contains helper struct to define a light uniform buffer
 		namespace SupportingData {
 			// Lighting data
-			struct Light16 {
+			struct Light32 {
 				Color color; // 12 bytes
+				int uniqueID; // 4 bytes
 				bool enableShadow = false; // 4 bytes
+				V3Padding;
 
-				Light16() : color(Color::Black()), enableShadow(false)
+				Light32() : uniqueID(-1), color(Color::Black()), enableShadow(false)
 				{}
 			};
 
 			// Lighting, no interpolation
-			struct AmbientLight16 {
-				Light16 base;
+			struct AmbientLight32 {
+				Light32 base;
 			};
-			struct DirectionalLight32 {
-				Light16 base; // 16 bytes
+			struct DirectionalLight48 {
+				Light32 base; // 32 bytes
 				glm::vec3 direction = glm::vec3(0, 1, 0); // 12 bytes
 				V1Padding; // 4 bytes
 
-				DirectionalLight32() : base(Light16()), direction(glm::vec3(0, 1, 0)) {}
+				DirectionalLight48() : base(Light32()), direction(glm::vec3(0, 1, 0)) {}
 			};
-			struct PointLight48 {
-				Light16 base; // 16 bytes
+			struct PointLight64 {
+				Light32 base; // 32 bytes
 				glm::vec3 position = glm::vec3(0, 0, 0); // 12 bytes
 				float radius = 100.f;			// 4 bytes
 				int ShadowMapIdx = 0;	// 4 bytes
 				int ResolutionIdx = 0;		// 4 bytes
 				V2Padding;						// 8 bytes
-				PointLight48() : position(glm::vec3(0, 0, 0)), radius(100.f)
+				PointLight64() : base(Light32()), position(glm::vec3(0, 0, 0)), radius(100.f)
 				{}
 			};
-			struct SpotLight64 {
-				PointLight48 base; // 48 bytes
+			struct SpotLight80 {
+				PointLight64 base; // 64 bytes
 				glm::vec3 direction = glm::vec3(0, 1, 0); // 12 bytes
 				float edge = 1.f; // 4 bytes
-				SpotLight64() : direction(glm::vec3(0, 1, 0)), edge(1)
+				SpotLight80() :base(PointLight64()), direction(glm::vec3(0, 1, 0)), edge(1)
 				{}
 			};
 		}
 
 		struct sLighting
 		{
-			SupportingData::SpotLight64 spotLights[MAX_COUNT_PER_LIGHT]; // 48 * MAX_COUNT_PER_LIGHT = 240 bytes
-			SupportingData::PointLight48 pointLights[OMNI_SHADOW_MAP_COUNT * 16]; // 48 * 80 = 3.8 KB
-			SupportingData::DirectionalLight32 directionalLight; // 32 bytes
-			SupportingData::AmbientLight16 ambientLight; // 16 bytes
+			SupportingData::SpotLight80 spotLights[MAX_COUNT_PER_LIGHT]; 
+			SupportingData::PointLight64 pointLights[MAX_POINT_LIGHT_COUNT]; 
+			SupportingData::DirectionalLight48 directionalLight;
+			SupportingData::AmbientLight32 ambientLight;
 			int pointLightCount = 0; // 4 bytes
 			int spotLightCount = 0; // 4 bytes
+			V2Padding; // 8 bytes
 		};
 
 		// Clipping plane data

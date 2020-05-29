@@ -22,7 +22,7 @@
     <ClInclude Include="..\Constants\Constants.h" />
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="Empty.cpp" />
+    <ClCompile Include="Constants.cpp" />
   </ItemGroup>
   <PropertyGroup Label="Globals">
     <VCProjectVersion>15.0</VCProjectVersion>

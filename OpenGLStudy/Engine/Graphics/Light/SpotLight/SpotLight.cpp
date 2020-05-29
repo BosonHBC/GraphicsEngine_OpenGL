@@ -16,6 +16,7 @@ namespace Graphics {
 	void cSpotLight::Illuminate()
 	{
 		auto& gLighting = Graphics::GetGlobalLightingData();
+		gLighting.spotLights[m_lightIndex].base.base.uniqueID = UniqueID;
 		gLighting.spotLights[m_lightIndex].base.base.color = LightColor;
 		gLighting.spotLights[m_lightIndex].base.base.enableShadow = m_enableShadow;
 		gLighting.spotLights[m_lightIndex].base.position = Transform.Position();

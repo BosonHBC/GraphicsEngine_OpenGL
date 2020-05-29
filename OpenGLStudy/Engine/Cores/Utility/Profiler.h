@@ -10,7 +10,7 @@ namespace Profiler
 		EPT_PointLightShadowMap,
 		EPT_DeferredLighting,
 		EPT_Selection,
-		EPT_Invalid = -1,
+		EPT_Invalid = 255,
 	};
 
 	struct sGPUProfilerUnit

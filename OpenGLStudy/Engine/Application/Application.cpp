@@ -108,7 +108,7 @@ namespace Application {
 			// Submit data
 			{
 				/** 1. Wait until render thread is ready for receiving new graphic data */
-				//Graphics::MakeApplicationThreadWaitForSwapingData(m_applicationMutex);
+				Graphics::MakeApplicationThreadWaitForSwapingData(m_applicationMutex);
 				/** 2. Clear the application thread data and submit new one */
 				Graphics::ClearApplicationThreadData();
 				SubmitDataToBeRender(static_cast<float>(Time::ConvertFromTickToSeconds(tickCount_systemTime_elapsedSinceLastLoop)));
@@ -126,6 +126,11 @@ namespace Application {
 	void cApplication::ResetWindowSize()
 	{
 		m_window->SetViewportSize(m_window->GetBufferWidth(), m_window->GetBufferHeight());
+	}
+
+	float cApplication::GetSystemElapsedTime() const
+	{
+		return Time::ConvertFromTickToSeconds(m_tickCountt_systemTime_Elapsed);
 	}
 
 	void cApplication::CleanUp()

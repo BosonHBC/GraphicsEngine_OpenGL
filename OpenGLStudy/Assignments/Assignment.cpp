@@ -24,6 +24,7 @@
 #include "Application/imgui/imgui.h"
 #include "Editor/Editor.h"
 #include "Cores/Utility//Profiler.h"
+#include "Assignments/ParticleTest.h"
 
 Graphics::ERenderMode g_renderMode = Graphics::ERenderMode::ERM_DeferredShading;
 
@@ -141,7 +142,8 @@ void Assignment::CreateLight()
 	{
 		//Color randomColor = Color(randomFloats(generator), randomFloats(generator), randomFloats(generator));
 		bool enableShadow = true;
-		Graphics::CreatePointLight(glm::vec3(0 + (i % lightPerRow) * horiDist, 200, 100 - (i / lightPerRow) * vertDist), m_pointLightColor, 250.f, enableShadow, m_pLights[i]);
+		Graphics::CreatePointLight(glm::vec3(0 + (i % lightPerRow) * horiDist, 100, 100 - (i / lightPerRow) * vertDist), m_pointLightColor, 150.f, enableShadow, m_pLights[i], i);
+		m_pointLightMap.insert({ m_pLights[i]->UniqueID, m_pLights[i] });
 	}
 
 	//CreatePointLight(glm::vec3(0, 100, 0), Color::White() * 0.5f, 250, true);
@@ -254,6 +256,7 @@ void Assignment::Run()
 
 		// Swap buffers
 		m_window->SwapBuffers();
+		Graphics::SwapDataFromRenderThread();
 	}
 }
 
@@ -350,12 +353,14 @@ void Assignment::Tick(float second_since_lastFrame)
 	{
 		g_renderActorList[i]->Transform.Update();
 	}
+
 	for (int i = 0; i < m_createdPLightCount; ++i)
 	{
+		m_pLights[i]->CalculateDistToEye(m_editorCamera->CamLocation());
 		m_pLights[i]->Transform.Update();
 	}
 
-	if (dLight)
+	if (dLight)  
 		dLight->Transform.Update();
 	if (spLight)
 		spLight->Transform.Update();
@@ -379,20 +384,31 @@ void Assignment::SubmitLightingData()
 	std::vector<Graphics::cPointLight> _pLights;
 	std::vector<Graphics::cSpotLight> _spLights;
 
-	for (int i = 0; i < m_createdPLightCount; ++i)
+	auto& dataFromRenderThread = Graphics::GetDataFromRenderThread();
+
+
+	for (auto it : m_pointLightMap)
 	{
-		m_pLights[i]->UpdateLightIndex(_pLights.size());
-		m_pLights[i]->CalculateDistToEye(m_editorCamera->CamLocation());
-		_pLights.push_back(*m_pLights[i]);
+		it.second->Enabled = true;
+		it.second->SetEnableShadow(true);
 	}
+
+	for (int i = 0; i < m_createdPLightCount - dataFromRenderThread.g_visiblePointLightCount; ++i)
+	{
+		unsigned int disableUniqueID = dataFromRenderThread.g_disablePointLightIndices[i];
+
+		m_pointLightMap[disableUniqueID]->Enabled = false;
+		m_pointLightMap[disableUniqueID]->SetEnableShadow(false);
+	}
+
 	// process point light
 	{
-		std::sort(_pLights.begin(), _pLights.end(), [](Graphics::cPointLight& const l1, Graphics::cPointLight&  const l2) {
-			return l1.Importance() > l2.Importance(); });
+		std::sort(m_pLights, m_pLights + m_createdPLightCount, [](Graphics::cPointLight* l1, Graphics::cPointLight* l2) {
+			return l1->Importance() > l2->Importance(); });
 		// Now the point light list is sorted depends on their importance
-		for (size_t i = 0; i < _pLights.size(); ++i)
+		for (size_t i = 0; i < m_createdPLightCount; ++i)
 		{
-			auto* it = &_pLights[i];
+			auto* it = m_pLights[i];
 			int shadowMapIdx = -1; int resolutionIdx = -1;
 			if (Graphics::RetriveShadowMapIndexAndSubRect(i, shadowMapIdx, resolutionIdx))
 			{
@@ -402,9 +418,16 @@ void Assignment::SubmitLightingData()
 			else
 				assert(false);
 		}
-		std::sort(_pLights.begin(), _pLights.end(), [](Graphics::cPointLight& const l1, Graphics::cPointLight&  const l2) {
-			return l1.ShadowMapIdx() < l2.ShadowMapIdx(); });
+		std::sort(m_pLights, m_pLights + m_createdPLightCount, [](Graphics::cPointLight* l1, Graphics::cPointLight* l2) {
+			return l1->ShadowMapIdx() < l2->ShadowMapIdx(); });
 	}
+
+	for (int i = 0; i < m_createdPLightCount; ++i)
+	{
+		m_pLights[i]->UpdateLightIndex(i);
+		_pLights.push_back(*m_pLights[i]);
+	}
+
 
 	if (spLight)
 	{
@@ -476,19 +499,19 @@ void Assignment::SubmitShadowData()
 		_renderingMap.push_back({ g_renderActorList[i]->GetModelHandle(), g_renderActorList[i]->Transform });
 	}
 
+	// Frame data from directional light
+	if (dLight && dLight->IsShadowEnabled()) {
+		Graphics::UniformBufferFormats::sFrame _frameData_Shadow(dLight->GetProjectionmatrix(), dLight->GetViewMatrix());
+		// directional light shadow map pass
+		Graphics::SubmitDataToBeRendered(_frameData_Shadow, _renderingMap, &Graphics::DirectionalShadowMap_Pass);
+	}
+
 	{// Spot light shadow map pass
 		Graphics::SubmitDataToBeRendered(Graphics::UniformBufferFormats::sFrame(), _renderingMap, &Graphics::SpotLightShadowMap_Pass);
 	}
 
 	{ // Point light shadow map pass
 		Graphics::SubmitDataToBeRendered(Graphics::UniformBufferFormats::sFrame(), _renderingMap, &Graphics::PointLightShadowMap_Pass);
-	}
-
-	// Frame data from directional light
-	if (dLight && dLight->IsShadowEnabled()) {
-		Graphics::UniformBufferFormats::sFrame _frameData_Shadow(dLight->GetProjectionmatrix(), dLight->GetViewMatrix());
-		// directional light shadow map pass
-		Graphics::SubmitDataToBeRendered(_frameData_Shadow, _renderingMap, &Graphics::DirectionalShadowMap_Pass);
 	}
 
 }
@@ -498,7 +521,8 @@ void Assignment::CreatePointLight(const glm::vec3& i_initialLocation, const Colo
 	std::lock_guard<std::mutex> autoLock(m_applicationMutex);
 	if (m_createdPLightCount < s_maxPLightCount)
 	{
-		Graphics::CreatePointLight(i_initialLocation, i_color, i_radius, i_enableShadow, m_pLights[m_createdPLightCount]);
+		Graphics::CreatePointLight(i_initialLocation, i_color, i_radius, i_enableShadow, m_pLights[m_createdPLightCount], m_createdPLightCount);
+		m_pointLightMap.insert({ m_pLights[m_createdPLightCount]->UniqueID, m_pLights[m_createdPLightCount] });
 		m_createdPLightCount++;
 	}
 
@@ -594,13 +618,6 @@ void Assignment::EditorGUI()
 		ImGui::TextWrapped("Editor CPU");
 		ImGui::TextWrapped("Render thread waiting time CPU");
 
-
-		/*
-				ImGui::TextWrapped("Render a frame GPU");
-				ImGui::TextWrapped("G-Buffer_GPU");
-				ImGui::TextWrapped("Deferred Lighting_GPU");
-				ImGui::TextWrapped("PointLight shadow map_GPU");
-				ImGui::TextWrapped("Editor_GPU");*/
 		ImGui::NextColumn();
 
 		ImGui::TextWrapped("%.4f ms/frame", Time::DeltaTime() * 1000);
@@ -623,6 +640,21 @@ void Assignment::EditorGUI()
 		ImGui::TreePop();
 	}
 	ImGui::Text("Point light count: %d", m_createdPLightCount);
+	ImGui::Text("Visible Point light count: %d", dataFromRenderThread.g_visiblePointLightCount);
+/*
+	ImGui::Text("Invisible light indices: ");
+	int len = m_createdPLightCount - dataFromRenderThread.g_visiblePointLightCount;
+	for (int i  = 0; i < len; ++i)
+	{
+		unsigned int disableIndex = dataFromRenderThread.g_disablePointLightIndices[i];
+		ImGui::SameLine();
+		ImGui::Text("%d, ", disableIndex);
+	}*/
+
+	int mouseX = glm::clamp((int)ImGui::GetIO().MousePos.x, 0, 1279);
+	int mouseY = glm::clamp(720 - (int)ImGui::GetIO().MousePos.y, 0, 719);
+	auto minMapDepth = Graphics::GetTileMinMaxDepthOnCursor(mouseX, mouseY);
+	ImGui::Text("Cursor(%d , %d), depths(%.1f, %.1f)", mouseX, mouseY, minMapDepth.x, minMapDepth.y);
 	ImGui::End();
 
 	ImGui::Begin("Control");
@@ -656,7 +688,7 @@ void Assignment::EditorGUI()
 			ImGui::ColorEdit3("Point Light Color: ", (float*)&m_pointLightColor);
 			if (ImGui::Button("Spawn Point Light"))
 			{
-				CreatePointLight(m_editorCamera->CamLocation() + m_editorCamera->Transform.Forward() * 100.f, m_pointLightColor, 250.f, true);
+				CreatePointLight(m_editorCamera->CamLocation() + m_editorCamera->Transform.Forward() * 100.f, m_pointLightColor, 150.f, true);
 			}
 		}
 		if (ImGui::CollapsingHeader("Post processing"))
@@ -693,7 +725,20 @@ void Assignment::EditorGUI()
 				m_ppData.EnableFxAA = _enableFxAA;
 			}
 		}
+		if (ImGui::CollapsingHeader("Particle")) 
+		{
+			ImGui::Checkbox("Enable particles", &ComputeShaderTest::enableParticle);
+			if (ComputeShaderTest::enableParticle)
+			{
+				ImGui::DragFloat3("Initial Loc min", (float*)&ComputeShaderTest::initialLocMin, 0.1f);
+				ImGui::DragFloat3("Initial Loc max", (float*)&ComputeShaderTest::initialLocMax, 0.1f);
+				ImGui::DragFloat3("Initial Vel min", (float*)&ComputeShaderTest::initialVelMin, 0.1f);
+				ImGui::DragFloat3("Initial Vel max", (float*)&ComputeShaderTest::initialVelMax, 0.1f);
 
+				ImGui::DragFloat("Life time", &ComputeShaderTest::lifeTime, 0.1f, 0.1f, 20.f);
+				ImGui::DragFloat("Delay time", &ComputeShaderTest::delayTime, 0.1f, -20.f, 0);
+			}
+		}
 		if (ImGui::Button("Reset"))
 		{
 			g_renderMode = Graphics::ERM_DeferredShading;
@@ -752,6 +797,14 @@ void Assignment::EditorGUI()
 					{
 						_pLight->Transform.SetScale(glm::vec3(_pLight->Range));
 					}
+					glm::vec4 viewSpacePos = m_editorCamera->GetViewMatrix() * glm::vec4(_pLight->Transform.Position(), 1.0);
+
+					ImGui::Text("Light Position in View Space (%.1f, %.1f, %.1f, %.1f)", viewSpacePos.x, viewSpacePos.y, viewSpacePos.z, viewSpacePos.w);
+					ImGui::Checkbox("Enabled", &_pLight->Enabled);
+					bool shadowEnabled = _pLight->IsShadowEnabled();
+					ImGui::Checkbox("Shadow enabled", &shadowEnabled);
+					ImGui::Text("Light unique id: %d", _pLight->UniqueID);
+					ImGui::Text("Light index: %d", _pLight->GetLightIndex());
 				}
 			}
 

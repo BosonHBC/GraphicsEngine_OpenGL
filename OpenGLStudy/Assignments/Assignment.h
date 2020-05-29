@@ -51,8 +51,10 @@ private:
 	Color m_clearColor = Color(0,0,0);
 	cEditorCamera* m_editorCamera = nullptr;
 
-	int m_createdPLightCount = 0;
-	Graphics::cPointLight* m_pLights[s_maxPLightCount] = {nullptr};
+	int m_createdPLightCount = 1;
+	std::map<int, Graphics::cPointLight*> m_pointLightMap;
+	Graphics::cPointLight* m_pLights[s_maxPLightCount] = { nullptr };
+
 	cSphere m_collisionSpheres[Assignment::s_maxPLightCount];
 
 	Graphics::cAmbientLight* aLight = nullptr;

@@ -41,16 +41,17 @@ namespace Graphics {
 		virtual void UseShadowMap(GLuint i_textureUnit) {}
 		cFrameBuffer* GetShadowMap() const { return m_shadowMap; }
 		bool IsShadowMapValid() const;
-		bool IsShadowEnabled() const { return m_enableShadow && IsShadowMapValid(); }
+		virtual bool IsShadowEnabled() const { return m_enableShadow && IsShadowMapValid(); }
 		void CleanUpShadowMap();
+		GLuint GetLightIndex() const { return m_lightIndex; }
 
 		cTransform Transform;
 		Color LightColor = Color(0, 0, 0);
 		float Intensity = 1.0f;
+		bool Enabled = true;
+		int UniqueID = -1;
 
 	protected:
-
-
 		// record the index of this light
 		GLuint m_lightIndex = 0;
 		bool m_enableShadow = false;

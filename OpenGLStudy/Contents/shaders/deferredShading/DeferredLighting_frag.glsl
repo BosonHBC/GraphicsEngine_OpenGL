@@ -41,7 +41,7 @@ uniform samplerCube pointLightShadowMap[MAX_COUNT_PER_LIGHT]; // 19-> 23
 uniform sampler2D directionalShadowMap; // 24
 uniform sampler2D gSSAOMap; 			// 25
 
-const vec3 gridSamplingDisk[20] =vec3[]
+const vec3 gridSamplingDisk[20] = vec3[]
 (
    vec3(1, 1,  1), vec3( 1, -1,  1), vec3(-1, -1,  1), vec3(-1, 1,  1), 
    vec3(1, 1, -1), vec3( 1, -1, -1), vec3(-1, -1, -1), vec3(-1, 1, -1),
@@ -69,7 +69,9 @@ out vec4 color;
 
 struct Light{	
 	vec3 color;
+	int uniqueID;
 	bool enableShadow;
+	vec2 padding;
 };
 
 // Lighting, no interpoloation
