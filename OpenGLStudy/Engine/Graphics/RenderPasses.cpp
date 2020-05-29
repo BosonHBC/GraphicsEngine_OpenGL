@@ -570,7 +570,8 @@ namespace Graphics
 		g_currentEffect->UnUseEffect();
 	}
 
-
+	GLuint cleanData[MAX_POINT_LIGHT_COUNT] = { 0 };
+	GLuint visibilities[MAX_POINT_LIGHT_COUNT];
 	void TileGenerationPass()
 	{
 		g_uniformBufferMap[UBT_Frame].Update(&g_dataRenderingByGraphicThread->g_renderPasses[3].FrameData);
@@ -579,7 +580,6 @@ namespace Graphics
 			GLint bufMask = GL_MAP_WRITE_BIT | GL_MAP_INVALIDATE_BUFFER_BIT;
 			glBindBuffer(GL_SHADER_STORAGE_BUFFER, g_lightVisibilitiesID);
 			const GLsizei bufferSize = sizeof(GLuint) * MAX_POINT_LIGHT_COUNT;
-			GLuint cleanData[MAX_POINT_LIGHT_COUNT] = { 0 };
 			GLuint* _data = (GLuint *)glMapBufferRange(GL_SHADER_STORAGE_BUFFER, 0, bufferSize, bufMask);
 			memcpy(_data, cleanData, bufferSize);
 
@@ -618,7 +618,6 @@ namespace Graphics
 
 		// Get buffer data
 		GLuint visiblePointLightCount = 0;
-		GLuint visibilities[MAX_POINT_LIGHT_COUNT];
 		{
 			glBindBuffer(GL_SHADER_STORAGE_BUFFER, g_lightVisibilitiesID);
 			const GLsizei bufferSize = sizeof(GLuint) * MAX_POINT_LIGHT_COUNT;

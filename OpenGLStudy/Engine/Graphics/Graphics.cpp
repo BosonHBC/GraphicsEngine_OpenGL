@@ -64,7 +64,7 @@ namespace Graphics {
 	cTexture::HANDLE g_tileLightingTexture;
 	cMaterial::HANDLE g_arrowMatHandles[2];
 	PboDownloader g_pboDownloader;
-	
+
 	// Lighting data
 	UniformBufferFormats::sLighting g_globalLightingData;
 	UniformBufferFormats::sSSAO g_ssaoData;
@@ -89,9 +89,9 @@ namespace Graphics {
 	// outline buffer
 	cFrameBuffer g_outlineBuffer;
 
-	GLuint minMaxDepthID;
+	GLuint minMaxDepthID = 0;
 	glm::vec4 minMaxDepth[NUM_GROUPS_X * NUM_GROUPS_Y] = { glm::vec4(1,2,3,4) };
-	GLuint g_lightVisibilitiesID;
+	GLuint g_lightVisibilitiesID = 0;
 
 	// Effect
 	// ------------------------------------------------------------------------------------------------------------------------------------
@@ -158,7 +158,7 @@ namespace Graphics {
 					printf("Fail to create default effect.\n");
 					return result;
 				}
-				
+
 			}
 			// Create shadow map effect
 			{
@@ -218,7 +218,7 @@ namespace Graphics {
 					printf("Fail to create PBR_MR effect.\n");
 					return result;
 				}
-				
+
 			}
 			// Create rectangular HDR map to cubemap effect
 			{
@@ -485,7 +485,7 @@ namespace Graphics {
 				printf("Fail to create outline-Buffer.\n");
 				return result;
 			}
-			
+
 			g_pboDownloader.init(GL_RGB, _window->GetBufferWidth(), _window->GetBufferHeight(), 2);
 
 			//EnvironmentCaptureManager::AddCaptureProbes(cSphere(glm::vec3(-225, 230, 0), 600.f), 50.f, envMapResolution);
@@ -509,10 +509,9 @@ namespace Graphics {
 		{
 			GLint bufMask = GL_MAP_WRITE_BIT | GL_MAP_INVALIDATE_BUFFER_BIT;
 
-			glGenBuffers(1, &g_lightVisibilitiesID);
-			glBindBuffer(GL_SHADER_STORAGE_BUFFER, g_lightVisibilitiesID);
-
 			{
+				glGenBuffers(1, &g_lightVisibilitiesID);
+				glBindBuffer(GL_SHADER_STORAGE_BUFFER, g_lightVisibilitiesID);
 				const GLsizei bufferSize = sizeof(GLuint) * MAX_POINT_LIGHT_COUNT;
 				glBufferData(GL_SHADER_STORAGE_BUFFER, bufferSize, NULL, GL_DYNAMIC_DRAW);
 				GLuint cleanData[MAX_POINT_LIGHT_COUNT] = { 0 };
@@ -520,11 +519,10 @@ namespace Graphics {
 				memcpy(_data, cleanData, bufferSize);
 				glUnmapBuffer(GL_SHADER_STORAGE_BUFFER);
 
-				glBindBufferBase(GL_ATOMIC_COUNTER_BUFFER, 3, g_lightVisibilitiesID);
 				glBindBuffer(GL_SHADER_STORAGE_BUFFER, 0);
 				assert(GL_NO_ERROR == glGetError());
 			}
-			{			
+			{
 				glGenBuffers(1, &minMaxDepthID);
 				glBindBuffer(GL_SHADER_STORAGE_BUFFER, minMaxDepthID);
 
@@ -534,7 +532,6 @@ namespace Graphics {
 				memcpy(_data, minMaxDepth, bufferSize);
 				glUnmapBuffer(GL_SHADER_STORAGE_BUFFER);
 
-				glBindBufferBase(GL_ATOMIC_COUNTER_BUFFER, 4, minMaxDepthID);
 				glBindBuffer(GL_SHADER_STORAGE_BUFFER, 0);
 				assert(GL_NO_ERROR == glGetError());
 			}
@@ -820,7 +817,7 @@ namespace Graphics {
 		Profiler::StopRecording(Profiler::EPT_RenderAFrame);
 
 		/** 4. After all render of this frame is done*/
-		/*  
+		/*
 		// GPU profiling will take a long time because this need to wait until a GPU finish its rendering so this will take a long time, should avoid when unneccessary.
 		 Profiler::GetProfilingTime(Profiler::EPT_RenderAFrame, g_dataGetFromRenderThread->g_deltaRenderAFrameTime);
 		 Profiler::GetProfilingTime(Profiler::EPT_GBuffer, g_dataGetFromRenderThread->g_deltaGeometryTime);
@@ -889,7 +886,7 @@ namespace Graphics {
 	{
 		memcpy(g_dataSubmittedByApplicationThread->particles, ClothSim::g_positionData, sizeof(glm::vec3) * ClothSim::VC);
 		memcpy(g_dataSubmittedByApplicationThread->clothVertexData, ClothSim::GetVertexData(), sizeof(float) * ClothSim::VC * 14);
-}
+	}
 #endif // ENABLE_CLOTH_SIM
 
 
@@ -945,7 +942,7 @@ namespace Graphics {
 		}
 		g_cubeHandle.CleanUp();
 		g_quadHandle.CleanUp();
-		
+
 		cMaterial::s_manager.Release(g_arrowMatHandles[0]);
 		cMaterial::s_manager.Release(g_arrowMatHandles[1]);
 
@@ -1047,18 +1044,16 @@ namespace Graphics {
 
 	glm::vec2 GetTileMinMaxDepthOnCursor(int i_x, int i_y)
 	{
-		int idx = i_x /  WORK_GROUP_SIZE + (i_y / WORK_GROUP_SIZE)  * NUM_GROUPS_X;
+		int idx = i_x / WORK_GROUP_SIZE + (i_y / WORK_GROUP_SIZE)  * NUM_GROUPS_X;
 		idx = glm::clamp(idx, 0, NUM_GROUPS_X * NUM_GROUPS_Y - 1);
 		return minMaxDepth[idx];
 	}
 
 	const Graphics::sDataReturnToApplicationThread& GetDataFromRenderThread()
 	{
-		std::lock_guard<std::mutex> autoLock(g_graphicMutex);
-/*
 		std::unique_lock<std::mutex> lck(Application::GetCurrentApplication()->GetApplicationMutex());
 		constexpr unsigned int timeToWait_inMilliseconds = 1;
-		g_whenDataReturnToApplicationThreadHasSwapped.wait_for(lck, std::chrono::milliseconds(timeToWait_inMilliseconds));*/
+		g_whenDataReturnToApplicationThreadHasSwapped.wait_for(lck, std::chrono::milliseconds(timeToWait_inMilliseconds));
 		return *g_dataUsedByApplicationThread;
 	}
 
@@ -1198,10 +1193,8 @@ namespace Graphics {
 	void SwapDataFromRenderThread()
 	{
 		// swap data and notify data has been swapped.
-		//std::swap(g_dataGetFromRenderThread, g_dataUsedByApplicationThread);
-		//g_whenDataReturnToApplicationThreadHasSwapped.notify_one();
-		std::lock_guard<std::mutex> autoLock(g_graphicMutex);
-		memcpy(g_dataUsedByApplicationThread, g_dataGetFromRenderThread, sizeof(sDataReturnToApplicationThread));
+		std::swap(g_dataGetFromRenderThread, g_dataUsedByApplicationThread);
+		g_whenDataReturnToApplicationThreadHasSwapped.notify_one();
 	}
 
 	void ClearApplicationThreadData()
