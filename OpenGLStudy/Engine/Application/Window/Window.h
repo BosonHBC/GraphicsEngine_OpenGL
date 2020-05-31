@@ -3,6 +3,8 @@
 #include "GL/glew.h"
 #include "GLFW/glfw3.h"
 #include "Math/Shape/Rect.h"
+#include <thread>
+#include <mutex>
 
 #define GLFW_MAX_KEY_COUNT 360
 #define GLFW_MAX_BUTTON_COUNT 8
@@ -31,12 +33,13 @@ public:
 	// Update the viewport size
 	void SetViewportSize(GLuint i_newWidth, GLuint i_newHeight);
 	void SetViewPort(const sRect& i_newViewPort);
+	void CloseWindow();
 
 	/** Getters */
 	const GLint& GetBufferWidth() const { return m_bufferWidth; }
 	const GLint& GetBufferHeight() const { return m_bufferHeight; }
 	GLfloat GetAOR() const { return static_cast<GLfloat>(m_bufferWidth) / m_bufferHeight; }
-	bool GetShouldClose() const;
+	bool GetShouldClose();
 	GLFWwindow* GetWindow() const { return m_glfwWindow; }
 	sWindowInput* const GetWindowInput() const { return m_windowInput; }
 
@@ -47,6 +50,7 @@ private:
 	const char* m_windowName;
 	sWindowInput* m_windowInput;
 	bool m_windowMaximumed = false;
+	std::mutex m_mutex;
 
 	/** private helper functions*/
 	bool SetupGLFWWindow(GLFWwindow*& o_mainWindow, const char* i_windowName, GLFWmonitor* i_monitor = nullptr, GLFWwindow* i_sharedWindow = nullptr);

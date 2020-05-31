@@ -5,6 +5,7 @@ namespace Graphics
 
 	bool cGBuffer::Initialize(GLuint i_width, GLuint i_height)
 	{
+		std::lock_guard<std::mutex> autoLock(m_mutex);
 		auto result = true;
 		m_width = i_width; m_height = i_height;
 		// record the previous frame buffer object

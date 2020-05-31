@@ -41,7 +41,6 @@ namespace Application {
 
 		/** Getters */
 		cWindow* GetCurrentWindow() const { return m_window; }
-		std::mutex& GetApplicationMutex() {return m_applicationMutex;}
 		float GetSystemElapsedTime() const;
 	protected:
 		cApplication(const cApplication& i_other) = delete;
@@ -58,7 +57,6 @@ namespace Application {
 
 		/** Handle threading*/
 		//---------------------------------------------------
-		std::mutex m_applicationMutex;
 		std::thread* m_applicationThread;
 		// Start an application thread
 		void ApplicationLoopThread(void* const io_application);
@@ -80,7 +78,7 @@ namespace Application {
 		s_currentApplication = reinterpret_cast<APP*>(_newApp);
 		if (!(result = _newApp->Initialize(i_width, i_height, i_windowName)))
 		{
-			printf("Failed to create application!");
+			printf("Failed to create application, application.h!\n");
 			safe_delete(_newApp);
 			return result;
 		}

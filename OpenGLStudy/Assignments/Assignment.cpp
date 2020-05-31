@@ -39,7 +39,7 @@ bool Assignment::Initialize(GLuint i_width, GLuint i_height, const char* i_windo
 	if (!(result = cApplication::Initialize(i_width, i_height, i_windowName))) {
 		assert(false);
 		// TODO: LogError
-		printf("Failed to initialize Application!");
+		printf("Failed to initialize Application, assignment.h!\n");
 		return false;
 	}
 
@@ -219,8 +219,11 @@ void Assignment::SubmitDataToBeRender(const float i_seconds_elapsedSinceLastLoop
 
 void Assignment::BeforeUpdate()
 {
-	Graphics::MakeApplicationThreadWaitUntilPreRenderFrameDone(m_applicationMutex);
+	Graphics::MakeApplicationThreadWaitUntilPreRenderFrameDone();
 
+	Graphics::SetSwapData(true);
+	Graphics::SetSubmitData(false);
+	Graphics::Notify_DataHasBeenSwapped();
 }
 
 void Assignment::Run()
@@ -265,8 +268,7 @@ void Assignment::Tick(float second_since_lastFrame)
 {
 	sWindowInput* _windowInput = GetCurrentWindow()->GetWindowInput();
 	if (ImGui::IsKeyDown(GLFW_KEY_ESCAPE)) {
-		// tell glfw window that it is time to close
-		glfwSetWindowShouldClose(GetCurrentWindow()->GetWindow(), GL_TRUE);
+		GetCurrentWindow()->CloseWindow();
 	}
 	// get + handle user input events
 	{
@@ -518,7 +520,7 @@ void Assignment::SubmitShadowData()
 
 void Assignment::CreatePointLight(const glm::vec3& i_initialLocation, const Color& i_color, const GLfloat& i_radius, bool i_enableShadow)
 {
-	std::lock_guard<std::mutex> autoLock(m_applicationMutex);
+	std::lock_guard<std::mutex> autoLock(Graphics::g_Mutex);
 	if (m_createdPLightCount < s_maxPLightCount)
 	{
 		Graphics::CreatePointLight(i_initialLocation, i_color, i_radius, i_enableShadow, m_pLights[m_createdPLightCount], m_createdPLightCount);

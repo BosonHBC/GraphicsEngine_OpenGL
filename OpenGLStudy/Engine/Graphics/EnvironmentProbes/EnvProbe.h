@@ -25,15 +25,13 @@ namespace Graphics
 		cEnvProbe() {}
 
 		~cEnvProbe() { };
-		cEnvProbe(const cEnvProbe& i_other) :
-			m_position(i_other.m_position), m_captured(i_other.m_captured), m_frameBuffer(i_other.m_frameBuffer), 
-			m_range(i_other.m_range), m_width(i_other.m_width), m_height(i_other.m_height) {}
-		cEnvProbe& operator = (const cEnvProbe& i_other);
+		cEnvProbe(const cEnvProbe& i_other) = default;
+		cEnvProbe& operator = (const cEnvProbe& i_other) = default;
 
 		bool Initialize(GLfloat i_range, GLuint i_width, GLuint i_height, const ETextureType& i_textureType, const glm::vec3& i_initialLocation = glm::vec3(0));
 		bool CleanUp();
 
-		bool IsValid() const { return m_frameBuffer.IsValid() && m_range > 0 && m_width > 0 && m_height > 0 && m_width == m_height && m_captured; }
+		bool IsValid() const { return m_frameBuffer->IsValid() && m_range > 0 && m_width > 0 && m_height > 0 && m_width == m_height && m_captured; }
 
 		void StartCapture(const std::function<void()>& captureFunction);
 		void StopCapture();
@@ -41,7 +39,7 @@ namespace Graphics
 		/** Getters */
 		GLuint GetCubemapTextureID() const;
 		glm::vec3 GetPosition() const { return m_position; }
-		Assets::cHandle<cTexture> GetCubemapTextureHandle() const { return m_frameBuffer.GetTextureHandle(); }
+		Assets::cHandle<cTexture> GetCubemapTextureHandle() const { return m_frameBuffer->GetTextureHandle(); }
 		glm::mat4 GetProjectionMat4() const {
 			return glm::perspective(glm::radians(90.f), 1.f, 1.f, 2000.f);
 		}
@@ -50,12 +48,12 @@ namespace Graphics
 		GLuint GetHeight() const { return m_height; }
 		GLfloat GetRange() const { return m_range; }
 
-		GLuint fbo() const { return m_frameBuffer.rbo(); }
-		GLuint rbo() const { return m_frameBuffer.rbo(); }
+		GLuint fbo() const { return m_frameBuffer->rbo(); }
+		GLuint rbo() const { return m_frameBuffer->rbo(); }
 	private:
 
 		glm::vec3 m_position;
-		cFrameBuffer m_frameBuffer;
+		cFrameBuffer* m_frameBuffer;
 		bool m_captured;
 
 		// the maximum distance of this environment probe will capture

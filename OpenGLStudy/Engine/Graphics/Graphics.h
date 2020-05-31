@@ -17,6 +17,7 @@
 // Graphics stores, initializes, cleans up all data that needs to be rendered
 namespace Graphics {
 
+	extern std::mutex g_Mutex;
 
 	/** Initialization and clean up function*/
 	bool Initialize();
@@ -71,9 +72,14 @@ namespace Graphics {
 	void UpdateLightingData();
 	/** Threading related */
 	void Notify_DataHasBeenSubmited();
+	void Notify_DataHasBeenSwapped();
+	bool DataSwapped();
+	bool DataSubmitted();
+	void SetSwapData(bool i_swapped);
+	void SetSubmitData(bool i_submitted);
 	// When the data is swapped, application data can be cleared and it is ready for next submission
-	void MakeApplicationThreadWaitForSwapingData(std::mutex& i_applicationMutex);
-	void MakeApplicationThreadWaitUntilPreRenderFrameDone(std::mutex& i_applicationMutex);
+	bool MakeApplicationThreadWaitForSwapingData(bool shouldApplicationExit);
+	void MakeApplicationThreadWaitUntilPreRenderFrameDone();
 
 	void SwapDataFromRenderThread();
 	/** Others */

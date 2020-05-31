@@ -19,20 +19,11 @@ namespace Graphics
 			GLuint Resolution;							// Resolution of Environment cubemap(each size)
 
 			sCaptureProbes() {}
+			~sCaptureProbes() {}
 			sCaptureProbes(const cSphere& i_sphere, const cSphere& i_innerSphere, float i_influence, GLuint i_resolution) : BV(i_sphere), InnerBV(i_innerSphere), Influence(i_influence), Resolution(i_resolution) { }
-			sCaptureProbes(const sCaptureProbes& i_other) :
-				EnvironmentProbe(i_other.EnvironmentProbe), IrradianceProbe(i_other.IrradianceProbe), PrefilterProbe(i_other.PrefilterProbe),
-				BV(i_other.BV), InnerBV(i_other.InnerBV), Influence(i_other.Influence), Resolution(i_other.Resolution) {}
-			sCaptureProbes& operator = (const sCaptureProbes& i_other) {
-				EnvironmentProbe = i_other.EnvironmentProbe;
-				IrradianceProbe = i_other.IrradianceProbe;
-				PrefilterProbe = i_other.PrefilterProbe;
-				BV = i_other.BV;
-				InnerBV = i_other.InnerBV;
-				Influence = i_other.Influence;
-				Resolution = i_other.Resolution;
-				return *this;
-			}
+			sCaptureProbes(const sCaptureProbes& i_other) = default;
+			sCaptureProbes& operator = (const sCaptureProbes& i_other) = default;
+
 			bool operator < (const sCaptureProbes& i_other) { return (*this).Influence < i_other.Influence; }
 			void CleanUp() {
 				EnvironmentProbe.CleanUp();

@@ -9,6 +9,7 @@ namespace Graphics {
 
 	bool cFrameBuffer::Initialize(GLuint i_width, GLuint i_height, ETextureType i_textureType)
 	{
+		std::lock_guard<std::mutex> autoLock(m_mutex);
 		auto result = true;
 		m_width = i_width; m_height = i_height;
 		// record the previous frame buffer object
@@ -124,31 +125,21 @@ namespace Graphics {
 		return result;
 	}
 
-	Graphics::cFrameBuffer& cFrameBuffer::operator=(const cFrameBuffer& i_other)
-	{
-		m_fbo = i_other.m_fbo;
-		m_rbo = i_other.m_rbo;
-		m_prevFbo = i_other.m_prevFbo;
-		m_renderToTexture = i_other.m_renderToTexture;
-		m_width = i_other.m_width;
-		m_height = i_other.m_height;
-
-		return *this;
-	}
-
 	void cFrameBuffer::Write(const std::function<void()>& captureFunction)
 	{
-		// Change view port size first
-		Application::cApplication* _app = Application::GetCurrentApplication();
-		if (_app) { _app->GetCurrentWindow()->SetViewportSize(m_width, m_height); }
+		{
+			// Change view port size first
+			Application::cApplication* _app = Application::GetCurrentApplication();
+			if (_app) { _app->GetCurrentWindow()->SetViewportSize(m_width, m_height); }
 
-		// right now, it will write current buffer to this frame buffer 
-		glGetIntegerv(GL_FRAMEBUFFER_BINDING, &m_prevFbo);
-		glBindFramebuffer(GL_FRAMEBUFFER, m_fbo);
-		if (m_rbo > 0 && m_rbo < static_cast<GLuint>(-1))
-			glBindRenderbuffer(GL_RENDERBUFFER, m_rbo);
+			// right now, it will write current buffer to this frame buffer 
+			glGetIntegerv(GL_FRAMEBUFFER_BINDING, &m_prevFbo);
+			glBindFramebuffer(GL_FRAMEBUFFER, m_fbo);
+			if (m_rbo > 0 && m_rbo < static_cast<GLuint>(-1))
+				glBindRenderbuffer(GL_RENDERBUFFER, m_rbo);
 
-		assert(GL_NO_ERROR == glGetError());
+			assert(GL_NO_ERROR == glGetError());
+		}
 
 		// Execute capture function
 		captureFunction();
@@ -158,17 +149,19 @@ namespace Graphics {
 
 	void cFrameBuffer::WriteSubArea(const std::function<void()>& captureFunction, const sRect& i_offsetArea)
 	{
-		// Change view port size first
-		Application::cApplication* _app = Application::GetCurrentApplication();
-		if (_app) { _app->GetCurrentWindow()->SetViewPort(i_offsetArea); }
+		{
+			// Change view port size first
+			Application::cApplication* _app = Application::GetCurrentApplication();
+			if (_app) { _app->GetCurrentWindow()->SetViewPort(i_offsetArea); }
 
-		// right now, it will write current buffer to this frame buffer 
-		glGetIntegerv(GL_FRAMEBUFFER_BINDING, &m_prevFbo);
-		glBindFramebuffer(GL_FRAMEBUFFER, m_fbo);
-		if (m_rbo > 0 && m_rbo < static_cast<GLuint>(-1))
-			glBindRenderbuffer(GL_RENDERBUFFER, m_rbo);
+			// right now, it will write current buffer to this frame buffer 
+			glGetIntegerv(GL_FRAMEBUFFER_BINDING, &m_prevFbo);
+			glBindFramebuffer(GL_FRAMEBUFFER, m_fbo);
+			if (m_rbo > 0 && m_rbo < static_cast<GLuint>(-1))
+				glBindRenderbuffer(GL_RENDERBUFFER, m_rbo);
 
-		assert(GL_NO_ERROR == glGetError());
+			assert(GL_NO_ERROR == glGetError());
+		}
 
 		// Execute capture function
 		captureFunction();
@@ -178,6 +171,7 @@ namespace Graphics {
 
 	void cFrameBuffer::UnWrite()
 	{
+
 		glBindFramebuffer(GL_FRAMEBUFFER, m_prevFbo);
 		m_prevFbo = 0;
 		glBindRenderbuffer(GL_RENDERBUFFER, 0);

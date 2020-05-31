@@ -90,8 +90,11 @@ namespace ComputeShaderTest
 
 	void cleanUp()
 	{
+		if(posSSbo > 0)
 		glDeleteBuffers(1, &posSSbo);
+		if (velSSbo > 0)
 		glDeleteBuffers(1, &velSSbo);
+		if (dataSSbo > 0)
 		glDeleteBuffers(1, &dataSSbo);
 		assert(GL_NO_ERROR == glGetError());
 	}
