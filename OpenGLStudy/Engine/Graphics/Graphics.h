@@ -65,7 +65,7 @@ namespace Graphics {
 
 	/** Lighting related*/
 	UniformBufferFormats::sLighting& GetGlobalLightingData();
-	bool CreateAmbientLight(const Color& i_color, cAmbientLight*& o_ambientLight);
+	bool CreateAmbientLight(const Color& i_color, float intensity, cAmbientLight*& o_ambientLight);
 	bool CreatePointLight(const glm::vec3& i_initialLocation, const Color& i_color, const GLfloat& i_radius, bool i_enableShadow, cPointLight*& o_pointLight, int uniqueID);
 	bool CreateSpotLight(const glm::vec3& i_initialLocation, const glm::vec3& i_direction, const Color& i_color, const GLfloat& i_edge, const GLfloat& i_radius, bool i_enableShadow, cSpotLight*& o_spotLight);
 	bool CreateDirectionalLight(const Color& i_color, glm::vec3 i_direction, bool i_enableShadow, cDirectionalLight*& o_directionalLight);

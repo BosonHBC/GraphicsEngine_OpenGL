@@ -526,7 +526,7 @@ namespace Graphics {
 
 			//EnvironmentCaptureManager::AddCaptureProbes(cSphere(glm::vec3(-225, 230, 0), 600.f), 50.f, envMapResolution);
 
-			EnvironmentCaptureManager::AddCaptureProbes(cSphere(glm::vec3(0, 230, 0), 600.f), 50.f, envMapResolution);
+			EnvironmentCaptureManager::AddCaptureProbes(cSphere(glm::vec3(0, 150, 0), 600.f), 50.f, envMapResolution);
 
 			//EnvironmentCaptureManager::AddCaptureProbes(cSphere(glm::vec3(225, 230, 0), 600.f), 50.f, envMapResolution);
 
@@ -1028,7 +1028,7 @@ namespace Graphics {
 			glDeleteBuffers(1, &g_lightVisibilitiesID);
 		if (minMaxDepthID > 0)
 			glDeleteBuffers(1, &minMaxDepthID);
-
+			 
 		s_cubemapProbe.CleanUp();
 		s_brdfLUTTexture.CleanUp();
 		g_hdrBuffer.CleanUp();
@@ -1153,7 +1153,7 @@ namespace Graphics {
 		return g_globalLightingData;
 	}
 
-	bool CreateAmbientLight(const Color& i_color, cAmbientLight*& o_ambientLight)
+	bool CreateAmbientLight(const Color& i_color, float intensity, cAmbientLight*& o_ambientLight)
 	{
 		auto result = true;
 
@@ -1164,7 +1164,7 @@ namespace Graphics {
 		g_ambientLight = new  cAmbientLight(i_color);
 		g_ambientLight->UniqueID = 0;
 		g_ambientLight->SetupLight(0, 0);
-		g_ambientLight->Intensity = 0.2f;
+		g_ambientLight->Intensity = intensity;
 		o_ambientLight = g_ambientLight;
 
 		return result;

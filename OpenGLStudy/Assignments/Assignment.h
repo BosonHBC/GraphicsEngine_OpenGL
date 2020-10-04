@@ -63,7 +63,7 @@ private:
 	Graphics::cSpotLight* spLight2 = nullptr;
 	Color m_pointLightColor = Color::White() * 0.5f;
 
-	int m_renderingTeapotCount = 1;
+	int m_renderingTeapotCount = 8;
 	cActor* m_teapots[s_maxTeapotCount] = {nullptr};
 	cActor* m_cubemap = nullptr;
 	cActor* m_spaceHolder = nullptr;

@@ -67,6 +67,71 @@ out vec4 color;
 // Struct definitions
 //-------------------------------------------------------------------------
 
+void swap(inout float a, inout float b)
+{
+	float temp = a;
+	a = b;
+	b = temp;
+}
+
+// define a volume
+struct sVolume
+{
+	vec3 min;
+	vec3 max;
+
+	bool isPointInside(vec3 p)
+	{
+		return p.x >= min.x && p.y >= min.y && p.z >= min.z 
+		&& p.x >= max.x && p.y >= max.y && p.z >= max.z;
+	}
+	
+	bool rayVolumeIntersection(vec3 o, vec3 dir /* assume normalized*/, out float tMin, out float tMax)
+	{
+		// interfect with 6 plane, and get all intersections points
+		// only point that satidfied 1. dir * plane.normal < 0; 2. inside the volume is valid
+		// there should only be one point is like this
+		
+		float tmin = (min.x - o.x) / dir.x; 
+    	float tmax = (max.x - o.x) / dir.x; 
+ 
+    	if (tmin > tmax) swap(tmin, tmax); 
+ 
+    	float tymin = (min.y - o.y) / dir.y; 
+    	float tymax = (max.y - o.y) / dir.y; 
+ 
+    	if (tymin > tymax) swap(tymin, tymax); 
+ 
+    	if ((tmin > tymax) || (tymin > tmax)) 
+        	return false; 
+ 
+    	if (tymin > tmin) 
+        	tmin = tymin; 
+ 
+    	if (tymax < tmax) 
+        	tmax = tymax; 
+ 
+    	float tzmin = (min.z - o.z) / dir.z; 
+    	float tzmax = (max.z - o.z) / dir.z; 
+ 
+    	if (tzmin > tzmax) swap(tzmin, tzmax); 
+ 
+    	if ((tmin > tzmax) || (tzmin > tmax)) 
+        	return false; 
+ 
+    	if (tzmin > tmin) 
+        	tmin = tzmin; 
+ 
+    	if (tzmax < tmax) 
+        	tmax = tzmax; 
+		
+		tMin = tmin;
+		tMax = tmax;
+		return true; 
+	}
+};
+
+
 struct Light{	
 	vec3 color;
 	int uniqueID;
@@ -287,7 +352,7 @@ float CalcPointLightShadowMap(PointLight pLight, vec3 worldPos, float dist_vV)
 
 	float currentDepth = fragToLightLength / pLight.radius;
 	float shadow = 0.0;
-	float bias = 0.05;
+	float bias = 0.01;
 	float samples = 20;
 	// length it goes according to the grid sampler, and it determines the blur amount of the shadow
 	float diskRadius = (1.0 + (dist_vV / pLight.radius)) / 5.0; 
@@ -356,15 +421,23 @@ vec3 GetBlendedIrradTexture(vec3 vN)
 
 	return outColor;
 }
-vec3 GetBlendedPreFilterTexture(vec3 vR, float roughness)
+vec3 GetBlendedPreFilterTexture(vec3 vR, float roughness, vec3 worldPos, vec3 ViewPosition)
 {
-	
+
+	sVolume volume;
+	volume.min = vec3(-480,0,-325);
+	volume.max = vec3(480, 290, 325);
+	float tMax = 0, tMin = 0;
+	bool bSucceedFindIntersectionPoint = volume.rayVolumeIntersection(worldPos, vR, tMin, tMax);
+	vec3 intersectionPoint = worldPos + vR * tMax;
+
+	vec3 sampleDir = bSucceedFindIntersectionPoint ? intersectionPoint - ViewPosition : vR;
 	vec3 outColor = vec3(0,0,0);
 	float lod = roughness * MAX_REFLECTION_LOD;
-	outColor += ((envCapWeights.x > 0.0) ? envCapWeights.x * textureLod(PrefilterMap[0], vR, lod).rgb : vec3(0.0));
-	outColor += ((envCapWeights.y > 0.0) ? envCapWeights.y * textureLod(PrefilterMap[1], vR, lod).rgb : vec3(0.0));
-	outColor += ((envCapWeights.z > 0.0) ? envCapWeights.z * textureLod(PrefilterMap[2], vR, lod).rgb : vec3(0.0));		
-	outColor += ((envCapWeights.w > 0.0) ? envCapWeights.w * textureLod(PrefilterMap[3], vR, lod).rgb : vec3(0.0));
+	outColor += ((envCapWeights.x > 0.0) ? envCapWeights.x * textureLod(PrefilterMap[0], sampleDir, lod).rgb : vec3(0.0));
+	outColor += ((envCapWeights.y > 0.0) ? envCapWeights.y * textureLod(PrefilterMap[1], sampleDir, lod).rgb : vec3(0.0));
+	outColor += ((envCapWeights.z > 0.0) ? envCapWeights.z * textureLod(PrefilterMap[2], sampleDir, lod).rgb : vec3(0.0));		
+	outColor += ((envCapWeights.w > 0.0) ? envCapWeights.w * textureLod(PrefilterMap[3], sampleDir, lod).rgb : vec3(0.0));
 	//outColor += envCapWeights.x * textureLod(PrefilterMap[0], vR, lod).rgb;
 	//outColor += envCapWeights.y * textureLod(PrefilterMap[1], vR, lod).rgb;
 	//outColor += envCapWeights.z * textureLod(PrefilterMap[2], vR, lod).rgb;
@@ -372,7 +445,7 @@ vec3 GetBlendedPreFilterTexture(vec3 vR, float roughness)
 	//outColor = max(outColor, vec3(0));
 	return outColor;
 }
-vec3 CalcAmbientLight(AmbientLight aLight, vec3 albedoColor,float metalness, float roughness, vec3 f0 ,vec3 vN,vec3 vV,vec3 vR )
+vec3 CalcAmbientLight(AmbientLight aLight, vec3 albedoColor,float metalness, float roughness, vec3 f0 ,vec3 vN,vec3 vV,vec3 vR, vec3 worldPos, vec3 ViewPosition )
 {
 	float NdotV = max(dot(vN, vV), 0.0001f);
 	vec3 kS = fresnelSchlickRoughness(NdotV, f0, roughness); 
@@ -382,13 +455,13 @@ vec3 CalcAmbientLight(AmbientLight aLight, vec3 albedoColor,float metalness, flo
 	vec3 diffuse    = irradiance * albedoColor;
 	
 	// sample both the pre-filter map and the BRDF lut and combine them together as per the Split-Sum approximation to get the IBL specular part.    
-	vec3 prefilteredColor = GetBlendedPreFilterTexture(vR, roughness);
+	vec3 prefilteredColor = GetBlendedPreFilterTexture(vR, roughness, worldPos, ViewPosition);
 	//vec2 brdfuv = vec2(NdotV, 1 - roughness);
 	vec2 brdfuv = vec2(NdotV, roughness);
     vec2 brdf  = texture(BrdfLUTMap, brdfuv).rg;
     vec3 specular = prefilteredColor * (kS * brdf.x + brdf.y);
 	
-	vec3 ambient    = (kD * diffuse + specular) * aLight.base.color /** ao // no ao for now*/; 
+	vec3 ambient = (kD * diffuse + specular) * aLight.base.color /** ao // no ao for now*/; 
 
 	return ambient;
 }
@@ -491,10 +564,10 @@ void main(){
 	float textureAO = ior_ao.a;
 	vec3 F0 = abs ((1.0 - ior) / (1.0 + ior)); //vec3(0.04);
 	F0 = F0 * F0;
-	F0 = mix(F0, albedoColor, vec3(metalness));
+	F0 = mix(vec3(0.04), albedoColor, vec3(metalness));
 
 	// ambient light
-	vec3 ambientLightColor = CalcAmbientLight(g_ambientLight,albedoColor, metalness, roughness, F0,normal,normalized_view, vR);
+	vec3 ambientLightColor = CalcAmbientLight(g_ambientLight,albedoColor, metalness, roughness, F0,normal,normalized_view, vR, worldPos.xyz, ViewPosition);
 	
 	// cubemap light
 	//vec4 cubemapColor = IlluminateByCubemap(diffuseTexColor,specularTexColor, normalized_normal, normalized_view);

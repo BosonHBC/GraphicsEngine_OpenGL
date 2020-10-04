@@ -110,13 +110,13 @@ void Assignment::CreateActor()
 
 	m_supplyBox = new cActor();
 	m_supplyBox->Initialize();
-	m_supplyBox->Transform.SetTransform(glm::vec3(0, 0, -10), glm::quat(1, 0, 0, 0), glm::vec3(250, 250, 250));
+	m_supplyBox->Transform.SetTransform(glm::vec3(0, 0, -150), glm::quat(1, 0, 0, 0), glm::vec3(250, 250, 250));
 	m_supplyBox->SetModel("Contents/models/sifiGuns/supplyBox_Close.model");
 	g_renderActorList.push_back(m_supplyBox);
 #ifdef ENABLE_CLOTH_SIM
 	m_collisionSphere = new cActor();
 	m_collisionSphere->Initialize();
-	m_collisionSphere->Transform.SetTransform(glm::vec3(0, 0, -150), glm::quat(1, 0, 0, 0), glm::vec3(10, 10, 10));
+	m_collisionSphere->Transform.SetTransform(glm::vec3(0, 0, -180), glm::quat(1, 0, 0, 0), glm::vec3(10, 10, 10));
 	m_collisionSphere->SetModel("Contents/models/pbrSphere.model");
 	g_renderActorList.push_back(m_collisionSphere);
 #endif // ENABLE_CLOTH_SIM
@@ -136,16 +136,16 @@ void Assignment::CreateLight()
 	const int lightPerRow = 4;
 	const float horiDist = 50 * 40.f / m_createdPLightCount;
 	const float vertDist = 50 * 40.f / m_createdPLightCount;
-	Graphics::CreateAmbientLight(Color::White(), aLight);
+	Graphics::CreateAmbientLight(Color::White(), 8.5f, aLight);
 
 	for (int i = 0; i < m_createdPLightCount; ++i)
 	{
 		//Color randomColor = Color(randomFloats(generator), randomFloats(generator), randomFloats(generator));
 		bool enableShadow = true;
-		Graphics::CreatePointLight(glm::vec3(0 + (i % lightPerRow) * horiDist, 100, 100 - (i / lightPerRow) * vertDist), m_pointLightColor, 150.f, enableShadow, m_pLights[i], i);
+		Graphics::CreatePointLight(glm::vec3(0 + (i % lightPerRow) * horiDist, 100, 100 - (i / lightPerRow) * vertDist), m_pointLightColor, 1000.f, enableShadow, m_pLights[i], i);
 		m_pointLightMap.insert({ m_pLights[i]->UniqueID, m_pLights[i] });
 	}
-
+	 
 	//CreatePointLight(glm::vec3(0, 100, 0), Color::White() * 0.5f, 250, true);
 
 	//Graphics::CreatePointLight(glm::vec3(100, 150.f, 100.f), Color(1, 1, 1), 1.f, 0.7f, 1.8f, true, pLight2);
@@ -663,7 +663,7 @@ void Assignment::EditorGUI()
 	{
 		if (ImGui::CollapsingHeader("Render settings"))
 		{
-			const Graphics::ERenderMode rendermodes[] = { Graphics::ERM_ForwardShading, Graphics::ERM_DeferredShading, Graphics::ERM_Deferred_Albede, Graphics::ERM_Deferred_Metallic, Graphics::ERM_Deferred_Roughness,
+			const static Graphics::ERenderMode rendermodes[] = { Graphics::ERM_ForwardShading, Graphics::ERM_DeferredShading, Graphics::ERM_Deferred_Albede, Graphics::ERM_Deferred_Metallic, Graphics::ERM_Deferred_Roughness,
 		Graphics::ERM_Deferred_Normal, Graphics::ERM_Deferred_Depth, Graphics::ERM_SSAO };
 			static bool toggles[] = { false, true, false, false, false, false, false, false };
 			if (ImGui::Button("ChooseRenderMode.."))
