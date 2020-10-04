@@ -11,9 +11,7 @@ namespace Graphics
 	public:
 		cGBuffer() : cFrameBuffer() {}
 		~cGBuffer() {};
-		cGBuffer(const cGBuffer& i_other) :
-			cFrameBuffer(i_other), m_normalHolder(i_other.m_normalHolder)
-		{}
+		cGBuffer(const cGBuffer& i_other) = default;
 		bool Initialize(GLuint i_width, GLuint i_height);
 		void CleanUp();
 

@@ -3,6 +3,7 @@
 #include <stdio.h>
 #include <condition_variable> // threading
 #include <mutex> // unique_lock
+#include <chrono> // ms
 #include "Graphics.h"
 
 #include "Cores/Core.h"
@@ -42,8 +43,43 @@ namespace Graphics {
 	std::condition_variable g_whenDataHasBeenSwappedInRenderThread;
 	std::condition_variable g_whenPreRenderFinish;
 	std::condition_variable g_whenDataReturnToApplicationThreadHasSwapped;
-	std::mutex g_graphicMutex;
+	std::mutex g_Mutex;
+	std::mutex g_dataMutex;
+	bool g_dataSwapped = false;
+	bool g_dataSubmitted = true;
+	//#define PRINT_SET_GET
 
+	bool DataSwapped() {
+#ifdef PRINT_SET_GET
+		printf("Get data swap: %s\n", (g_dataSwapped ? "true" : "false"));
+#endif // PRINT_SET_GET
+
+
+		return g_dataSwapped;
+	}
+	bool DataSubmitted() {
+#ifdef PRINT_SET_GET
+		printf("Get data swap: %s\n", (g_dataSubmitted ? "true" : "false"));
+#endif
+		return g_dataSubmitted;
+	}
+	void SetSwapData(bool i_swapped) {
+		std::lock_guard<std::mutex> autoLock(g_dataMutex);
+		g_dataSwapped = i_swapped;
+#ifdef PRINT_SET_GET
+		printf("Set data swap: %s\n", (g_dataSwapped ? "true" : "false"));
+#endif // PRINT_SET_GET
+
+
+	}
+	void SetSubmitData(bool i_submitted) {
+		std::lock_guard<std::mutex> autoLock(g_dataMutex);
+		g_dataSubmitted = i_submitted;
+
+#ifdef PRINT_SET_GET
+		printf("Set data submit: %s\n", (g_dataSubmitted ? "true" : "false"));
+#endif
+	}
 	// Global data
 	// ------------------------------------------------------------------------------------------------------------------------------------
 	// Uniform buffer maps
@@ -490,7 +526,7 @@ namespace Graphics {
 
 			//EnvironmentCaptureManager::AddCaptureProbes(cSphere(glm::vec3(-225, 230, 0), 600.f), 50.f, envMapResolution);
 
-			EnvironmentCaptureManager::AddCaptureProbes(cSphere(glm::vec3(0, 230, 0), 600.f), 50.f, envMapResolution);
+			EnvironmentCaptureManager::AddCaptureProbes(cSphere(glm::vec3(0, 150, 0), 600.f), 50.f, envMapResolution);
 
 			//EnvironmentCaptureManager::AddCaptureProbes(cSphere(glm::vec3(225, 230, 0), 600.f), 50.f, envMapResolution);
 
@@ -680,13 +716,13 @@ namespace Graphics {
 			{
 				printf("Failed to Cloth material !\n");
 				return result;
-			}
 		}
+	}
 #endif // ENABLE_CLOTH_SIM
 
 		ComputeShaderTest::Init();
 		return result;
-	}
+}
 
 	void PreRenderFrame()
 	{
@@ -745,24 +781,29 @@ namespace Graphics {
 		/** 4. Start to render pass one by one */
 		EnvironmentCaptureManager::CaptureEnvironment(g_dataRenderingByGraphicThread);
 		//printf("Finish capture environment.\n");
-		g_whenPreRenderFinish.notify_one();
+		g_whenPreRenderFinish.notify_all();
 		printf("---------------------------------Pre-Rendering stage done.---------------------------------\n");
 	}
-	int renderCount = 0;
+
+
 	void RenderFrame()
 	{
 		/** 1. Wait for data being submitted here */
 		// Acquire the lock
 		Profiler::StartRecording(6);
-		std::unique_lock<std::mutex> _mlock(g_graphicMutex);
+		std::unique_lock<std::mutex> _mlock(g_Mutex);
+
 		/** 2.Wait until the conditional variable is signaled */
-		g_whenAllDataHasBeenSubmittedFromApplicationThread.wait(_mlock);
+		g_whenAllDataHasBeenSubmittedFromApplicationThread.wait(_mlock, DataSubmitted);
 		Profiler::StopRecording(6);
 
 		// After data has been submitted, swap the data
 		std::swap(g_dataSubmittedByApplicationThread, g_dataRenderingByGraphicThread);
 		// Notify the application thread that data is swapped and it is ready for receiving new data
-		g_whenDataHasBeenSwappedInRenderThread.notify_one();
+
+		SetSubmitData(false);
+		SetSwapData(true);
+		Notify_DataHasBeenSwapped();
 
 		Profiler::StartRecording(Profiler::EPT_RenderAFrame);
 		// For example calculate something here
@@ -983,10 +1024,11 @@ namespace Graphics {
 		{
 			g_omniShadowMaps[i].CleanUp();
 		}
-
-		glDeleteBuffers(1, &g_lightVisibilitiesID);
-		glDeleteBuffers(1, &minMaxDepthID);
-
+		if (g_lightVisibilitiesID > 0)
+			glDeleteBuffers(1, &g_lightVisibilitiesID);
+		if (minMaxDepthID > 0)
+			glDeleteBuffers(1, &minMaxDepthID);
+			 
 		s_cubemapProbe.CleanUp();
 		s_brdfLUTTexture.CleanUp();
 		g_hdrBuffer.CleanUp();
@@ -1051,9 +1093,9 @@ namespace Graphics {
 
 	const Graphics::sDataReturnToApplicationThread& GetDataFromRenderThread()
 	{
-		std::unique_lock<std::mutex> lck(Application::GetCurrentApplication()->GetApplicationMutex());
+		/*std::unique_lock<std::mutex> lck(g_Mutex);
 		constexpr unsigned int timeToWait_inMilliseconds = 1;
-		g_whenDataReturnToApplicationThreadHasSwapped.wait_for(lck, std::chrono::milliseconds(timeToWait_inMilliseconds));
+		g_whenDataReturnToApplicationThreadHasSwapped.wait_for(lck, std::chrono::milliseconds(timeToWait_inMilliseconds));*/
 		return *g_dataUsedByApplicationThread;
 	}
 
@@ -1095,7 +1137,7 @@ namespace Graphics {
 
 	cEffect* GetEffectByKey(const eEffectType& i_key)
 	{
-		//std::lock_guard<std::mutex> autoLock(g_graphicMutex);
+		//std::lock_guard<std::mutex> autoLock(g_Mutex);
 		if (g_KeyToEffect_map.find(i_key) != g_KeyToEffect_map.end()) {
 			return g_KeyToEffect_map.at(i_key);
 		}
@@ -1111,7 +1153,7 @@ namespace Graphics {
 		return g_globalLightingData;
 	}
 
-	bool CreateAmbientLight(const Color& i_color, cAmbientLight*& o_ambientLight)
+	bool CreateAmbientLight(const Color& i_color, float intensity, cAmbientLight*& o_ambientLight)
 	{
 		auto result = true;
 
@@ -1122,7 +1164,7 @@ namespace Graphics {
 		g_ambientLight = new  cAmbientLight(i_color);
 		g_ambientLight->UniqueID = 0;
 		g_ambientLight->SetupLight(0, 0);
-		g_ambientLight->Intensity = 0.2f;
+		g_ambientLight->Intensity = intensity;
 		o_ambientLight = g_ambientLight;
 
 		return result;
@@ -1174,19 +1216,49 @@ namespace Graphics {
 	//----------------------------------------------------------------------------------
 	void Notify_DataHasBeenSubmited()
 	{
-		g_whenAllDataHasBeenSubmittedFromApplicationThread.notify_one();
+		g_whenAllDataHasBeenSubmittedFromApplicationThread.notify_all();
 	}
 
-	void MakeApplicationThreadWaitForSwapingData(std::mutex& i_applicationMutex)
+	void Notify_DataHasBeenSwapped()
 	{
-		std::unique_lock<std::mutex> lck(g_graphicMutex);
-		constexpr unsigned int timeToWait_inMilliseconds = 1;
-		g_whenDataHasBeenSwappedInRenderThread.wait_for(lck, std::chrono::milliseconds(timeToWait_inMilliseconds));
+		g_whenDataHasBeenSwappedInRenderThread.notify_all();
 	}
 
-	void MakeApplicationThreadWaitUntilPreRenderFrameDone(std::mutex& i_applicationMutex)
+	bool MakeApplicationThreadWaitForSwapingData(bool shouldApplicationExit)
 	{
-		std::unique_lock<std::mutex> lck(i_applicationMutex);
+		std::unique_lock<std::mutex> lck(g_Mutex);
+		bool canGraphicsDataBeSubmittedForANewFrame = false;
+		do
+		{
+			// The wait is long in terms of rendering
+			// but short enough that any delay in exiting will (hopefully) not be noticeable to a human
+			using namespace std::chrono_literals;
+			auto timeToWait_inMilliseconds = 250ms;
+			canGraphicsDataBeSubmittedForANewFrame = g_whenDataHasBeenSwappedInRenderThread.wait_for(lck, timeToWait_inMilliseconds, DataSwapped);
+		} while (!canGraphicsDataBeSubmittedForANewFrame && !shouldApplicationExit);
+
+		// data can't be submitted for a new frame, the application will exit
+		if (!canGraphicsDataBeSubmittedForANewFrame)
+		{
+			if (shouldApplicationExit)
+			{
+				// it is true because graphic thread quits such that there is no signal anymore
+			}
+			else
+			{
+				assert(false);
+				printf("Failed to wait for graphics data for a new frame to be submittable.\n");
+				printf("Something unexpected went wrong and rendering can't continue (the application will now exit.)\n");
+			}
+			return false;
+		}
+
+		return true;
+	}
+
+	void MakeApplicationThreadWaitUntilPreRenderFrameDone()
+	{
+		std::unique_lock<std::mutex> lck(g_Mutex);
 		g_whenPreRenderFinish.wait(lck);
 	}
 
@@ -1194,7 +1266,7 @@ namespace Graphics {
 	{
 		// swap data and notify data has been swapped.
 		std::swap(g_dataGetFromRenderThread, g_dataUsedByApplicationThread);
-		g_whenDataReturnToApplicationThreadHasSwapped.notify_one();
+		g_whenDataReturnToApplicationThreadHasSwapped.notify_all();
 	}
 
 	void ClearApplicationThreadData()
@@ -1203,5 +1275,6 @@ namespace Graphics {
 		g_dataSubmittedByApplicationThread->g_pointLights.clear();
 		g_dataSubmittedByApplicationThread->g_spotLights.clear();
 		g_dataSubmittedByApplicationThread->g_modelTransformPairForSelectionPass.clear();
+
 	}
 }

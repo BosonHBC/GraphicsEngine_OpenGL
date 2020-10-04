@@ -92,8 +92,9 @@ void cWindow::CleanUp()
 	glfwTerminate();
 }
 
-bool cWindow::GetShouldClose() const
+bool cWindow::GetShouldClose()
 {
+	std::lock_guard<std::mutex> autoLock(m_mutex);
 	return glfwWindowShouldClose(m_glfwWindow);
 }
 
@@ -164,11 +165,6 @@ void cWindow::HandleKeys(GLFWwindow* i_window, int i_key, int i_code, int i_acti
 	cWindow* thisWindow = static_cast<cWindow*>(glfwGetWindowUserPointer(i_window));
 	sWindowInput* _input = thisWindow->m_windowInput;
 
-	if (i_key == GLFW_KEY_ESCAPE && i_action == GLFW_PRESS) {
-		// tell glfw window that it is time to close
-		glfwSetWindowShouldClose(i_window, GL_TRUE);
-	}
-
 }
 
 void cWindow::HandleMouse(GLFWwindow* i_window, double i_xPos, double i_yPos)
@@ -232,4 +228,11 @@ void cWindow::SetViewportSize(GLuint i_newWidth, GLuint i_newHeight)
 void cWindow::SetViewPort(const sRect& i_newViewPort)
 {
 	glViewport(i_newViewPort.Min.x, i_newViewPort.Min.y, i_newViewPort.w(), i_newViewPort.h());
+}
+
+void cWindow::CloseWindow()
+{
+	std::lock_guard<std::mutex> autoLock(m_mutex);
+	// tell glfw window that it is time to close
+	glfwSetWindowShouldClose(m_glfwWindow, GL_TRUE);
 }

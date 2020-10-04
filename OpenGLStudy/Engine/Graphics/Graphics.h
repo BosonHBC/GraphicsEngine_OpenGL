@@ -17,6 +17,7 @@
 // Graphics stores, initializes, cleans up all data that needs to be rendered
 namespace Graphics {
 
+	extern std::mutex g_Mutex;
 
 	/** Initialization and clean up function*/
 	bool Initialize();
@@ -64,16 +65,21 @@ namespace Graphics {
 
 	/** Lighting related*/
 	UniformBufferFormats::sLighting& GetGlobalLightingData();
-	bool CreateAmbientLight(const Color& i_color, cAmbientLight*& o_ambientLight);
+	bool CreateAmbientLight(const Color& i_color, float intensity, cAmbientLight*& o_ambientLight);
 	bool CreatePointLight(const glm::vec3& i_initialLocation, const Color& i_color, const GLfloat& i_radius, bool i_enableShadow, cPointLight*& o_pointLight, int uniqueID);
 	bool CreateSpotLight(const glm::vec3& i_initialLocation, const glm::vec3& i_direction, const Color& i_color, const GLfloat& i_edge, const GLfloat& i_radius, bool i_enableShadow, cSpotLight*& o_spotLight);
 	bool CreateDirectionalLight(const Color& i_color, glm::vec3 i_direction, bool i_enableShadow, cDirectionalLight*& o_directionalLight);
 	void UpdateLightingData();
 	/** Threading related */
 	void Notify_DataHasBeenSubmited();
+	void Notify_DataHasBeenSwapped();
+	bool DataSwapped();
+	bool DataSubmitted();
+	void SetSwapData(bool i_swapped);
+	void SetSubmitData(bool i_submitted);
 	// When the data is swapped, application data can be cleared and it is ready for next submission
-	void MakeApplicationThreadWaitForSwapingData(std::mutex& i_applicationMutex);
-	void MakeApplicationThreadWaitUntilPreRenderFrameDone(std::mutex& i_applicationMutex);
+	bool MakeApplicationThreadWaitForSwapingData(bool shouldApplicationExit);
+	void MakeApplicationThreadWaitUntilPreRenderFrameDone();
 
 	void SwapDataFromRenderThread();
 	/** Others */

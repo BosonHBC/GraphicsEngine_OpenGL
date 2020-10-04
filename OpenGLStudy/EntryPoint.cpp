@@ -14,18 +14,23 @@ int main()
 	auto result = true;
 
 	if (!(result = Application::CreateApplication<Assignment>(_myGame, WIDTH, HEIGHT, "Assignment"))) {
-		printf("Failed to create application!");
+		printf("Failed to create application, main()!\n");
 		return 1;
 	}
+
+	glMemoryBarrier(GL_ALL_BARRIER_BITS);
+
 	if (!(result = _myGame->PostInitialization())) {
-		printf("Failed to post initialize the application!");
+		printf("Failed to post initialize the application!\n");
 		return 1;
 	}
 
 	_myGame->Run();
 
+	glMemoryBarrier(GL_ALL_BARRIER_BITS);
 	Application::DestroyApplication(_myGame);
 
+	glMemoryBarrier(GL_ALL_BARRIER_BITS);
 #ifdef _DEBUG
 	//_CrtDumpMemoryLeaks();
 #endif

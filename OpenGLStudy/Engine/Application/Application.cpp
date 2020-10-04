@@ -66,12 +66,14 @@ namespace Application {
 		// In debug mode, application may freeze but the tick will not.
 		// To prevent the second_since_last_update from being too large, need to add a max limitation for it. 
 		const auto tickCount_maxAllowable_time_per_Iteration = Time::ConvertFromSecondsToTick(0.5);
-		
+
 		BeforeUpdate();
 
 		// Update until application thread exits
 		while (!m_shouldApplicationLoopExit)
 		{
+			m_shouldApplicationLoopExit = m_window->GetShouldClose();
+			if (m_shouldApplicationLoopExit) break;
 
 			// Calculate how much time has elapsed since the last loop
 			uint64_t tickCount_systemTime_elapsedSinceLastLoop;
@@ -108,17 +110,17 @@ namespace Application {
 			// Submit data
 			{
 				/** 1. Wait until render thread is ready for receiving new graphic data */
-				Graphics::MakeApplicationThreadWaitForSwapingData(m_applicationMutex);
+				Graphics::MakeApplicationThreadWaitForSwapingData(m_shouldApplicationLoopExit);
+
 				/** 2. Clear the application thread data and submit new one */
 				Graphics::ClearApplicationThreadData();
 				SubmitDataToBeRender(static_cast<float>(Time::ConvertFromTickToSeconds(tickCount_systemTime_elapsedSinceLastLoop)));
+
 				/** 3. Let the graphic thread know that all data has been submitted */
+				Graphics::SetSubmitData(true);
+				Graphics::SetSwapData(false);
 				Graphics::Notify_DataHasBeenSubmited();
 			}
-
-			m_shouldApplicationLoopExit = m_window->GetShouldClose();
-		//	appCount++;
-		//	printf("Application thread count: %d\n", appCount);
 		}
 
 	}
@@ -147,20 +149,20 @@ namespace Application {
 		safe_delete(m_window);
 	}
 
-	
+
 	void cApplication::RenderEditorGUI()
 	{
 
-			ImGui_ImplOpenGL3_NewFrame();
-			ImGui_ImplGlfw_NewFrame();
-			ImGui::NewFrame();
-			// 2. Show a simple window that we create ourselves. We use a Begin/End pair to created a named window.
-			{
-				EditorGUI();
-			}
-			ImGui::Render();
+		ImGui_ImplOpenGL3_NewFrame();
+		ImGui_ImplGlfw_NewFrame();
+		ImGui::NewFrame();
+		// 2. Show a simple window that we create ourselves. We use a Begin/End pair to created a named window.
+		{
+			EditorGUI();
+		}
+		ImGui::Render();
 
-			ImGui_ImplOpenGL3_RenderDrawData(ImGui::GetDrawData());
+		ImGui_ImplOpenGL3_RenderDrawData(ImGui::GetDrawData());
 
 	}
 

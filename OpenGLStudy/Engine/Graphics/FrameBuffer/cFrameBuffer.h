@@ -3,6 +3,7 @@
 #include "GL/glew.h"
 #include "Graphics/Texture/Texture.h"
 #include "Math/Shape/Rect.h"
+#include <mutex>
 namespace Graphics {
 	class cFrameBuffer
 	{
@@ -11,11 +12,9 @@ namespace Graphics {
 			: m_fbo(0), m_rbo(0), m_prevFbo(0), m_width(0), m_height(0) {}
 
 		bool Initialize(GLuint i_width, GLuint i_height, ETextureType i_textureType);
-		cFrameBuffer(const cFrameBuffer& i_other):
-			m_fbo(i_other.m_fbo), m_rbo(i_other.m_rbo), m_prevFbo(i_other.m_prevFbo),
-			m_renderToTexture(i_other.m_renderToTexture), m_width(i_other.m_width), m_height(i_other.m_height)
-		{}
-		cFrameBuffer& operator = (const cFrameBuffer& i_other);
+		cFrameBuffer(const cFrameBuffer& i_other) = default;
+		cFrameBuffer& operator = (const cFrameBuffer& i_other) = default;
+
 		// Write current buffer data to this frame buffer
 		void Write(const std::function<void()>& captureFunction);
 		// Write current buffer to this frame buffer with offset
@@ -46,5 +45,7 @@ namespace Graphics {
 
 		// generated map should has same size as the window
 		GLuint m_width = 0, m_height = 0;
+
+		std::mutex m_mutex;
 	};
 }
